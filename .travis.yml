@@ -1,0 +1,34 @@
+language: c
+sudo: required
+matrix:
+  include:
+    - os: linux
+
+env:
+  global:
+    - coverity_branch: cstat
+    - secure: VLZ3KdJOzERC/FSYoJAfEj2GuzBBB/EPgpX6DFiy9KrgzzGK4ecItL/FGs/Jdrai5Vl2g89FXEWCK0F2Bif+1nRMUal3cpAgahYMuGwuZ4AX3SrRdBOL14xfNxc69urlFJ5EUOeywnMFWiB2XZbauipDlL7HwDIGMsYtUGHntn3Xali6S7BakzSSa/L34EmikqUKHNqtcFnrCOrEo9rFL2vmXbrM98xJAXHTFLOLwi/xIGwW7W6rp6VgU5t9EDEHz+il4uuXZx127NACoAyiGh/1jjqnIF9/gANdtvp/hmLqVc8SEe/zbF/LmHxEbdqi6D9DoWBUMNM04xefZlS4i0yPsfeloq8OXKzlmZuuTB4MbWgY0zC/F9jDVRyTFsIWaa9E5RSxRly8xBbAT4VMgWo3OwcBWwm+tntRTHkdB+JxYLLe3sWGT+Z+9WqG6iDJEJ6d2uUiLNRNlwiuCaSrPK70NIPxcmfdtGoIb+odrgCmwSH+bk0mZIecLTa+tBWx2MPtFxot26NtOYMricEaMKXL8YqDUMAdE+7ElReSdiHf4DwbcdJDEAtLAwYtDnoDOusxBIEW0weJbhgoY8ie0nsYs/gMAimymybuTXRKHvv4q+fttAR59u7LIUr4MPzkoWfoK3CL3BQgPFjIgXVbK9S7ykH5D+iu1sMJkdE0vwY=
+addons:
+  apt:
+    packages:
+    - python3-pip
+    - libcunit1
+    - libcunit1-dev
+  coverity_scan:
+    project:
+      name: SkyMaverick/ucm
+      description: UniChat modification
+    notification_email: skymaverickas@gmail.com
+    build_command: sh -c "./build.sh debug"
+    branch_pattern: $coverity_branch
+
+before_install:
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+install:
+  - sudo python3 -m pip install --upgrade pip
+  - sudo python3 -m pip install "meson<0.45.0"
+  - export PATH="`pwd`/build:${PATH}"
+  - wget https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip && unzip -q ninja-linux.zip -d build
+script:
+  - sh -c "./build.sh debug"

@@ -1,0 +1,9 @@
+/build/
+/pkgs/
+tags
+*.swp
+.gitconfig
+TODO
+ABOUT
+*.so
+test_app
