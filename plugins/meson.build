@@ -1,4 +1,5 @@
 plugins_dir = [
+    'db_mdbx',
     'net_legacy',
     'net_std'
 ]
