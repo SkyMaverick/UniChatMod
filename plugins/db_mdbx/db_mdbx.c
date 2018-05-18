@@ -1,47 +1,52 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
-#include "../../gcfm.h"
+#include "ucm.h"
+#include "api.h"
+#include "libmdbx/mdbx.h"
 
-static const gc_functions_t* app;
-static gc_plugin_t plugin;
+static const ucm_functions_t* app;
+static ucm_plugin_t plugin;
 
-#define trace_dbg(fmt, ...) {app->log(&plugin,GC_LOG_DEBUG,fmt,__VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->log{&plugin,GC_LOG_INFO,fmt,__VA_ARGS__};}
-#define trace_err(fmt, ...) {app->log{&plugin,GC_LOG_ERROR,fmt,__VA_ARGS__};}
+#define trace_dbg(fmt, ...) {app->log(&plugin,UCM_LOG_DEBUG,fmt,__VA_ARGS__);}
+#define trace_inf(fmt, ...) {app->log{&plugin,UCM_LOG_INFO,fmt,__VA_ARGS__};}
+#define trace_err(fmt, ...) {app->log{&plugin,UCM_LOG_ERROR,fmt,__VA_ARGS__};}
 
-GC_RET _run_demo(void){
-//    trace_dbg("%s\n","Run procedure in demo.c");
-    return RET_SUCCESS;
+UCM_RET _run_dbmdbx(void)
+{
+    return UCM_RET_SUCCESS;
 }
 
-GC_RET _stop_demo(void){
-//    trace_dbg("%s\n","Stop procedure in demo.c");
-    return RET_SUCCESS;
+UCM_RET _stop_dbmdbx(void){
+    return UCM_RET_SUCCESS;
 }
 
-void _message(uint32_t id, uintptr_t ctx, 
-                            uint32_t x1, uint32_t x2){
+void 
+_message(uint32_t id, 
+         uintptr_t ctx, 
+         uint32_t x1, 
+         uint32_t x2)
+{
 }
 
-static gc_plugin_t plugin = {
+static ucm_plugin_t plugin = {
     .api = {.vmajor = 0, .vminor=1},
-    .type = PL_EXT,
+    .type = 1,
     .vmajor = 0,
     .vminor = 1,
-    .pid = "demo",
-    .name = "Demo plugin",
+    .pid = "dbmdbx",
+    .name = "Storage mdbx plugin",
     .developer = "SkyMaverick",
-    .description = "Demo plugin for demonstrate realisation and test functionality",
-    .copyright = "Zlib",
+    .description = "System standart storage plugin (based on libmdbx).",
+    .copyright = "Zlib + ReOpenLDAP",
     .email = "mail@mail.ru",
     .website = "http://null.org",
-    .run = _run_demo,
-    .stop = _stop_demo,
+    .run = _run_dbmdbx,
+    .stop = _stop_dbmdbx,
     .message = _message
 };
 
-gc_plugin_t* _init_plugin(const gc_functions_t* api){
+ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;
     return &plugin;
 }
