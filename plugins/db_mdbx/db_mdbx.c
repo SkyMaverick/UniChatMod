@@ -11,12 +11,15 @@ static ucm_plugin_t plugin;
 #define trace_inf(fmt, ...) {app->log{&plugin,UCM_LOG_INFO,fmt,__VA_ARGS__};}
 #define trace_err(fmt, ...) {app->log{&plugin,UCM_LOG_ERROR,fmt,__VA_ARGS__};}
 
-UCM_RET _run_dbmdbx(void)
+UCM_RET
+_run_dbmdbx (void)
 {
     return UCM_RET_SUCCESS;
 }
 
-UCM_RET _stop_dbmdbx(void){
+UCM_RET
+_stop_dbmdbx (void)
+{
     return UCM_RET_SUCCESS;
 }
 
@@ -26,6 +29,7 @@ _message(uint32_t id,
          uint32_t x1, 
          uint32_t x2)
 {
+
 }
 
 static ucm_plugin_t plugin = {
