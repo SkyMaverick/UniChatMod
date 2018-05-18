@@ -2,7 +2,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include "ucm.h"
-#include "api.h"
 #include "libmdbx/mdbx.h"
 
 static const ucm_functions_t* app;
