@@ -2,6 +2,14 @@
 #define _UCM_CONFIG_H_
 
 #define UCM_VERSION "@version@"
+#define UCM_VERSION_MAJOR @version_major@
+#define UCM_VERSION_MINOR @version_minor@
+#define UCM_VERSION_PATCH @version_patch@
+
+#define UCM_COMMIT_NUMBER "@commit@"
+#define UCM_BUILD_TIME "@build_time@"
+#define UCM_VERSION_FULL "@version_full@"
+
 #define DEF_MQ_SIZE @mq_size@
 #define DEF_STRLEN @string_capacity@
 
