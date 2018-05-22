@@ -18,13 +18,13 @@ static uint32_t log_types = UCM_LOG_INFO  |
                             UCM_LOG_DEBUG |
                             UCM_LOG_ERROR;
 
-static void 
-_log_core (ucm_plugin_t* plug, 
-           uint32_t      type, 
+static void
+_log_core (ucm_plugin_t* plug,
+           uint32_t      type,
            const char* txt)
 {
     switch (type){
-        case UCM_LOG_DEBUG: 
+        case UCM_LOG_DEBUG:
                 #ifdef ENABLE_DEBUG
                         fwrite(txt,strlen(txt),1,stdout);
                         break;
@@ -42,8 +42,8 @@ _log_core (ucm_plugin_t* plug,
     rwlock_unlock(lock_mtx);
 }
 
-static int 
-_log_enabled (ucm_plugin_t* plug, 
+static int
+_log_enabled (ucm_plugin_t* plug,
               uint32_t      type)
 {
     if(plug && ( !(plug->flags == UCM_FLAG_PLUGIN_LOGGED) ))
@@ -53,7 +53,7 @@ _log_enabled (ucm_plugin_t* plug,
     return 1;
 }
 
-static void 
+static void
 _log_flush (ucm_logger_t** list)
 {
     ucm_logger_t* tmp = NULL;
@@ -64,24 +64,24 @@ _log_flush (ucm_logger_t** list)
     }
 }
 
-void 
+void
 log_init (void)
 {
     log = NULL;
     lock_mtx = rwlock_create();
 }
 
-void 
+void
 log_release (void)
 {
     _log_flush(&log);
     rwlock_free(lock_mtx);
 }
 
-void 
-logger_vlog (ucm_plugin_t* plugin, 
-             uint32_t      type, 
-             const char*   fmt, 
+void
+logger_vlog (ucm_plugin_t* plugin,
+             uint32_t      type,
+             const char*   fmt,
              va_list va)
 {
     if(!_log_enabled(plugin,type))
@@ -95,7 +95,7 @@ logger_vlog (ucm_plugin_t* plugin,
 void
 logger_log (ucm_plugin_t* plugin,
             uint32_t      type,
-            const char*   fmt, 
+            const char*   fmt,
             ...)
 {
     if(!_log_enabled(plugin,type))
@@ -107,7 +107,7 @@ logger_log (ucm_plugin_t* plugin,
     va_end(va);
 }
 
-void 
+void
 ucm_vlog (const char* fmt,
           va_list     va)
 {
@@ -116,7 +116,7 @@ ucm_vlog (const char* fmt,
         _log_core(NULL,UCM_LOG_INFO,buf);
 }
 
-void 
+void
 ucm_log (const char* fmt,
          ...)
 {
@@ -126,12 +126,12 @@ ucm_log (const char* fmt,
     va_end(va);
 }
 
-void 
+void
 logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
     ucm_logger_t* tmp = malloc (sizeof(ucm_logger_t));
     memset(tmp,0,sizeof(ucm_logger_t));
-    
+
     rwlock_wlock(lock_mtx);
     tmp->cb_log = callback;
     tmp->next = log;
@@ -139,11 +139,11 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
     rwlock_unlock(lock_mtx);
 }
 
-void 
+void
 logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
     ucm_logger_t* prev = NULL;
-    
+
     rwlock_wlock(lock_mtx);
     for(ucm_logger_t* i = log; i;prev=i,i=i->next) {
         if(i->cb_log == callback){
@@ -154,7 +154,7 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
             }
             free(i);
             break;
-        }        
+        }
     }
     rwlock_unlock(lock_mtx);
 }

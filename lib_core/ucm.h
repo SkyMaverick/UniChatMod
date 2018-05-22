@@ -66,7 +66,7 @@
     #define UCM_NAME_MAX 256
 #endif
 
-/* CORE structures ******************************************************* 
+/* CORE structures *******************************************************
 */
 
 /*! Core return status */
@@ -87,7 +87,7 @@ typedef enum _ucm_status_return_e {
 } UCM_RET;
 
 enum {
-    UCM_LOG_INFO = 1,
+    UCM_LOG_INFO  = 1 << 0,
     UCM_LOG_DEBUG = 1 << 1,
     UCM_LOG_ERROR = 1 << 2
 };
@@ -112,9 +112,11 @@ typedef struct {
 
 /*! Enums what defines the plugin area */
 typedef enum _ucm_plugin_opt_e {
-    UCM_PLUG_NET    = 2,
-    UCM_PLUG_CRYPTO = 3,
-    UCM_PLUG_HIST   = 4
+    UCM_PLUG_DB       = 1 << 0,
+    UCM_PLUG_NET      = 1 << 1,
+    UCM_PLUG_CRYPTO   = 1 << 2,
+    UCM_PLUG_HIST     = 1 << 3,
+    UCM_PLUG_STUFF    = 1 << 4
 } UCM_PLUG_TYPE;
 
 /*! Usage API version */
@@ -134,7 +136,7 @@ enum {
 
 /*! Structure what defines base plugin interface*/
 typedef struct _ucm_plugin_s {
-    const UCM_API_VER api;                 /// plugin release api version (required)
+    const UCM_API_VER api;                /// plugin release api version (required)
     const int type;                       /// plugin subsystem (required)
     const unsigned int vmajor;            /// major plugin version (required)
     const unsigned int vminor;            /// minor plugin version (required)
@@ -151,7 +153,7 @@ typedef struct _ucm_plugin_s {
 
     UCM_RET (*run)(void);                 /// activate plugin (with context for hot-plug) (required)
     UCM_RET (*stop)(void);                /// deactivate plugin (required)
-    void (*message)(uint32_t id, uintptr_t ctx, 
+    void (*message)(uint32_t id, uintptr_t ctx,
                     uint32_t x1, uint32_t x2);    /// recieve system messages callback
 } ucm_plugin_t;
 
@@ -192,7 +194,7 @@ typedef struct _ucm_functions_s {
     void (*set_float) (char* group, char* key, float value);
     void (*set_str) (char* group, char* key, char* value);
     void (*item_del) (char* group, char* key);
-    
+
     /*! general queue access */
     int (*mainloop_msg_send)(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
     ucm_ev_t* (*mainloop_ev_alloc)(int id);
@@ -203,7 +205,7 @@ typedef struct _ucm_functions_s {
     /*! get MD5 hash function */
     void (*md5)(uint8_t buf[16], const char* in, int size);
     void (*md5_to_str)(char* out, const uint8_t buf[16]);
-    
+
     /*! log and trace messages handlers*/
     void (*vlog)(ucm_plugin_t* plugin, uint32_t type, const char* fmt, va_list va);
     void (*log)(ucm_plugin_t* plugin, uint32_t type, const char* fmt, ...);
@@ -213,12 +215,22 @@ typedef struct _ucm_functions_s {
     void (*logger_disconnect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*));
 
     /*! get global paths */
-    const char* const (*get_startup_path)(void);
-    const char* const (*get_usercfg_path)(void);
-    const char* const (*get_plugins_path)(void);
-    const char* const (*get_socket_path)(void);
-    const char* const (*get_locales_path)(void);
+    const char* (*get_startup_path)(void);
+    const char* (*get_usercfg_path)(void);
+    const char* (*get_plugins_path)(void);
 } ucm_functions_t;
+
+UCM_RET
+ucm_core_start ();
+
+UCM_RET
+ucm_core_send_message ();
+
+void
+ucm_core_recv_register ();
+
+UCM_RET
+ucm_core_stop (void);
 
 #undef UCM_DEPRECATED
 

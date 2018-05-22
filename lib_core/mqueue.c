@@ -1,5 +1,5 @@
 #include "ucm.h"
-#include "mqueue.h" 
+#include "mqueue.h"
 #include "threading.h"
 #include <stdlib.h>
 #include <string.h>
@@ -21,14 +21,14 @@ typedef struct mq_block_s {
     mq_msg_t queue[1];
 } mq_block_t;
 
-static void 
+static void
 _mq_flush (mq_block_t* h)
 {
     h->head = 0; h->tail = 0; h->count = 0;
     memset (h->queue, 0, h->q_size * sizeof(mq_msg_t));
 };
 
-struct mq_block_s* 
+struct mq_block_s*
 mq_create (uint32_t q_count)
 {
     int mem_sz = sizeof(mq_block_t) + (q_count - 1) * sizeof(mq_msg_t);
@@ -40,8 +40,8 @@ mq_create (uint32_t q_count)
     return h;
 };
 
-int 
-mq_push (mq_block_t* h, 
+int
+mq_push (mq_block_t* h,
          uint32_t   id,
          uintptr_t  ctx,
          uint32_t   x1,
@@ -50,7 +50,7 @@ mq_push (mq_block_t* h,
 if(h){
     mutex_lock (h->mutex);
     if (h->count < h->q_size){
-        
+
         h->queue[h->tail].id  = id;
         h->queue[h->tail].ctx = ctx;
         h->queue[h->tail].x1  = x1;
@@ -79,7 +79,7 @@ mq_pop (mq_block_t* h,
     if (h){
         mutex_lock (h->mutex);
             if (h->count > 0){
-                
+
                 *id =  h->queue[h->head].id;
                 *ctx = h->queue[h->head].ctx;
                 *x1 =  h->queue[h->head].x1;
@@ -105,7 +105,7 @@ mq_clear (mq_block_t *h)
     _mq_flush (h);
 };
 
-void 
+void
 mq_wait (mq_block_t *h)
 {
     cond_wait(h->cond, h->mutex);

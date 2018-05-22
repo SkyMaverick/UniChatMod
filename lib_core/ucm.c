@@ -1,10 +1,12 @@
 #include "ucm.h"
 #include "api.h"
+#include "plugmgr.h"
 
 UCM_RET
 ucm_core_start ()
-{   
+{
     //TODO build plugin stack, init and start core plugin
+    plugins_load_registry();
     return UCM_RET_SUCCESS;
 }
 
@@ -23,7 +25,8 @@ ucm_core_recv_register ()
 
 UCM_RET
 ucm_core_stop (void)
-{   
+{
     //TODO stop core plugin, cleanup and release plugin stack
+    plugins_release_registry();
     return UCM_RET_SUCCESS;
 }

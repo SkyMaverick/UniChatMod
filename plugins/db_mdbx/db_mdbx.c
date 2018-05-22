@@ -23,10 +23,10 @@ _stop_dbmdbx (void)
     return UCM_RET_SUCCESS;
 }
 
-void 
-_message(uint32_t id, 
-         uintptr_t ctx, 
-         uint32_t x1, 
+void
+_message(uint32_t id,
+         uintptr_t ctx,
+         uint32_t x1,
          uint32_t x2)
 {
 

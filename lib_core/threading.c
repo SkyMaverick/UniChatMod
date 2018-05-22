@@ -52,7 +52,7 @@ thread_exit (void* ret)
     return;
 }
 
-int 
+int
 thread_join (intptr_t tid)
 {
     void* ret;
@@ -92,7 +92,7 @@ mutex_create (void)
     pthread_mutexattr_init(&attr);
 #if defined (__GLIBC__)
     pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
-#endif    
+#endif
     int fail=pthread_mutex_init(mtx,&attr);
     if (fail) {
         ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
@@ -161,7 +161,7 @@ cond_wait (uintptr_t _cond,
     pthread_cond_t* cond = (pthread_cond_t*) _cond;
     pthread_mutex_t* mtx = (pthread_mutex_t*) _mtx;
     int fail = mutex_lock(_mtx);
-    if (fail) 
+    if (fail)
         return fail;
     fail = pthread_cond_wait(cond,mtx);
     if (fail)

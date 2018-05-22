@@ -9,7 +9,7 @@
 
 static struct mq_block_s* messages;
 
-int 
+int
 ucm_mloop_init (int size)
 {
     if (size < DEF_MQ_SIZE) {
@@ -22,54 +22,54 @@ ucm_mloop_init (int size)
         size = DEF_MQ_SIZE;
     }
     messages = mq_create(size);
-    return messages ? UCM_RET_SUCCESS : 
+    return messages ? UCM_RET_SUCCESS :
                       UCM_RET_NOOBJECT;
 }
 
-int 
-ucm_mloop_push (uint32_t  id, 
-                uintptr_t ctx, 
-                uint32_t  x1, 
+int
+ucm_mloop_push (uint32_t  id,
+                uintptr_t ctx,
+                uint32_t  x1,
                 uint32_t  x2)
 {
     return mq_push (messages, id, ctx, x1, x2);
 }
 
-int 
-ucm_mloop_pop (uint32_t*  id, 
-               uintptr_t* ctx, 
-               uint32_t*  x1, 
+int
+ucm_mloop_pop (uint32_t*  id,
+               uintptr_t* ctx,
+               uint32_t*  x1,
                uint32_t*  x2)
 {
     return mq_pop (messages, id, ctx, x1, x2);
 }
 
-void 
+void
 ucm_mloop_clear (void)
 {
     mq_clear (messages);
 }
 
-void 
+void
 ucm_mloop_wait (void)
 {
     mq_wait(messages);
 }
 
-int 
+int
 ucm_mloop_noempty (void)
 {
     return mq_noempty (messages);
 }
 
-void 
+void
 ucm_mloop_free (void)
 {
     if (messages)
         mq_free (messages);
 }
 
-ucm_ev_t* 
+ucm_ev_t*
 ucm_mloop_event_alloc (int id)
 {
     size_t size = 0;
@@ -89,7 +89,7 @@ ucm_mloop_event_alloc (int id)
     return event;
 }
 
-void 
+void
 ucm_mloop_event_free (ucm_ev_t** event)
 {
     if (*event) {
@@ -102,15 +102,15 @@ ucm_mloop_event_free (ucm_ev_t** event)
     }
 }
 
-int 
-ucm_mloop_event_push (ucm_ev_t* event, 
-                      uint32_t x1, 
-                      uint32_t x2, 
+int
+ucm_mloop_event_push (ucm_ev_t* event,
+                      uint32_t x1,
+                      uint32_t x2,
                       void*    sender)
 {
-    if (!event) 
+    if (!event)
         return UCM_RET_NOOBJECT;
-    
+
     event->sender = sender;
     return mq_push (messages, event->ev, (uintptr_t)event, x1, x2);
 }

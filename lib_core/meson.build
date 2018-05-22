@@ -2,7 +2,7 @@ configure_file (input: 'config.h.in',
                 output: 'config.h',
                 configuration: lib_core_conf)
 
-libcore_src = files(''' 
+libcore_src = files('''
   api.c
   api.h
   core.c
@@ -24,7 +24,8 @@ libcore_src = files('''
 
 libcore_args = [
     '-Wall',
-    '-Winline'
+    '-Winline',
+    '-Wextra'
 ]
 
 libcore_deps = [
@@ -58,12 +59,12 @@ elif get_option('buildtype').startswith('release')
     endforeach
 endif
 
-libcore = shared_library (meson.project_name(), 
+libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
                           include_directories: lib_core_inc)
 
-libcore_a = static_library (meson.project_name(), 
+libcore_a = static_library (meson.project_name(),
                             libcore_src,
                             dependencies: libcore_deps,
                             include_directories: lib_core_inc)

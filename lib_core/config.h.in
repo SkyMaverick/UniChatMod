@@ -1,8 +1,8 @@
-#ifndef _UCM_CONFIG_H_ 
+#ifndef _UCM_CONFIG_H_
 #define _UCM_CONFIG_H_
 
 #define UCM_VERSION "@version@"
 #define DEF_MQ_SIZE @mq_size@
-#define DEF_STRLEN @string_capacity@ 
+#define DEF_STRLEN @string_capacity@
 
 #endif

@@ -26,4 +26,4 @@ void rwlock_free(uintptr_t _rwl);
 int rwlock_rlock(uintptr_t _rwl);
 int rwlock_wlock(uintptr_t _rwl);
 int rwlock_unlock(uintptr_t _rwl);
-#endif 
+#endif
