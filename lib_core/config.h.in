@@ -1,14 +1,18 @@
 #ifndef _UCM_CONFIG_H_
 #define _UCM_CONFIG_H_
 
-#define UCM_VERSION "@version@"
-#define UCM_VERSION_MAJOR @version_major@
-#define UCM_VERSION_MINOR @version_minor@
-#define UCM_VERSION_PATCH @version_patch@
+#define UCM_VERSION         @version@
+#define UCM_VERSION_MAJOR   @version_major@
+#define UCM_VERSION_MINOR   @version_minor@
+#define UCM_VERSION_PATCH   @version_patch@
+#define UCM_VERSION_FULL    @version_full@
 
-#define UCM_COMMIT_NUMBER "@commit@"
-#define UCM_BUILD_TIME "@build_time@"
-#define UCM_VERSION_FULL "@version_full@"
+#define UCM_BUILD_COMMIT    @build_commit@
+#define UCM_BUILD_TIME      @build_time@
+#define UCM_BUILD_TARGET    @build_target@
+#define UCM_BUILD_CC        @build_cc@
+#define UCM_BUILD_OPTS      @build_opts@
+#define UCM_BUILD_FLAGS     @build_flags@
 
 #define DEF_MQ_SIZE @mq_size@
 #define DEF_STRLEN @string_capacity@

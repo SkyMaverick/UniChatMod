@@ -134,23 +134,34 @@ enum {
     UCM_FLAG_PLUGIN_LOGGED = 1,
 };
 
-/*! Structure what defines base plugin interface*/
-typedef struct _ucm_plugin_s {
+typedef struct {
     const UCM_API_VER api;                /// plugin release api version (required)
-    const int type;                       /// plugin subsystem (required)
-    const unsigned int vmajor;            /// major plugin version (required)
-    const unsigned int vminor;            /// minor plugin version (required)
-    // flags
-    uint32_t flags;                       /// plugin flags
-    // info
+    const uint8_t type;                   /// plugin subsystem (required)
+    const uint16_t vmajor;                /// major plugin version (required)
+    const uint16_t vminor;                /// minor plugin version (required)
     char* const pid;                      /// plugin id for internal ident (required)
+    uint32_t flags;                       /// plugin flags
+    // build info.
+    struct {
+        const char* commit;               /// commit in repository
+        const char* datetime;             /// build datetime
+        const char* target;               /// build target platform
+        const char* compiler;             /// build this compiler
+        const char* options;              /// build options
+        const char* flags;                /// build with flags
+    } build;
+    // developer info
     char* const name;                     /// plugin name for user
     char* const developer;                /// developer name
     char* const description;              /// plugin description and more info
     char* const copyright;                /// plugin license
     char* const email;                    /// support email
     char* const website;                  /// official website
+} ucm_plugin_info_t;
 
+/*! Structure what defines base plugin interface*/
+typedef struct _ucm_plugin_s {
+    ucm_plugin_info_t info;
     UCM_RET (*run)(void);                 /// activate plugin (with context for hot-plug) (required)
     UCM_RET (*stop)(void);                /// deactivate plugin (required)
     void (*message)(uint32_t id, uintptr_t ctx,
@@ -218,19 +229,19 @@ typedef struct _ucm_functions_s {
     const char* (*get_startup_path)(void);
     const char* (*get_usercfg_path)(void);
     const char* (*get_plugins_path)(void);
+
+    /*! user API */
+    const ucm_plugin_info_t* (*get_plugin_info)(char* pid);
+    UCM_RET (*ucm_send_message)(void);   //TODO
+    UCM_RET (*ucm_recv_message)(void);   //TODO
 } ucm_functions_t;
 
 UCM_RET
 ucm_core_start ();
 
 UCM_RET
-ucm_core_send_message ();
-
-void
-ucm_core_recv_register ();
-
-UCM_RET
 ucm_core_stop (void);
+
 
 #undef UCM_DEPRECATED
 

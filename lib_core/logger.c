@@ -46,7 +46,7 @@ static int
 _log_enabled (ucm_plugin_t* plug,
               uint32_t      type)
 {
-    if(plug && ( !(plug->flags == UCM_FLAG_PLUGIN_LOGGED) ))
+    if(plug && ( !(plug->info.flags == UCM_FLAG_PLUGIN_LOGGED) ))
         return 0;
     if(plug && ( !(type & log_types) ))
         return 0;

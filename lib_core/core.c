@@ -1,22 +1,32 @@
 #include "ucm.h"
 #include "api.h"
 #include "core.h"
+#include "config.h"
 
 static ucm_plugin_t core_lib = {
-    .api.vmajor  = UCM_API_MAJOR_VER,
-    .api.vminor  = UCM_API_MINOR_VER,
-    .type        = 0,
-    .vmajor      = 0, //TODO
-    .vminor      = 0,
-    .flags       = 0,
+    .info.api.vmajor  = UCM_API_MAJOR_VER,
+    .info.api.vminor  = UCM_API_MINOR_VER,
+    .info.type        = 0,
+    .info.vmajor      = 0, //TODO
+    .info.vminor      = 0,
+    .info.build       =
+    {
+        .commit       = UCM_BUILD_COMMIT,
+        .datetime     = UCM_BUILD_TIME,
+        .target       = UCM_BUILD_TARGET,
+        .compiler     = UCM_BUILD_CC,
+        .options      = UCM_BUILD_OPTS,
+        .flags        = UCM_BUILD_FLAGS,
+    },
+    .info.flags       = 0,
 
-    .pid         = "ucm_core",
-    .name        = "UniChatMod core plugin",
-    .developer   = "SkyMaverick",
-    .description = "UniChatMod core library plugin",
-    .copyright   = "Zlib",
-    .email       = "",
-    .website     = "",
+    .info.pid         = "ucm_core",
+    .info.name        = "UniChatMod core plugin",
+    .info.developer   = "SkyMaverick",
+    .info.description = "UniChatMod core library plugin",
+    .info.copyright   = "Zlib",
+    .info.email       = "",
+    .info.website     = "",
 
     .run         = NULL,
     .stop        = NULL,
