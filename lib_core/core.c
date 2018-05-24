@@ -3,6 +3,28 @@
 #include "core.h"
 #include "config.h"
 
+static UCM_RET
+_run_core (void)
+{
+    return UCM_RET_SUCCESS;
+}
+
+static UCM_RET
+_stop_core (void)
+{
+    return UCM_RET_SUCCESS;
+}
+
+static void
+_message_dispatch(uint32_t id,
+                  uintptr_t ctx,
+                  uint32_t x1,
+                  uint32_t x2)
+
+{
+    //TODO
+}
+
 static ucm_plugin_t core_lib = {
     .info.api.vmajor  = UCM_API_MAJOR_VER,
     .info.api.vminor  = UCM_API_MINOR_VER,
@@ -29,9 +51,9 @@ static ucm_plugin_t core_lib = {
     .info.email       = "",
     .info.website     = "",
 
-    .run         = NULL,
-    .stop        = NULL,
-    .message     = NULL
+    .run         = _run_core,
+    .stop        = _stop_core,
+    .message     = _message_dispatch
 };
 
 ucm_plugin_t* lib_core = &core_lib;
