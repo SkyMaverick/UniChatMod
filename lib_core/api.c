@@ -5,30 +5,28 @@
 #include "mainloop.h"
 #include "threading.h"
 
-char gc_path[UCM_PATH_MAX];
-char gc_path_sconf[UCM_PATH_MAX];
-char gc_path_uconf[UCM_PATH_MAX];
-char gc_path_plugs[UCM_PATH_MAX];
-char gc_path_socket[UCM_PATH_MAX];
-char gc_path_locales[UCM_PATH_MAX];
+char ucm_path[UCM_PATH_MAX];
+char ucm_path_store[UCM_PATH_MAX];
+char ucm_path_plugs[UCM_PATH_MAX];
+
 
 // application global parameters (paths, vars, etc.)
 static const char*
 g_startup_path (void)
 {
-    return gc_path;
+    return ucm_path;
 }
 
 static const char*
-g_usercfg_path (void)
+g_store_path (void)
 {
-    return gc_path_uconf;
+    return ucm_path_store;
 }
 
 static const char*
 g_plugins_path (void)
 {
-    return gc_path_plugs;
+    return ucm_path_plugs;
 }
 
 static ucm_functions_t core_api = {
@@ -87,8 +85,8 @@ static ucm_functions_t core_api = {
 
     /*! get global paths */
     .get_startup_path   = g_startup_path ,
-    .get_usercfg_path   = g_usercfg_path ,
+    .get_store_path     = g_store_path   ,
     .get_plugins_path   = g_plugins_path ,
 };
 
-ucm_functions_t* ucm_api = &core_api;
+ucm_functions_t* ucm_global_api = &core_api;

@@ -66,6 +66,8 @@
     #define UCM_NAME_MAX 256
 #endif
 
+#define UCM_PID_MAX 33
+
 /* CORE structures *******************************************************
 */
 
@@ -144,7 +146,7 @@ typedef struct {
     const uint16_t vmajor;                /// major plugin version (required)
     const uint16_t vminor;                /// minor plugin version (required)
     const uint16_t vpatch;                /// patch plugin version (required)
-    char* const pid;                      /// plugin id for internal ident (required)
+    const char pid [UCM_PID_MAX];         /// plugin id for internal ident (required)
     uint32_t flags;                       /// plugin flags
     // build info.
     struct {
@@ -243,7 +245,7 @@ typedef struct _ucm_functions_s {
 
     /*! get global paths */
     const char* (*get_startup_path)(void);
-    const char* (*get_usercfg_path)(void);
+    const char* (*get_store_path)(void);
     const char* (*get_plugins_path)(void);
 
     /*! user API */
@@ -257,7 +259,8 @@ typedef struct _ucm_functions_s {
 // ######################################################################
 
 UCM_RET
-ucm_core_start ();
+ucm_core_start (const char* path_abs,
+                const char* path_store_abs);
 
 UCM_RET
 ucm_core_stop (void);

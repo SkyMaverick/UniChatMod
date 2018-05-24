@@ -56,4 +56,4 @@ static ucm_plugin_t core_lib = {
     .message     = _message_dispatch
 };
 
-ucm_plugin_t* lib_core = &core_lib;
+ucm_plugin_t* ucm_global_core = &core_lib;

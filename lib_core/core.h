@@ -3,6 +3,6 @@
 
 #include "ucm.h"
 
-extern ucm_plugin_t* lib_core;
+extern ucm_plugin_t* ucm_global_core;
 
 #endif

@@ -7,7 +7,7 @@
     extern "C" {
 #endif
 
-extern ucm_functions_t* ucm_api;
+extern ucm_functions_t* ucm_global_api;
 
 #ifdef __cplusplus
     }
