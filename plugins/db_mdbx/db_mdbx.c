@@ -2,6 +2,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "ucm.h"
+#include "config.h"
 #include "libmdbx/mdbx.h"
 
 static const ucm_functions_t* app;
@@ -33,10 +34,24 @@ _message(uint32_t id,
 }
 
 static ucm_plugin_t plugin = {
-    .info.api = {.vmajor = 0, .vminor=1},
-    .info.type = 1,
-    .info.vmajor = 0,
-    .info.vminor = 1,
+    .info.api    =
+    {
+        .vmajor = UCM_API_MAJOR_VER,
+        .vminor = UCM_API_MINOR_VER
+    },
+    .info.type   = UCM_PLUG_DB,
+    .info.vmajor = UCM_VERSION_MAJOR,
+    .info.vminor = UCM_VERSION_MINOR,
+    .info.vpatch = UCM_VERSION_PATCH,
+    .info.build  =
+    {
+        .commit       = UCM_BUILD_COMMIT,
+        .datetime     = UCM_BUILD_TIME,
+        .target       = UCM_BUILD_TARGET,
+        .compiler     = UCM_BUILD_CC,
+        .options      = UCM_BUILD_OPTS,
+        .flags        = UCM_BUILD_FLAGS,
+    },
     .info.pid = "dbmdbx",
     .info.name = "Storage mdbx plugin",
     .info.developer = "SkyMaverick",

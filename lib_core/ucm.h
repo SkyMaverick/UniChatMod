@@ -107,6 +107,10 @@ typedef struct {
     void* sender;
 } ucm_ev_t;
 
+// ######################################################################
+//      PLUGINS FUNCTIONALITY API IMPLEMENTATION
+// ######################################################################
+
 #define _EVENT_SENDER(obj)\
     ((ucm_plugin_t*)(((ucm_ev_t*)obj)->sender))
 
@@ -139,6 +143,7 @@ typedef struct {
     const uint8_t type;                   /// plugin subsystem (required)
     const uint16_t vmajor;                /// major plugin version (required)
     const uint16_t vminor;                /// minor plugin version (required)
+    const uint16_t vpatch;                /// patch plugin version (required)
     char* const pid;                      /// plugin id for internal ident (required)
     uint32_t flags;                       /// plugin flags
     // build info.
@@ -167,6 +172,17 @@ typedef struct _ucm_plugin_s {
     void (*message)(uint32_t id, uintptr_t ctx,
                     uint32_t x1, uint32_t x2);    /// recieve system messages callback
 } ucm_plugin_t;
+
+typedef struct {
+    ucm_plugin_t core;
+    UCM_RET (*init_db)(void* ctx);
+    // TODO
+    UCM_RET (*close_db)(void);
+} ucm_dbplugin_t;
+
+// ######################################################################
+//      MAIN APPLICATION API STRUCTURE
+// ######################################################################
 
 /*! API structure. Provide for all plugins */
 typedef struct _ucm_functions_s {
@@ -236,11 +252,18 @@ typedef struct _ucm_functions_s {
     UCM_RET (*ucm_recv_message)(void);   //TODO
 } ucm_functions_t;
 
+// ######################################################################
+//      START/STOP/INFO MODULE
+// ######################################################################
+
 UCM_RET
 ucm_core_start ();
 
 UCM_RET
 ucm_core_stop (void);
+
+const ucm_plugin_info_t*
+ucm_core_info (void);
 
 
 #undef UCM_DEPRECATED

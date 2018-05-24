@@ -1,5 +1,5 @@
 project ('ucm', 'c',
-         version: '0.0.1a',
+         version: '0.0.1',
          license: 'Zlib',
          default_options:[
             'c_std=gnu11'

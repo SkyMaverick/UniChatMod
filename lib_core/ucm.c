@@ -1,6 +1,7 @@
 #include "ucm.h"
 #include "api.h"
 #include "plugmgr.h"
+#include "core.h"
 
 UCM_RET
 ucm_core_start ()
@@ -10,17 +11,11 @@ ucm_core_start ()
     return UCM_RET_SUCCESS;
 }
 
-UCM_RET
-ucm_core_send_message ()
+const ucm_plugin_info_t*
+ucm_core_info (void)
 {
-    // TODO send message function
-    return UCM_RET_CORE;
-}
-
-void
-ucm_core_recv_register ()
-{
-    // TODO register recive message callback
+    extern ucm_plugin_t* lib_core;
+    return libcore->info;
 }
 
 UCM_RET
