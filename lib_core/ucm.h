@@ -153,14 +153,14 @@ typedef enum _ucm_plugin_opt_e {
 typedef struct {
     const uint8_t vmajor;
     const uint8_t vminor;
-} ucm_api_t;
+} ucm_vapi_t;
 
 enum {
     UCM_FLAG_PLUGIN_LOGGED = 1,
 };
 
 typedef struct {
-    const ucm_api_t api;                  /// plugin release api version (required)
+    const ucm_vapi_t api;                 /// plugin release api version (required)
     const uint8_t sys;                    /// plugin subsystem (required)
     const uint16_t vmajor;                /// major plugin version (required)
     const uint16_t vminor;                /// minor plugin version (required)
