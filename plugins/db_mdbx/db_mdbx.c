@@ -39,7 +39,7 @@ static ucm_plugin_t plugin = {
         .vmajor = UCM_API_MAJOR_VER,
         .vminor = UCM_API_MINOR_VER
     },
-    .info.type   = UCM_PLUG_DB,
+    .info.sys   = UCM_PLUG_DB,
     .info.vmajor = UCM_VERSION_MAJOR,
     .info.vminor = UCM_VERSION_MINOR,
     .info.vpatch = UCM_VERSION_PATCH,

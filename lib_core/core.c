@@ -72,7 +72,7 @@ _message_core(uint32_t id,
 static ucm_plugin_t core_lib = {
     .info.api.vmajor  = UCM_API_MAJOR_VER,
     .info.api.vminor  = UCM_API_MINOR_VER,
-    .info.type        = 0,
+    .info.sys         = 0,
     .info.vmajor      = UCM_VERSION_MAJOR, //TODO
     .info.vminor      = UCM_VERSION_MINOR,
     .info.vpatch      = UCM_VERSION_PATCH,

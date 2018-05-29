@@ -161,7 +161,7 @@ enum {
 
 typedef struct {
     const ucm_api_t api;                  /// plugin release api version (required)
-    const uint8_t type;                   /// plugin subsystem (required)
+    const uint8_t sys;                    /// plugin subsystem (required)
     const uint16_t vmajor;                /// major plugin version (required)
     const uint16_t vminor;                /// minor plugin version (required)
     const uint16_t vpatch;                /// patch plugin version (required)
