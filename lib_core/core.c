@@ -2,6 +2,25 @@
 #include "api.h"
 #include "core.h"
 #include "config.h"
+#include "mainloop.h"
+
+static void
+loop_core (void* ctx)
+{
+    uint32_t  id;
+    uintptr_t lctx;
+    uint32_t  x1;
+    uint32_t  x2;
+    unsigned  term = 0;
+    while(1) {
+        while ( ucm_mloop_pop(&id, &lctx, &x1, &x2) == UCM_RET_SUCCESS )
+        {
+
+        }
+        if (term) return;
+        // ucm_mloop_wait()
+    }
+}
 
 static UCM_RET
 _run_core (void)
@@ -16,10 +35,10 @@ _stop_core (void)
 }
 
 static void
-_message_dispatch(uint32_t id,
-                  uintptr_t ctx,
-                  uint32_t x1,
-                  uint32_t x2)
+_message_core(uint32_t id,
+              uintptr_t ctx,
+              uint32_t x1,
+              uint32_t x2)
 
 {
     //TODO
@@ -53,7 +72,7 @@ static ucm_plugin_t core_lib = {
 
     .run         = _run_core,
     .stop        = _stop_core,
-    .message     = _message_dispatch
+    .message     = _message_core
 };
 
 ucm_plugin_t* ucm_global_core = &core_lib;

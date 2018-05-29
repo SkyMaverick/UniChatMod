@@ -110,6 +110,30 @@ typedef struct {
 } ucm_ev_t;
 
 // ######################################################################
+//      CHAT FUNCTIONALITY API IMPLEMENTATION
+// ######################################################################
+
+enum {
+    UCM_FLAG_MSG_MULTYCAST  = 1 << 0,
+    UCM_FLAG_MSG_CRYPTO     = 1 << 1,
+    UCM_FLAG_MSG_ALERT      = 1 << 2
+};
+
+typedef struct ucm_cnt_info_s {
+    uint32_t ip;
+    const char* name;
+    uint8_t status;
+} ucm_cnt_info_t;
+
+typedef struct ucm_msg_s {
+    uint32_t flags;
+    ucm_cnt_info_t info;
+    // TODO
+    // message body area
+    char data[1];
+} ucm_message_t;
+
+// ######################################################################
 //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
 // ######################################################################
 
@@ -126,27 +150,22 @@ typedef enum _ucm_plugin_opt_e {
 } UCM_PLUG_TYPE;
 
 /*! Usage API version */
-typedef struct _ucm_plugin_api_version_s {
+typedef struct {
     const uint8_t vmajor;
     const uint8_t vminor;
-} UCM_API_VER;
-
-/*! Wrapper for global config access */
-typedef struct{
-    struct _ucm_confplug_s* config;
-} UCM_CFG;
+} ucm_api_t;
 
 enum {
     UCM_FLAG_PLUGIN_LOGGED = 1,
 };
 
 typedef struct {
-    const UCM_API_VER api;                /// plugin release api version (required)
+    const ucm_api_t api;                  /// plugin release api version (required)
     const uint8_t type;                   /// plugin subsystem (required)
     const uint16_t vmajor;                /// major plugin version (required)
     const uint16_t vminor;                /// minor plugin version (required)
     const uint16_t vpatch;                /// patch plugin version (required)
-    const char pid [UCM_PID_MAX];         /// plugin id for internal ident (required)
+    const char* const pid;                /// plugin id for internal ident (required)
     uint32_t flags;                       /// plugin flags
     // build info.
     struct {
@@ -158,12 +177,12 @@ typedef struct {
         const char* flags;                /// build with flags
     } build;
     // developer info
-    char* const name;                     /// plugin name for user
-    char* const developer;                /// developer name
-    char* const description;              /// plugin description and more info
-    char* const copyright;                /// plugin license
-    char* const email;                    /// support email
-    char* const website;                  /// official website
+    const char* const name;               /// plugin name for user
+    const char* const developer;          /// developer name
+    const char* const description;        /// plugin description and more info
+    const char* const copyright;          /// plugin license
+    const char* const email;              /// support email
+    const char* const website;            /// official website
 } ucm_plugin_info_t;
 
 /*! Structure what defines base plugin interface*/
@@ -243,6 +262,14 @@ typedef struct _ucm_functions_s {
     void (*logger_connect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*));
     void (*logger_disconnect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*));
 
+    /*! get plugins by category */
+    const ucm_plugin_t* (*get_plugins_all) (void);
+    const ucm_plugin_t* (*get_plugins_db) (void);
+    const ucm_plugin_t* (*get_plugins_net) (void);
+    const ucm_plugin_t* (*get_plugins_crypt) (void);
+    const ucm_plugin_t* (*get_plugins_hist) (void);
+    const ucm_plugin_t* (*get_plugins_stuff) (void);
+
     /*! get global paths */
     const char* (*get_startup_path)(void);
     const char* (*get_store_path)(void);
@@ -252,13 +279,14 @@ typedef struct _ucm_functions_s {
     const ucm_plugin_info_t* (*get_plugin_info)(char* pid);
     UCM_RET (*ucm_send_message)(void);   //TODO
     UCM_RET (*ucm_recv_message)(void);   //TODO
+
 } ucm_functions_t;
 
 // ######################################################################
 //      START/STOP/INFO MODULE
 // ######################################################################
 
-UCM_RET
+const ucm_functions_t*
 ucm_core_start (const char* path_abs,
                 const char* path_store_abs);
 

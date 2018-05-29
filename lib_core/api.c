@@ -4,6 +4,7 @@
 #include "logger.h"
 #include "mainloop.h"
 #include "threading.h"
+#include "plugmgr.h"
 
 char ucm_path[UCM_PATH_MAX];
 char ucm_path_store[UCM_PATH_MAX];
@@ -82,6 +83,13 @@ static ucm_functions_t core_api = {
     .ucm_log            = ucm_log           ,
     .logger_connect     = logger_connect    ,
     .logger_disconnect  = logger_disconnect ,
+
+    .get_plugins_all    = plugins_get_all   ,
+    .get_plugins_db     = plugins_get_db    ,
+    .get_plugins_net    = plugins_get_net   ,
+    .get_plugins_crypt  = plugins_get_crypt ,
+    .get_plugins_hist   = plugins_get_hist  ,
+    .get_plugins_stuff  = plugins_get_stuff ,
 
     /*! get global paths */
     .get_startup_path   = g_startup_path ,

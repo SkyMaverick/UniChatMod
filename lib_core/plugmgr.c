@@ -27,9 +27,43 @@ ucm_module_t modules = {
     .next   = NULL
 };
 
+static size_t plugins_limit        = UCM_DEF_PLUG_COUNT;
+static size_t plugins_count        = 0;
+static ucm_plugin_t* plugins_all   [UCM_DEF_PLUG_COUNT];
+static size_t plugins_db_count     = 0;
+static ucm_plugin_t* plugins_db    [UCM_DEF_PLUG_COUNT];
+static size_t plugins_net_count    = 0;
+static ucm_plugin_t* plugins_net   [UCM_DEF_PLUG_COUNT];
+static size_t plugins_cript_count  = 0;
+static ucm_plugin_t* plugins_crypt [UCM_DEF_PLUG_COUNT];
+static size_t plugins_hist_count   = 0;
+static ucm_plugin_t* plugins_hist  [UCM_DEF_PLUG_COUNT];
+static size_t plugins_stuff_count  = 0;
+static ucm_plugin_t* plugins_stuff [UCM_DEF_PLUG_COUNT];
+
+// ######################################################################
+//      PRIVATE API IMPLEMENTATION
+// ######################################################################
+
 static UCM_RET
 _plugin_verify (ucm_plugin_t* plugin)
 {
+    if (plugin->info.api.vmajor != UCM_API_MAJOR_VER) {
+        return UCM_RET_UNREALIZED;
+    }
+    if (plugin->info.type > UCM_PLUG_STUFF) {
+        return UCM_RET_UBOUND;
+    }
+    // TODO strongly PID validation
+    if (plugin->info.pid) {
+        if ( strcmp (plugin->info.pid, "") == 0 ) {
+            return UCM_RET_NOOBJECT;
+        }
+    }
+    if (( plugin->run  = NULL ) ||
+        ( plugin->stop = NULL )) {
+        return UCM_RET_UNREALIZED;
+    }
     return UCM_RET_SUCCESS;
 }
 
@@ -52,8 +86,10 @@ _plugin_load (char* filename)
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS )
                 module = malloc (sizeof(ucm_module_t));
                 if (module) {
+
                     module->plugin = plug;
                     module->handle = handle;
+                    return module;
                 }
        } else {
            ucm_etrace ("%s: %s", filename, _("this plugin broken"));
@@ -66,6 +102,43 @@ _plugin_load (char* filename)
     return module;
 }
 
+static inline void
+_plugin_registry_add (ucm_plugin_t* plugin)
+{
+                plugins_all[ plugins_count ] = plugin;
+
+                switch (plugin->info.type) {
+                    case UCM_PLUG_DB:
+                        {
+                            plugins_db [plugins_db_count++] = plugin;
+                            break;
+                        }
+                    case UCM_PLUG_NET:
+                        {
+                            plugins_net [plugins_net_count++] = plugin;
+                            break;
+                        }
+                    case UCM_PLUG_CRYPTO:
+                        {
+                            plugins_crypt [plugins_cript_count++] = plugin;
+                            break;
+                        }
+                    case UCM_PLUG_HIST:
+                        {
+                            plugins_db [plugins_hist_count++] = plugin;
+                            break;
+                        }
+                    case UCM_PLUG_STUFF:
+                        {
+                            plugins_db [plugins_stuff_count++] = plugin;
+                            break;
+                        }
+                }
+}
+
+// ######################################################################
+//      PUBLIC API IMPLEMENTATION
+// ######################################################################
 
 UCM_RET
 plugins_load_registry (char* plug_path)
@@ -106,14 +179,86 @@ plugins_load_registry (char* plug_path)
 void
 plugins_release_registry (void)
 {
-    ucm_module_t* tmp_module = modules.next;
-    modules.next = NULL;
+    ucm_module_t* m_tmp = modules.next;
+    ucm_module_t* m_del = NULL;
 
-    while(tmp_module) {
-        ucm_module_t* del_module = tmp_module;
-        tmp_module = tmp_module->next;
+    while(m_tmp) {
+        m_del = m_tmp;
+        m_tmp = m_tmp->next;
 
-        dlclose(del_module->handle);
-        free(del_module);
+        dlclose(m_del->handle);
+        free(m_del);
     }
+}
+
+void
+plugins_run_all (void)
+{
+    ucm_module_t* m_tmp = modules.next;
+
+    for ( ; m_tmp; m_tmp = m_tmp->next) {
+        if ( plugins_limit > plugins_count ) {
+            if ( m_tmp->plugin->run() ) {
+                _plugin_registry_add(m_tmp->plugin);
+                plugins_count += 1;
+            } else {
+                ucm_etrace("%s: %s\n", m_tmp->plugin->info.pid,
+                     _("plugin start missing. Ignore this plugin."));
+            }
+        }
+    }
+}
+
+void
+plugins_stop_all (void)
+{
+    for (size_t i = 0; i < UCM_DEF_PLUG_COUNT; i++) {
+        if (plugins_all[i] != NULL) {
+            plugins_all[i]->stop();
+        } else {
+            break;
+        }
+    }
+    memset (plugins_all,   0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    memset (plugins_db,    0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    memset (plugins_net,   0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    memset (plugins_crypt, 0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    memset (plugins_hist,  0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    memset (plugins_stuff, 0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+}
+
+const ucm_plugin_t*
+plugins_get_all (void)
+{
+    return (ucm_plugin_t*) plugins_all;
+}
+
+const ucm_plugin_t*
+plugins_get_db (void)
+{
+    return (ucm_plugin_t*) plugins_db;
+}
+
+const ucm_plugin_t*
+plugins_get_net (void)
+{
+    return (ucm_plugin_t*) plugins_net;
+}
+
+const ucm_plugin_t*
+plugins_get_crypt (void)
+{
+    return (ucm_plugin_t*) plugins_crypt;
+}
+
+const ucm_plugin_t*
+plugins_get_hist (void)
+{
+    return (ucm_plugin_t*) plugins_hist;
+}
+
+const ucm_plugin_t*
+plugins_get_stuff (void)
+{
+    return (ucm_plugin_t*) plugins_stuff;
 }

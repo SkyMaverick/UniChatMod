@@ -87,8 +87,8 @@ logger_vlog (ucm_plugin_t* plugin,
     if(!_log_enabled(plugin,type))
         return;
 
-    char buf[DEF_STRLEN];
-    if(vsnprintf(buf,DEF_STRLEN,fmt,va))
+    char buf[UCM_DEF_STRLEN];
+    if(vsnprintf(buf,UCM_DEF_STRLEN,fmt,va))
         _log_core(plugin,type,buf);
 }
 
@@ -111,8 +111,8 @@ void
 ucm_vlog (const char* fmt,
           va_list     va)
 {
-    char buf[DEF_STRLEN];
-    if(vsnprintf(buf,DEF_STRLEN,fmt,va))
+    char buf[UCM_DEF_STRLEN];
+    if(vsnprintf(buf,UCM_DEF_STRLEN,fmt,va))
         _log_core(NULL,UCM_LOG_INFO,buf);
 }
 

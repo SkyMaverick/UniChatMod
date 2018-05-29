@@ -9,4 +9,28 @@ plugins_load_registry (char* plug_path);
 void
 plugins_release_registry (void);
 
+void
+plugins_run_all (void);
+
+void
+plugins_stop_all (void);
+
+const ucm_plugin_t*
+plugins_get_all (void);
+
+const ucm_plugin_t*
+plugins_get_db (void);
+
+const ucm_plugin_t*
+plugins_get_net (void);
+
+const ucm_plugin_t*
+plugins_get_crypt (void);
+
+const ucm_plugin_t*
+plugins_get_hist (void);
+
+const ucm_plugin_t*
+plugins_get_stuff (void);
+
 #endif

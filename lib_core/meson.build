@@ -15,6 +15,7 @@ libcore_src = files('''
   plugmgr.h
   threading.c
   threading.h
+  ucm.c
   ucm.h
 '''.split())
 
@@ -107,6 +108,7 @@ lib_core_conf.set_quoted ('build_opts'      , '') #TODO compiler options
 lib_core_conf.set_quoted ('build_flags'     , '') #TODO compiler flags
 lib_core_conf.set        ('mq_size'         , get_option('message_queue_size'))
 lib_core_conf.set        ('string_capacity' , get_option('string_buffer_capacity'))
+lib_core_conf.set        ('limit_plugins'   , get_option('limit_plugins_count'))
 
 configure_file (input: 'config.h.in',
                 output: 'config.h',

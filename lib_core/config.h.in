@@ -14,7 +14,9 @@
 #define UCM_BUILD_OPTS      @build_opts@
 #define UCM_BUILD_FLAGS     @build_flags@
 
-#define DEF_MQ_SIZE @mq_size@
-#define DEF_STRLEN @string_capacity@
+#define UCM_DEF_PLUG_COUNT  @limit_plugins@
+
+#define UCM_DEF_MQ_LIMIT    @mq_size@
+#define UCM_DEF_STRLEN      @string_capacity@
 
 #endif

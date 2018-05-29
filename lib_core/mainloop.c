@@ -12,14 +12,14 @@ static struct mq_block_s* messages;
 int
 ucm_mloop_init (int size)
 {
-    if (size < DEF_MQ_SIZE) {
+    if (size < UCM_DEF_MQ_LIMIT) {
         ucm_etrace("%s %d. %s: %d. %s\n",
                   _("Message queue size don't less minimal size"),
-                  DEF_MQ_SIZE,
+                  UCM_DEF_MQ_LIMIT,
                   _("Now define size"),
                   size,
                   _("Using default value"));
-        size = DEF_MQ_SIZE;
+        size = UCM_DEF_MQ_LIMIT;
     }
     messages = mq_create(size);
     return messages ? UCM_RET_SUCCESS :
