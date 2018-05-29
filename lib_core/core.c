@@ -1,8 +1,13 @@
 #include "ucm.h"
 #include "api.h"
-#include "core.h"
+#include "defs.h"
 #include "config.h"
+
+#include "core.h"
 #include "mainloop.h"
+#include "plugmgr.h"
+
+static uintptr_t tid_loop_core = 0;
 
 static void
 loop_core (void* ctx)
@@ -13,24 +18,42 @@ loop_core (void* ctx)
     uint32_t  x2;
     unsigned  term = 0;
     while(1) {
-        while ( ucm_mloop_pop(&id, &lctx, &x1, &x2) == UCM_RET_SUCCESS )
-        {
+        while ( ucm_mloop_pop(&id, &lctx, &x1, &x2) == UCM_RET_SUCCESS ) {
+            plugins_message_dispatch(&id, &lctx, &x1, &x2);
 
+            switch (id) {
+                case UCM_EV_TERM:
+                    {
+                        term = 1;
+                        ucm_dtrace ("%s\n", "Catch TERM message. Core loop exit.");
+                        break;
+                    }
+            }
         }
-        if (term) return;
-        // ucm_mloop_wait()
+        if (term) break;
+        ucm_mloop_wait();
     }
 }
 
 static UCM_RET
 _run_core (void)
 {
+    // start main message loop
+    tid_loop_core = ucm_global_api->thread_create(loop_core, NULL);
+    // run all plugins
+    plugins_run_all();
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
 _stop_core (void)
 {
+    // send TERM message for stop systems and plugins prepare
+    ucm_global_api->mainloop_msg_send(UCM_EV_TERM, (uintptr_t)ucm_global_core, 0, 0);
+    // stop all plugins
+    plugins_stop_all();
+    // stop main message loop
+    ucm_global_api->thread_join(tid_loop_core);
     return UCM_RET_SUCCESS;
 }
 
@@ -41,7 +64,9 @@ _message_core(uint32_t id,
               uint32_t x2)
 
 {
-    //TODO
+    switch (id) {
+        // TODO
+    }
 }
 
 static ucm_plugin_t core_lib = {

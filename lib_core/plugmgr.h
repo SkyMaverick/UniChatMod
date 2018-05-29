@@ -15,6 +15,11 @@ plugins_run_all (void);
 void
 plugins_stop_all (void);
 
+void
+plugins_message_dispatch (const uint32_t* id,
+                          const uintptr_t* ctx,
+                          const uint32_t* x1,
+                          const uint32_t* x2);
 const ucm_plugin_t*
 plugins_get_all (void);
 

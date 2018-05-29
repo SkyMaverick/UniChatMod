@@ -227,6 +227,21 @@ plugins_stop_all (void)
     memset (plugins_stuff, 0, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
 }
 
+void
+plugins_message_dispatch (const uint32_t* id,
+                          const uintptr_t* ctx,
+                          const uint32_t* x1,
+                          const uint32_t* x2)
+{
+    modules.plugin->message(*id, *ctx, *x1, *x2);   // core receive message first
+
+    for ( size_t i = 0; i < plugins_count; i++ ) {
+        if (plugins_all[i]->message) {
+            plugins_all[i]->message (*id, *ctx, *x1, *x2);
+        }
+    }
+}
+
 const ucm_plugin_t*
 plugins_get_all (void)
 {
