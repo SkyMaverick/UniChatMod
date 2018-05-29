@@ -1,9 +1,13 @@
 /build/
 /pkgs/
+/lib_core/backup/
 tags
 *.swp
 .gitconfig
 TODO
 ABOUT
 *.so
+*.lps
+*.o
+*.ppu
 test_app
