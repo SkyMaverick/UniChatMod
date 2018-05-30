@@ -231,17 +231,17 @@ typedef struct _ucm_functions_s {
     int (*rwlock_wlock)(uintptr_t _rwl);
     int (*rwlock_unlock)(uintptr_t _rwl);
 
-    /*! settings provider functions */
-    int (*get_int) (char* group, char* key, int def);
-    int64_t (*get_int64) (char* group, char* key, int64_t def);
-    float (*get_float) (char* group, char* key, float def);
-    char* (*get_str) (char* group, char* key, char* def);
-    char* (*get_str_copy) (char* group, char* key, char* def);
-    void (*set_int) (char* group, char* key, int value);
-    void (*set_int64) (char* group, char* key, int64_t value);
-    void (*set_float) (char* group, char* key, float value);
-    void (*set_str) (char* group, char* key, char* value);
-    void (*item_del) (char* group, char* key);
+    /*! low-level settings provider functions */
+    int (*get_int) (char* key, int def);
+    int64_t (*get_int64) (char* key, int64_t def);
+    float (*get_float) (char* key, float def);
+    char* (*get_str) (char* key, char* def);
+    char* (*get_str_copy) (char* key, char* def);
+    void (*set_int) (char* key, int value);
+    void (*set_int64) (char* key, int64_t value);
+    void (*set_float) (char* key, float value);
+    void (*set_str) (char* key, char* value);
+    void (*item_del) (char* key);
 
     /*! general queue access */
     int (*mainloop_msg_send)(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
