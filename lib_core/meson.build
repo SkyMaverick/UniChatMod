@@ -114,6 +114,9 @@ configure_file (input: 'config.h.in',
                 output: 'config.h',
                 configuration: lib_core_conf)
 
+core_header_c = files('ucm.h')
+core_header_pas = files('ucm.pas')
+
 libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,

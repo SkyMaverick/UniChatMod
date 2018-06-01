@@ -13,3 +13,8 @@ option ('build_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
 option ('build_with_full_commit', type: 'boolean', value: 'true',
         description: 'full (without --short key) rev-value commit code in plugin options')
+
+option ('build_with_gui', type: 'boolean', value: 'true',
+        description: 'build standart gui')
+option ('gui_enable_lazarus', type: 'boolean', value: 'true',
+        description: 'enable lazarus based gui as variant')

@@ -4,7 +4,7 @@ project ('ucm', 'c',
          default_options:[
             'c_std=gnu11'
          ],
-         meson_version: '>=0.40')
+         meson_version: '>=0.44')
 
 cc = meson.get_compiler('c')
 
@@ -23,4 +23,8 @@ subdir('lib_core')
 
 if get_option('build_with_plugins')
     subdir('plugins')
+endif
+
+if get_option('build_with_gui')
+    subdir('gui')
 endif

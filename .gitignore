@@ -1,11 +1,14 @@
 /build/
+*backup/
 /pkgs/
-/lib_core/backup/
+/gui/lazarus/UniChatMod
+/gui/lazarus/lib/
 tags
 *.swp
 .gitconfig
 TODO
 ABOUT
+*.a
 *.so
 *.lps
 *.o
