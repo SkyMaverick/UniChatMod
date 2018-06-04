@@ -39,9 +39,11 @@ static UCM_RET
 _run_core (void)
 {
     // start main message loop
-    tid_loop_core = ucm_global_api->thread_create(loop_core, NULL);
-    // run all plugins
-    plugins_run_all();
+    if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
+        tid_loop_core = ucm_global_api->thread_create(loop_core, NULL);
+        // run all plugins
+        plugins_run_all();
+    }
     return UCM_RET_SUCCESS;
 }
 
@@ -54,6 +56,7 @@ _stop_core (void)
     plugins_stop_all();
     // stop main message loop
     ucm_global_api->thread_join(tid_loop_core);
+    ucm_mloop_free();
     return UCM_RET_SUCCESS;
 }
 
