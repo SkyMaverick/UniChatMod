@@ -4,6 +4,7 @@
 /gui/lazarus/UniChatMod
 /gui/lazarus/lib/
 tags
+*.lps
 *.swp
 .gitconfig
 TODO
@@ -13,4 +14,6 @@ ABOUT
 *.lps
 *.o
 *.ppu
+*.dbg
+*.out
 test_app

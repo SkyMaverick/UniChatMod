@@ -7,16 +7,31 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, uMainForm
+  Forms, uMainForm, ucoreclass
   { you can add units after this };
 
 {$R *.res}
+
+var
+  UCMCore: TUCMCore;
 
 begin
   Application.Scaled:=True;
   RequireDerivedFormResource:=True;
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
-  Application.Run;
+  // Initialize core library
+  try
+     UCMCore := TUCMCore.Create;
+  except
+    Application.Terminate;
+  end;
+  if (UCMCore <> nil) then
+  begin
+       UCMCore.Initialize(ParamStr(0), '');
+       Application.CreateForm(TfmMain, fmMain);
+       Application.Run;
+       UCMCore.Free;
+  end;
+
 end.
 

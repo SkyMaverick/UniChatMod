@@ -2,6 +2,18 @@ unit ucm;
 
 interface
 
+const
+{$IFDEF UNIX}
+    clibname = 'libucm.so';
+{$ELSE}
+    clibname = 'libucm.dll';
+{$ENDIF}
+
+UCMStartProcName = 'ucm_core_start';
+UCMStopProcName = 'ucm_core_stop';
+UCMInfoProcName = 'ucm_core_info';
+
+
 type
 
 // ######################################################################
@@ -220,9 +232,9 @@ end;
 PUCMFunctions = ^TUCMFunctions;
 
 {$IFDEF FPC}
-function UCMCoreStart (const PathAbs: PChar; const UCMPathStoreAbs: PChar): PUCMFunctions; cdecl; external name 'ucm_core_start';
-function UCMCoreStop  (): TUCMRetStatus; cdecl; external name 'ucm_core_stop';
-function UCMCoreInfo  (): PUCMPluginInfo; cdecl; external name 'ucm_core_info';
+function UCMCoreStart (const PathAbs: PChar; const UCMPathStoreAbs: PChar): PUCMFunctions; cdecl; external clibname name 'ucm_core_start';
+function UCMCoreStop  (): TUCMRetStatus; cdecl; external clibname name 'ucm_core_stop';
+function UCMCoreInfo  (): PUCMPluginInfo; cdecl; external clibname name 'ucm_core_info';
 {$ELSE}
     {TODO}
 {$ENDIF}

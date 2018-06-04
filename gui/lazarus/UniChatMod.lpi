@@ -14,16 +14,57 @@
       </XPManifest>
       <Icon Value="0"/>
     </General>
-    <i18n>
-      <EnableI18N Value="True"/>
-    </i18n>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="1"/>
-      <StringTable Comments="UniChatMod application (based on UniChat and libucm)" InternalName="ucmapp" LegalCopyright="ZLib" ProductName="UniChatMod" ProductVersion=""/>
+      <StringTable Comments="UniChatMod application (based on UniChat and libucm)" InternalName="ucmapp" LegalCopyright="ZLib" ProductName="UniChatMod"/>
     </VersionInfo>
-    <BuildModes Count="1">
-      <Item1 Name="Default" Default="True"/>
+    <BuildModes Count="2">
+      <Item1 Name="debug" Default="True"/>
+      <Item2 Name="release">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="UniChatMod"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <Libraries Value="../../build/lib_core"/>
+            <OtherUnitFiles Value="../../lib_core"/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+          <CodeGeneration>
+            <SmartLinkUnit Value="True"/>
+            <Checks>
+              <IOChecks Value="True"/>
+              <RangeChecks Value="True"/>
+              <OverflowChecks Value="True"/>
+              <StackChecks Value="True"/>
+            </Checks>
+            <VerifyObjMethodCallValidity Value="True"/>
+            <Optimizations>
+              <OptimizationLevel Value="3"/>
+            </Optimizations>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <GenerateDebugInfo Value="False"/>
+              <StripSymbols Value="True"/>
+            </Debugging>
+            <LinkSmart Value="True"/>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+        </CompilerOptions>
+      </Item2>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -32,13 +73,18 @@
       <local>
         <FormatVersion Value="1"/>
       </local>
+      <environment>
+        <UserOverrides Count="1">
+          <Variable0 Name="LD_PRELOAD" Value="./libucm.so"/>
+        </UserOverrides>
+      </environment>
     </RunParams>
     <RequiredPackages Count="1">
       <Item1>
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="2">
+    <Units Count="3">
       <Unit0>
         <Filename Value="UniChatMod.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -46,10 +92,16 @@
       <Unit1>
         <Filename Value="umainform.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form1"/>
+        <ComponentName Value="fmMain"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="uMainForm"/>
       </Unit1>
+      <Unit2>
+        <Filename Value="ucoreclass.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uCoreClass"/>
+      </Unit2>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -59,10 +111,34 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <Libraries Value="../../build/lib_core"/>
       <OtherUnitFiles Value="../../lib_core"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <IncludeAssertionCode Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <Checks>
+        <IOChecks Value="True"/>
+        <RangeChecks Value="True"/>
+        <OverflowChecks Value="True"/>
+        <StackChecks Value="True"/>
+      </Checks>
+      <VerifyObjMethodCallValidity Value="True"/>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
+    </CodeGeneration>
     <Linking>
+      <Debugging>
+        <UseHeaptrc Value="True"/>
+        <UseValgrind Value="True"/>
+        <GenGProfCode Value="True"/>
+        <UseExternalDbgSyms Value="True"/>
+      </Debugging>
       <Options>
         <Win32>
           <GraphicApplication Value="True"/>

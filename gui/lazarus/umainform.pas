@@ -5,10 +5,13 @@ unit uMainForm;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ucm;
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs;
 
 type
-  TForm1 = class(TForm)
+
+  { TfmMain }
+
+  TfmMain = class(TForm)
   private
 
   public
@@ -16,7 +19,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  fmMain: TfmMain;
 
 implementation
 
