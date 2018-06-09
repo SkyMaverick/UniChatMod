@@ -72,17 +72,21 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
+        <WorkingDirectory Value="/home/alex/projects/UniChatMod/build/"/>
       </local>
       <environment>
         <UserOverrides Count="1">
-          <Variable0 Name="LD_PRELOAD" Value="./libucm.so"/>
+          <Variable0 Name="LD_PRELOAD" Value="./lib_core/libucm.so"/>
         </UserOverrides>
       </environment>
     </RunParams>
-    <RequiredPackages Count="1">
+    <RequiredPackages Count="2">
       <Item1>
-        <PackageName Value="LCL"/>
+        <PackageName Value="lazrichview"/>
       </Item1>
+      <Item2>
+        <PackageName Value="LCL"/>
+      </Item2>
     </RequiredPackages>
     <Units Count="3">
       <Unit0>
@@ -136,7 +140,6 @@
       <Debugging>
         <UseHeaptrc Value="True"/>
         <UseValgrind Value="True"/>
-        <GenGProfCode Value="True"/>
         <UseExternalDbgSyms Value="True"/>
       </Debugging>
       <Options>

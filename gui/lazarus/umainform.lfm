@@ -1,8 +1,307 @@
 object fmMain: TfmMain
-  Left = 246
-  Height = 526
-  Top = 120
-  Width = 919
-  Caption = 'fmMain'
-  LCLVersion = '1.8.2.0'
+  Left = 358
+  Height = 480
+  Top = 111
+  Width = 640
+  Caption = 'UniChatMod'
+  ClientHeight = 460
+  ClientWidth = 640
+  Menu = mmMain
+  Position = poWorkAreaCenter
+  LCLVersion = '1.8.4.0'
+  object pnlWnd: TPanel
+    Left = 165
+    Height = 460
+    Top = 0
+    Width = 475
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 460
+    ClientWidth = 475
+    TabOrder = 0
+    object Splitter2: TSplitter
+      Cursor = crVSplit
+      Left = 0
+      Height = 8
+      Top = 287
+      Width = 475
+      Align = alBottom
+      ResizeAnchor = akBottom
+    end
+    object pnlInput: TPanel
+      Left = 0
+      Height = 165
+      Top = 295
+      Width = 475
+      Align = alBottom
+      BevelOuter = bvNone
+      Caption = 'pnlInput'
+      ClientHeight = 165
+      ClientWidth = 475
+      TabOrder = 1
+      object memInput: TMemo
+        Left = 0
+        Height = 139
+        Top = 0
+        Width = 475
+        Align = alClient
+        TabOrder = 0
+      end
+      object tbInputCtrls: TToolBar
+        Left = 0
+        Height = 26
+        Top = 139
+        Width = 475
+        Align = alBottom
+        ButtonHeight = 25
+        ButtonWidth = 25
+        Caption = 'tbInputCtrls'
+        TabOrder = 1
+        object ToolButton1: TToolButton
+          Left = 1
+          Top = 2
+          Caption = 'ToolButton1'
+        end
+        object ToolButton2: TToolButton
+          Left = 26
+          Top = 2
+          Caption = 'ToolButton2'
+        end
+        object ToolButton3: TToolButton
+          Left = 51
+          Top = 2
+          Caption = 'ToolButton3'
+        end
+        object ToolButton4: TToolButton
+          Left = 76
+          Top = 2
+          Caption = 'ToolButton4'
+        end
+      end
+    end
+    object pnlWArea: TPanel
+      Left = 0
+      Height = 287
+      Top = 0
+      Width = 475
+      Align = alClient
+      BevelOuter = bvNone
+      Caption = 'pnlWArea'
+      ClientHeight = 287
+      ClientWidth = 475
+      TabOrder = 2
+      object pcTabs: TPageControl
+        Left = 0
+        Height = 259
+        Top = 28
+        Width = 475
+        ActivePage = tsMain
+        Align = alClient
+        Images = ilBtnIcons
+        TabIndex = 0
+        TabOrder = 0
+        object tsMain: TTabSheet
+          Caption = 'Main'
+          ClientHeight = 227
+          ClientWidth = 469
+          object rvHist: TRichView
+            Left = 0
+            Height = 227
+            Top = 0
+            Width = 469
+            TabStop = True
+            TabOrder = 0
+            Align = alClient
+            Tracking = True
+            VScrollVisible = False
+            FirstJumpNo = 0
+            Style = rvsArea
+            MaxTextWidth = 0
+            MinTextWidth = 0
+            LeftMargin = 5
+            RightMargin = 5
+            BackgroundStyle = bsNoBitmap
+            Delimiters = ' .;,:(){}"'
+            AllowSelection = True
+            SingleClick = True
+          end
+        end
+        object tsReports: TTabSheet
+          Caption = 'Adverts'
+          ClientHeight = 227
+          ClientWidth = 469
+          object rvReports: TRichView
+            Left = 0
+            Height = 227
+            Top = 0
+            Width = 469
+            TabStop = True
+            TabOrder = 0
+            Align = alClient
+            Tracking = True
+            VScrollVisible = False
+            FirstJumpNo = 0
+            Style = rvsArea
+            MaxTextWidth = 0
+            MinTextWidth = 0
+            LeftMargin = 5
+            RightMargin = 5
+            BackgroundStyle = bsNoBitmap
+            Delimiters = ' .;,:(){}"'
+            AllowSelection = True
+            SingleClick = False
+          end
+        end
+      end
+      object cbTopicChange: TComboBoxEx
+        Left = 0
+        Height = 28
+        Top = 0
+        Width = 475
+        Align = alTop
+        ItemHeight = 0
+        ItemsEx = <>
+        ReadOnly = True
+        Style = csExDropDownList
+        TabOrder = 1
+      end
+    end
+  end
+  object pnlUsers: TPanel
+    Left = 0
+    Height = 460
+    Top = 0
+    Width = 160
+    Align = alLeft
+    Anchors = [akLeft]
+    BevelOuter = bvNone
+    Caption = 'pnlUsers'
+    ClientHeight = 460
+    ClientWidth = 160
+    TabOrder = 1
+    object tbUsersCtrl: TToolBar
+      Left = 0
+      Height = 26
+      Top = 434
+      Width = 160
+      Align = alBottom
+      ButtonHeight = 25
+      ButtonWidth = 25
+      Caption = 'tbUsersCtrl'
+      TabOrder = 0
+    end
+    object ListView1: TListView
+      Left = 0
+      Height = 406
+      Top = 28
+      Width = 160
+      Align = alClient
+      Columns = <>
+      TabOrder = 1
+    end
+    object cbUserChange: TComboBoxEx
+      Left = 0
+      Height = 28
+      Top = 0
+      Width = 160
+      Align = alTop
+      ItemHeight = 0
+      ItemsEx = <>
+      ReadOnly = True
+      Style = csExDropDownList
+      TabOrder = 2
+    end
+  end
+  object Splitter1: TSplitter
+    Left = 160
+    Height = 460
+    Top = 0
+    Width = 5
+  end
+  object alActions: TActionList
+    left = 344
+    top = 336
+  end
+  object ilBtnIcons: TImageList
+    left = 408
+    top = 336
+  end
+  object mmMain: TMainMenu
+    Images = ilBtnIcons
+    left = 472
+    top = 336
+    object mmiTalks: TMenuItem
+      Caption = 'Talks'
+    end
+    object mmiEdit: TMenuItem
+      Caption = 'Edit'
+    end
+    object mmiView: TMenuItem
+      Caption = 'View'
+    end
+    object mmiSettings: TMenuItem
+      Caption = 'Settings'
+    end
+    object mmiHelp: TMenuItem
+      Caption = 'Help'
+    end
+  end
+  object tiIcon: TTrayIcon
+    Visible = True
+    left = 576
+    top = 336
+  end
+  object rvsArea: TRVStyle
+    TextStyles = <    
+      item
+        CharSet = DEFAULT_CHARSET
+        FontName = 'Arial'
+        Size = 10
+        Color = clWindowText
+        Style = []
+      end    
+      item
+        CharSet = DEFAULT_CHARSET
+        FontName = 'Arial'
+        Size = 10
+        Color = clBlue
+        Style = [fsBold]
+      end    
+      item
+        CharSet = DEFAULT_CHARSET
+        FontName = 'Arial'
+        Size = 10
+        Color = clNavy
+        Style = [fsBold]
+      end    
+      item
+        CharSet = DEFAULT_CHARSET
+        FontName = 'Arial'
+        Size = 10
+        Color = clMaroon
+        Style = [fsItalic]
+      end    
+      item
+        CharSet = DEFAULT_CHARSET
+        FontName = 'Arial'
+        Size = 10
+        Color = clGreen
+        Style = [fsUnderline]
+      end    
+      item
+        CharSet = DEFAULT_CHARSET
+        FontName = 'Arial'
+        Size = 10
+        Color = clGreen
+        Style = [fsUnderline]
+      end>
+    JumpCursor = 101
+    Color = clWindow
+    HoverColor = clNone
+    FullRedraw = False
+    SelColor = clHighlight
+    SelTextColor = clHighlightText
+    left = 528
+    top = 336
+  end
 end
