@@ -1,0 +1,223 @@
+object fmAbout: TfmAbout
+  Left = 479
+  Height = 400
+  Top = 187
+  Width = 500
+  BorderStyle = bsDialog
+  Caption = 'fmAbout'
+  ClientHeight = 400
+  ClientWidth = 500
+  Position = poMainFormCenter
+  LCLVersion = '1.8.4.0'
+  object pnlTop: TPanel
+    Left = 0
+    Height = 150
+    Top = 0
+    Width = 500
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 150
+    ClientWidth = 500
+    TabOrder = 0
+    object imLogo: TImage
+      Left = 8
+      Height = 128
+      Top = 11
+      Width = 128
+    end
+    object laProject: TLabel
+      Left = 144
+      Height = 14
+      Top = 11
+      Width = 209
+      Caption = 'UniChatMod (with lazarus GUI)'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laVersion: TLabel
+      Left = 144
+      Height = 14
+      Top = 33
+      Width = 55
+      Caption = 'Version:'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laVersionCore: TLabel
+      Left = 144
+      Height = 14
+      Top = 55
+      Width = 90
+      Caption = 'Version Core:'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laBuildInfo: TLabel
+      Left = 144
+      Height = 14
+      Top = 77
+      Width = 63
+      Caption = 'Build for:'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laStore: TLabel
+      Left = 144
+      Height = 14
+      Top = 121
+      Width = 59
+      Caption = 'Storage:'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laFlags: TLabel
+      Left = 144
+      Height = 14
+      Top = 99
+      Width = 74
+      Caption = 'Build with:'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laVersonU: TLabel
+      Left = 208
+      Height = 14
+      Top = 33
+      Width = 59
+      Caption = 'laVersonU'
+      ParentColor = False
+    end
+    object laVersionCoreU: TLabel
+      Left = 244
+      Height = 14
+      Top = 56
+      Width = 89
+      Caption = 'laVersionCoreU'
+      ParentColor = False
+    end
+    object laBuildInfoU: TLabel
+      Left = 216
+      Height = 14
+      Top = 77
+      Width = 72
+      Caption = 'laBuildInfoU'
+      ParentColor = False
+    end
+    object laFlagsU: TLabel
+      Left = 224
+      Height = 14
+      Top = 99
+      Width = 50
+      Caption = 'laFlagsU'
+      ParentColor = False
+    end
+    object laStoreU: TLabel
+      Left = 208
+      Height = 14
+      Top = 121
+      Width = 51
+      Caption = 'laStoreU'
+      ParentColor = False
+    end
+  end
+  object pnlOrigAuthors: TPanel
+    Left = 0
+    Height = 50
+    Top = 150
+    Width = 500
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 50
+    ClientWidth = 500
+    TabOrder = 1
+    object laOrigAuthors: TLabel
+      Left = 136
+      Height = 14
+      Top = 8
+      Width = 179
+      Caption = 'Original UniChat authors: '
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object laOAuthorsList: TLabel
+      Left = 112
+      Height = 14
+      Top = 24
+      Width = 235
+      Caption = 'Dentall, Agent Smith, Scropus, Adelina'
+      ParentColor = False
+    end
+  end
+  object tbInfo: TPageControl
+    Left = 0
+    Height = 200
+    Top = 200
+    Width = 500
+    ActivePage = tbsAuthors
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 2
+    object tbsAuthors: TTabSheet
+      Caption = 'Authors'
+      ClientHeight = 168
+      ClientWidth = 494
+      object memAuthors: TMemo
+        Left = 0
+        Height = 168
+        Top = 0
+        Width = 494
+        Align = alClient
+        ReadOnly = True
+        TabOrder = 0
+      end
+    end
+    object tbsLicense: TTabSheet
+      Caption = 'License'
+      ClientHeight = 168
+      ClientWidth = 494
+      object memLicense: TMemo
+        Left = 0
+        Height = 168
+        Top = 0
+        Width = 494
+        Align = alClient
+        ReadOnly = True
+        TabOrder = 0
+      end
+    end
+    object tbsTranslates: TTabSheet
+      Caption = 'Translates'
+      ClientHeight = 168
+      ClientWidth = 494
+      object memTranslates: TMemo
+        Left = 0
+        Height = 168
+        Top = 0
+        Width = 494
+        Align = alClient
+        TabOrder = 0
+      end
+    end
+    object tbsLibs: TTabSheet
+      Caption = 'Modules'
+      ClientHeight = 168
+      ClientWidth = 494
+      object memModules: TMemo
+        Left = 0
+        Height = 168
+        Top = 0
+        Width = 494
+        Align = alClient
+        ReadOnly = True
+        TabOrder = 0
+      end
+    end
+  end
+end

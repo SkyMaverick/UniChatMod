@@ -14,13 +14,16 @@ type
     TUCMCore = class(TObject)
     private
         CoreAPI: PUCMFunctions;
+        InfoPtr: PUCMPluginInfo;
     protected
     public
         // make this class as TObject-child singleton
         class function NewInstance: TObject; override;
         procedure BeforeDestruction; override;
-
         procedure Initialize(const PathCoreAbs: string; const PathStoreAbs: string);
+
+        function GetVersion(): string;
+
         procedure Finish();
     end;
 
@@ -50,6 +53,11 @@ procedure TUCMCore.Initialize(const PathCoreAbs: string; const PathStoreAbs: str
 begin
     //TODO
     CoreAPI := UCMCoreStart(PChar(PathCoreAbs), PChar(PathStoreAbs));
+end;
+
+function TUCMCore.GetVersion(): string;
+begin
+
 end;
 
 procedure TUCMCore.Finish();

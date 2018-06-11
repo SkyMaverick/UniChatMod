@@ -19,7 +19,7 @@ object fmMain: TfmMain
     ClientHeight = 460
     ClientWidth = 475
     TabOrder = 0
-    object Splitter2: TSplitter
+    object hSplit: TSplitter
       Cursor = crVSplit
       Left = 0
       Height = 8
@@ -35,7 +35,6 @@ object fmMain: TfmMain
       Width = 475
       Align = alBottom
       BevelOuter = bvNone
-      Caption = 'pnlInput'
       ClientHeight = 165
       ClientWidth = 475
       TabOrder = 1
@@ -86,7 +85,6 @@ object fmMain: TfmMain
       Width = 475
       Align = alClient
       BevelOuter = bvNone
-      Caption = 'pnlWArea'
       ClientHeight = 287
       ClientWidth = 475
       TabOrder = 2
@@ -114,6 +112,7 @@ object fmMain: TfmMain
             Align = alClient
             Tracking = True
             VScrollVisible = False
+            PopupMenu = pmArea
             FirstJumpNo = 0
             Style = rvsArea
             MaxTextWidth = 0
@@ -197,6 +196,7 @@ object fmMain: TfmMain
       Width = 160
       Align = alClient
       Columns = <>
+      PopupMenu = pmUsers
       TabOrder = 1
     end
     object cbUserChange: TComboBoxEx
@@ -212,24 +212,121 @@ object fmMain: TfmMain
       TabOrder = 2
     end
   end
-  object Splitter1: TSplitter
+  object vSplit: TSplitter
     Left = 160
     Height = 460
     Top = 0
     Width = 5
   end
   object alActions: TActionList
-    left = 344
-    top = 336
+    left = 360
+    top = 312
+    object actMulticast: TAction
+      Category = 'UserList'
+      Caption = 'Multicast'
+      ShortCut = 117
+    end
+    object actUsersRefresh: TAction
+      Category = 'UserList'
+      Caption = 'Refresh'
+      ShortCut = 116
+    end
+    object actAreaClear: TAction
+      Category = 'Area'
+      Caption = 'Clear Area'
+    end
+    object actAreaTxtCopy: TAction
+      Category = 'Area'
+      Caption = 'Copy all'
+    end
+    object actAreaAutoScroll: TAction
+      Category = 'Area'
+      Caption = 'AutoScroll'
+    end
+    object actMgmChangeTheme: TAction
+      Category = 'Management'
+      Caption = 'Change Theme'
+    end
+    object actMgmExitChat: TAction
+      Category = 'Management'
+      Caption = 'Chat Exit'
+      ShortCut = 8307
+    end
+    object actUStatActive: TAction
+      Category = 'Status'
+      Caption = 'Active'
+      ShortCut = 16449
+    end
+    object actUStatGame: TAction
+      Category = 'Status'
+      Caption = 'Game'
+      ShortCut = 16455
+    end
+    object actUStatBusy: TAction
+      Category = 'Status'
+      Caption = 'Busy'
+      ShortCut = 16452
+    end
+    object actUStatNotConn: TAction
+      Category = 'Status'
+      Caption = 'Not connect'
+      ShortCut = 16463
+    end
+    object actUStatAbuse: TAction
+      Category = 'Status'
+      Caption = 'Abuse'
+      ShortCut = 16454
+    end
+    object actMgmSettings: TAction
+      Category = 'Management'
+      Caption = 'Settings'
+    end
+    object actMgmMinimize: TAction
+      Category = 'Management'
+      Caption = 'Minimize'
+    end
+    object actMgmArchive: TAction
+      Category = 'Management'
+      Caption = 'Archive'
+    end
+    object actMgmExit: TAction
+      Category = 'Management'
+      Caption = 'Exit'
+    end
+    object actDummy: TAction
+      Category = 'Management'
+    end
+    object actHlpAbout: TAction
+      Category = 'Help'
+      Caption = 'About'
+      OnExecute = actHlpAboutExecute
+    end
+    object actHlpHelp: TAction
+      Category = 'Help'
+      Caption = 'Help'
+      ShortCut = 112
+    end
+    object actHlpSite: TAction
+      Category = 'Help'
+      Caption = 'WWW'
+    end
+    object actHlpLicense: TAction
+      Category = 'Help'
+      Caption = 'License'
+    end
+    object actHlpIssues: TAction
+      Category = 'Help'
+      Caption = 'Issues'
+    end
   end
   object ilBtnIcons: TImageList
-    left = 408
-    top = 336
+    left = 424
+    top = 312
   end
   object mmMain: TMainMenu
     Images = ilBtnIcons
-    left = 472
-    top = 336
+    left = 488
+    top = 312
     object mmiTalks: TMenuItem
       Caption = 'Talks'
     end
@@ -244,12 +341,31 @@ object fmMain: TfmMain
     end
     object mmiHelp: TMenuItem
       Caption = 'Help'
+      object MenuItem18: TMenuItem
+        Action = actHlpHelp
+      end
+      object MenuItem19: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem20: TMenuItem
+        Action = actHlpSite
+      end
+      object MenuItem21: TMenuItem
+        Action = actHlpIssues
+      end
+      object MenuItem24: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem23: TMenuItem
+        Action = actHlpAbout
+      end
     end
   end
   object tiIcon: TTrayIcon
+    PopUpMenu = pmTray
     Visible = True
-    left = 576
-    top = 336
+    left = 592
+    top = 312
   end
   object rvsArea: TRVStyle
     TextStyles = <    
@@ -301,7 +417,93 @@ object fmMain: TfmMain
     FullRedraw = False
     SelColor = clHighlight
     SelTextColor = clHighlightText
-    left = 528
-    top = 336
+    left = 544
+    top = 312
+  end
+  object pmArea: TPopupMenu
+    left = 592
+    top = 64
+    object pmiClearArea: TMenuItem
+      Action = actAreaClear
+    end
+    object MenuItem1: TMenuItem
+      Caption = '-'
+    end
+    object pmiCopyAll: TMenuItem
+      Action = actAreaTxtCopy
+    end
+    object MenuItem2: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem3: TMenuItem
+      Action = actMgmChangeTheme
+    end
+    object MenuItem4: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem5: TMenuItem
+      Action = actAreaAutoScroll
+      RadioItem = True
+    end
+    object MenuItem6: TMenuItem
+      Action = actMgmExitChat
+    end
+  end
+  object pmUsers: TPopupMenu
+    left = 104
+    top = 40
+    object pmiUsersRefresh: TMenuItem
+      Action = actUsersRefresh
+    end
+    object pmiUsersMulticast: TMenuItem
+      Action = actMulticast
+    end
+  end
+  object pmTray: TPopupMenu
+    left = 592
+    top = 368
+    object MenuItem7: TMenuItem
+      Action = actMgmMinimize
+    end
+    object MenuItem8: TMenuItem
+      Action = actMgmSettings
+    end
+    object MenuItem9: TMenuItem
+      Action = actDummy
+      Caption = 'Mode'
+      object MenuItem10: TMenuItem
+        Action = actUStatActive
+      end
+      object MenuItem11: TMenuItem
+        Action = actUStatGame
+      end
+      object MenuItem12: TMenuItem
+        Action = actUStatBusy
+      end
+      object MenuItem13: TMenuItem
+        Action = actUStatNotConn
+      end
+      object MenuItem14: TMenuItem
+        Action = actUStatAbuse
+      end
+    end
+    object MenuItem15: TMenuItem
+      Action = actMulticast
+    end
+    object MenuItem16: TMenuItem
+      Action = actMgmArchive
+    end
+    object MenuItem25: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem26: TMenuItem
+      Action = actHlpAbout
+    end
+    object MenuItem27: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem17: TMenuItem
+      Action = actMgmExit
+    end
   end
 end

@@ -6,19 +6,72 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ActnList,
-  Menus, ExtCtrls, StdCtrls, ComCtrls, ComboEx, RichView, RVStyle;
+  Menus, ExtCtrls, StdCtrls, ComCtrls, ComboEx, RichView, RVStyle, uCoreClass,
+  uAboutForm;
 
 type
 
   { TfmMain }
 
   TfmMain = class(TForm)
+      actAreaClear: TAction;
+      actAreaTxtCopy: TAction;
+      actAreaAutoScroll: TAction;
+      actDummy: TAction;
+      actHlpAbout: TAction;
+      actHlpHelp: TAction;
+      actHlpSite: TAction;
+      actHlpLicense: TAction;
+      actHlpIssues: TAction;
+      actMgmExit: TAction;
+      actMgmArchive: TAction;
+      actMgmMinimize: TAction;
+      actMgmSettings: TAction;
+      actUStatAbuse: TAction;
+      actUStatNotConn: TAction;
+      actUStatBusy: TAction;
+      actUStatGame: TAction;
+      actUStatActive: TAction;
+      actMgmExitChat: TAction;
+      actMgmChangeTheme: TAction;
+      actUsersRefresh: TAction;
+      actMulticast: TAction;
       alActions: TActionList;
       cbUserChange: TComboBoxEx;
       cbTopicChange: TComboBoxEx;
       ilBtnIcons: TImageList;
       ListView1: TListView;
       memInput: TMemo;
+      MenuItem1: TMenuItem;
+      MenuItem10: TMenuItem;
+      MenuItem11: TMenuItem;
+      MenuItem12: TMenuItem;
+      MenuItem13: TMenuItem;
+      MenuItem14: TMenuItem;
+      MenuItem15: TMenuItem;
+      MenuItem16: TMenuItem;
+      MenuItem17: TMenuItem;
+      MenuItem18: TMenuItem;
+      MenuItem19: TMenuItem;
+      MenuItem2: TMenuItem;
+      MenuItem20: TMenuItem;
+      MenuItem21: TMenuItem;
+      MenuItem23: TMenuItem;
+      MenuItem24: TMenuItem;
+      MenuItem25: TMenuItem;
+      MenuItem26: TMenuItem;
+      MenuItem27: TMenuItem;
+      MenuItem3: TMenuItem;
+      MenuItem4: TMenuItem;
+      MenuItem5: TMenuItem;
+      MenuItem6: TMenuItem;
+      MenuItem7: TMenuItem;
+      MenuItem8: TMenuItem;
+      MenuItem9: TMenuItem;
+      pmiCopyAll: TMenuItem;
+      pmiClearArea: TMenuItem;
+      pmiUsersMulticast: TMenuItem;
+      pmiUsersRefresh: TMenuItem;
       mmiHelp: TMenuItem;
       mmiSettings: TMenuItem;
       mmiEdit: TMenuItem;
@@ -30,11 +83,14 @@ type
       pnlWArea: TPanel;
       pnlWnd: TPanel;
       pnlUsers: TPanel;
+      pmArea: TPopupMenu;
+      pmUsers: TPopupMenu;
+      pmTray: TPopupMenu;
       rvReports: TRichView;
       rvHist: TRichView;
       rvsArea: TRVStyle;
-      Splitter1: TSplitter;
-      Splitter2: TSplitter;
+      vSplit: TSplitter;
+      hSplit: TSplitter;
       tsReports: TTabSheet;
       tiIcon: TTrayIcon;
       tbInputCtrls: TToolBar;
@@ -44,6 +100,7 @@ type
       ToolButton3: TToolButton;
       ToolButton4: TToolButton;
       tsMain: TTabSheet;
+      procedure actHlpAboutExecute(Sender: TObject);
   private
 
   public
@@ -56,6 +113,15 @@ var
 implementation
 
 {$R *.lfm}
+
+{ TfmMain }
+
+procedure TfmMain.actHlpAboutExecute(Sender: TObject);
+begin
+    fmAbout := TfmAbout.Create(Self);
+    fmAbout.ShowModal;
+    fmAbout.Free;
+end;
 
 end.
 
