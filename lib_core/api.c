@@ -77,9 +77,7 @@ static ucm_functions_t core_api = {
     .md5_to_str         = NULL,
 
     /*! log and trace messages handlers*/
-    .vlog               = logger_vlog       ,
     .log                = logger_log        ,
-    .ucm_vlog           = ucm_vlog          ,
     .ucm_log            = ucm_log           ,
     .logger_connect     = logger_connect    ,
     .logger_disconnect  = logger_disconnect ,

@@ -139,9 +139,7 @@ TUCMMd5Buf  =   array [1..16] of byte;
 TUCMCB_Md5Buffer   = procedure (buf: TUCMMd5Buf; inbuf: PChar; size: Integer); cdecl;
 TUCMCB_Md5String   = procedure (outbuf: PChar; const buf: TUCMMd5Buf); cdecl;
 
-TUCMCB_LogList             = procedure (plugin: TUCMPlugin; fmt: PChar); cdecl; varargs;
 TUCMCB_LogBase             = procedure (plugin: TUCMPlugin; fmt: PChar); cdecl; varargs;
-TUCMCB_LogCoreList         = procedure (fmt: PChar); cdecl; varargs;
 TUCMCB_LogCore             = procedure (fmt: PChar); cdecl; varargs;
 
 TUCMCB_Logger              = procedure (sender: PUCMPlugin; log_type: Cardinal; txt: PChar); cdecl;
@@ -204,9 +202,7 @@ TUCMFunctions = record
     md5_to_str          : TUCMCB_Md5String;
 
         // log and trace messages handlers*/
-    vlog                : TUCMCB_LogList;
     log                 : TUCMCB_LogBase;
-    ucm_vlog            : TUCMCB_LogCoreList;
     ucm_log             : TUCMCB_LogCore;
     logger_connect      : TUCMCB_LogUnitConnect;
     logger_disconnect   : TUCMCB_LogUnitDisconnect;
