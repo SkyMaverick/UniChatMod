@@ -1,7 +1,7 @@
 object fmMain: TfmMain
   Left = 358
   Height = 480
-  Top = 111
+  Top = 135
   Width = 640
   Caption = 'UniChatMod'
   ClientHeight = 460
@@ -223,7 +223,7 @@ object fmMain: TfmMain
     top = 312
     object actMulticast: TAction
       Category = 'UserList'
-      Caption = 'Multicast'
+      Caption = 'Multicast...'
       ShortCut = 117
     end
     object actUsersRefresh: TAction
@@ -279,7 +279,8 @@ object fmMain: TfmMain
     end
     object actMgmSettings: TAction
       Category = 'Management'
-      Caption = 'Settings'
+      Caption = 'Settings ...'
+      OnExecute = actMgmSettingsExecute
     end
     object actMgmMinimize: TAction
       Category = 'Management'
@@ -287,7 +288,7 @@ object fmMain: TfmMain
     end
     object actMgmArchive: TAction
       Category = 'Management'
-      Caption = 'Archive'
+      Caption = 'Archive...'
     end
     object actMgmExit: TAction
       Category = 'Management'
@@ -338,6 +339,9 @@ object fmMain: TfmMain
     end
     object mmiSettings: TMenuItem
       Caption = 'Settings'
+      object MenuItem22: TMenuItem
+        Action = actMgmSettings
+      end
     end
     object mmiHelp: TMenuItem
       Caption = 'Help'
@@ -450,7 +454,7 @@ object fmMain: TfmMain
     end
   end
   object pmUsers: TPopupMenu
-    left = 104
+    left = 96
     top = 40
     object pmiUsersRefresh: TMenuItem
       Action = actUsersRefresh

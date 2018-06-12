@@ -6,7 +6,7 @@ interface
 
 uses
     Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-    StdCtrls, ComCtrls;
+    StdCtrls, ComCtrls, uCoreClass, fileinfo;
 
 type
 
@@ -29,17 +29,22 @@ type
         laProject: TLabel;
         memAuthors: TMemo;
         memLicense: TMemo;
-        memModules: TMemo;
         memTranslates: TMemo;
         tbsTranslates: TTabSheet;
-        tbsLibs: TTabSheet;
         tbsLicense: TTabSheet;
         tbInfo: TPageControl;
         pnlOrigAuthors: TPanel;
         pnlTop: TPanel;
         tbsAuthors: TTabSheet;
+        procedure FormCreate(Sender: TObject);
+        procedure tbsAuthorsShow(Sender: TObject);
+        procedure tbsLicenseShow(Sender: TObject);
+        procedure tbsTranslatesShow(Sender: TObject);
     private
-
+        UCMCore: TUCMCore;
+        isLoadedAuthors: boolean;
+        isLoadedLicense: boolean;
+        isLoadedTranslate: boolean;
     public
 
     end;
@@ -51,5 +56,100 @@ implementation
 
 {$R *.lfm}
 
+{ TfmAbout }
+
+function GetAppVersion(): string;
+var
+    AppVersion: TFileVersionInfo;
+begin
+    AppVersion := TFileVersionInfo.Create(nil);
+    try
+        AppVersion.ReadFileInfo;
+        Result := AppVersion.VersionStrings.Values['ProductVersion'];
+    finally
+        AppVersion.Free;
+    end;
+end;
+
+procedure TfmAbout.FormCreate(Sender: TObject);
+begin
+    UCMCore := TUCMCore.Create;
+    with UCMCore do
+    begin
+        laVersonU.Caption := GetAppVersion();
+        laVersionCoreU.Caption :=
+            Format('%d.%d.%d', [Info.vmajor, Info.vminor, Info.vpatch]);
+        laBuildInfoU.Caption := Info.build.compiler;
+        laFlagsU.Caption := Info.build.options;
+    end;
+    isLoadedAuthors := False;
+    isLoadedLicense := False;
+    isLoadedTranslate := False;
+end;
+
+procedure TfmAbout.tbsAuthorsShow(Sender: TObject);
+var
+    fpath: string;
+begin
+    with memAuthors do
+    begin
+        if not isLoadedAuthors then
+        begin
+            Lines.Clear;
+            fpath := UCMCore.PathDocuments + PathDelim + 'AUTHORS';
+            if (FileExists(fpath)) then
+            begin
+                Lines.LoadFromFile(fpath);
+                isLoadedAuthors := True;
+            end
+            else
+                Lines.Add(Format('%s: %s', ['Not found file', fpath]));
+        end;
+    end;
+end;
+
+procedure TfmAbout.tbsLicenseShow(Sender: TObject);
+var
+    fpath: string;
+begin
+    with memLicense do
+    begin
+        if not isLoadedLicense then
+        begin
+            Lines.Clear;
+            fpath := UCMCore.PathDocuments + PathDelim + 'LICENSE';
+            if (FileExists(fpath)) then
+            begin
+                Lines.LoadFromFile(fpath);
+                isLoadedLicense := True;
+            end
+            else
+                Lines.Add(Format('%s: %s', ['Not found file', fpath]));
+        end;
+    end;
+end;
+
+procedure TfmAbout.tbsTranslatesShow(Sender: TObject);
+var
+    fpath: string;
+begin
+    with memTranslates do
+    begin
+        if not isLoadedTranslate then
+        begin
+            Lines.Clear;
+            fpath := UCMCore.PathCore + PathDelim + 'TRANSLATE';
+            if (FileExists(fpath)) then
+            begin
+                Lines.LoadFromFile(fpath);
+                isLoadedLicense := True;
+            end
+            else
+                Lines.Add(Format('%s: %s', ['Not found file', fpath]));
+        end;
+    end;
+end;
+
 end.
+
 

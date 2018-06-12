@@ -1,12 +1,13 @@
 object fmAbout: TfmAbout
-  Left = 479
+  Left = 453
   Height = 400
-  Top = 187
+  Top = 184
   Width = 500
   BorderStyle = bsDialog
-  Caption = 'fmAbout'
+  Caption = 'About'
   ClientHeight = 400
   ClientWidth = 500
+  OnCreate = FormCreate
   Position = poMainFormCenter
   LCLVersion = '1.8.4.0'
   object pnlTop: TPanel
@@ -49,8 +50,8 @@ object fmAbout: TfmAbout
       Left = 144
       Height = 14
       Top = 55
-      Width = 90
-      Caption = 'Version Core:'
+      Width = 88
+      Caption = 'Version core:'
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -59,8 +60,8 @@ object fmAbout: TfmAbout
       Left = 144
       Height = 14
       Top = 77
-      Width = 63
-      Caption = 'Build for:'
+      Width = 96
+      Caption = 'Build core for:'
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -79,8 +80,8 @@ object fmAbout: TfmAbout
       Left = 144
       Height = 14
       Top = 99
-      Width = 74
-      Caption = 'Build with:'
+      Width = 107
+      Caption = 'Build core with:'
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -94,7 +95,7 @@ object fmAbout: TfmAbout
       ParentColor = False
     end
     object laVersionCoreU: TLabel
-      Left = 244
+      Left = 240
       Height = 14
       Top = 56
       Width = 89
@@ -102,7 +103,7 @@ object fmAbout: TfmAbout
       ParentColor = False
     end
     object laBuildInfoU: TLabel
-      Left = 216
+      Left = 248
       Height = 14
       Top = 77
       Width = 72
@@ -110,7 +111,7 @@ object fmAbout: TfmAbout
       ParentColor = False
     end
     object laFlagsU: TLabel
-      Left = 224
+      Left = 256
       Height = 14
       Top = 99
       Width = 50
@@ -137,7 +138,7 @@ object fmAbout: TfmAbout
     ClientWidth = 500
     TabOrder = 1
     object laOrigAuthors: TLabel
-      Left = 136
+      Left = 147
       Height = 14
       Top = 8
       Width = 179
@@ -147,7 +148,7 @@ object fmAbout: TfmAbout
       ParentFont = False
     end
     object laOAuthorsList: TLabel
-      Left = 112
+      Left = 119
       Height = 14
       Top = 24
       Width = 235
@@ -168,6 +169,7 @@ object fmAbout: TfmAbout
       Caption = 'Authors'
       ClientHeight = 168
       ClientWidth = 494
+      OnShow = tbsAuthorsShow
       object memAuthors: TMemo
         Left = 0
         Height = 168
@@ -182,6 +184,7 @@ object fmAbout: TfmAbout
       Caption = 'License'
       ClientHeight = 168
       ClientWidth = 494
+      OnShow = tbsLicenseShow
       object memLicense: TMemo
         Left = 0
         Height = 168
@@ -196,26 +199,13 @@ object fmAbout: TfmAbout
       Caption = 'Translates'
       ClientHeight = 168
       ClientWidth = 494
+      OnShow = tbsTranslatesShow
       object memTranslates: TMemo
         Left = 0
         Height = 168
         Top = 0
         Width = 494
         Align = alClient
-        TabOrder = 0
-      end
-    end
-    object tbsLibs: TTabSheet
-      Caption = 'Modules'
-      ClientHeight = 168
-      ClientWidth = 494
-      object memModules: TMemo
-        Left = 0
-        Height = 168
-        Top = 0
-        Width = 494
-        Align = alClient
-        ReadOnly = True
         TabOrder = 0
       end
     end

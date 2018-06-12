@@ -88,7 +88,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="4">
+    <Units Count="5">
       <Unit0>
         <Filename Value="UniChatMod.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -114,6 +114,13 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="uAboutForm"/>
       </Unit3>
+      <Unit4>
+        <Filename Value="uconfform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fmSettings"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="uConfForm"/>
+      </Unit4>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
