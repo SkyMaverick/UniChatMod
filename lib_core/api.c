@@ -9,7 +9,7 @@
 char ucm_path[UCM_PATH_MAX];
 char ucm_path_store[UCM_PATH_MAX];
 char ucm_path_plugs[UCM_PATH_MAX];
-
+char ucm_path_doc[UCM_PATH_MAX];
 
 // application global parameters (paths, vars, etc.)
 static const char*
@@ -28,6 +28,12 @@ static const char*
 g_plugins_path (void)
 {
     return ucm_path_plugs;
+}
+
+static const char*
+g_doc_path (void)
+{
+    return ucm_path_doc;
 }
 
 static ucm_functions_t core_api = {
@@ -93,6 +99,7 @@ static ucm_functions_t core_api = {
     .get_startup_path   = g_startup_path ,
     .get_store_path     = g_store_path   ,
     .get_plugins_path   = g_plugins_path ,
+    .get_doc_path       = g_doc_path     ,
 };
 
 ucm_functions_t* ucm_global_api = &core_api;

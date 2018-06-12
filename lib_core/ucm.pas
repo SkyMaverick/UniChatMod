@@ -219,6 +219,7 @@ TUCMFunctions = record
     get_startup_path    : TUCMCB_PathGet;
     get_store_path      : TUCMCB_PathGet;
     get_plugins_path    : TUCMCB_PathGet;
+    get_doc_path        : TUCMCB_PathGet;
 
         // user API */
     get_plugin_info     : TUCMCB_PluginInfo;

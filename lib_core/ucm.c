@@ -12,13 +12,15 @@ ucm_core_start (const char* path_abs,
                 const char* path_store_abs)
 {
     //TODO build plugin stack, init and start core plugin
-    char ucm_path [UCM_PATH_MAX];
-    char ucm_path_store[UCM_PATH_MAX];
-    char ucm_path_plugs[UCM_PATH_MAX];
+    extern char ucm_path [UCM_PATH_MAX];
+    extern char ucm_path_store[UCM_PATH_MAX];
+    extern char ucm_path_plugs[UCM_PATH_MAX];
+    extern char ucm_path_doc[UCM_PATH_MAX];
 
     if (path_abs) {
         snprintf (ucm_path, UCM_PATH_MAX, "%s", path_abs);
         snprintf (ucm_path_plugs, UCM_PATH_MAX, "%s/%s", path_abs, "mods");
+        snprintf (ucm_path_doc, UCM_PATH_MAX, "%s/%s", path_abs, "doc");
     } else {
         ucm_dtrace("%s\n", "Library location path is empty");
         return NULL;
