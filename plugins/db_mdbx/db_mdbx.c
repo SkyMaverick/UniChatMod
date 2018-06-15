@@ -6,7 +6,8 @@
 #include "libmdbx/mdbx.h"
 
 static const ucm_functions_t* app;
-static ucm_plugin_t plugin;
+
+static ucm_dbplugin_t plugin;
 
 #define trace_dbg(fmt, ...) {app->log(&plugin,UCM_LOG_DEBUG,fmt,__VA_ARGS__);}
 #define trace_inf(fmt, ...) {app->log{&plugin,UCM_LOG_INFO,fmt,__VA_ARGS__};}
@@ -30,41 +31,57 @@ _message(uint32_t id,
          uint32_t x1,
          uint32_t x2)
 {
-
+    //TODO
 }
 
-static ucm_plugin_t plugin = {
-    .info.api    =
+static ucm_dbplugin_t plugin = {
+    .core.info.api           =
     {
-        .vmajor = UCM_API_MAJOR_VER,
-        .vminor = UCM_API_MINOR_VER
+        .vmajor              = UCM_API_MAJOR_VER,
+        .vminor              = UCM_API_MINOR_VER
     },
-    .info.sys   = UCM_PLUG_DB,
-    .info.vmajor = UCM_VERSION_MAJOR,
-    .info.vminor = UCM_VERSION_MINOR,
-    .info.vpatch = UCM_VERSION_PATCH,
-    .info.build  =
+    .core.info.sys           = UCM_PLUG_DB,
+    .core.info.vmajor        = UCM_VERSION_MAJOR,
+    .core.info.vminor        = UCM_VERSION_MINOR,
+    .core.info.vpatch        = UCM_VERSION_PATCH,
+    .core.info.build         =
     {
-        .commit       = UCM_BUILD_COMMIT,
-        .datetime     = UCM_BUILD_TIME,
-        .target       = UCM_BUILD_TARGET,
-        .compiler     = UCM_BUILD_CC,
-        .options      = UCM_BUILD_OPTS,
-        .flags        = UCM_BUILD_FLAGS,
+        .commit              = UCM_BUILD_COMMIT,
+        .datetime            = UCM_BUILD_TIME,
+        .target              = UCM_BUILD_TARGET,
+        .compiler            = UCM_BUILD_CC,
+        .options             = UCM_BUILD_OPTS,
+        .flags               = UCM_BUILD_FLAGS,
     },
-    .info.pid = "dbmdbx",
-    .info.name = "Storage mdbx plugin",
-    .info.developer = "SkyMaverick",
-    .info.description = "System standart storage plugin (based on libmdbx).",
-    .info.copyright = "Zlib + ReOpenLDAP",
-    .info.email = "mail@mail.ru",
-    .info.website = "http://null.org",
-    .run = _run_dbmdbx,
-    .stop = _stop_dbmdbx,
-    .message = _message
+    .core.info.pid           = "dbmdbx",
+    .core.info.name          = "Storage mdbx plugin",
+    .core.info.developer     = "SkyMaverick",
+    .core.info.description   = "System standart storage plugin (based on libmdbx).",
+    .core.info.copyright     = "Zlib + ReOpenLDAP",
+    .core.info.email         = "mail@mail.ru",
+    .core.info.website       = "http://null.org",
+
+    .core.run                = _run_dbmdbx,
+    .core.stop               = _stop_dbmdbx,
+    .core.message            = _message,
+
+    .db_open                 = NULL,
+    .db_check                = NULL,
+    .db_flush                = NULL,
+    .db_close                = NULL,
+
+    .get_int                 = NULL,
+    .get_int64               = NULL,
+    .get_float               = NULL,
+    .get_str                 = NULL,
+    .set_int                 = NULL,
+    .set_int64               = NULL,
+    .set_float               = NULL,
+    .set_str                 = NULL,
+    .item_del                = NULL
 };
 
 ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;
-    return &plugin;
+    return (ucm_plugin_t*)(&plugin);
 }
