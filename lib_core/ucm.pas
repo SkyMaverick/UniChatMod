@@ -16,6 +16,9 @@ UCMInfoProcName = 'ucm_core_info';
 
 type
 
+//TODO remove hardcode
+TUCMPath = array [0..4096] of char;
+
 // ######################################################################
 //  ENUMERATIONS DECLARE
 // ######################################################################
@@ -37,20 +40,10 @@ TUCMRetStatus = (
 );
 
 TUCMLogType = (
-    UCM_LOG_INFO,
-    UCM_LOG_DEBUG,
-    UCM_LOG_ERROR
+    UCM_LOG_INFO    = 1,
+    UCM_LOG_DEBUG   = 2,
+    UCM_LOG_ERROR   = 4
 );
-
-// ######################################################################
-//  EVENTS
-// ######################################################################
-
-TUCMEvent = record
-
-end;
-PUCMEvent = ^TUCMEvent;
-PPUCMEvent = ^PUCMEvent;
 
 // ######################################################################
 //  PLUGINS FUNCTIOANLITY
@@ -99,6 +92,57 @@ end;
 PUCMPlugin = ^TUCMPlugin;
 
 // ######################################################################
+//      CHAT FUNCTIONALITY API IMPLEMENTATION
+// ######################################################################
+
+TUCMEvent = record
+    ev      : Byte;
+    size    : QWord;
+    sender  : Pointer;
+end;
+PUCMEvent = ^TUCMEvent;
+PPUCMEvent = ^PUCMEvent;
+
+TUCMDatabase = record
+    fname: TUCMPath;
+    handler: PUCMPlugin;
+end;
+PUCMDatabase = ^TUCMDatabase;
+
+TUCMCB_DbOpen       = function  (db: TUCMDatabase; ctx: Pointer): PUCMDatabase; cdecl;
+TUCMCB_DbCheck      = function  (db: TUCMDatabase; ctx: Pointer): TUCMRetStatus; cdecl;
+TUCMCB_DbFlush      = function  (db: TUCMDatabase): TUCMRetStatus; cdecl;
+TUCMCB_DbClose      = function  (db: TUCMDatabase): TUCMRetStatus; cdecl;
+TUCMCB_DbGetInt     = function  (db: TUCMDatabase; key: PChar; def: Integer): Integer; cdecl;
+TUCMCB_DbGetLInt    = function  (db: TUCMDatabase; key: PChar; def: LongInt): LongInt; cdecl;
+TUCMCB_DbGetSingle  = function  (db: TUCMDatabase; key: PChar; def: Single): Single; cdecl;
+TUCMCB_DbGetPChar   = function  (db: TUCMDatabase; key: PChar; def: PChar): PChar; cdecl;
+TUCMCB_DbSetInt     = procedure (db: TUCMDatabase; key: PChar; value: Integer); cdecl;
+TUCMCB_DbSetLInt    = procedure (db: TUCMDatabase; key: PChar; value: LongInt); cdecl;
+TUCMCB_DbSetSingle  = procedure (db: TUCMDatabase; key: PChar; value: Single); cdecl;
+TUCMCB_DbSetPChar   = procedure (db: TUCMDatabase; key: PChar; value: PChar); cdecl;
+TUCMCB_DbItemDel    = procedure (db: TUCMDatabase; key: PChar); cdecl;
+
+TUCMDbPlugin = record
+    core        : TUCMPlugin;
+    db_open     : TUCMCB_DbOpen;
+    db_check    : TUCMCB_DbCheck;
+    db_flush    : TUCMCB_DbFlush;
+    db_close    : TUCMCB_DbClose;
+
+    get_int     : TUCMCB_DbGetInt;
+    get_int64   : TUCMCB_DbGetLInt;
+    get_float   : TUCMCB_DbGetSingle;
+    get_str     : TUCMCB_DbGetPChar;
+    set_int     : TUCMCB_DbSetInt;
+    set_int64   : TUCMCB_DbSetLInt;
+    set_float   : TUCMCB_DbSetSingle;
+    set_str     : TUCMCB_DbSetPChar;
+    item_del    : TUCMCB_DbItemDel;
+end;
+PUCMDbPlugin = ^TUCMDbPlugin;
+
+// ######################################################################
 //  API FUNCTIONALITY
 // ######################################################################
 
@@ -129,7 +173,7 @@ TUCMCB_StoreSetSingle    = procedure (key: PChar; value: Single) ; cdecl;
 TUCMCB_StoreSetPChar     = procedure (key: PChar; value: PChar) ; cdecl;
 TUCMCB_StoreItemDel      = procedure (key: PChar) ; cdecl;
 
-TUCMCB_MLMsgSend         = function  (id: Cardinal; ctx: UIntPtr; x1: Cardinal; x2: Cardinal): Integer ; cdecl; 
+TUCMCB_MLMsgSend         = function  (id: Cardinal; ctx: UIntPtr; x1: Cardinal; x2: Cardinal): Integer ; cdecl;
 TUCMCB_MLEventGetMem     = function  (id: Integer): TUCMEvent; cdecl;
 TUCMCB_MLEventPush       = function  (event: TUCMEvent; x1: Cardinal; x2: Cardinal; sender: Pointer): Integer; cdecl;
 TUCMCB_MLEventFreeAndNil = procedure (event: PPUCMEvent); cdecl;

@@ -94,8 +94,11 @@ enum {
     UCM_LOG_ERROR = 1 << 2
 };
 
-/*! Core events identificator
-  */
+// ######################################################################
+//      CHAT FUNCTIONALITY API IMPLEMENTATION
+// ######################################################################
+
+// Events ---------------------
 enum {
     UCM_EV_RUN,
     UCM_EV_TERM,
@@ -104,15 +107,12 @@ enum {
 };
 
 typedef struct {
-    int ev;
-    size_t size;
-    void* sender;
+    uint8_t ev;
+    size_t  size;
+    void*   sender;
 } ucm_ev_t;
 
-// ######################################################################
-//      CHAT FUNCTIONALITY API IMPLEMENTATION
-// ######################################################################
-
+// Messages -------------------
 enum {
     UCM_FLAG_MSG_MULTYCAST  = 1 << 0,
     UCM_FLAG_MSG_CRYPTO     = 1 << 1,
@@ -133,8 +133,9 @@ typedef struct ucm_msg_s {
     char data[1];
 } ucm_message_t;
 
+// Database ------------------
 typedef struct ucm_db_s {
-    char file [PATH_MAX];
+    char fname [PATH_MAX];
     struct ucm_plugin_t* handler;
 } ucm_db_t;
 
