@@ -100,10 +100,10 @@ enum {
 
 // Events ---------------------
 enum {
-    UCM_EV_RUN,
-    UCM_EV_TERM,
-    UCM_EV_INFO,
-    UCM_EV_LOAD_SUCCESS,
+    UCM_EV_TERM              = 0,
+    UCM_EV_RUN               = 1 << 0,
+    UCM_EV_INFO              = 1 << 1,
+    UCM_EV_LOAD_SUCCESS      = 1 << 2
 };
 
 typedef struct {
@@ -270,6 +270,9 @@ typedef struct _ucm_functions_s {
     int (*mainloop_ev_push)(ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
     void (*mainloop_ev_free)(ucm_ev_t** event);
     void (*mainloop_flush)(void);
+
+    void (*mainloop_hook_attach)(void(*callback)(uint32_t id, uintptr_t ev_ctx, uint32_t x1, uint32_t x2, void* ctx), void* ctx, uint32_t mask);
+    void (*mainloop_hook_detach)(void(*callback)(uint32_t id, uintptr_t ev_ctx, uint32_t x1, uint32_t x2, void* ctx));
 
     /*! get MD5 hash function */
     void (*md5)(uint8_t buf[16], const char* in, int size);

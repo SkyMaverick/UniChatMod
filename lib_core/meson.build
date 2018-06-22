@@ -1,9 +1,12 @@
 libcore_src = files('''
+  alloc.h
   api.c
   api.h
   core.c
   core.h
   defs.h
+  evhook.c
+  evhook.h
   mainloop.c
   mainloop.h
   gettext.h
