@@ -229,7 +229,6 @@ TUCMFunctions = record
     get_int64           : TUCMCB_StoreGetLongInt;
     get_float           : TUCMCB_StoreGetSingle;
     get_str             : TUCMCB_StoreGetPChar;
-    get_str_copy        : TUCMCB_StoreGetPCharCopy;
     set_int             : TUCMCB_StoreSetInt;
     set_int64           : TUCMCB_StoreSetLongInt;
     set_float           : TUCMCB_StoreSetSingle;
