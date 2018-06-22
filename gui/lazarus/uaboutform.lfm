@@ -28,7 +28,7 @@ object fmAbout: TfmAbout
     end
     object laProject: TLabel
       Left = 144
-      Height = 14
+      Height = 15
       Top = 11
       Width = 209
       Caption = 'UniChatMod (with lazarus GUI)'
@@ -38,7 +38,7 @@ object fmAbout: TfmAbout
     end
     object laVersion: TLabel
       Left = 144
-      Height = 14
+      Height = 15
       Top = 33
       Width = 55
       Caption = 'Version:'
@@ -48,7 +48,7 @@ object fmAbout: TfmAbout
     end
     object laVersionCore: TLabel
       Left = 144
-      Height = 14
+      Height = 15
       Top = 55
       Width = 88
       Caption = 'Version core:'
@@ -58,7 +58,7 @@ object fmAbout: TfmAbout
     end
     object laBuildInfo: TLabel
       Left = 144
-      Height = 14
+      Height = 15
       Top = 77
       Width = 96
       Caption = 'Build core for:'
@@ -68,7 +68,7 @@ object fmAbout: TfmAbout
     end
     object laStore: TLabel
       Left = 144
-      Height = 14
+      Height = 15
       Top = 121
       Width = 59
       Caption = 'Storage:'
@@ -78,7 +78,7 @@ object fmAbout: TfmAbout
     end
     object laFlags: TLabel
       Left = 144
-      Height = 14
+      Height = 15
       Top = 99
       Width = 107
       Caption = 'Build core with:'
@@ -86,17 +86,17 @@ object fmAbout: TfmAbout
       ParentColor = False
       ParentFont = False
     end
-    object laVersonU: TLabel
+    object laVersionU: TLabel
       Left = 208
-      Height = 14
+      Height = 15
       Top = 33
-      Width = 59
-      Caption = 'laVersonU'
+      Width = 62
+      Caption = 'laVersionU'
       ParentColor = False
     end
     object laVersionCoreU: TLabel
       Left = 240
-      Height = 14
+      Height = 15
       Top = 56
       Width = 89
       Caption = 'laVersionCoreU'
@@ -104,7 +104,7 @@ object fmAbout: TfmAbout
     end
     object laBuildInfoU: TLabel
       Left = 248
-      Height = 14
+      Height = 15
       Top = 77
       Width = 72
       Caption = 'laBuildInfoU'
@@ -112,7 +112,7 @@ object fmAbout: TfmAbout
     end
     object laFlagsU: TLabel
       Left = 256
-      Height = 14
+      Height = 15
       Top = 99
       Width = 50
       Caption = 'laFlagsU'
@@ -120,7 +120,7 @@ object fmAbout: TfmAbout
     end
     object laStoreU: TLabel
       Left = 208
-      Height = 14
+      Height = 15
       Top = 121
       Width = 51
       Caption = 'laStoreU'
@@ -139,7 +139,7 @@ object fmAbout: TfmAbout
     TabOrder = 1
     object laOrigAuthors: TLabel
       Left = 147
-      Height = 14
+      Height = 15
       Top = 8
       Width = 179
       Caption = 'Original UniChat authors: '
@@ -149,7 +149,7 @@ object fmAbout: TfmAbout
     end
     object laOAuthorsList: TLabel
       Left = 119
-      Height = 14
+      Height = 15
       Top = 24
       Width = 235
       Caption = 'Dentall, Agent Smith, Scropus, Adelina'
@@ -161,18 +161,18 @@ object fmAbout: TfmAbout
     Height = 200
     Top = 200
     Width = 500
-    ActivePage = tbsAuthors
+    ActivePage = tbsTranslates
     Align = alClient
-    TabIndex = 0
+    TabIndex = 2
     TabOrder = 2
     object tbsAuthors: TTabSheet
       Caption = 'Authors'
-      ClientHeight = 168
+      ClientHeight = 167
       ClientWidth = 494
       OnShow = tbsAuthorsShow
       object memAuthors: TMemo
         Left = 0
-        Height = 168
+        Height = 167
         Top = 0
         Width = 494
         Align = alClient
@@ -182,12 +182,12 @@ object fmAbout: TfmAbout
     end
     object tbsLicense: TTabSheet
       Caption = 'License'
-      ClientHeight = 168
+      ClientHeight = 167
       ClientWidth = 494
       OnShow = tbsLicenseShow
       object memLicense: TMemo
         Left = 0
-        Height = 168
+        Height = 167
         Top = 0
         Width = 494
         Align = alClient
@@ -197,12 +197,12 @@ object fmAbout: TfmAbout
     end
     object tbsTranslates: TTabSheet
       Caption = 'Translates'
-      ClientHeight = 168
+      ClientHeight = 167
       ClientWidth = 494
       OnShow = tbsTranslatesShow
       object memTranslates: TMemo
         Left = 0
-        Height = 168
+        Height = 167
         Top = 0
         Width = 494
         Align = alClient

@@ -5,8 +5,7 @@ unit uAboutForm;
 interface
 
 uses
-    Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-    StdCtrls, ComCtrls, uCoreClass, fileinfo;
+    SysUtils, Forms, ExtCtrls, StdCtrls, ComCtrls, uCoreClass, fileinfo;
 
 type
 
@@ -15,7 +14,7 @@ type
     TfmAbout = class(TForm)
         imLogo: TImage;
         laStore: TLabel;
-        laVersonU: TLabel;
+        laVersionU: TLabel;
         laVersionCoreU: TLabel;
         laBuildInfoU: TLabel;
         laFlagsU: TLabel;
@@ -76,11 +75,11 @@ begin
     UCMCore := TUCMCore.Create;
     with UCMCore do
     begin
-        laVersonU.Caption := GetAppVersion();
+        laVersionU.Caption := GetAppVersion();
         laVersionCoreU.Caption :=
             Format('%d.%d.%d', [Info.vmajor, Info.vminor, Info.vpatch]);
-        laBuildInfoU.Caption := Info.build.compiler;
-        laFlagsU.Caption := Info.build.options;
+        laBuildInfoU.Caption := StrPas(Info.build.compiler);
+        laFlagsU.Caption := StrPas(Info.build.options);
     end;
     isLoadedAuthors := False;
     isLoadedLicense := False;

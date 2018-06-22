@@ -127,7 +127,7 @@ end;
 
 procedure TfmMain.actMgmSettingsExecute(Sender: TObject);
 begin
-    fmSettings:= TfmSettings.Create(Self);
+    fmSettings := TfmSettings.Create(Self);
     fmSettings.ShowModal;
     fmSettings.Free;
 end;
