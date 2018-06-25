@@ -7,6 +7,7 @@
 #include "core.h"
 #include "mainloop.h"
 #include "plugmgr.h"
+#include "evhook.h"
 
 static uintptr_t tid_loop_core = 0;
 
@@ -23,6 +24,9 @@ loop_core (void* ctx)
 
     while(1) {
         while ( ucm_mloop_pop(&id, &lctx, &x1, &x2) == UCM_RET_SUCCESS ) {
+            // hook events for shost applications
+            hook_event(id, lctx, x1, x2);
+            // send message to all plugins
             plugins_message_dispatch(&id, &lctx, &x1, &x2);
 
             switch (id) {

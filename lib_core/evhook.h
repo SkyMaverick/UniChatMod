@@ -10,10 +10,10 @@ typedef  void (*cb_hook)(uint32_t    eid,
                          uint32_t    x2,
                          void*       ctx);
 void
-hook_event (uint32_t    eid,
-            uintptr_t   ev,
-            uint32_t    x1,
-            uint32_t    x2);
+hook_event (const uint32_t    eid,
+            const uintptr_t   ev,
+            const uint32_t    x1,
+            const uint32_t    x2);
 
 void
 hook_event_attach (cb_hook  hook,
