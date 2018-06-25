@@ -2,10 +2,12 @@
 #include "api.h"
 #include "defs.h"
 #include "config.h"
+#include "gettext.h"
 
 #include "core.h"
 #include "mainloop.h"
 #include "plugmgr.h"
+#include "evhook.h"
 
 static uintptr_t tid_loop_core = 0;
 
@@ -17,8 +19,14 @@ loop_core (void* ctx)
     uint32_t  x1;
     uint32_t  x2;
     unsigned  term = 0;
+
+    UNUSED(ctx);
+
     while(1) {
         while ( ucm_mloop_pop(&id, &lctx, &x1, &x2) == UCM_RET_SUCCESS ) {
+            // hook events for shost applications
+            hook_event(id, lctx, x1, x2);
+            // send message to all plugins
             plugins_message_dispatch(&id, &lctx, &x1, &x2);
 
             switch (id) {
@@ -44,6 +52,7 @@ _run_core (void)
         // run all plugins
         plugins_run_all();
     }
+    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
 
@@ -67,6 +76,10 @@ _message_core(uint32_t id,
               uint32_t x2)
 
 {
+    UNUSED(id);
+    UNUSED(ctx);
+    UNUSED(x1);
+    UNUSED(x2);
     switch (id) {
         // TODO
     }
