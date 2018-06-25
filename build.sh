@@ -74,6 +74,12 @@ else
                 fi
             fi
         ;;
+        lazgui) 
+            if [ -d $build_dir ]
+            then
+                cd $build_dir && ninja lazgui && cd $build_dir
+            fi
+        ;;
         install)
             if [ -d $build_dir ]
             then

@@ -1,7 +1,8 @@
-lazapp_proj = 'UniChatMod.lpi'
+lazapp_proj = 'UniChatMod.lpr'
+lazbuild_script = 'build.sh'
 
+# -- found and check lazbuild ---
 lazbuild = find_program('lazbuild', required: true)
-
 lazbuild_support = '>=1.8.0'
 
 if lazbuild.found()
@@ -15,30 +16,72 @@ else
     warning ('Lazarus build app NOT found')
 endif
 
-lazbuild_ars = [
-    '--build-all'
-]
+# -- found and check shell ---
+shell = find_program('sh', required: true)
+if shell.found()
+
+endif
+
+
+# -- define OS-specified arguments ---
+
+shell_run = configuration_data()
+
+shell_run.set('sh_project', lazapp_proj)
 
 if target_machine.system() == 'windows'
     if target_machine.cpu_family() == 'x86'
-        lazbuild_ars += '--operating-system=win32 --ws=win32'
+        shell_run.set('sh_os', 'win32')
+        shell_run.set('sh_ws', 'win32')
     elif target_machine.cpu_family() == 'x86_64'
-        lazbuild_ars += '--operating-system=win64 --ws=win64'
+        shell_run.set('sh_os', 'win64')
+        shell_run.set('sh_ws', 'win64')
     endif
 else
-    lazbuild_ars += '--operating-system=linux --ws=gtk2'
+        shell_run.set('sh_os', 'linux')
+        shell_run.set('sh_ws', 'gtk2')
 endif
-
 if target_machine.cpu_family() == 'x86'
-    lazbuild_args += '--cpu=i386'
+        shell_run.set('sh_arch', 'i386')
 else
-    lazbuild_ars  += '--cpu=x86_64'
+        shell_run.set('sh_arch', 'x86_64')
 endif
 
-lazapp = run_command (lazbuild, lazbuild_ars)
+configure_file (input: 'build.sh.in',
+                output: lazbuild_script,
+                configuration: shell_run)
 
-message(lazapp.stdout())    
+lazbuild_script = join_paths(meson.current_build_dir(), lazbuild_script)
 
-if lazapp.returncode() != 0
-    error('Stop compilation code: @0@. @1@'.format(lazapp.returncode(), lazapp.stdout()))
-endif
+lazapp = run_target ('lazgui',
+                     depends: [libcore, libcore_a],
+                     command: [lazbuild_script])
+
+# lazbuild_args = []
+# 
+# if target_machine.system() == 'windows'
+#     if target_machine.cpu_family() == 'x86'
+#         lazbuild_args += 'win32 win32'
+#     elif target_machine.cpu_family() == 'x86_64'
+#         lazbuild_args += 'win64 win64'
+#     endif
+# else
+#     lazbuild_args += 'linux gtk2'
+# endif
+# 
+# if target_machine.cpu_family() == 'x86'
+#     lazbuild_args += 'i386'
+# else
+#     lazbuild_args  += 'x86_64'
+# endif
+# 
+# lazapp_proj = join_paths(meson.current_source_dir(), lazapp_proj)
+# lazbuild_script = join_paths(meson.current_source_dir(), lazbuild_script)
+# lazbuild_args = ' '.join(lazbuild_args)
+# 
+# shell_command = ' '.join(['-lic', lazbuild_script, lazapp_proj, lazbuild_args])
+# 
+# lazapp = run_target ('lazgui',
+#                      depends: [libcore, libcore_a],
+#                      command: [shell, shell_command])
+# 
