@@ -67,6 +67,8 @@
 #endif
 
 #define UCM_PID_MAX 33
+#define UNUSED(x) (void)(x);
+// #define UNUSED_ALL(...) (void)(__VA_ARGS__)
 
 /* CORE structures *******************************************************
 */
@@ -133,12 +135,6 @@ typedef struct ucm_msg_s {
     char data[1];
 } ucm_message_t;
 
-// Database ------------------
-typedef struct ucm_db_s {
-    char fname [PATH_MAX];
-    struct ucm_plugin_t* handler;
-} ucm_db_t;
-
 // ######################################################################
 //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
 // ######################################################################
@@ -200,25 +196,31 @@ typedef struct _ucm_plugin_s {
                     uint32_t x1, uint32_t x2);    /// recieve system messages callback
 } ucm_plugin_t;
 
+enum {
+    UCM_FLAG_DB_READONLY    = 1 << 0,
+    UCM_FLAG_DB_NEEDCHAECK  = 1 << 1,
+    UCM_FLAG_DB_NEEDBACKUP  = 1 << 2,
+};
+
 typedef struct {
     ucm_plugin_t core;
 
     // technical db functionality
-    ucm_db_t* (*db_open)  (char* file, void* ctx);
-    UCM_RET   (*db_check) (ucm_db_t* db, void* ctx);
-    UCM_RET   (*db_flush) (ucm_db_t* db);
-    UCM_RET   (*db_close) (ucm_db_t* db);
+    UCM_RET   (*db_open)  (char* file, uint32_t flags);
+    UCM_RET   (*db_check) (void);
+    UCM_RET   (*db_flush) (void);
+    UCM_RET   (*db_close) (void);
 
     // low-level API. Use simple config elements. Use in case of emergency
-    int     (*get_int)   (ucm_db_t* db, char* key, int def);
-    int64_t (*get_int64) (ucm_db_t* db, char* key, int64_t def);
-    float   (*get_float) (ucm_db_t* db, char* key, float def);
-    char*   (*get_str)   (ucm_db_t* db, char* key, char* def);
-    void    (*set_int)   (ucm_db_t* db, char* key, int value);
-    void    (*set_int64) (ucm_db_t* db, char* key, int64_t value);
-    void    (*set_float) (ucm_db_t* db, char* key, float value);
-    void    (*set_str)   (ucm_db_t* db, char* key, char* value);
-    void    (*item_del)  (ucm_db_t* db, char* key);
+    int     (*get_int)   (char* key, int def);
+    int64_t (*get_int64) (char* key, int64_t def);
+    float   (*get_float) (char* key, float def);
+    char*   (*get_str)   (char* key, char* def);
+    void    (*set_int)   (char* key, int value);
+    void    (*set_int64) (char* key, int64_t value);
+    void    (*set_float) (char* key, float value);
+    void    (*set_str)   (char* key, char* value);
+    void    (*item_del)  (char* key);
     // hight-level API. Use app structures config with one API function
     // TODO
 } ucm_dbplugin_t;

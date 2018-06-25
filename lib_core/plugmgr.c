@@ -83,14 +83,14 @@ _plugin_load (char* filename)
     if ( (err = dlerror()) == NULL ) {
         ucm_plugin_t* plug = cb_init_plugin(ucm_global_api);
         if (plug) {
-            if ( _plugin_verify (plug) == UCM_RET_SUCCESS )
+            if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
                 module = malloc (sizeof(ucm_module_t));
                 if (module) {
-
                     module->plugin = plug;
                     module->handle = handle;
                     return module;
                 }
+            }
        } else {
            ucm_etrace ("%s: %s", filename, _("this plugin broken"));
        }
