@@ -199,6 +199,10 @@ TUCMCB_PluginInfo = function (pid: PChar): PUCMPluginInfo; cdecl;
 TUCMCB_UMsgSend    = function (): TUCMRetStatus; cdecl;
 TUCMCB_UMsgRecieve = function (): TUCMRetStatus; cdecl;
 
+TUCMCB_HookEvent  = procedure (id: Cardinal; ev: UIntPtr; x1: Cardinal; x2: Cardinal; ctx: Pointer); cdecl;
+TUCMCB_HookAttach = procedure (hook: TUCMCB_HookEvent; ctx: Pointer); cdecl;
+TUCMCB_HookDetach = procedure (hook: TUCMCB_HookEvent); cdecl;
+
 TUCMFunctions = record
     thread_create       : TUCMCB_ThreadCreate;
     thread_detach       : TUCMCB_ThreadOperation;
@@ -239,6 +243,9 @@ TUCMFunctions = record
     mainloop_ev_push    : TUCMCB_MLEventPush;
     mainloop_ev_free    : TUCMCB_MLEventFreeAndNil;
     mainloop_flush      : TUCMCB_MLClear;
+
+    mainloop_hook_attach: TUCMCB_HookAttach;
+    mainloop_hook_detach: TUCMCB_HookDetach;
 
         // get MD5 hash function */
     md5                 : TUCMCB_Md5Buffer;

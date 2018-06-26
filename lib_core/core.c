@@ -49,10 +49,11 @@ _run_core (void)
 {
     // start main message loop
     if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
+
         log_init();
         hooks_event_init();
+
         tid_loop_core = ucm_global_api->thread_create(loop_core, NULL);
-        // run all plugins
         plugins_run_all();
     }
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
