@@ -18,6 +18,7 @@ type
         pcSettings: TPageControl;
         pnlButtons: TPanel;
         tvCategory: TTreeView;
+        procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     private
 
     public
@@ -31,5 +32,11 @@ implementation
 
 {$R *.lfm}
 
-end.
+{ TfmSettings }
 
+procedure TfmSettings.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+    CloseAction := caFree;
+end;
+
+end.

@@ -6,6 +6,7 @@ object fmSettings: TfmSettings
   Caption = 'Settings'
   ClientHeight = 400
   ClientWidth = 600
+  OnClose = FormClose
   LCLVersion = '1.8.4.0'
   object tvCategory: TTreeView
     Left = 0
