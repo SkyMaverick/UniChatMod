@@ -121,15 +121,19 @@ implementation
 procedure TfmMain.actHlpAboutExecute(Sender: TObject);
 begin
     fmAbout := TfmAbout.Create(Self);
+    actHlpAbout.Enabled:=FALSE;
     fmAbout.ShowModal;
     fmAbout.Free;
+    actHlpAbout.Enabled:=TRUE;
 end;
 
 procedure TfmMain.actMgmSettingsExecute(Sender: TObject);
 begin
     fmSettings := TfmSettings.Create(Self);
+    actMgmSettings.Enabled:=FALSE;
     fmSettings.ShowModal;
     fmSettings.Free;
+    actMgmSettings.Enabled:=TRUE;
 end;
 
 end.
