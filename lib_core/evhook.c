@@ -9,9 +9,9 @@
 
 
 typedef struct _event_hook_s {
-    unsigned mask;                      // events selector mask
-    void*    ctx;                       // callback context pointer
-    cb_hook hook;
+    unsigned  mask;                      // events selector mask
+    void*     ctx;                       // callback context pointer
+    cb_evhook hook;
 
     struct _event_hook_s* next;
 } ucm_evhook_t;
@@ -34,18 +34,45 @@ _hooks_core (uint32_t    eid,
     rwlock_unlock (_lock_hooks);
 }
 
+static void
+_hooks_flush (ucm_evhook_t** list) 
+{
+    ucm_evhook_t* tmp = NULL;
+    while (*list) {
+        tmp = *list;
+        *list = (*list)->next;
+        free(tmp);
+    }
+}
+
 void
-hook_event (uint32_t    eid,
-            uintptr_t   ev,
-            uint32_t    x1,
-            uint32_t    x2)
+hooks_event_init (void)
+{
+    _hooks = NULL;
+    _lock_hooks = rwlock_create();
+}
+
+void
+hooks_event_release (void)
+{
+    _hooks_flush(&_hooks);
+    rwlock_free(_lock_hooks);
+}
+
+void
+hooks_event (uint32_t    eid,
+             uintptr_t   ev,
+             uint32_t    x1,
+             uint32_t    x2)
 {
     // TODO block some events if it's need
     _hooks_core (eid, ev, x1, x2);
 }
 
 void
-hook_event_attach (cb_hook hook, void* ctx, uint32_t mask)
+hooks_event_attach (cb_evhook  hook, 
+                    void*      ctx, 
+                    uint32_t   mask)
 {
     ucm_evhook_t* eh = ucm_zmalloc(sizeof(ucm_evhook_t));
     if (eh) {
@@ -61,7 +88,7 @@ hook_event_attach (cb_hook hook, void* ctx, uint32_t mask)
 }
 
 void
-hook_event_detach (cb_hook hook)
+hooks_event_detach (cb_evhook hook)
 {
     ucm_evhook_t* prev = NULL;
 

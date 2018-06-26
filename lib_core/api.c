@@ -78,8 +78,8 @@ static ucm_functions_t core_api = {
     .mainloop_ev_free     = ucm_mloop_event_free,
     .mainloop_flush       = NULL,
 
-    .mainloop_hook_attach = hook_event_attach,
-    .mainloop_hook_detach = hook_event_detach,
+    .mainloop_hook_attach = hooks_event_attach,
+    .mainloop_hook_detach = hooks_event_detach,
 
     /*! get MD5 hash function */
     .md5                  = NULL,

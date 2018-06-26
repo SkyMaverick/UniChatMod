@@ -8,6 +8,7 @@
 #include "mainloop.h"
 #include "plugmgr.h"
 #include "evhook.h"
+#include "logger.h"
 
 static uintptr_t tid_loop_core = 0;
 
@@ -25,7 +26,7 @@ loop_core (void* ctx)
     while(1) {
         while ( ucm_mloop_pop(&id, &lctx, &x1, &x2) == UCM_RET_SUCCESS ) {
             // hook events for shost applications
-            hook_event(id, lctx, x1, x2);
+            hooks_event(id, lctx, x1, x2);
             // send message to all plugins
             plugins_message_dispatch(&id, &lctx, &x1, &x2);
 
@@ -48,6 +49,8 @@ _run_core (void)
 {
     // start main message loop
     if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
+        log_init();
+        hooks_event_init();
         tid_loop_core = ucm_global_api->thread_create(loop_core, NULL);
         // run all plugins
         plugins_run_all();
@@ -66,6 +69,10 @@ _stop_core (void)
     // stop main message loop
     ucm_global_api->thread_join(tid_loop_core);
     ucm_mloop_free();
+
+    log_release();
+    hooks_event_release();
+
     return UCM_RET_SUCCESS;
 }
 

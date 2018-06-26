@@ -4,23 +4,29 @@
 #include <stddef.h>
 #include <inttypes.h>
 
-typedef  void (*cb_hook)(uint32_t    eid,
-                         uintptr_t   ev,
-                         uint32_t    x1,
-                         uint32_t    x2,
-                         void*       ctx);
+typedef  void (*cb_evhook)(uint32_t    eid,
+                           uintptr_t   ev,
+                           uint32_t    x1,
+                           uint32_t    x2,
+                           void*       ctx);
 void
-hook_event (const uint32_t    eid,
-            const uintptr_t   ev,
-            const uint32_t    x1,
-            const uint32_t    x2);
+hooks_event_init (void);
 
 void
-hook_event_attach (cb_hook  hook,
+hooks_event_release (void);
+
+void
+hooks_event (const uint32_t    eid,
+             const uintptr_t   ev,
+             const uint32_t    x1,
+             const uint32_t    x2);
+
+void
+hooks_event_attach (cb_evhook  hook,
                    void*    ctx,
                    uint32_t mask);
 
 void
-hook_event_detach (cb_hook hook);
+hooks_event_detach (cb_evhook hook);
 
 #endif
