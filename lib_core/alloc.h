@@ -5,6 +5,12 @@
 #include <string.h>
 
 static inline void*
+ucm_malloc (size_t size)
+{
+    return malloc(size);
+}
+
+static inline void*
 ucm_zmalloc (size_t size)
 {
     return calloc (1, size);
@@ -22,12 +28,11 @@ ucm_free (void* obj)
     free (obj);
 }
 
-static inline void
-ucm_free_null (void** obj)
-{
-    free (*obj);
-    *obj = NULL;
-}
+#define ucm_free_null(X) \
+    do {                 \
+        free(X);         \
+        X = NULL;        \
+    } while (0);         \
 
 static inline void
 ucm_zmemory (void* mem, size_t size)

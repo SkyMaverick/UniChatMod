@@ -41,7 +41,7 @@ _hooks_flush (ucm_evhook_t** list)
     while (*list) {
         tmp = *list;
         *list = (*list)->next;
-        free(tmp);
+        ucm_free_null(tmp);
     }
 }
 

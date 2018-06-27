@@ -1,6 +1,8 @@
 #include "ucm.h"
 #include "mqueue.h"
 #include "threading.h"
+#include "alloc.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,14 +27,14 @@ static void
 _mq_flush (mq_block_t* h)
 {
     h->head = 0; h->tail = 0; h->count = 0;
-    memset (h->queue, 0, h->q_size * sizeof(mq_msg_t));
+    ucm_zmemory (h->queue, h->q_size * sizeof(mq_msg_t));
 };
 
 struct mq_block_s*
 mq_create (uint32_t q_count)
 {
     int mem_sz = sizeof(mq_block_t) + (q_count - 1) * sizeof(mq_msg_t);
-    mq_block_t* h = malloc(mem_sz);
+    mq_block_t* h = ucm_zmalloc(mem_sz);
     h->q_size = q_count;
     h->mutex = mutex_create ();
     h->cond = cond_create ();
@@ -126,5 +128,5 @@ mq_free (mq_block_t *h)
     mutex_unlock (h->mutex);
     mutex_free (h->mutex);
     cond_free (h->cond);
-    free (h);
+    ucm_free (h);
 };

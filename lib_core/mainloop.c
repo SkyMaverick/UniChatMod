@@ -5,6 +5,7 @@
 #include "config.h"
 #include "mqueue.h"
 #include "mainloop.h"
+#include "alloc.h"
 #include "gettext.h"
 
 static struct mq_block_s* messages;
@@ -79,8 +80,7 @@ ucm_mloop_event_alloc (int id)
     }
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
-        event = malloc(size);
-        memset(event, 0, size);
+        event = ucm_zmalloc(size);
         event->ev = id;
         event->size = size;
         event->sender = NULL;
@@ -97,8 +97,7 @@ ucm_mloop_event_free (ucm_ev_t** event)
         switch ((*event)->ev){
             // TODO
         }
-        free(*event);
-        event = NULL;
+        ucm_free_null(*event);
     }
 }
 
