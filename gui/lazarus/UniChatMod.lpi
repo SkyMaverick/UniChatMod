@@ -17,6 +17,7 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="1"/>
+      <Attributes pvaDebug="True"/>
       <StringTable Comments="UniChatMod application (based on UniChat and libucm)" InternalName="ucmapp" LegalCopyright="ZLib" ProductName="UniChatMod"/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -63,6 +64,12 @@
               </Win32>
             </Options>
           </Linking>
+          <Other>
+            <Verbosity>
+              <ShoLineNum Value="True"/>
+              <ShowHintsForUnusedUnitsInMainSrc Value="True"/>
+            </Verbosity>
+          </Other>
         </CompilerOptions>
       </Item2>
     </BuildModes>
@@ -164,6 +171,12 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <Verbosity>
+        <ShoLineNum Value="True"/>
+        <ShowHintsForUnusedUnitsInMainSrc Value="True"/>
+      </Verbosity>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

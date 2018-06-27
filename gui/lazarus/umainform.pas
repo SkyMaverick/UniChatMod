@@ -6,7 +6,7 @@ interface
 
 uses
     Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ActnList,
-    Menus, ExtCtrls, StdCtrls, ComCtrls, ComboEx, RichView, RVStyle, uCoreClass,
+    Menus, ExtCtrls, StdCtrls, ComCtrls, ComboEx, RichView, RVStyle,
     uAboutForm, uConfForm;
 
 type
@@ -121,19 +121,19 @@ implementation
 procedure TfmMain.actHlpAboutExecute(Sender: TObject);
 begin
     fmAbout := TfmAbout.Create(Self);
-    actHlpAbout.Enabled:=FALSE;
+    actHlpAbout.Enabled := False;
     fmAbout.ShowModal;
     fmAbout.Free;
-    actHlpAbout.Enabled:=TRUE;
+    actHlpAbout.Enabled := True;
 end;
 
 procedure TfmMain.actMgmSettingsExecute(Sender: TObject);
 begin
     fmSettings := TfmSettings.Create(Self);
-    actMgmSettings.Enabled:=FALSE;
+    actMgmSettings.Enabled := False;
     fmSettings.ShowModal;
     fmSettings.Free;
-    actMgmSettings.Enabled:=TRUE;
+    actMgmSettings.Enabled := True;
 end;
 
 end.

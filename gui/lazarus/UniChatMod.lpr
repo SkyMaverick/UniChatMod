@@ -9,7 +9,8 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     uMainForm,
     lazrichview,
     uAboutForm,
-    uConfForm, uCoreClass { you can add units after this };
+    uConfForm,
+    uCoreClass { you can add units after this };
 
 {$R *.res}
 
