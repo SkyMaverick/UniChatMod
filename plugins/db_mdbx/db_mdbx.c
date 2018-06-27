@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "ucm.h"
+#include "alloc.h"
 #include "config.h"
 #include "gettext.h"
 #include "libmdbx/mdbx.h"
@@ -56,8 +57,6 @@ typedef struct {
 #define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_INFO,  fmt, __VA_ARGS__);}
 #define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_ERROR, fmt, __VA_ARGS__);}
 
-#define zmalloc(size) calloc(1,size)
-
 static mdbx_dbmgr_t* UCM_MDBX_DB = NULL;
 
 // ######################################################################
@@ -90,7 +89,7 @@ static UCM_RET
 _run_dbmdbx (void)
 {
     int rc;
-    UCM_MDBX_DB = zmalloc(sizeof(mdbx_dbmgr_t));
+    UCM_MDBX_DB = ucm_zmalloc(sizeof(mdbx_dbmgr_t));
     if (UCM_MDBX_DB) {
           rc = mdbx_env_create(&(UCM_MDBX_DB->env));
           if (rc != MDBX_SUCCESS) {
@@ -106,8 +105,8 @@ _run_dbmdbx (void)
 static UCM_RET
 _stop_dbmdbx (void)
 {
-    plugin.db_close();
-    free (UCM_MDBX_DB);
+    plugin.db_close ();
+    ucm_free_null (UCM_MDBX_DB);
     return UCM_RET_SUCCESS;
 }
 

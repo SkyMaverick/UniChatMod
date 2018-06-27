@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "alloc.h"
 #include "threading.h"
 #include "defs.h"
 
@@ -68,47 +70,51 @@ thread_join (intptr_t tid)
 uintptr_t
 mutex_create_nonrecursive (void)
 {
-    pthread_mutex_t* mtx= malloc(sizeof(pthread_mutex_t));
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
+    pthread_mutex_t* mtx= ucm_malloc(sizeof(pthread_mutex_t));
+    if (mtx) {
+        pthread_mutexattr_t attr;
+        pthread_mutexattr_init(&attr);
 #if defined (__GLIBC__)
-    pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_TIMED_NP);
+        pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_TIMED_NP);
 #endif
-    int fail=pthread_mutex_init(mtx,&attr);
-    if (fail) {
-        ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
-        free(mtx);
-        return 0;
+        int fail=pthread_mutex_init(mtx,&attr);
+        if (fail) {
+            ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
+            ucm_free_null(mtx);
+        }
+        pthread_mutexattr_destroy (&attr);
     }
-    pthread_mutexattr_destroy (&attr);
     return (uintptr_t)mtx;
 }
 
 uintptr_t
 mutex_create (void)
 {
-    pthread_mutex_t* mtx= malloc(sizeof(pthread_mutex_t));
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
+    pthread_mutex_t* mtx= ucm_malloc(sizeof(pthread_mutex_t));
+    if (mtx) {
+        pthread_mutexattr_t attr;
+        pthread_mutexattr_init(&attr);
 #if defined (__GLIBC__)
-    pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
+        pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
 #endif
-    int fail=pthread_mutex_init(mtx,&attr);
-    if (fail) {
-        ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
-        free(mtx);
-        return 0;
+        int fail=pthread_mutex_init(mtx,&attr);
+        if (fail) {
+            ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
+            ucm_free_null(mtx);
+        }
+        pthread_mutexattr_destroy (&attr);
     }
-    pthread_mutexattr_destroy (&attr);
     return (uintptr_t)mtx;
 }
 
 void
 mutex_free (uintptr_t _mtx)
 {
-    pthread_mutex_t* mtx = (pthread_mutex_t*)_mtx;
-    pthread_mutex_destroy(mtx);
-    free(mtx);
+    if (_mtx) {
+        pthread_mutex_t* mtx = (pthread_mutex_t*)_mtx;
+        pthread_mutex_destroy(mtx);
+        ucm_free(mtx);
+    }
 }
 
 int
@@ -134,12 +140,13 @@ mutex_unlock(uintptr_t _mtx)
 uintptr_t
 cond_create (void)
 {
-    pthread_cond_t *cond = malloc(sizeof(pthread_cond_t));
-    int fail = pthread_cond_init(cond, NULL);
-    if (fail) {
-        ucm_etrace("%s. %s\n","Failed in pthread_cond_create", strerror(fail));
-        free(cond);
-        return 0;
+    pthread_cond_t *cond = ucm_malloc(sizeof(pthread_cond_t));
+    if (cond) {
+        int fail = pthread_cond_init(cond, NULL);
+        if (fail) {
+            ucm_etrace("%s. %s\n","Failed in pthread_cond_create", strerror(fail));
+            ucm_free_null(cond);
+        }
     }
     return (uintptr_t)cond;
 }
@@ -193,27 +200,30 @@ uintptr_t
 rwlock_create (void)
 {
     pthread_rwlock_t* rwl = malloc(sizeof(pthread_rwlock_t));
-    pthread_rwlockattr_t attr;
-    pthread_rwlockattr_init(&attr);
+    if (rwl) {
+        pthread_rwlockattr_t attr;
+        pthread_rwlockattr_init(&attr);
 #if defined (__GLIBC__)
-    pthread_rwlockattr_setkind_np(&attr,PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+        pthread_rwlockattr_setkind_np(&attr,PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-    int fail = pthread_rwlock_init(rwl,&attr);
-    if(fail){
-        ucm_etrace("%s. %s\n","Failed in rwlock_create", strerror(fail));
-        free(rwl);
-        return 0;
+        int fail = pthread_rwlock_init(rwl,&attr);
+        if(fail){
+            ucm_etrace("%s. %s\n","Failed in rwlock_create", strerror(fail));
+            ucm_free_null(rwl);
+        }
+        pthread_rwlockattr_destroy(&attr);
     }
-    pthread_rwlockattr_destroy(&attr);
     return (uintptr_t)rwl;
 }
 
 void
 rwlock_free (uintptr_t _rwl)
 {
-    pthread_rwlock_t* rwl = (pthread_rwlock_t*)_rwl;
-    pthread_rwlock_destroy(rwl);
-    free(rwl);
+    if (_rwl) {
+        pthread_rwlock_t* rwl = (pthread_rwlock_t*)_rwl;
+        pthread_rwlock_destroy(rwl);
+        ucm_free(rwl);
+    }
 }
 
 int
