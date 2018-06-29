@@ -3,6 +3,7 @@
 *backup/
 /pkgs/
 /gui/lazarus/UniChatMod
+/gui/lazarus/icons/out/
 /gui/lazarus/lib/
 tags
 *.lps

@@ -57,31 +57,4 @@ lazapp = run_target ('lazgui',
                      depends: [libcore, libcore_a],
                      command: [lazbuild_script])
 
-# lazbuild_args = []
-# 
-# if target_machine.system() == 'windows'
-#     if target_machine.cpu_family() == 'x86'
-#         lazbuild_args += 'win32 win32'
-#     elif target_machine.cpu_family() == 'x86_64'
-#         lazbuild_args += 'win64 win64'
-#     endif
-# else
-#     lazbuild_args += 'linux gtk2'
-# endif
-# 
-# if target_machine.cpu_family() == 'x86'
-#     lazbuild_args += 'i386'
-# else
-#     lazbuild_args  += 'x86_64'
-# endif
-# 
-# lazapp_proj = join_paths(meson.current_source_dir(), lazapp_proj)
-# lazbuild_script = join_paths(meson.current_source_dir(), lazbuild_script)
-# lazbuild_args = ' '.join(lazbuild_args)
-# 
-# shell_command = ' '.join(['-lic', lazbuild_script, lazapp_proj, lazbuild_args])
-# 
-# lazapp = run_target ('lazgui',
-#                      depends: [libcore, libcore_a],
-#                      command: [shell, shell_command])
-# 
+subdir('icons')

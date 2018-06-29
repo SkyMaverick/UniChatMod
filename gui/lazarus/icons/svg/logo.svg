@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="1024" height="1024" viewBox="0 0 270.93333 270.93334" version="1.1" id="svg8" inkscape:version="0.92.3 (unknown)" sodipodi:docname="logo.svg">
+  <defs id="defs2">
+    <linearGradient inkscape:collect="always" id="linearGradient4586">
+      <stop style="stop-color:white;stop-opacity:1;" offset="0" id="stop4582" />
+      <stop style="stop-color:#c4dcff;stop-opacity:1" offset="1" id="stop4584" />
+    </linearGradient>
+    <linearGradient inkscape:collect="always" id="linearGradient4578">
+      <stop style="stop-color:white;stop-opacity:1;" offset="0" id="stop4574" />
+      <stop style="stop-color:#80b3ff;stop-opacity:1" offset="1" id="stop4576" />
+    </linearGradient>
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient4578" id="linearGradient4580" x1="95.25" y1="222.91666" x2="176.41531" y2="346.47284" gradientUnits="userSpaceOnUse" gradientTransform="translate(3.5013487,-12.431197)" />
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient4586" id="linearGradient4588" x1="103.07249" y1="-113.56015" x2="245.94749" y2="-229.97682" gradientUnits="userSpaceOnUse" gradientTransform="translate(-7.1558363,-2.8565191)" />
+    <filter style="color-interpolation-filters:sRGB;" inkscape:label="Drop Shadow" id="filter438">
+      <feFlood flood-opacity="1" flood-color="rgb(0,0,0)" result="flood" id="feFlood428" />
+      <feComposite in="flood" in2="SourceGraphic" operator="in" result="composite1" id="feComposite430" />
+      <feGaussianBlur in="composite1" stdDeviation="5" result="blur" id="feGaussianBlur432" />
+      <feOffset dx="5" dy="5" result="offset" id="feOffset434" />
+      <feComposite in="SourceGraphic" in2="offset" operator="over" result="composite2" id="feComposite436" />
+    </filter>
+    <filter style="color-interpolation-filters:sRGB;" inkscape:label="Drop Shadow" id="filter858">
+      <feFlood flood-opacity="1" flood-color="rgb(0,0,0)" result="flood" id="feFlood848" />
+      <feComposite in="flood" in2="SourceGraphic" operator="in" result="composite1" id="feComposite850" />
+      <feGaussianBlur in="composite1" stdDeviation="5" result="blur" id="feGaussianBlur852" />
+      <feOffset dx="5" dy="-5" result="offset" id="feOffset854" />
+      <feComposite in="SourceGraphic" in2="offset" operator="over" result="composite2" id="feComposite856" />
+    </filter>
+    <filter style="color-interpolation-filters:sRGB;" inkscape:label="Drop Shadow" id="filter520">
+      <feFlood flood-opacity="1" flood-color="rgb(0,0,0)" result="flood" id="feFlood510" />
+      <feComposite in="flood" in2="SourceGraphic" operator="in" result="composite1" id="feComposite512" />
+      <feGaussianBlur in="composite1" stdDeviation="3" result="blur" id="feGaussianBlur514" />
+      <feOffset dx="2" dy="2" result="offset" id="feOffset516" />
+      <feComposite in="SourceGraphic" in2="offset" operator="over" result="composite2" id="feComposite518" />
+    </filter>
+    <filter style="color-interpolation-filters:sRGB;" inkscape:label="Drop Shadow" id="filter544">
+      <feFlood flood-opacity="1" flood-color="rgb(0,0,0)" result="flood" id="feFlood534" />
+      <feComposite in="flood" in2="SourceGraphic" operator="in" result="composite1" id="feComposite536" />
+      <feGaussianBlur in="composite1" stdDeviation="3" result="blur" id="feGaussianBlur538" />
+      <feOffset dx="2" dy="-2" result="offset" id="feOffset540" />
+      <feComposite in="SourceGraphic" in2="offset" operator="over" result="composite2" id="feComposite542" />
+    </filter>
+  </defs>
+  <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="0.25776458" inkscape:cx="-590.25223" inkscape:cy="722.49508" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="true" units="px" inkscape:pagecheckerboard="true" inkscape:window-width="1366" inkscape:window-height="715" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:snap-object-midpoints="true">
+    <inkscape:grid type="xygrid" id="grid10" dotted="true" empspacing="5" />
+  </sodipodi:namedview>
+  <metadata id="metadata5">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(0,-26.06665)">
+    <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:url(#linearGradient4588);fill-opacity:1;fill-rule:nonzero;stroke:#7696ca;stroke-width:5.29166651;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate;filter:url(#filter544)" id="rect34-3" width="209.00916" height="169.32166" x="49.09795" y="-246.24854" transform="rotate(90)" />
+    <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:url(#linearGradient4580);fill-opacity:1;fill-rule:nonzero;stroke:#7696ca;stroke-width:5.29166651;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate;filter:url(#filter520)" id="rect34" width="182.56187" height="111.12438" x="24.684803" y="162.8443" />
+    <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:0.83666003;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" id="rect4674" width="42.333332" height="9.260417" x="188.06487" y="64.948311" />
+    <rect y="139.38438" x="98.106506" height="9.260417" width="111.12499" id="rect4676" style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:1.35554409;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+    <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:1.47902012;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" id="rect4678" width="132.29169" height="9.260417" x="98.106506" y="122.18648" />
+    <rect y="104.98853" x="98.106506" height="9.260417" width="132.29169" id="rect4680" style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:1.47902012;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+    <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:0.83666003;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" id="rect4682" width="42.333332" height="9.260417" x="98.106506" y="87.790611" />
+    <rect y="246.05565" x="39.369022" height="9.260417" width="111.12499" id="rect4676-1" style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:1.35554409;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+    <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:1.47902012;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" id="rect4678-2" width="132.29169" height="9.260417" x="39.369022" y="228.85771" />
+    <rect y="211.65974" x="39.369022" height="9.260417" width="132.29169" id="rect4680-7" style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#3471b6;fill-opacity:1;fill-rule:nonzero;stroke-width:1.47902012;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+    <g id="g4714" transform="translate(6.8252752,-4.5099982)">
+      <rect y="196.45831" x="145.52083" height="5.2916665" width="39.6875" id="rect4705" style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#214478;fill-opacity:1;fill-rule:nonzero;stroke-width:0.6123724;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+      <rect style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:#f60;fill-opacity:1;fill-rule:nonzero;stroke-width:0.41834301;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" id="rect4709" width="39.687504" height="15.875" x="145.52083" y="180.58331" />
+      <rect y="185.87498" x="145.52083" height="10.583333" width="10.583333" id="rect4707" style="color:black;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:black;solid-opacity:1;fill:maroon;fill-opacity:1;fill-rule:nonzero;stroke-width:0.17638887;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+    </g>
+  </g>
+</svg>
