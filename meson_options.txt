@@ -18,3 +18,5 @@ option ('build_with_gui', type: 'boolean', value: 'true',
         description: 'build standart gui')
 option ('gui_enable_lazarus', type: 'boolean', value: 'true',
         description: 'enable lazarus based gui as variant')
+option ('auto_generate_icons', type: 'boolean', value: 'false',
+        description: 'create all icons set automaticaly or each size manual')

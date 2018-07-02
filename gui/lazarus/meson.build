@@ -13,7 +13,7 @@ if lazbuild.found()
         warning ('Lazarus build app version @0@ not tested. Use @1@ version'.format(lazbuild_version, lazbuild_support))
     endif
 else
-    warning ('Lazarus build app NOT found')
+    error ('Lazarus build app NOT found')
 endif
 
 # -- found and check shell ---
