@@ -56,5 +56,3 @@ lazbuild_script = join_paths(meson.current_build_dir(), lazbuild_script)
 lazapp = run_target ('lazgui',
                      depends: [libcore, libcore_a],
                      command: [lazbuild_script])
-
-subdir('icons')
