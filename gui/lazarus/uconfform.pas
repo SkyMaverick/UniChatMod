@@ -15,6 +15,7 @@ type
     TfmSettings = class(TForm)
         btCancel: TButton;
         btOk: TButton;
+        pnlBtnsRight: TPanel;
         pcSettings: TPageControl;
         pnlButtons: TPanel;
         tvCategory: TTreeView;
