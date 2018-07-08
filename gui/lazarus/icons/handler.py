@@ -1,7 +1,7 @@
 import os
-from convert import conv_p2p
+from .convert import conv_p2p
 
-resolutions = [16, 24, 48, 64, 128, 256, 512, 1024, 2048]
+resolutions = [16, 24, 48, 64, 128, 256, 512, 1024]
 src_ext = '.svg'
 out_ext = '.png'
 

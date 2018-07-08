@@ -5,6 +5,7 @@
 /gui/lazarus/UniChatMod
 /gui/lazarus/icons/out/
 /gui/lazarus/lib/
+__pycache__
 tags
 *.lps
 *.swp
