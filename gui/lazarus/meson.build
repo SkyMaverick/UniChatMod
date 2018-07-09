@@ -3,6 +3,8 @@ lazbuild_script = 'lazui.py'
 icons_src = join_paths (meson.current_source_dir(), 'icons', 'svg')
 icons_out = join_paths (meson.current_source_dir(), 'icons', 'out')
 
+lazapp_deps = [join_paths (meson.current_source_dir(), 'deps', 'RichView', 'lazrichview.lpk')]
+
 # -- found and check lazbuild ---
 app_lazbuild = find_program('lazbuild', required: true)
 app_lazbuild_support = '>=1.8.0'
@@ -39,6 +41,13 @@ endif
 py_data = [app_lazbuild.path()]
 py_data += [ join_paths (meson.current_source_dir(), lazapp_proj) ]
 
+
+if get_option('buildtype').startswith('debug')
+    py_data += ['debug']
+elif get_option('buildtype').startswith('release')
+    py_data += ['release']
+endif
+
 if target_machine.cpu_family() == 'x86'
         py_data += ['i386']
 else
@@ -55,8 +64,8 @@ else
 endif
 
 py_data += [icons_src, icons_out]
-py_cmd = [app_py, '-c', 'from lazui import lazui_build; lazui_build("@0@", "@1@", "@2@", "@3@", "@4@", "@5@", "@6@")'.format (
-                        py_data[0], py_data[1], py_data[2], py_data[3], py_data[4], py_data[5], py_data[6] )
+py_cmd = [app_py, '-c', 'from lazui import lazui_build; lazui_build("@0@", "@1@", @2@, "@3@", "@4@", "@5@", "@6@", "@7@", "@8@")'.format (
+                        py_data[0], py_data[1], lazapp_deps, py_data[2], py_data[3], py_data[4], py_data[5], py_data[6], py_data[7] )
 ]
 
 lazapp = run_target ('lazgui',
