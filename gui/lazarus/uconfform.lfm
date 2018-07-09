@@ -6,6 +6,7 @@ object fmSettings: TfmSettings
   Caption = 'Settings'
   ClientHeight = 400
   ClientWidth = 600
+  OnClose = FormClose
   LCLVersion = '1.8.4.0'
   object tvCategory: TTreeView
     Left = 0
@@ -33,21 +34,32 @@ object fmSettings: TfmSettings
     ClientHeight = 30
     ClientWidth = 600
     TabOrder = 2
-    object btCancel: TButton
-      Left = 505
-      Height = 25
-      Top = 3
-      Width = 90
-      Caption = 'Cancel'
+    object pnlBtnsRight: TPanel
+      Left = 400
+      Height = 30
+      Top = 0
+      Width = 200
+      Align = alRight
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 200
       TabOrder = 0
-    end
-    object btOk: TButton
-      Left = 416
-      Height = 25
-      Top = 3
-      Width = 90
-      Caption = 'OK'
-      TabOrder = 1
+      object btOk: TButton
+        Left = 8
+        Height = 25
+        Top = 3
+        Width = 90
+        Caption = 'OK'
+        TabOrder = 0
+      end
+      object btCancel: TButton
+        Left = 104
+        Height = 25
+        Top = 3
+        Width = 90
+        Caption = 'Cancel'
+        TabOrder = 1
+      end
     end
   end
 end

@@ -17,8 +17,11 @@ type
 
     TUCMCore = class(TObject)
     private
+
+        Refs: cardinal;
         CoreAPI: PUCMFunctions;
         InfoPtr: PUCMPluginInfo;
+
         function GetInfo: TUCMPluginInfo;
         function GetCorePath: string;
         function GetStorePath: string;
@@ -28,11 +31,13 @@ type
     public
         // make this class as TObject-child singleton
         class function NewInstance: TObject; override;
+        class function GetInstanceCount: cardinal;
         procedure FreeInstance; override;
 
         procedure Initialize(const PathCoreAbs: string; const PathStoreAbs: string);
         procedure Finish();
 
+        //        procedure AttachHook
         property Info: TUCMPluginInfo read GetInfo;
         property PathCore: string read GetCorePath;
         property PathStore: string read GetStorePath;
@@ -45,6 +50,7 @@ implementation
 { TUCMCore }
 
 var
+    __UCMCoreRefs: cardinal;
     __UCMCoreSingleton: TUCMCore;
 
 function TUCMCore.GetInfo: TUCMPluginInfo;
@@ -77,12 +83,22 @@ begin
     if __UCMCoreSingleton = nil then
         __UCMCoreSingleton := TUCMCore(inherited NewInstance);
     Result := __UCMCoreSingleton;
+    __UCMCoreRefs := __UCMCoreRefs + 1;
+end;
+
+class function TUCMCore.GetInstanceCount: cardinal;
+begin
+    Result := __UCMCoreRefs;
 end;
 
 procedure TUCMCore.FreeInstance;
 begin
-    inherited FreeInstance;
-    __UCMCoreSingleton := nil;
+    __UCMCoreRefs := __UCMCoreRefs - 1;
+    if (__UCMCoreRefs = 0) then
+    begin
+        inherited FreeInstance;
+        __UCMCoreSingleton := nil;
+    end;
 end;
 
 procedure TUCMCore.Initialize(const PathCoreAbs: string; const PathStoreAbs: string);

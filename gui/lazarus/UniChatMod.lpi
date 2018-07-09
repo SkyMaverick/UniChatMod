@@ -17,6 +17,7 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="1"/>
+      <Attributes pvaDebug="True"/>
       <StringTable Comments="UniChatMod application (based on UniChat and libucm)" InternalName="ucmapp" LegalCopyright="ZLib" ProductName="UniChatMod"/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -30,7 +31,7 @@
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
             <Libraries Value="../../build/lib_core"/>
-            <OtherUnitFiles Value="../../lib_core"/>
+            <OtherUnitFiles Value="../../lib_core;UCM_AL"/>
             <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>
@@ -63,6 +64,12 @@
               </Win32>
             </Options>
           </Linking>
+          <Other>
+            <Verbosity>
+              <ShoLineNum Value="True"/>
+              <ShowHintsForUnusedUnitsInMainSrc Value="True"/>
+            </Verbosity>
+          </Other>
         </CompilerOptions>
       </Item2>
     </BuildModes>
@@ -102,24 +109,25 @@
         <UnitName Value="uMainForm"/>
       </Unit1>
       <Unit2>
-        <Filename Value="ucoreclass.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="uCoreClass"/>
-      </Unit2>
-      <Unit3>
         <Filename Value="uaboutform.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="uAboutForm"/>
-      </Unit3>
-      <Unit4>
+      </Unit2>
+      <Unit3>
         <Filename Value="uconfform.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmSettings"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="uConfForm"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="UCM_AL/ucoreclass.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uCoreClass"/>
       </Unit4>
     </Units>
   </ProjectOptions>
@@ -131,7 +139,7 @@
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <Libraries Value="../../build/lib_core"/>
-      <OtherUnitFiles Value="../../lib_core"/>
+      <OtherUnitFiles Value="../../lib_core;UCM_AL"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
@@ -163,6 +171,12 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <Verbosity>
+        <ShoLineNum Value="True"/>
+        <ShowHintsForUnusedUnitsInMainSrc Value="True"/>
+      </Verbosity>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

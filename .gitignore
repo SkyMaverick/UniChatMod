@@ -2,8 +2,11 @@
 /clipart/
 *backup/
 /pkgs/
+/gui/lazarus/deps/RichView/lib/
 /gui/lazarus/UniChatMod
+/gui/lazarus/icons/out/
 /gui/lazarus/lib/
+__pycache__
 tags
 *.lps
 *.swp

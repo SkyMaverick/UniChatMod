@@ -7,6 +7,7 @@ object fmAbout: TfmAbout
   Caption = 'About'
   ClientHeight = 400
   ClientWidth = 500
+  OnClose = FormClose
   OnCreate = FormCreate
   Position = poMainFormCenter
   LCLVersion = '1.8.4.0'
@@ -161,9 +162,9 @@ object fmAbout: TfmAbout
     Height = 200
     Top = 200
     Width = 500
-    ActivePage = tbsTranslates
+    ActivePage = tbsAuthors
     Align = alClient
-    TabIndex = 2
+    TabIndex = 0
     TabOrder = 2
     object tbsAuthors: TTabSheet
       Caption = 'Authors'

@@ -35,6 +35,7 @@ type
         pnlOrigAuthors: TPanel;
         pnlTop: TPanel;
         tbsAuthors: TTabSheet;
+        procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
         procedure FormCreate(Sender: TObject);
         procedure tbsAuthorsShow(Sender: TObject);
         procedure tbsLicenseShow(Sender: TObject);
@@ -84,6 +85,12 @@ begin
     isLoadedAuthors := False;
     isLoadedLicense := False;
     isLoadedTranslate := False;
+end;
+
+procedure TfmAbout.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+    UCMCore.Free;
+    CloseAction := caFree;
 end;
 
 procedure TfmAbout.tbsAuthorsShow(Sender: TObject);
@@ -150,5 +157,3 @@ begin
 end;
 
 end.
-
-

@@ -7,10 +7,10 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     Interfaces, // this includes the LCL widgetset
     Forms,
     uMainForm,
-    ucoreclass,
     lazrichview,
     uAboutForm,
-    uConfForm { you can add units after this };
+    uConfForm,
+    uCoreClass { you can add units after this };
 
 {$R *.res}
 
