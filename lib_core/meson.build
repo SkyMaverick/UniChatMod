@@ -61,7 +61,7 @@ endif
 
 # split project version for move to config.h
 lib_core_version = meson.project_version().split('.')
-
+lib_core_commit = ''
 # get git commit number
 git_app = find_program('git', required: false)
 if git_app.found()
@@ -120,12 +120,17 @@ configure_file (input: 'config.h.in',
 core_header_c = files('ucm.h')
 core_header_pas = files('ucm.pas')
 
+install_headers ('ucm.h', 'ucm.pas', join_paths (meson.current_build_dir(), 'config.h'),
+                 install_dir: 'includes')
+
 libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
-                          include_directories: lib_core_inc)
+                          include_directories: lib_core_inc,
+                          install: true)
 
 libcore_a = static_library (meson.project_name(),
                             libcore_src,
                             dependencies: libcore_deps,
-                            include_directories: lib_core_inc)
+                            include_directories: lib_core_inc,
+                            install: true)

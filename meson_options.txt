@@ -9,6 +9,13 @@ option ('string_buffer_capacity', type: 'integer', min: 255, max: 65535, value: 
 option ('limit_plugins_count', type: 'integer', min: 10, max: 200, value: 100,
         description: 'limit loaded plugins count')
 
+option ('build_bundle', type: 'boolean', value: 'true',
+        description: 'build single path application or classic *nix')
+option ('path_modules_lookup', type: 'string', value: 'mods',
+        description: 'modules (plugins) subdir')
+option ('path_docs_lookup', type: 'string', value: 'docs',
+        description: 'documents (manuals, README, LICENSE etc.) path')
+
 option ('build_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
 option ('build_with_full_commit', type: 'boolean', value: 'true',

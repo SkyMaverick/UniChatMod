@@ -1,4 +1,5 @@
-lazapp_proj = 'UniChatMod.lpr'
+lazapp_name = 'UniChatMod'
+lazapp_proj = '.'.join ([lazapp_name, 'lpr'])
 lazbuild_script = 'lazui.py'
 icons_src = join_paths (meson.current_source_dir(), 'icons', 'svg')
 icons_out = join_paths (meson.current_source_dir(), 'icons', 'out')
@@ -71,3 +72,5 @@ py_cmd = [app_py, '-c', 'from lazui import lazui_build; lazui_build("@0@", "@1@"
 lazapp = run_target ('lazgui',
                      depends: [libcore, libcore_a],
                      command: [py_cmd])
+
+install_data (lazapp_name, rename: 'ucm')
