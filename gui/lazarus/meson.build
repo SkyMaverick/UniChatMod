@@ -1,8 +1,9 @@
 lazapp_name = 'UniChatMod'
 lazapp_proj = '.'.join ([lazapp_name, 'lpr'])
 lazbuild_script = 'lazui.py'
-icons_src = join_paths (meson.current_source_dir(), 'icons', 'svg')
-icons_out = join_paths (meson.current_source_dir(), 'icons', 'out')
+icons_path = join_paths (meson.current_source_dir(), 'icons')
+icons_src = join_paths (icons_path, 'svg')
+icons_out = join_paths (icons_path)
 
 lazapp_deps = [join_paths (meson.current_source_dir(), 'deps', 'RichView', 'lazrichview.lpk')]
 
@@ -73,4 +74,7 @@ lazapp = run_target ('lazgui',
                      depends: [libcore, libcore_a],
                      command: [py_cmd])
 
-install_data (lazapp_name, rename: 'ucm')
+install_data (lazapp_name, rename: 'ucm',
+              install_dir: install_path_root)
+install_subdir (icons_path, 
+                install_dir: install_path_root)

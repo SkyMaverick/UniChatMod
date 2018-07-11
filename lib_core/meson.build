@@ -121,16 +121,18 @@ core_header_c = files('ucm.h')
 core_header_pas = files('ucm.pas')
 
 install_headers ('ucm.h', 'ucm.pas', join_paths (meson.current_build_dir(), 'config.h'),
-                 install_dir: 'includes')
+                 install_dir: install_path_devs)
 
 libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
                           include_directories: lib_core_inc,
-                          install: true)
+                          install: true,
+                          install_dir: install_path_root)
 
 libcore_a = static_library (meson.project_name(),
                             libcore_src,
                             dependencies: libcore_deps,
                             include_directories: lib_core_inc,
-                            install: true)
+                            install: true,
+                            install_dir: install_path_root)

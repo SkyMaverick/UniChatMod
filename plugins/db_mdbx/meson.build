@@ -31,4 +31,4 @@ lib_db_mdbx = shared_library(plug_name,
                              dependencies: db_mdbx_dep,
                              include_directories: lib_core_inc,
                              install: true,
-                             install_dir: get_option('path_modules_lookup'))
+                             install_dir: install_path_mods)

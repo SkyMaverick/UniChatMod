@@ -13,6 +13,8 @@ option ('build_bundle', type: 'boolean', value: 'true',
         description: 'build single path application or classic *nix')
 option ('path_modules_lookup', type: 'string', value: 'mods',
         description: 'modules (plugins) subdir')
+option ('path_devels_lookup', type: 'string', value: 'include',
+        description: 'developer files subdir')
 option ('path_docs_lookup', type: 'string', value: 'docs',
         description: 'documents (manuals, README, LICENSE etc.) path')
 

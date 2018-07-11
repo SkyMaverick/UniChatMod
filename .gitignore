@@ -1,10 +1,11 @@
 /build/
+/bundle/
 /clipart/
 *backup/
 /pkgs/
 /gui/lazarus/deps/RichView/lib/
 /gui/lazarus/UniChatMod
-/gui/lazarus/icons/out/
+/gui/lazarus/icons/*x*/
 /gui/lazarus/lib/
 __pycache__
 tags
