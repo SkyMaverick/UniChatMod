@@ -19,8 +19,8 @@ ucm_core_start (const char* path_abs,
 
     if (path_abs) {
         snprintf (ucm_path, UCM_PATH_MAX, "%s", path_abs);
-        snprintf (ucm_path_plugs, UCM_PATH_MAX, "%s/%s", path_abs, "mods");
-        snprintf (ucm_path_doc, UCM_PATH_MAX, "%s/%s", path_abs, "doc");
+        snprintf (ucm_path_plugs, UCM_PATH_MAX, "%s%s", path_abs, UCM_PATH_MODULES);
+        snprintf (ucm_path_doc, UCM_PATH_MAX, "%s%s", path_abs, UCM_PATH_DOCS);
     } else {
         ucm_dtrace("%s\n", "Library location path is empty");
         return NULL;

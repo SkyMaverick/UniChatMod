@@ -144,7 +144,7 @@ begin
         if not isLoadedTranslate then
         begin
             Lines.Clear;
-            fpath := UCMCore.PathCore + PathDelim + 'TRANSLATE';
+            fpath := UCMCore.PathCore + 'TRANSLATE';
             if (FileExists(fpath)) then
             begin
                 Lines.LoadFromFile(fpath);

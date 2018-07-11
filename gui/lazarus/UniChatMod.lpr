@@ -8,6 +8,7 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     Forms,
     uMainForm,
     lazrichview,
+    FileUtil,
     uAboutForm,
     uConfForm,
     uCoreClass { you can add units after this };
@@ -24,7 +25,7 @@ begin
     // Initialize core library
     UCMCore := TUCMCore.Create;
     try
-        UCMCore.Initialize(ParamStr(0), '');
+        UCMCore.Initialize(ProgramDirectory, '');
         Application.CreateForm(TfmMain, fmMain);
         Application.Run;
     finally
