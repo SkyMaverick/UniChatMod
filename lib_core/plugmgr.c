@@ -61,8 +61,8 @@ _plugin_verify (ucm_plugin_t* plugin)
             return UCM_RET_NOOBJECT;
         }
     }
-    if (( plugin->run  = NULL ) ||
-        ( plugin->stop = NULL )) {
+    if (( plugin->run  == NULL ) ||
+        ( plugin->stop == NULL )) {
         return UCM_RET_UNREALIZED;
     }
     return UCM_RET_SUCCESS;
