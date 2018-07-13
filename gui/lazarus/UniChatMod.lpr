@@ -22,13 +22,16 @@ begin
     RequireDerivedFormResource := True;
     Application.Initialize;
     // Initialize core library
-    UCMCore := TUCMCore.Create;
     try
-        UCMCore.Initialize(ParamStr(0), '');
+        UCMCore := TUCMCore.Create;
+        UCMCore.Initialize(ProgramDirectory, '');
         Application.CreateForm(TfmMain, fmMain);
         Application.Run;
     finally
-        UCMCore.Finish();
-        UCMCore.Free;
+        if (UCMCore <> nil) then
+        begin
+             UCMCore.Finish();
+             UCMCore.Free;
+        end;
     end;
 end.
