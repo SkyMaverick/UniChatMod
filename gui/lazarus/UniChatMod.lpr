@@ -8,6 +8,7 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     Forms,
     uMainForm,
     lazrichview,
+    FileUtil,
     uAboutForm,
     uConfForm,
     uCoreClass { you can add units after this };

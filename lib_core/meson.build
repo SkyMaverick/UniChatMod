@@ -61,7 +61,7 @@ endif
 
 # split project version for move to config.h
 lib_core_version = meson.project_version().split('.')
-
+lib_core_commit = ''
 # get git commit number
 git_app = find_program('git', required: false)
 if git_app.found()
@@ -103,6 +103,9 @@ lib_core_conf.set        ('version_major'   , lib_core_version[0])
 lib_core_conf.set        ('version_minor'   , lib_core_version[1])
 lib_core_conf.set        ('version_patch'   , lib_core_version[2])
 lib_core_conf.set_quoted ('version_full'    , lib_core_version_full)
+lib_core_conf.set10      ('enable_bundle'   , get_option ('build_bundle'))
+lib_core_conf.set_quoted ('path_modules'    , get_option ('path_modules_lookup'))
+lib_core_conf.set_quoted ('path_docs'       , get_option ('path_docs_lookup'))
 lib_core_conf.set_quoted ('build_commit'    , lib_core_commit)
 lib_core_conf.set_quoted ('build_time'      , lib_core_time)
 lib_core_conf.set_quoted ('build_target'    , '@0@_@1@'.format(target_machine.cpu(), target_machine.system()))
@@ -120,12 +123,19 @@ configure_file (input: 'config.h.in',
 core_header_c = files('ucm.h')
 core_header_pas = files('ucm.pas')
 
+install_headers ('ucm.h', 'ucm.pas', join_paths (meson.current_build_dir(), 'config.h'),
+                 install_dir: install_path_devs)
+
 libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
-                          include_directories: lib_core_inc)
+                          include_directories: lib_core_inc,
+                          install: true,
+                          install_dir: install_path_root)
 
 libcore_a = static_library (meson.project_name(),
                             libcore_src,
                             dependencies: libcore_deps,
-                            include_directories: lib_core_inc)
+                            include_directories: lib_core_inc,
+                            install: true,
+                            install_dir: install_path_root)

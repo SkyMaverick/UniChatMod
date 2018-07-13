@@ -7,6 +7,10 @@
 #define UCM_VERSION_PATCH   @version_patch@
 #define UCM_VERSION_FULL    @version_full@
 
+#define UCM_ENABLE_BUNDLE   @enable_bundle@
+#define UCM_PATH_MODULES    @path_modules@
+#define UCM_PATH_DOCS       @path_docs@
+
 #define UCM_BUILD_COMMIT    @build_commit@
 #define UCM_BUILD_TIME      @build_time@
 #define UCM_BUILD_TARGET    @build_target@

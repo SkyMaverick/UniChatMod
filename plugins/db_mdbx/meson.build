@@ -29,4 +29,6 @@ db_mdbx_dep = cc.find_library('pthread', required: true)
 lib_db_mdbx = shared_library(plug_name,
                              db_mdbx_src,
                              dependencies: db_mdbx_dep,
-                             include_directories: lib_core_inc)
+                             include_directories: lib_core_inc,
+                             install: true,
+                             install_dir: install_path_mods)
