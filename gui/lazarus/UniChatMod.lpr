@@ -4,13 +4,10 @@ program UniChatMod;
 
 uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     cthreads, {$ENDIF} {$ENDIF}
-    Interfaces, // this includes the LCL widgetset
-    Forms,
+    sysutils,
+    Forms, Interfaces,
     uMainForm,
-    lazrichview,
     FileUtil,
-    uAboutForm,
-    uConfForm,
     uCoreClass { you can add units after this };
 
 {$R *.res}
@@ -24,15 +21,20 @@ begin
     Application.Initialize;
     // Initialize core library
     try
-        UCMCore := TUCMCore.Create;
-        UCMCore.Initialize(ProgramDirectory, '');
-        Application.CreateForm(TfmMain, fmMain);
-        Application.Run;
+        try
+            UCMCore := TUCMCore.Create;
+            UCMCore.Initialize(ProgramDirectory, '');
+            Application.CreateForm(TfmMain, fmMain);
+            Application.Run;
+        except
+            on E: Exception do
+               Application.MessageBox(PChar(E.Message),PChar('Unhandled core exception'), 0);
+        end;
     finally
         if (UCMCore <> nil) then
         begin
-             UCMCore.Finish();
-             UCMCore.Free;
+            UCMCore.Finish();
+            UCMCore.Free;
         end;
     end;
 end.

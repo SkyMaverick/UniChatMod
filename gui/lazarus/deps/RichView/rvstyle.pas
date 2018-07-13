@@ -217,9 +217,9 @@ begin
   inherited Create(AOwner);
   FFullRedraw := False;  
   {$IFDEF FPC}
-  Screen.Cursors[crJump] := LoadCursorFromLazarusREsource('RV_JUMP_CURSOR');
+  // Screen.Cursors[crJump] := LoadCursorFromLazarusREsource('RV_JUMP_CURSOR');
   {$ELSE}
-  Screen.Cursors[crJump] := LoadCursor(hInstance,'RV_JUMP_CURSOR');
+  // Screen.Cursors[crJump] := LoadCursor(hInstance,'RV_JUMP_CURSOR');
   {$ENDIF}
   FCursor := crJump;
   FColor := clWindow;

@@ -45,9 +45,17 @@ py_data += [ join_paths (meson.current_source_dir(), lazapp_proj) ]
 
 
 if get_option('buildtype').startswith('debug')
-    py_data += ['debug']
+    if get_option ('build_bundle') 
+        py_data += ['bundle_debug']
+    else
+        py_data += ['debug']
+    endif
 elif get_option('buildtype').startswith('release')
-    py_data += ['release']
+    if get_option ('build_bundle') 
+        py_data += ['bundle_release']
+    else    
+        py_data += ['release']
+    endif
 endif
 
 if target_machine.cpu_family() == 'x86'

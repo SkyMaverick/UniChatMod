@@ -4,7 +4,7 @@ project ('ucm', 'c',
          default_options:[
             'c_std=gnu11'
          ],
-         meson_version: '>=0.44')
+         meson_version: '>=0.46')
 
 cc = meson.get_compiler('c')
 
