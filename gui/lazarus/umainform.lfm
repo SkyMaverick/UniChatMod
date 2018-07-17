@@ -4,26 +4,28 @@ object fmMain: TfmMain
   Top = 135
   Width = 640
   Caption = 'UniChatMod'
-  ClientHeight = 460
+  ClientHeight = 459
   ClientWidth = 640
   Menu = mmMain
+  OnClose = FormClose
+  OnCreate = FormCreate
   Position = poWorkAreaCenter
   LCLVersion = '1.8.4.0'
   object pnlWnd: TPanel
     Left = 165
-    Height = 460
+    Height = 459
     Top = 0
     Width = 475
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 460
+    ClientHeight = 459
     ClientWidth = 475
     TabOrder = 0
     object hSplit: TSplitter
       Cursor = crVSplit
       Left = 0
       Height = 8
-      Top = 287
+      Top = 286
       Width = 475
       Align = alBottom
       ResizeAnchor = akBottom
@@ -31,7 +33,7 @@ object fmMain: TfmMain
     object pnlInput: TPanel
       Left = 0
       Height = 165
-      Top = 295
+      Top = 294
       Width = 475
       Align = alBottom
       BevelOuter = bvNone
@@ -80,18 +82,18 @@ object fmMain: TfmMain
     end
     object pnlWArea: TPanel
       Left = 0
-      Height = 287
+      Height = 286
       Top = 0
       Width = 475
       Align = alClient
       BevelOuter = bvNone
-      ClientHeight = 287
+      ClientHeight = 286
       ClientWidth = 475
       TabOrder = 2
       object pcTabs: TPageControl
         Left = 0
-        Height = 259
-        Top = 28
+        Height = 257
+        Top = 29
         Width = 475
         ActivePage = tsMain
         Align = alClient
@@ -100,11 +102,11 @@ object fmMain: TfmMain
         TabOrder = 0
         object tsMain: TTabSheet
           Caption = 'Main'
-          ClientHeight = 227
+          ClientHeight = 224
           ClientWidth = 469
           object rvHist: TRichView
             Left = 0
-            Height = 227
+            Height = 224
             Top = 0
             Width = 469
             TabStop = True
@@ -127,7 +129,7 @@ object fmMain: TfmMain
         end
         object tsReports: TTabSheet
           Caption = 'Adverts'
-          ClientHeight = 227
+          ClientHeight = 224
           ClientWidth = 469
           object rvReports: TRichView
             Left = 0
@@ -154,7 +156,7 @@ object fmMain: TfmMain
       end
       object cbTopicChange: TComboBoxEx
         Left = 0
-        Height = 28
+        Height = 29
         Top = 0
         Width = 475
         Align = alTop
@@ -168,20 +170,20 @@ object fmMain: TfmMain
   end
   object pnlUsers: TPanel
     Left = 0
-    Height = 460
+    Height = 459
     Top = 0
     Width = 160
     Align = alLeft
     Anchors = [akLeft]
     BevelOuter = bvNone
     Caption = 'pnlUsers'
-    ClientHeight = 460
+    ClientHeight = 459
     ClientWidth = 160
     TabOrder = 1
     object tbUsersCtrl: TToolBar
       Left = 0
       Height = 26
-      Top = 434
+      Top = 433
       Width = 160
       Align = alBottom
       ButtonHeight = 25
@@ -191,8 +193,8 @@ object fmMain: TfmMain
     end
     object ListView1: TListView
       Left = 0
-      Height = 406
-      Top = 28
+      Height = 404
+      Top = 29
       Width = 160
       Align = alClient
       Columns = <>
@@ -201,7 +203,7 @@ object fmMain: TfmMain
     end
     object cbUserChange: TComboBoxEx
       Left = 0
-      Height = 28
+      Height = 29
       Top = 0
       Width = 160
       Align = alTop
@@ -214,11 +216,12 @@ object fmMain: TfmMain
   end
   object vSplit: TSplitter
     Left = 160
-    Height = 460
+    Height = 459
     Top = 0
     Width = 5
   end
   object alActions: TActionList
+    Images = ilBtnIcons
     left = 360
     top = 312
     object actMulticast: TAction
@@ -429,6 +432,7 @@ object fmMain: TfmMain
     top = 64
     object pmiClearArea: TMenuItem
       Action = actAreaClear
+      SubMenuImages = ilBtnIcons
     end
     object MenuItem1: TMenuItem
       Caption = '-'
@@ -464,6 +468,7 @@ object fmMain: TfmMain
     end
   end
   object pmTray: TPopupMenu
+    Images = ilBtnIcons
     left = 592
     top = 368
     object MenuItem7: TMenuItem

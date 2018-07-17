@@ -197,7 +197,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="5">
+    <Units Count="6">
       <Unit0>
         <Filename Value="UniChatMod.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -231,6 +231,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="uCoreClass"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="uimagelisthelper.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uImageListHelper"/>
+      </Unit5>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

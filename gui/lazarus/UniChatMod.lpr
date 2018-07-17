@@ -8,7 +8,7 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     Forms, Interfaces,
     uMainForm,
     FileUtil,
-    uCoreClass { you can add units after this };
+    uCoreClass, uimagelisthelper { you can add units after this };
 
 {$R *.res}
 

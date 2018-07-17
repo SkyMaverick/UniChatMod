@@ -7,7 +7,7 @@ interface
 uses
     Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ActnList,
     Menus, ExtCtrls, StdCtrls, ComCtrls, ComboEx, RichView, RVStyle,
-    uAboutForm, uConfForm;
+    uAboutForm, uConfForm, uImageListHelper, uCoreClass;
 
 type
 
@@ -103,8 +103,10 @@ type
         tsMain: TTabSheet;
         procedure actHlpAboutExecute(Sender: TObject);
         procedure actMgmSettingsExecute(Sender: TObject);
+        procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+        procedure FormCreate(Sender: TObject);
     private
-
+        UCMCore: TUCMCore;
     public
 
     end;
@@ -134,6 +136,17 @@ begin
     fmSettings.ShowModal;
     fmSettings.Free;
     actMgmSettings.Enabled := True;
+end;
+
+procedure TfmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+    UCMCore.Free;
+end;
+
+procedure TfmMain.FormCreate(Sender: TObject);
+begin
+    UCMCore:=TUCMCore.Create;
+    ilBtnIcons.LoadPNGFromPath(ProgramDirectory+'icons'+PathDelim+'16x16');
 end;
 
 end.
