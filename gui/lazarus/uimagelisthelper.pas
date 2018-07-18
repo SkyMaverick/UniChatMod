@@ -4,7 +4,7 @@ unit uImageListHelper;
 interface
 
 uses
-    Classes, SysUtils, Controls, FileUtil, Graphics;
+    Classes, SysUtils, Controls, FileUtil, Graphics, Forms;
 
 type
 
@@ -18,18 +18,26 @@ implementation
 
 { TImageListLoader }
 
+function GetOptimalIconsSize(): cardinal;
+begin
+    Result := Forms.Screen.PixelsPerInch;
+end;
+
 function TImageListLoader.LoadPNGFromPath(path: string): cardinal;
 var
     png: TPortableNetworkGraphic;
     AFiles: TStringList;
     i: cardinal;
 begin
+//    Application.MessageBox(PChar(IntToStr(GetOptimalIconsSize())), nil, 0);
     AFiles := TStringList.Create;
     try
         FindAllFiles(AFiles, path, '*.png', False);
         if AFiles.Count > 0 then
         begin
             png := TPortableNetworkGraphic.Create;
+            if png = nil then
+                raise EInvalidPointer.Create('Not memory allocate for icons');
             try
                 for i := 0 to AFiles.Count - 1 do
                 begin
@@ -43,7 +51,7 @@ begin
     finally
         AFiles.Free;
     end;
-    Result:=Self.Count;
+    Result := Self.Count;
 end;
 
 end.

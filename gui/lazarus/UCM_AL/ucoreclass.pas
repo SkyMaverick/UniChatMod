@@ -104,9 +104,8 @@ procedure TUCMCore.Initialize(const PathCoreAbs: string; const PathStoreAbs: str
 
     procedure Terminate(Ex: Exception);
     begin
-        raise Ex;
         Finish();
-        exit();
+        raise Ex;
     end;
 
 var
@@ -122,24 +121,18 @@ begin
     // Dynamic load library
     CoreHandle := LoadLibrary(LibPath);
     if CoreHandle = dynlibs.NilHandle then
-    begin
         Terminate(EUCMCoreCreateFail.Create('Core library not loaded'));
-    end;
     // Get API functions
     CoreStartCB := TUCMCB_CoreStart(GetProcedureAddress(CoreHandle, UCMStartProcName));
     CoreStopCB := TUCMCB_CoreStop(GetProcedureAddress(CoreHandle, UCMStopProcName));
     CoreInfoCB := TUCMCB_CoreInfo(GetProcedureAddress(CoreHandle, UCMInfoProcName));
 
     if (CoreStartCB = nil) or (CoreStopCB = nil) or (CoreInfoCB = nil) then
-    begin
         Terminate(EUCMCoreAPIFail.Create('Core API get missing'));
-    end;
     // Start core. Get CoreAPI or terminate
     CoreAPI := CoreStartCB(PChar(PathCoreAbs), PChar(PathStoreAbs));
     if (CoreAPI = nil) then
-    begin
         Terminate(EUCMCoreAPIFail.Create('Core information get missing'));
-    end;
     // Get core info or terminate
     InfoPtr := CoreInfoCB();
     if (InfoPtr = nil) then

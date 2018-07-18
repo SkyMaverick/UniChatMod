@@ -39,7 +39,7 @@ type
         alActions: TActionList;
         cbUserChange: TComboBoxEx;
         cbTopicChange: TComboBoxEx;
-        ilBtnIcons: TImageList;
+        ilActIcons: TImageList;
         ListView1: TListView;
         memInput: TMemo;
         MenuItem1: TMenuItem;
@@ -111,12 +111,28 @@ type
 
     end;
 
+    { TIconsLoader }
+
+    TIconsLoader = class helper for TfmMain
+        procedure LoadActionsImages(Sender: TObject; ActionList: TActionList;
+            ImageList: TImageList);
+    end;
+
 var
     fmMain: TfmMain;
 
 implementation
 
 {$R *.lfm}
+
+{ TIconsLoader }
+
+procedure TIconsLoader.LoadActionsImages(Sender: TObject;
+    ActionList: TActionList; ImageList: TImageList);
+
+begin
+
+end;
 
 { TfmMain }
 
@@ -145,8 +161,8 @@ end;
 
 procedure TfmMain.FormCreate(Sender: TObject);
 begin
-    UCMCore:=TUCMCore.Create;
-    ilBtnIcons.LoadPNGFromPath(ProgramDirectory+'icons'+PathDelim+'16x16');
+    UCMCore := TUCMCore.Create;
+    ilActIcons.LoadPNGFromPath(ProgramDirectory + 'icons' + PathDelim + '16x16');
 end;
 
 end.
