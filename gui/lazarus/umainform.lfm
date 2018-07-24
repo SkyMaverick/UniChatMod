@@ -97,7 +97,6 @@ object fmMain: TfmMain
         Width = 475
         ActivePage = tsMain
         Align = alClient
-        Images = ilActIcons
         TabIndex = 0
         TabOrder = 0
         object tsMain: TTabSheet
@@ -221,7 +220,7 @@ object fmMain: TfmMain
     Width = 5
   end
   object alActions: TActionList
-    Images = ilActIcons
+    Images = filActions
     left = 360
     top = 312
     object actMulticast: TAction
@@ -323,12 +322,8 @@ object fmMain: TfmMain
       Caption = 'Issues'
     end
   end
-  object ilActIcons: TImageList
-    left = 424
-    top = 312
-  end
   object mmMain: TMainMenu
-    Images = ilActIcons
+    Images = filActions
     left = 488
     top = 312
     object mmiTalks: TMenuItem
@@ -432,7 +427,6 @@ object fmMain: TfmMain
     top = 64
     object pmiClearArea: TMenuItem
       Action = actAreaClear
-      SubMenuImages = ilActIcons
     end
     object MenuItem1: TMenuItem
       Caption = '-'
@@ -468,7 +462,7 @@ object fmMain: TfmMain
     end
   end
   object pmTray: TPopupMenu
-    Images = ilActIcons
+    Images = filActions
     left = 592
     top = 368
     object MenuItem7: TMenuItem
@@ -514,5 +508,10 @@ object fmMain: TfmMain
     object MenuItem17: TMenuItem
       Action = actMgmExit
     end
+  end
+  object filActions: TFolderImageList
+    UseDPISupport = True
+    left = 424
+    top = 312
   end
 end

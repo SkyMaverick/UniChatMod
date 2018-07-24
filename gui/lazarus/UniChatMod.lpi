@@ -189,15 +189,18 @@
         </UserOverrides>
       </environment>
     </RunParams>
-    <RequiredPackages Count="2">
+    <RequiredPackages Count="3">
       <Item1>
-        <PackageName Value="lazrichview"/>
+        <PackageName Value="folderimagelist"/>
       </Item1>
       <Item2>
-        <PackageName Value="LCL"/>
+        <PackageName Value="lazrichview"/>
       </Item2>
+      <Item3>
+        <PackageName Value="LCL"/>
+      </Item3>
     </RequiredPackages>
-    <Units Count="6">
+    <Units Count="5">
       <Unit0>
         <Filename Value="UniChatMod.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -231,11 +234,6 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="uCoreClass"/>
       </Unit4>
-      <Unit5>
-        <Filename Value="uimagelisthelper.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="uImageListHelper"/>
-      </Unit5>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

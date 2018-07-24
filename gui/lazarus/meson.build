@@ -6,6 +6,7 @@ icons_src = join_paths (icons_path, 'svg')
 icons_out = join_paths (icons_path)
 
 lazapp_deps = [join_paths (meson.current_source_dir(), 'deps', 'RichView', 'lazrichview.lpk')]
+lazapp_deps += [join_paths (meson.current_source_dir(), 'deps', 'FolderImList', 'folderimagelist.lpk')]
 
 # -- found and check lazbuild ---
 app_lazbuild = find_program('lazbuild', required: true)

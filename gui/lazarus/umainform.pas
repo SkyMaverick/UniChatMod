@@ -7,7 +7,7 @@ interface
 uses
     Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ActnList,
     Menus, ExtCtrls, StdCtrls, ComCtrls, ComboEx, RichView, RVStyle,
-    uAboutForm, uConfForm, uImageListHelper, uCoreClass;
+    uAboutForm, uConfForm, FIList, uCoreClass;
 
 type
 
@@ -39,7 +39,7 @@ type
         alActions: TActionList;
         cbUserChange: TComboBoxEx;
         cbTopicChange: TComboBoxEx;
-        ilActIcons: TImageList;
+        filActions: TFolderImageList;
         ListView1: TListView;
         memInput: TMemo;
         MenuItem1: TMenuItem;
@@ -107,6 +107,7 @@ type
         procedure FormCreate(Sender: TObject);
     private
         UCMCore: TUCMCore;
+        PathIcons: string;
     public
 
     end;
@@ -115,7 +116,7 @@ type
 
     TIconsLoader = class helper for TfmMain
         procedure LoadActionsImages(Sender: TObject; ActionList: TActionList;
-            ImageList: TImageList);
+            ImageList: TFolderImageList);
     end;
 
 var
@@ -128,10 +129,15 @@ implementation
 { TIconsLoader }
 
 procedure TIconsLoader.LoadActionsImages(Sender: TObject;
-    ActionList: TActionList; ImageList: TImageList);
-
+    ActionList: TActionList; ImageList: TFolderImageList);
+var
+    i: cardinal;
+    PathIcons: string;
 begin
-
+    ImageList.LoadFolder(fmMain.PathIcons, 'actions');
+    for i := 0 to ActionList.ActionCount - 1 do
+        TAction(ActionList.Actions[i]).ImageIndex :=
+            ImageList.GetIndexByName(TAction(ActionList.Actions[i]).Name);
 end;
 
 { TfmMain }
@@ -162,7 +168,8 @@ end;
 procedure TfmMain.FormCreate(Sender: TObject);
 begin
     UCMCore := TUCMCore.Create;
-    ilActIcons.LoadPNGFromPath(ProgramDirectory + 'icons' + PathDelim + '16x16');
+    PathIcons := ProgramDirectory + 'icons' + PathDelim;
+    LoadActionsImages(Sender, alActions, filActions);
 end;
 
 end.

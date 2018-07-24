@@ -6,9 +6,9 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
     cthreads, {$ENDIF} {$ENDIF}
     sysutils,
     Forms, Interfaces,
-    uMainForm,
+    uMainForm, folderimagelist,
     FileUtil,
-    uCoreClass, uimagelisthelper { you can add units after this };
+    uCoreClass;
 
 {$R *.res}
 
