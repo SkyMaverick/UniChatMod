@@ -105,4 +105,4 @@ static ucm_functions_t core_api = {
     .get_doc_path       = g_doc_path     ,
 };
 
-ucm_functions_t* ucm_global_api = &core_api;
+ucm_functions_t* ucm_api = &core_api;

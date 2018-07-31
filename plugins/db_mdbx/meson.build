@@ -1,8 +1,11 @@
 plug_name = 'db_mdbx'
 
 db_mdbx_src = files('''
+    db_mdbx.h
     db_mdbx.c
-'''.split())
+    db_mdbx_base.h
+    db_mdbx_base.c
+'''.split()) + core_header_c
 
 lib_mdbx_src = files ('''
     libmdbx/mdbx.h

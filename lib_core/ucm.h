@@ -68,7 +68,9 @@
 
 #define UCM_PID_MAX 33
 #define UNUSED(x) (void)(x);
-// #define UNUSED_ALL(...) (void)(__VA_ARGS__)
+
+#define UCM_CONTACT_ID_MAX   256
+#define UCM_CONTACT_NAME_MAX 1024
 
 /* CORE structures *******************************************************
 */
@@ -97,7 +99,7 @@ enum {
 };
 
 // ######################################################################
-//      CHAT FUNCTIONALITY API IMPLEMENTATION
+//      BASE STRUCTURES 
 // ######################################################################
 
 // Events ---------------------
@@ -121,18 +123,15 @@ enum {
     UCM_FLAG_MSG_ALERT      = 1 << 2
 };
 
-typedef struct ucm_cnt_info_s {
-    uint32_t ip;
-    const char* name;
-    uint8_t status;
-} ucm_cnt_info_t;
-
 typedef struct ucm_msg_s {
-    uint32_t flags;
-    ucm_cnt_info_t info;
-    // TODO
+    uint32_t    flags;          // message processing flags
+    uint32_t    uid;            // uid string offset
+    uint32_t    ip;             // sender ip
+    time_t      time;           // time send msg
+    uint32_t    theme;          // 
     // message body area
-    char data[1];
+    uint32_t    size;           // size data field
+    char        data [1];       // strings storage
 } ucm_message_t;
 
 // ######################################################################
@@ -162,11 +161,11 @@ enum {
 };
 
 typedef struct {
-    const ucm_vapi_t api;                 /// plugin release api version (required)
-    const uint8_t sys;                    /// plugin subsystem (required)
-    const uint16_t vmajor;                /// major plugin version (required)
-    const uint16_t vminor;                /// minor plugin version (required)
-    const uint16_t vpatch;                /// patch plugin version (required)
+    const ucm_vapi_t  api;                /// plugin release api version (required)
+    const uint8_t     sys;                /// plugin subsystem (required)
+    const uint16_t    vmajor;             /// major plugin version (required)
+    const uint16_t    vminor;             /// minor plugin version (required)
+    const uint16_t    vpatch;             /// patch plugin version (required)
     const char* const pid;                /// plugin id for internal ident (required)
     uint32_t flags;                       /// plugin flags
     // build info.
@@ -190,10 +189,12 @@ typedef struct {
 /*! Structure what defines base plugin interface*/
 typedef struct _ucm_plugin_s {
     ucm_plugin_info_t info;
-    UCM_RET (*run)(void);                 /// activate plugin (with context for hot-plug) (required)
-    UCM_RET (*stop)(void);                /// deactivate plugin (required)
-    void (*message)(uint32_t id, uintptr_t ctx,
-                    uint32_t x1, uint32_t x2);    /// recieve system messages callback
+    UCM_RET           (*run)(void);                 /// activate plugin (with context for hot-plug) (required)
+    UCM_RET           (*stop)(void);                /// deactivate plugin (required)
+    void              (*message)(uint32_t id, uintptr_t ctx,
+                                 uint32_t x1, uint32_t x2);    /// recieve system messages callback
+    // TODO define this prototype
+    void              (*msg_process)(void);
 } ucm_plugin_t;
 
 enum {
@@ -224,6 +225,16 @@ typedef struct {
     // hight-level API. Use app structures config with one API function
     // TODO
 } ucm_dbplugin_t;
+
+// ######################################################################
+//      CHAT FUNCTIONALITY STRUCTURES
+// ######################################################################
+
+typedef struct {
+    uint8_t sid;
+    ucm_plugin_t* input_chain;
+    ucm_plugin_t* output_chain;
+} ucm_session_t;
 
 // ######################################################################
 //      MAIN APPLICATION API STRUCTURE

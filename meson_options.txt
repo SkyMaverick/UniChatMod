@@ -3,6 +3,8 @@ option ('enable_traces', type: 'boolean', value: true,
         description: 'use stdio messages in wfft lib')
 option ('message_queue_size', type: 'integer', min: 50, max: 32575, value: 200,
         description: 'messages queues blocks count')
+option ('session_count', type: 'integer', min: 1, max: 256, value: 256,
+        description: 'max active sessions in one instance')
 option ('string_buffer_capacity', type: 'integer', min: 255, max: 65535, value: 4096,
         description: 'string buffers size. Message buffers DONT this')
 

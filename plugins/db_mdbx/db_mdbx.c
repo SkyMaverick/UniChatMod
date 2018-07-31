@@ -10,77 +10,30 @@
 #include "gettext.h"
 #include "libmdbx/mdbx.h"
 
-static const ucm_functions_t* app;
+#include "db_mdbx.h"
+
+const ucm_functions_t* app;
 static ucm_dbplugin_t plugin;
-
-typedef struct {
-    uint8_t         type;
-    union {
-        uint8_t     byte;
-        uint16_t    word;
-        uint32_t    d_word;
-        uint64_t    q_word;
-        char*       string;
-        struct {
-            size_t  lenght;
-            void*   data;
-        } blob;
-    };
-} db_value_t;
-
-typedef struct {
-    uint32_t    signature;
-    uint32_t    version;
-} db_header_t;
-
-typedef struct {
-
-    char            file_apath [PATH_MAX];
-
-    MDBX_env*       env;
-    MDBX_txn*       txn;
-
-    MDBX_dbi        dbi_global;
-    MDBX_cursor*    cur_global;
-
-    MDBX_dbi        dbi_events;
-    MDBX_cursor*    cur_events;
-
-    MDBX_dbi        dbi_contacts;
-    MDBX_cursor*    cur_contacts;
-
-    MDBX_dbi        dbi_plugins;
-    MDBX_cursor*    cur_plugins;
-} mdbx_dbmgr_t;
 
 #define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_DEBUG, fmt, __VA_ARGS__);}
 #define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_INFO,  fmt, __VA_ARGS__);}
 #define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_ERROR, fmt, __VA_ARGS__);}
 
-static mdbx_dbmgr_t* UCM_MDBX_DB = NULL;
+db_object_t* UCM_DB = NULL;
 
 // ######################################################################
 //      INTERNAL PLUGIN SERVICE FUNCTIONS
 // ######################################################################
 
-static inline MDBX_txn*
-_start_mdbx_txn (uint32_t flags)
+void
+_assert_func (const MDBX_env *env, 
+              const char     *msg,
+              const char     *function,
+              unsigned       line)
 {
-    MDBX_txn* result = NULL;
-    int rc = mdbx_txn_begin (UCM_MDBX_DB->env,
-                             NULL,
-                             (flags | UCM_FLAG_DB_READONLY) ? MDBX_RDONLY : 0,
-                             &result);
-    return (rc != MDBX_SUCCESS) ? NULL : result;
+    UNUSED (env);
+    trace_err(_("%s. Assert in %s (line: %d)\n"), msg, function, line); 
 }
-
-// static void*
-// _touch_mdbx_file (char* fname)
-// {
-//     void* handle =
-//     return
-// }
-//
 // ######################################################################
 //      STANDART PLUGIN API IMPLEMENTATION
 // ######################################################################
@@ -88,25 +41,18 @@ _start_mdbx_txn (uint32_t flags)
 static UCM_RET
 _run_dbmdbx (void)
 {
-    int rc;
-    UCM_MDBX_DB = ucm_zmalloc(sizeof(mdbx_dbmgr_t));
-    if (UCM_MDBX_DB) {
-          rc = mdbx_env_create(&(UCM_MDBX_DB->env));
-          if (rc != MDBX_SUCCESS) {
-              trace_err("%s: (%d) %s\n", _("mdbx_env_create:"), rc, mdbx_strerror(rc));
-          } else {
-              trace_dbg("%s\n", "Create mdbx ENV success");
-              return UCM_RET_SUCCESS;
-          }
-    }
-    return UCM_RET_NONALLOC;
+    UCM_DB = ucm_zmalloc (sizeof(db_object_t));
+    if ( UCM_DB == NULL ) 
+        return UCM_RET_NONALLOC;
+    UCM_DB->mtx = app->rwlock_create ();
+    return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
 _stop_dbmdbx (void)
 {
-    plugin.db_close ();
-    ucm_free_null (UCM_MDBX_DB);
+    app->rwlock_free ( UCM_DB->mtx );
+    ucm_free_null (UCM_DB);
     return UCM_RET_SUCCESS;
 }
 
@@ -132,7 +78,7 @@ mdbx_db_open  (char*    file,
                uint32_t flags)
 {
     UNUSED(flags);
-    snprintf (UCM_MDBX_DB->file_apath, PATH_MAX, "%s", file);
+    snprintf (UCM_DB->file_apath, PATH_MAX, "%s", file);
 
     return UCM_RET_SUCCESS;
 }

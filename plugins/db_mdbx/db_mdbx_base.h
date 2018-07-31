@@ -1,0 +1,4 @@
+#ifndef _DB_MDBX_BASE_OPERATIONS_H_
+#define _DB_MDBX_BASE_OPERATIONS_H_
+
+#endif

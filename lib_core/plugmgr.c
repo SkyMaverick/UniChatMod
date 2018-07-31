@@ -82,7 +82,7 @@ _plugin_load (char* filename)
     char* err = NULL;
     ucm_plugin_t* (*cb_init_plugin)(ucm_functions_t* api) = dlsym(handle,"_init_plugin");
     if ( (err = dlerror()) == NULL ) {
-        ucm_plugin_t* plug = cb_init_plugin(ucm_global_api);
+        ucm_plugin_t* plug = cb_init_plugin(ucm_api);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
                 module = ucm_malloc (sizeof(ucm_module_t));
@@ -144,7 +144,7 @@ _plugin_registry_add (ucm_plugin_t* plugin)
 UCM_RET
 plugins_load_registry (char* plug_path)
 {
-    modules.plugin = ucm_global_core;
+    modules.plugin = ucm_core;
     ucm_module_t* tmp_module = &modules;
 
     DIR* plugs_dir = opendir(plug_path);

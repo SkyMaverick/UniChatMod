@@ -33,21 +33,21 @@ ucm_core_start (const char* path_abs,
     }
 
     plugins_load_registry(ucm_path_plugs);
-    ucm_global_core->run();
-    return ucm_global_api;
+    ucm_core->run();
+    return ucm_api;
 }
 
 const ucm_plugin_info_t*
 ucm_core_info (void)
 {
-    return &(ucm_global_core->info);
+    return &(ucm_core->info);
 }
 
 UCM_RET
 ucm_core_stop (void)
 {
     //TODO stop core plugin, cleanup and release plugin stack
-    ucm_global_core->stop();
+    ucm_core->stop();
     plugins_release_registry();
     return UCM_RET_SUCCESS;
 }

@@ -23,11 +23,6 @@
 #   undef NDEBUG
 #endif
 
-/* Features under development */
-#ifndef MDBX_DEVEL
-#   define MDBX_DEVEL 1
-#endif
-
 /*----------------------------------------------------------------------------*/
 
 /* Should be defined before any includes */
@@ -45,6 +40,9 @@
 #if _MSC_VER > 1800
 #   pragma warning(disable : 4464) /* relative include path contains '..' */
 #endif
+#if _MSC_VER > 1913
+#   pragma warning(disable : 5045) /* Compiler will insert Spectre mitigation... */
+#endif
 #pragma warning(disable : 4710) /* 'xyz': function not inlined */
 #pragma warning(disable : 4711) /* function 'xyz' selected for automatic inline expansion */
 #pragma warning(disable : 4201) /* nonstandard extension used : nameless struct / union */
@@ -55,6 +53,7 @@
 #pragma warning(disable : 4310) /* cast truncates constant value */
 #pragma warning(disable : 4820) /* bytes padding added after data member for aligment */
 #pragma warning(disable : 4548) /* expression before comma has no effect; expected expression with side - effect */
+#pragma warning(disable : 4366) /* the result of the unary '&' operator may be unaligned */
 #endif                          /* _MSC_VER (warnings) */
 
 #include "../mdbx.h"
@@ -89,26 +88,29 @@
 #endif /* __SANITIZE_THREAD__ */
 
 #if __has_warning("-Wconstant-logical-operand")
-#if defined(__clang__)
-#pragma clang diagnostic ignored "-Wconstant-logical-operand"
-#elif defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Wconstant-logical-operand"
-#else
-#pragma warning disable "constant-logical-operand"
-#endif
+#   if defined(__clang__)
+#       pragma clang diagnostic ignored "-Wconstant-logical-operand"
+#   elif defined(__GNUC__)
+#       pragma GCC diagnostic ignored "-Wconstant-logical-operand"
+#   else
+#      pragma warning disable "constant-logical-operand"
+#   endif
 #endif /* -Wconstant-logical-operand */
 
-#if __has_warning("-Walignment-reduction-ignored") || defined(__e2k__) || defined(__ICC)
-#if defined(__ICC)
-#pragma warning(disable: 3453 1366)
-#elif defined(__clang__)
-#pragma clang diagnostic ignored "-Walignment-reduction-ignored"
-#elif defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Walignment-reduction-ignored"
-#else
-#pragma warning disable "alignment-reduction-ignored"
-#endif
-#endif /* -Wno-constant-logical-operand */
+#if defined(__LCC__) && (__LCC__ <= 121)
+    /* bug #2798 */
+#   pragma diag_suppress alignment_reduction_ignored
+#elif defined(__ICC)
+#   pragma warning(disable: 3453 1366)
+#elif __has_warning("-Walignment-reduction-ignored")
+#   if defined(__clang__)
+#       pragma clang diagnostic ignored "-Walignment-reduction-ignored"
+#   elif defined(__GNUC__)
+#       pragma GCC diagnostic ignored "-Walignment-reduction-ignored"
+#   else
+#       pragma warning disable "alignment-reduction-ignored"
+#   endif
+#endif /* -Walignment-reduction-ignored */
 
 #include "./osal.h"
 
@@ -137,9 +139,9 @@
 #define MDBX_MAGIC UINT64_C(/* 56-bit prime */ 0x59659DBDEF4C11)
 
 /* The version number for a database's datafile format. */
-#define MDBX_DATA_VERSION ((MDBX_DEVEL) ? 255 : 2)
+#define MDBX_DATA_VERSION 2
 /* The version number for a database's lockfile format. */
-#define MDBX_LOCK_VERSION ((MDBX_DEVEL) ? 255 : 2)
+#define MDBX_LOCK_VERSION 2
 
 /* handle for the DB used to track free pages. */
 #define FREE_DBI 0
@@ -164,9 +166,7 @@ typedef uint32_t pgno_t;
 /* A transaction ID. */
 typedef uint64_t txnid_t;
 #define PRIaTXN PRIi64
-#if MDBX_DEVEL
-#define MIN_TXNID (UINT64_MAX - UINT32_MAX)
-#elif MDBX_DEBUG
+#if MDBX_DEBUG
 #define MIN_TXNID UINT64_C(0x100000000)
 #else
 #define MIN_TXNID UINT64_C(1)
@@ -249,7 +249,7 @@ typedef struct MDBX_reader {
   uint8_t pad[MDBX_CACHELINE_SIZE -
               (sizeof(txnid_t) + sizeof(mdbx_pid_t) + sizeof(mdbx_tid_t)) %
                   MDBX_CACHELINE_SIZE];
-} __cache_aligned MDBX_reader;
+} MDBX_reader;
 
 /* Information about a single database in the environment. */
 typedef struct MDBX_db {
@@ -407,47 +407,53 @@ typedef struct MDBX_lockinfo {
   /* Flags which environment was opened. */
   volatile uint32_t mti_envmode;
 
-  union {
 #ifdef MDBX_OSAL_LOCK
+  /* Mutex protecting write access to this table. */
+  union {
     MDBX_OSAL_LOCK mti_wmutex;
+    uint8_t pad_mti_wmutex[MDBX_OSAL_LOCK_SIZE % sizeof(size_t)];
+  };
 #endif
-    uint64_t align_wmutex;
-  };
+#define MDBX_lockinfo_SIZE_A                                                   \
+  (8 /* mti_magic_and_version */ + 4 /* mti_os_and_format */ +                 \
+   4 /* mti_envmode */ + MDBX_OSAL_LOCK_SIZE /* mti_wmutex */ +                \
+   MDBX_OSAL_LOCK_SIZE % sizeof(size_t) /* pad_mti_wmutex */)
 
-  union {
-    /* The number of slots that have been used in the reader table.
-     * This always records the maximum count, it is not decremented
-     * when readers release their slots. */
-    volatile unsigned __cache_aligned mti_numreaders;
-    uint64_t align_numreaders;
-  };
+  /* cache-line alignment */
+  uint8_t
+      pad_a[MDBX_CACHELINE_SIZE - MDBX_lockinfo_SIZE_A % MDBX_CACHELINE_SIZE];
 
-  union {
+  /* The number of slots that have been used in the reader table.
+   * This always records the maximum count, it is not decremented
+   * when readers release their slots. */
+  volatile unsigned mti_numreaders;
+
 #ifdef MDBX_OSAL_LOCK
-    /* Mutex protecting access to this table. */
+  /* Mutex protecting readers registration access to this table. */
+  union {
     MDBX_OSAL_LOCK mti_rmutex;
+    uint8_t pad_mti_rmutex[MDBX_OSAL_LOCK_SIZE % sizeof(size_t)];
+  };
 #endif
-    uint64_t align_rmutex;
-  };
 
-  union {
-    volatile txnid_t mti_oldest;
-    uint64_t align_oldest;
-  };
+  volatile txnid_t mti_oldest;
+  volatile uint32_t mti_readers_refresh_flag;
 
-  union {
-    volatile uint32_t mti_readers_refresh_flag;
-    uint64_t align_reader_finished_flag;
-  };
+#define MDBX_lockinfo_SIZE_B                                                   \
+  (sizeof(unsigned) /* mti_numreaders */ +                                     \
+   MDBX_OSAL_LOCK_SIZE /* mti_rmutex */ + sizeof(txnid_t) /* mti_oldest */ +   \
+   sizeof(uint32_t) /* mti_readers_refresh_flag */ +                           \
+   MDBX_OSAL_LOCK_SIZE % sizeof(size_t) /* pad_mti_rmutex */)
 
-  uint8_t pad_align[MDBX_CACHELINE_SIZE - sizeof(uint64_t) * 7];
+  /* cache-line alignment */
+  uint8_t
+      pad_b[MDBX_CACHELINE_SIZE - MDBX_lockinfo_SIZE_B % MDBX_CACHELINE_SIZE];
 
-  MDBX_reader __cache_aligned mti_readers[1];
+  MDBX_reader mti_readers[1];
+
 } MDBX_lockinfo;
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif /* MSVC: Enable aligment */
 
 #define MDBX_LOCKINFO_WHOLE_SIZE                                               \
   ((sizeof(MDBX_lockinfo) + MDBX_CACHELINE_SIZE - 1) &                         \
@@ -938,13 +944,13 @@ static __inline void mdbx_jitter4testing(bool tiny) {
 /* Internal prototypes and inlines */
 
 int mdbx_reader_check0(MDBX_env *env, int rlocked, int *dead);
-void mdbx_rthc_dtor(void *rthc);
-void mdbx_rthc_lock(void);
-void mdbx_rthc_unlock(void);
 int mdbx_rthc_alloc(mdbx_thread_key_t *key, MDBX_reader *begin,
                     MDBX_reader *end);
-void mdbx_rthc_remove(mdbx_thread_key_t key);
-void mdbx_rthc_cleanup(void);
+void mdbx_rthc_remove(const mdbx_thread_key_t key);
+
+void mdbx_rthc_global_init(void);
+void mdbx_rthc_global_dtor(void);
+void mdbx_rthc_thread_dtor(void *ptr);
 
 static __inline bool mdbx_is_power2(size_t x) { return (x & (x - 1)) == 0; }
 
