@@ -52,7 +52,7 @@ _plugin_verify (ucm_plugin_t* plugin)
     if (plugin->info.api.vmajor != UCM_API_MAJOR_VER) {
         return UCM_RET_UNREALIZED;
     }
-    if (plugin->info.sys > UCM_PLUG_STUFF) {
+    if (plugin->info.sys > UCM_TYPE_PLUG_STUFF) {
         return UCM_RET_UBOUND;
     }
     // TODO strongly PID validation
@@ -109,27 +109,27 @@ _plugin_registry_add (ucm_plugin_t* plugin)
                 plugins_all[ plugins_count ] = plugin;
 
                 switch (plugin->info.sys) {
-                    case UCM_PLUG_DB:
+                    case UCM_TYPE_PLUG_DB:
                         {
                             plugins_db [plugins_db_count++] = plugin;
                             break;
                         }
-                    case UCM_PLUG_NET:
+                    case UCM_TYPE_PLUG_NET:
                         {
                             plugins_net [plugins_net_count++] = plugin;
                             break;
                         }
-                    case UCM_PLUG_CRYPTO:
+                    case UCM_TYPE_PLUG_CRYPTO:
                         {
                             plugins_crypt [plugins_cript_count++] = plugin;
                             break;
                         }
-                    case UCM_PLUG_HIST:
+                    case UCM_TYPE_PLUG_HIST:
                         {
                             plugins_db [plugins_hist_count++] = plugin;
                             break;
                         }
-                    case UCM_PLUG_STUFF:
+                    case UCM_TYPE_PLUG_STUFF:
                         {
                             plugins_db [plugins_stuff_count++] = plugin;
                             break;

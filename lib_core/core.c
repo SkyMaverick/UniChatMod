@@ -36,7 +36,7 @@ loop_core (void* ctx)
             plugins_message_dispatch(&id, &lctx, &x1, &x2);
 
             switch (id) {
-                case UCM_EV_TERM:
+                case UCM_EVENT_TERM:
                     {
                         term = 1;
                         ucm_dtrace ("%s\n", "Catch TERM message. Core loop exit.");
@@ -69,7 +69,7 @@ static UCM_RET
 _stop_core (void)
 {
     // send TERM message for stop systems and plugins prepare
-    ucm_api->mainloop_msg_send(UCM_EV_TERM, (uintptr_t)ucm_core, 0, 0);
+    ucm_api->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
     // stop all plugins
     plugins_stop_all();
     // stop main message loop

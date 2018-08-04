@@ -93,9 +93,9 @@ typedef enum _ucm_status_return_e {
 } UCM_RET;
 
 enum {
-    UCM_LOG_INFO  = 1 << 0,
-    UCM_LOG_DEBUG = 1 << 1,
-    UCM_LOG_ERROR = 1 << 2
+    UCM_TYPE_LOG_INFO  = 1 << 0,
+    UCM_TYPE_LOG_DEBUG = 1 << 1,
+    UCM_TYPE_LOG_ERROR = 1 << 2
 };
 
 // ######################################################################
@@ -104,10 +104,10 @@ enum {
 
 // Events ---------------------
 enum {
-    UCM_EV_TERM              = 0,
-    UCM_EV_RUN               = 1 << 0,
-    UCM_EV_INFO              = 1 << 1,
-    UCM_EV_LOAD_SUCCESS      = 1 << 2
+    UCM_EVENT_TERM              = 0,
+    UCM_EVENT_RUN               = 1 << 0,
+    UCM_EVENT_INFO              = 1 << 1,
+    UCM_EVENT_LOAD_SUCCESS      = 1 << 2
 };
 
 typedef struct {
@@ -150,13 +150,13 @@ typedef struct ucm_msg_s {
     ((ucm_plugin_t*)(((ucm_ev_t*)obj)->sender))
 
 /*! Enums what defines the plugin area */
-typedef enum _ucm_plugin_opt_e {
-    UCM_PLUG_DB       = 1 << 0,
-    UCM_PLUG_NET      = 1 << 1,
-    UCM_PLUG_CRYPTO   = 1 << 2,
-    UCM_PLUG_HIST     = 1 << 3,
-    UCM_PLUG_STUFF    = 1 << 4
-} UCM_PLUG_TYPE;
+enum {
+    UCM_TYPE_PLUG_DB       = 1 << 0,
+    UCM_TYPE_PLUG_NET      = 1 << 1,
+    UCM_TYPE_PLUG_CRYPTO   = 1 << 2,
+    UCM_TYPE_PLUG_HIST     = 1 << 3,
+    UCM_TYPE_PLUG_STUFF    = 1 << 4
+};
 
 /*! Usage API version */
 typedef struct {
@@ -165,7 +165,7 @@ typedef struct {
 } ucm_vapi_t;
 
 enum {
-    UCM_FLAG_PLUGIN_LOGGED = 1,
+    UCM_FLAG_PLUG_LOGGED = 1,
 };
 
 typedef struct {

@@ -15,9 +15,9 @@
 const ucm_functions_t* app;
 static ucm_dbplugin_t plugin;
 
-#define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_DEBUG, fmt, __VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_INFO,  fmt, __VA_ARGS__);}
-#define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_LOG_ERROR, fmt, __VA_ARGS__);}
+#define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
+#define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
+#define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
 
 db_object_t* UCM_DB = NULL;
 
@@ -96,7 +96,7 @@ static ucm_dbplugin_t plugin = {
         .vmajor              = UCM_API_MAJOR_VER,
         .vminor              = UCM_API_MINOR_VER
     },
-    .core.info.sys           = UCM_PLUG_DB,
+    .core.info.sys           = UCM_TYPE_PLUG_DB,
     .core.info.vmajor        = UCM_VERSION_MAJOR,
     .core.info.vminor        = UCM_VERSION_MINOR,
     .core.info.vpatch        = UCM_VERSION_PATCH,

@@ -15,9 +15,9 @@ typedef struct _logger_s {
 
 static ucm_logger_t* log;
 static uintptr_t lock_mtx;
-static uint32_t log_types = UCM_LOG_INFO  |
-                            UCM_LOG_DEBUG |
-                            UCM_LOG_ERROR;
+static uint32_t log_types = UCM_TYPE_LOG_INFO  |
+                            UCM_TYPE_LOG_DEBUG |
+                            UCM_TYPE_LOG_ERROR;
 
 static void
 _log_core (ucm_plugin_t* plug,
@@ -25,15 +25,15 @@ _log_core (ucm_plugin_t* plug,
            const char* txt)
 {
     switch (type){
-        case UCM_LOG_DEBUG:
+        case UCM_TYPE_LOG_DEBUG:
                 #ifdef ENABLE_DEBUG
                         fwrite(txt,strlen(txt),1,stdout);
                         break;
                 #endif
                         return;
-        case UCM_LOG_INFO: fwrite(txt,strlen(txt),1,stdout);
+        case UCM_TYPE_LOG_INFO: fwrite(txt,strlen(txt),1,stdout);
                         break;
-        case UCM_LOG_ERROR: fwrite(txt,strlen(txt),1,stderr);
+        case UCM_TYPE_LOG_ERROR: fwrite(txt,strlen(txt),1,stderr);
                         break;
     }
 
@@ -47,7 +47,7 @@ static int
 _log_enabled (ucm_plugin_t* plug,
               uint32_t      type)
 {
-    if(plug && ( !(plug->info.flags == UCM_FLAG_PLUGIN_LOGGED) ))
+    if(plug && ( !(plug->info.flags == UCM_FLAG_PLUG_LOGGED) ))
         return 0;
     if(plug && ( !(type & log_types) ))
         return 0;
@@ -114,7 +114,7 @@ ucm_vlog (const char* fmt,
 {
     char buf[UCM_DEF_STRLEN];
     if(vsnprintf(buf,UCM_DEF_STRLEN,fmt,va))
-        _log_core(NULL,UCM_LOG_INFO,buf);
+        _log_core(NULL,UCM_TYPE_LOG_INFO,buf);
 }
 
 void
