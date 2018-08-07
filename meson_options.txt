@@ -22,6 +22,12 @@ option ('path_docs_lookup', type: 'string', value: 'docs',
 
 option ('build_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
+
+# === ATTENTION !!! ===
+# It is not guaranteed that the assembly will be correct with the versions of the libraries that differ from those offered.
+
+option ('build_with_syslibs', type: 'boolean', value: 'false',
+        description: 'build with target system libraries if available')
 option ('build_with_full_commit', type: 'boolean', value: 'true',
         description: 'full (without --short key) rev-value commit code in plugin options')
 

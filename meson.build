@@ -9,6 +9,7 @@ project ('ucm', 'c',
 cc = meson.get_compiler('c')
 
 # --- compiler preferences ----------
+add_global_arguments('-DUTF8PROC_STATIC', language: 'c')
 if get_option('buildtype').startswith('debug')
     add_global_arguments ('-DDEBUG', language: 'c')
 endif
@@ -16,8 +17,46 @@ if get_option('enable_traces')
     add_global_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
 endif
 
+# --- compiler arguments ----------
+c_args = [
+    '-Wall',
+    '-Winline',
+    '-Wextra'
+]
+
+if get_option('buildtype').startswith('debug')
+    foreach arg : [
+            '-O0',
+            '-g'
+        ]
+        if cc.has_argument(arg)
+            add_project_arguments(arg, language : 'c')
+        endif
+    endforeach
+elif get_option('buildtype').startswith('release')
+    foreach arg : [
+            '-O3',
+            '-s'
+        ]
+        if cc.has_argument(arg)
+            add_project_arguments(arg, language : 'c')
+        endif
+    endforeach
+endif
+
+foreach arg : c_args
+    if cc.has_argument(arg)
+        add_project_arguments(arg, language : 'c')
+    endif
+endforeach
+
 # --- include headers paths ----------
-lib_core_inc = include_directories ('.', 'lib_core')
+lib_core_inc = include_directories ('''
+    ./
+    ./lib_core
+    ./lib_core/md5
+    ./lib_core/utf8proc
+'''.split())
 
 # --- install paths resolve ----------
 if get_option ('build_bundle')

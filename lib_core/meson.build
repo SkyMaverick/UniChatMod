@@ -1,3 +1,8 @@
+lib_utf8proc = files ('''
+    utf8proc/utf8proc.c
+    utf8proc/utf8proc.h
+'''.split())
+
 libcore_src = files('''
   alloc.h
   api.c
@@ -20,44 +25,12 @@ libcore_src = files('''
   threading.h
   ucm.c
   ucm.h
-'''.split())
-
-libcore_args = [
-    '-Wall',
-    '-Winline',
-    '-Wextra'
-]
+'''.split()) + lib_utf8proc
 
 libcore_deps = [
     cc.find_library('pthread', required: false),
     cc.find_library('dl', required: false)
 ]
-
-foreach arg : libcore_args
-    if cc.has_argument(arg)
-        add_project_arguments(arg, language : 'c')
-    endif
-endforeach
-
-if get_option('buildtype').startswith('debug')
-    foreach arg : [
-            '-O0',
-            '-g'
-        ]
-        if cc.has_argument(arg)
-            add_project_arguments(arg, language : 'c')
-        endif
-    endforeach
-elif get_option('buildtype').startswith('release')
-    foreach arg : [
-            '-O3',
-            '-s'
-        ]
-        if cc.has_argument(arg)
-            add_project_arguments(arg, language : 'c')
-        endif
-    endforeach
-endif
 
 # split project version for move to config.h
 lib_core_version = meson.project_version().split('.')
