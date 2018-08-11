@@ -1,4 +1,6 @@
 lib_utf8proc = files ('''
+    utf8proc/utf8.c
+    utf8proc/utf8.h
     utf8proc/utf8proc.c
     utf8proc/utf8proc.h
 '''.split())

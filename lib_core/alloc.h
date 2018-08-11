@@ -17,7 +17,8 @@ ucm_zmalloc (size_t size)
 }
 
 static inline void*
-ucm_calloc (size_t nmem, size_t size)
+ucm_calloc (size_t nmem, 
+            size_t size)
 {
     return calloc (nmem, size);
 }
@@ -35,7 +36,8 @@ ucm_free (void* obj)
     } while (0);         \
 
 static inline void
-ucm_zmemory (void* mem, size_t size)
+ucm_zmemory (void*  mem,
+             size_t size)
 {
     if (size) {
         if ( size > 4096 ) {
@@ -47,6 +49,18 @@ ucm_zmemory (void* mem, size_t size)
             } while (size);
         }
     }
+}
+
+static inline int
+ucm_realloc (void**  mem,
+             size_t size)
+{
+    void* nblk = realloc(*mem, size);
+    if (nblk) {
+        *mem = nblk;
+        return 0;
+    }
+    return 1;    
 }
 
 #endif
