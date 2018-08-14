@@ -30,8 +30,8 @@ libcore_src = files('''
 '''.split()) + lib_utf8proc
 
 libcore_deps = [
-    cc.find_library('pthread', required: false),
-    cc.find_library('dl', required: false)
+    cc.find_library('pthread', required: true),
+    cc.find_library('dl', required: true)
 ]
 
 # split project version for move to config.h

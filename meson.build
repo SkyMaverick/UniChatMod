@@ -76,3 +76,7 @@ endif
 if get_option('build_with_gui')
     subdir('gui')
 endif
+
+if get_option('build_with_tests')
+    subdir('tests')
+endif

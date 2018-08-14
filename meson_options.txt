@@ -22,6 +22,8 @@ option ('path_docs_lookup', type: 'string', value: 'docs',
 
 option ('build_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
+option ('build_with_tests', type: 'boolean', value: 'true',
+        description: 'build and run enabled tests')
 
 # === ATTENTION !!! ===
 # It is not guaranteed that the assembly will be correct with the versions of the libraries that differ from those offered.

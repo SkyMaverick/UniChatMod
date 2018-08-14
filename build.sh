@@ -80,7 +80,12 @@ else
                 cd $build_dir && ninja lazgui && cd $build_dir
             fi
         ;;
-        install)
+        test_bot) 
+            if [ -d $build_dir ]
+            then
+                cd $build_dir && ninja test_bot && cd $build_dir
+            fi
+        ;;        install)
             if [ -d $build_dir ]
             then
                 cd $build_dir && ninja install && cd $current_dir
