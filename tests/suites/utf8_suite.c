@@ -4,7 +4,7 @@
 #include "../util.h"
 #include "CUnit/Basic.h"
 
-#include "utf8.h"
+#include "unicode.h"
 #include "alloc.h"
 
 _TEST(strlen_lenght) {

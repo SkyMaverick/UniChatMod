@@ -55,7 +55,7 @@ lib_core_inc = include_directories ('''
     ./
     ./lib_core
     ./lib_core/md5
-    ./lib_core/utf8proc
+    ./lib_core/unicode
 '''.split())
 
 # --- install paths resolve ----------

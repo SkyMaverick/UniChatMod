@@ -1,8 +1,8 @@
 lib_utf8proc = files ('''
-    utf8proc/utf8.c
-    utf8proc/utf8.h
-    utf8proc/utf8proc.c
-    utf8proc/utf8proc.h
+    unicode/unicode.c
+    unicode/unicode.h
+    unicode/utf8proc.c
+    unicode/utf8proc.h
 '''.split())
 
 libcore_src = files('''

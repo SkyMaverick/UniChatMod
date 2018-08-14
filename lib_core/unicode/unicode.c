@@ -1,4 +1,4 @@
-#include "utf8.h"
+#include "unicode.h"
 #include "alloc.h"
 
 #include <string.h>
