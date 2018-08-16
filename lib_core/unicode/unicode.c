@@ -1,9 +1,9 @@
 #include "unicode.h"
 #include "alloc.h"
 
+#include <stdarg.h>
 #include <string.h>
 
-#define UNUSED(X) (void)(X)
 #define CHAR_SIZE sizeof(uchar_t)
 
 #define MIN2(A,B) ((A) < (B) ? (A) : (B))
@@ -12,21 +12,56 @@
                     ((A) < (C)) ? (A) : (C) : \
                     ((B) < (C)) ? (B) : (C) )
 
-// Unicode string strlen. 
+// ==========================================
+//     INTERNAL INLINE FUNCTIONS
+// ==========================================
+
 // WARNING! without NULL-terminated symbol
 static inline size_t
 _intrnl_u32strlen (uchar_t* str)
 {
-    size_t i = 0;
-    while (str [i++]){};
-    return i;
+    size_t count = 0;
+    if (str) {
+        for (; *str; str++, count++){};
+    }
+    return count;
 }
 
-size_t 
+static inline void
+_intrnl_u32strcpy (uchar_t* dest,
+                   uchar_t* src,
+                   uchar_t  echr)
+{
+    size_t i;
+    if (dest && src) {
+        for (i = 0; src[i] != 0; i++)
+            dest [i] = src [i];
+        dest [i] = echr;
+    }
+}
+
+static inline void
+_intrnl_u32strncpy (uchar_t* dest,
+                    uchar_t* src,
+                    uchar_t  echr,
+                    size_t   num)
+{
+    size_t i;
+    if (dest && src) {
+        for (i = 0; i < num && src[i] != 0; i++)
+            dest [i] = src [i];
+        dest [i] = echr;
+    }
+}
+
+// ==========================================
+//     BASIC FUNCTIONS
+// ==========================================
+
+size_t
 ucm_strlen (uchar_t* str)
 {
-    return (str == NULL) ? 0 :
-        _intrnl_u32strlen (str) - 1;
+    return _intrnl_u32strlen (str);
 }
 
 uchar_t*
@@ -43,175 +78,385 @@ ucm_strdup (uchar_t* str)
     return buf;
 }
 
+// ==========================================
+//     COMPARE FUNCTIONS
+// ==========================================
+
 int
-ucm_strcmp (const uchar_t* lstr,
-            const uchar_t* rstr)
+ucm_strcmp (uchar_t* lstr,
+            uchar_t* rstr)
 {
     while (*lstr && (*lstr == *rstr)) lstr++, rstr++;
     return (*lstr > *rstr) - (*lstr < *rstr);
 }
-// static int
-// uc_valid (uchar_t* str,
-//           ssize_t   lenght)
-// {
-//     while (lenght >= 0)
-//         if ( !utf8proc_codepoint_valid (str[ lenght-- ]) )
-//             return 0;
-//     return 1;
-// }
-// 
-// static size_t
-// uec_strlen (uechar_t* str)
-// {
-//     uchar_t code;
-//     size_t  count = 0;
-//     while ( utf8proc_iterate ( str, -1, &code ) > 0) count++;
-//     return count;
-// }
-// 
-// static ssize_t
-// uec2str (uechar_t** ue_str)
-// {
-//     size_t buf_len   = sizeof(ucm_string_t) + uec_strlen (*ue_str) +1 * CHAR_SIZE;
-//     ucm_string_t* buf = (buf_len > 0) ? ucm_zmalloc( buf_len ) : NULL;
-// 
-//     if (buf) {
-//         uchar_t ch;
-//         while ( utf8proc_iterate (*ue_str, -1, &ch) > 0)
-//             buf->data [ buf->lenght++ ] = ch;
-// 
-//         if ( utf8proc_normalize_utf32 ( buf->data, buf->lenght, UTF8PROC_STRIPCC
-//                                                                |UTF8PROC_COMPOSE
-//                                                                |UTF8PROC_STABLE) > 0 )
-//         {
-//             if ( !ucm_realloc ((void**)ue_str, buf_len) ) {
-//                 memcpy (*ue_str, buf, buf_len);
-//                 ucm_free (buf);
-//                 return ((ucm_string_t*)(*ue_str))->lenght;
-//             }
-//         }
-//         ucm_free (buf);
-//     }
-//     return -1;
-// }
-// 
-// static ssize_t
-// str2uec (ucm_string_t** u_str)
-// {
-//     utf8proc_ssize_t bytes = 0;
-//     size_t string_len = (*u_str)->lenght + CHAR_SIZE;
-// 
-//     if ( (bytes = utf8proc_reencode ( (*u_str)->data, string_len, UTF8PROC_STRIPCC
-//                                                                  |UTF8PROC_COMPOSE
-//                                                                  |UTF8PROC_STABLE) ) > 0 )
-//     {
-//         memmove (*u_str, (*u_str)->data, bytes);
-//         return ( realloc (*u_str, bytes) ) ? -1 : bytes;
-//     }
-//     return -1;
-// }
-// 
-// // ===================================
-// 
-// static inline uint8_t
-// u8_cmp (ucm_string_t* left,
-//         ucm_string_t* right,
-//         size_t        lenght)
-// {
-//      for (size_t i=0; i < lenght; i++)
-//         if ( left->data[ i ] != right->data[ i ] )
-//             return ( left->data[ i ] > right->data[ i ] ) ? -1 : 1;
-//     return 0;
-// }
-// 
-// static inline uint8_t
-// u8_casecmp (ucm_string_t* left,
-//             ucm_string_t* right,
-//             size_t        lenght)
-// {
-//     for (size_t i=0; i < lenght; i++)
-//     {
-//         uchar_t a = utf8proc_tolower ( left->data[ i ] );
-//         uchar_t b = utf8proc_tolower ( right->data[ i ] );
-// 
-//         if ( a != b )
-//             return ( a > b ) ? -1 : 1;
-//     }
-//     return 0;
-// }
-// 
-// size_t
-// ucm_strlen (ucm_string_t* string)
-// {
-//     return string->lenght - 1;
-// }
-// 
-// ucm_string_t*
-// ucm_strdup (ucm_string_t* string)
-// {
-//     size_t ret_size = sizeof(ucm_string_t)          // struct size
-//                       + string->lenght * CHAR_SIZE; // string lenght
-//     ucm_string_t* ret = ucm_malloc ( ret_size );
-//     if (ret)
-//         memcpy (ret, string, ret_size );
-//     return ret;
-// }
-// 
-// void
-// ucm_strcat (ucm_string_t* result,
-//             ucm_string_t** cat)
-// {
-//     size_t new_size = sizeof(ucm_string_t)          // struct size
-//                       + result->lenght * CHAR_SIZE  // 1-st string lenght
-//                       + (*cat)->lenght * CHAR_SIZE  // 2-nd string lenght
-//                       - CHAR_SIZE;                  // - one /0 terminate
-//     if ( !ucm_realloc ( (void*)(&result), new_size) ) {
-//         memcpy ( &( result->data [ result->lenght - 1 ] ), (*cat)->data, (*cat)->lenght);
-//         result->lenght = new_size;
-//         ucm_free_null (*cat);
-//     }
-// }
-// 
-// int8_t
-// ucm_strcmp (ucm_string_t* left,
-//             ucm_string_t* right)
-// {
-//     if (left->lenght != right->lenght)
-//         return ( left->lenght > right->lenght ) ? -1 : 1;
-//     return u8_cmp (left, right, left->lenght);
-// }
-// 
-// int8_t
-// ucm_strcasecmp (ucm_string_t* left,
-//                 ucm_string_t* right)
-// {
-//     if (left->lenght != right->lenght)
-//         return ( left->lenght > right->lenght ) ? -1 : 1;
-//     return u8_casecmp (left, right, left->lenght);
-// }
-// 
-// int8_t
-// ucm_strncmp (ucm_string_t* left,
-//              ucm_string_t* right,
-//              size_t        num)
-// {
-//     size_t lenght = MIN3 (left->lenght, right->lenght, num);
-//     return u8_cmp (left, right, lenght);
-// }
-// 
-// void
-// ucm_strcpy (ucm_string_t* dest,
-//             ucm_string_t* source)
-// {
-//     size_t size = sizeof(ucm_string_t) + source->lenght * CHAR_SIZE;
-//     memcpy (dest, source, size);
-// }
-// 
-// void
-// ucm_strncpy (ucm_string_t* dest,
-//              ucm_string_t* source,
-//              size_t        num)
-// {
-//     size_t size = MIN2 (num, sizeof(ucm_string_t) + source->lenght * CHAR_SIZE);
-//     memcpy (dest, source, size);
-// }
+
+int
+ucm_strcasecmp (uchar_t* lstr,
+                uchar_t* rstr)
+{
+    while (*lstr && (utf8proc_tolower(*lstr) == utf8proc_tolower(*rstr)))
+            lstr++, rstr++;
+    return (*lstr > *rstr) - (*lstr < *rstr);
+}
+
+int
+ucm_strncmp (uchar_t* lstr,
+             uchar_t* rstr,
+             size_t num)
+{
+    if (num == 0) return 0;
+    while (*lstr && (*lstr == *rstr) && num) lstr++, rstr++, num--;
+    return (*lstr > *rstr) - (*lstr < *rstr);
+}
+
+int
+ucm_strncasecmp (uchar_t* lstr,
+                 uchar_t* rstr,
+                 size_t num)
+{
+    if (num == 0) return 0;
+    while (*lstr && (utf8proc_tolower(*lstr) == utf8proc_tolower(*rstr)) && num)
+            lstr++, rstr++, num--;
+    return (*lstr > *rstr) - (*lstr < *rstr);
+}
+
+// ==========================================
+//     CASEFOLD FUNCTIONS
+// ==========================================
+
+void
+ucm_strupcase (uchar_t* str)
+{
+    while(*str)
+        utf8proc_toupper(*str++);
+}
+
+void
+ucm_strlowcase (uchar_t* str)
+{
+    while(*str)
+        utf8proc_tolower(*str++);
+}
+
+// ==========================================
+//     STRING COPY FUNCTIONS
+// ==========================================
+
+void
+ucm_strcpy (uchar_t* dest,
+            uchar_t* src)
+{
+    _intrnl_u32strcpy (dest, src, 0);
+}
+
+void
+ucm_strncpy (uchar_t* dest,
+             uchar_t* src,
+             size_t   num)
+{
+    _intrnl_u32strncpy (dest, src, 0, num);
+}
+
+// ==========================================
+//     STRING CONCAT FUNCTIONS
+// ==========================================
+
+void
+ucm_strcat (uchar_t* dest,
+            uchar_t* src)
+{
+    size_t dest_size = _intrnl_u32strlen(dest);
+    _intrnl_u32strcpy (dest + dest_size, src, 0);
+}
+
+void
+ucm_strncat (uchar_t* dest,
+             uchar_t* src,
+             size_t   num)
+{
+    size_t dest_size = _intrnl_u32strlen(dest);
+    _intrnl_u32strncpy (dest + dest_size, src, 0, num);
+}
+
+void
+ucm_vstrcat (uchar_t* dest,
+             unsigned num,
+             va_list va)
+{
+    size_t i = _intrnl_u32strlen(dest) + 1;
+    size_t j;
+
+    while (num--) {
+        uchar_t* tmp_str = va_arg (va, uchar_t*);
+        if (tmp_str) {
+            for (j = 0; tmp_str[j] != 0; i++, j++)
+                dest [i] = tmp_str[j];
+            dest [i] = 0;
+        }
+    }
+}
+
+void
+ucm_mstrcat (uchar_t* dest,
+             unsigned num,
+             ...)
+{
+    va_list strs;
+    va_start (strs, num);
+    ucm_vstrcat (dest, num, strs);
+    va_end (strs);
+}
+
+// ==========================================
+//     STRING GET CHAR POSITION FUNCTIONS
+// ==========================================
+
+uchar_t*
+ucm_strchr (uchar_t* str,
+            uchar_t  chr)
+{
+    if (!str)
+        return NULL;
+
+    size_t i;
+    for (i = 0; str[i] != chr; i++){};
+    return &str[i];
+}
+
+uchar_t*
+ucm_strrchr (uchar_t* str,
+             uchar_t  chr)
+{
+    if (!str)
+        return NULL;
+
+    size_t i, size = _intrnl_u32strlen (str);
+
+    for (i = size; str [i] != chr; i++){};
+    return &str[i];
+}
+
+// ==========================================
+//     STRING JOIN FUNCTIONS
+// ==========================================
+
+uchar_t*
+ucm_strjoin (uchar_t* str1,
+             uchar_t* str2)
+{
+    uchar_t* result = NULL;
+    if (str1 && str2) {
+        size_t str1_len = _intrnl_u32strlen (str1);
+        size_t str2_len  = _intrnl_u32strlen (str2);
+
+        result = ucm_zmalloc ((str1_len + str2_len + 1) * CHAR_SIZE);
+
+        if ( result ) {
+            _intrnl_u32strcpy (result, str1, 0);
+            _intrnl_u32strcpy (result + str1_len, str2, 0);
+        }
+    }
+    return result;
+}
+
+uchar_t*
+ucm_vstrjoin (size_t   num,
+              va_list  va)
+{
+    uchar_t* buf = NULL;
+    size_t   buf_len  = 0;
+    va_list  tmp_va;
+
+    // calculate buffer size
+    va_copy (tmp_va, va);
+    for (size_t i = 0; i < num; i++) {
+        uchar_t* tmp_buf = va_arg (tmp_va, uchar_t*);
+        if (tmp_buf && *tmp_buf)
+            buf_len += _intrnl_u32strlen(tmp_buf);
+    }
+    va_end (tmp_va);
+
+    // copy to buffer
+    buf = ucm_zmalloc ((buf_len + 1) * CHAR_SIZE);
+    if ( buf ) {
+        uchar_t* p = buf;
+        for (size_t i = 0; i < num; i++) {
+            uchar_t* tmp_buf = va_arg (va, uchar_t*);
+            if (tmp_buf && *tmp_buf) {
+                _intrnl_u32strcpy (p, tmp_buf, 0);
+                p += _intrnl_u32strlen(tmp_buf);
+            }
+        }
+    }
+    return buf;
+}
+
+uchar_t*
+ucm_mstrjoin (size_t   num,
+              ...)
+{
+    uchar_t* ret = NULL;
+
+    va_list strs;
+    va_start (strs, num);
+
+    ret = ucm_vstrjoin (num, strs);
+
+    va_end (strs);
+    return ret;
+}
+
+// ==========================================
+//     STRING JOIN WITH BROKEN CHAR FUNCTIONS
+// ==========================================
+
+uchar_t*
+ucm_strbrkjoin (uchar_t* str1,
+                uchar_t* str2,
+                uchar_t  brk)
+{
+    uchar_t* result = NULL;
+    if (str1 && str2) {
+        size_t str1_len = _intrnl_u32strlen (str1);
+        size_t str2_len = _intrnl_u32strlen (str2);
+
+        result = ucm_zmalloc( (str1_len + str2_len + 1) * CHAR_SIZE);
+        if ( result ) {
+            _intrnl_u32strcpy (result, str1, brk);
+            _intrnl_u32strcpy (result + str1_len + 1, str2, 0);
+        }
+    }
+    return result;
+}
+
+uchar_t*
+ucm_vstrbrkjoin (size_t   num,
+                 uchar_t  brk,
+                 va_list  va)
+{
+    uchar_t* buf = NULL;
+    size_t   buf_len  = 0;
+    va_list  tmp_va;
+
+    // calculate buffer size
+    va_copy (tmp_va, va);
+    for (size_t i = 0; i < num; i++) {
+        uchar_t* tmp_buf = va_arg (tmp_va, uchar_t*);
+        if (tmp_buf && *tmp_buf)
+            buf_len += _intrnl_u32strlen(tmp_buf)+1;
+    }
+    va_end (tmp_va);
+
+    // copy to buffer
+    buf = ucm_zmalloc (buf_len * CHAR_SIZE);
+    if ( buf ) {
+        uchar_t* p = buf;
+        for (size_t i = 0; i < num; i++) {
+            uchar_t* tmp_buf = va_arg (va, uchar_t*);
+            if (tmp_buf && *tmp_buf) {
+                _intrnl_u32strcpy (p, tmp_buf, brk);
+                p += _intrnl_u32strlen(tmp_buf) + 1;
+            }
+        }
+    }
+    return buf;
+}
+
+uchar_t*
+ucm_mstrbrkjoin (uchar_t  brk,
+                 size_t   num,
+                 ...)
+{
+    uchar_t* ret = NULL;
+
+    va_list strs;
+    va_start (strs, num);
+
+    ret = ucm_vstrbrkjoin (num, brk, strs);
+
+    va_end (strs);
+    return ret;
+
+}
+
+// ==========================================
+//      SUBSTRING SEARCH FUNCTIONS
+// ==========================================
+
+int64_t
+ucm_strstr (uchar_t* str,
+            uchar_t* sstr)
+{
+    if (str && sstr) {
+        int64_t i, j, N, M;
+        N = _intrnl_u32strlen(str);
+        M = _intrnl_u32strlen(sstr);
+
+        int64_t* d = ucm_zmalloc (M * sizeof(int64_t));
+
+        // prefix function
+        for (i = 1, j = 0; i < M; i++)
+        {
+            while ( j > 0 && sstr[j] != sstr[i])
+                j = d [j-1];
+            if (sstr [j] == sstr [i])
+                j++;
+            d [i] = j;
+        }
+
+        // Search function
+        for (i = 0, j = 0; i < N; i++)
+        {
+            while ( j > 0 && sstr [j] != str [i] )
+                j = d [j - 1];
+            if ( sstr [j] == str [i] )
+                j++;
+            if ( j == M) {
+                ucm_free(d);
+                return i - j + 1;
+            }
+        }
+        ucm_free (d);
+    }
+    return -1;
+}
+
+int64_t
+ucm_strcasestr (uchar_t* str,
+                uchar_t* sstr)
+{
+    #define __U8LCASE(X) utf8proc_tolower(X)
+    if (str && sstr) {
+        int64_t i, j, N, M;
+        N = _intrnl_u32strlen(str);
+        M = _intrnl_u32strlen(sstr);
+
+        int64_t* d = ucm_zmalloc (M * sizeof(int64_t));
+
+        // prefix function
+        for (i = 1, j = 0; i < M; i++)
+        {
+            while ( j > 0 && __U8LCASE( sstr[j] ) != __U8LCASE( sstr[i] ))
+                j = d [j-1];
+            if (__U8LCASE( sstr [j] ) == __U8LCASE( sstr [i] ))
+                j++;
+            d [i] = j;
+        }
+
+        // Search function
+        for (i = 0, j = 0; i < N; i++)
+        {
+            while ( j > 0 && __U8LCASE( sstr [j] ) != __U8LCASE( str [i] ))
+                j = d [j - 1];
+            if ( __U8LCASE( sstr [j] ) == __U8LCASE( str [i] ))
+                j++;
+            if ( j == M) {
+                ucm_free(d);
+                return i - j + 1;
+            }
+        }
+        ucm_free (d);
+    }
+    return -1;
+    #undef __U8LCASE
+}
