@@ -1,10 +1,10 @@
 #include "unicode.h"
+#include "ucm.h"
 #include "alloc.h"
 
 #include <stdarg.h>
 #include <string.h>
 
-#define CHAR_SIZE sizeof(u32char_t)
 
 #define MIN2(A,B) ((A) < (B) ? (A) : (B))
 
@@ -70,7 +70,7 @@ u32_strdup (u32char_t* str)
     u32char_t* buf = NULL;
 
     if (str) {
-        size_t buf_size = (u32_strlen (str) + 1)  * CHAR_SIZE;
+        size_t buf_size = (u32_strlen (str) + 1)  * U32CHAR_SIZE;
         buf = ucm_malloc (buf_size);
         if (buf)
             memcpy (buf, str, buf_size);
@@ -249,7 +249,7 @@ u32_strjoin (u32char_t* str1,
         size_t str1_len = _intrnl_u32strlen (str1);
         size_t str2_len  = _intrnl_u32strlen (str2);
 
-        result = ucm_zmalloc ((str1_len + str2_len + 1) * CHAR_SIZE);
+        result = ucm_zmalloc ((str1_len + str2_len + 1) * U32CHAR_SIZE);
 
         if ( result ) {
             _intrnl_u32strcpy (result, str1, 0);
@@ -277,7 +277,7 @@ u32_vstrjoin (size_t   num,
     va_end (tmp_va);
 
     // copy to buffer
-    buf = ucm_zmalloc ((buf_len + 1) * CHAR_SIZE);
+    buf = ucm_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
     if ( buf ) {
         u32char_t* p = buf;
         for (size_t i = 0; i < num; i++) {
@@ -320,7 +320,7 @@ u32_strbrkjoin (u32char_t* str1,
         size_t str1_len = _intrnl_u32strlen (str1);
         size_t str2_len = _intrnl_u32strlen (str2);
 
-        result = ucm_zmalloc( (str1_len + str2_len + 1) * CHAR_SIZE);
+        result = ucm_zmalloc( (str1_len + str2_len + 1) * U32CHAR_SIZE);
         if ( result ) {
             _intrnl_u32strcpy (result, str1, brk);
             _intrnl_u32strcpy (result + str1_len + 1, str2, 0);
@@ -348,7 +348,7 @@ u32_vstrbrkjoin (size_t   num,
     va_end (tmp_va);
 
     // copy to buffer
-    buf = ucm_zmalloc (buf_len * CHAR_SIZE);
+    buf = ucm_zmalloc (buf_len * U32CHAR_SIZE);
     if ( buf ) {
         u32char_t* p = buf;
         for (size_t i = 0; i < num; i++) {

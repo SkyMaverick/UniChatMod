@@ -75,6 +75,21 @@
 /* CORE structures *******************************************************
 */
 
+// TODO check uchar.h enabled
+#if 1
+    #include <uchar.h>
+    typedef char      u8char_t;
+    typedef char16_t  u16char_t;
+    typedef char32_t  u32char_t;
+#else
+    typedef uint8_t   u8char_t;
+    typedef uint16_t  u16char_t;
+    typedef uint32_t  u32char_t;
+#endif
+#define U8CHAR_SIZE  sizeof(u8char_t)
+#define U16CHAR_SIZE sizeof(u16char_t)
+#define U32CHAR_SIZE sizeof(u32char_t)
+
 /*! Core return status */
 typedef enum _ucm_status_return_e {
     UCM_RET_SUCCESS,

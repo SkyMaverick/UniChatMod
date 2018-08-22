@@ -1,15 +1,11 @@
-#ifndef _UCM_UTF8_INTERNAL_H_
-#define _UCM_UTF8_INTERNAL_H_
+#ifndef _UCM_UNICODE_FUNCS_H_
+#define _UCM_UNICODE_FUNCS_H_
 
 #include <stdarg.h>
 #include <inttypes.h>
 #include "utf8proc.h"
 #include "uconv.h"
-
-// FIXME This proto
-typedef utf8proc_uint8_t   u8char_t;
-typedef utf8proc_uint16_t  u16char_t;
-typedef utf8proc_uint32_t  u32char_t;
+#include "ucm.h"
 
 size_t
 u32_strlen (u32char_t* str);
