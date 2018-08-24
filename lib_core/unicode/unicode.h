@@ -18,107 +18,107 @@ ucs4_encode_u8 (u32char_t*       str,
                 u8char_t**       ret);
 
 size_t
-u32_strlen (u32char_t* str);
+ucm_strlen (u32char_t* str);
 
 u32char_t*
-u32_strdup (u32char_t* str);
+ucm_strdup (u32char_t* str);
 
 int
-u32_strcmp (u32char_t* lstr,
+ucm_strcmp (u32char_t* lstr,
             u32char_t* rstr);
 
 int
-u32_strcmp (u32char_t* lstr,
+ucm_strcmp (u32char_t* lstr,
             u32char_t* rstr);
 
 int
-u32_strcasecmp (u32char_t* lstr,
+ucm_strcasecmp (u32char_t* lstr,
                 u32char_t* rstr);
 
 int
-u32_strncmp (u32char_t* lstr,
+ucm_strncmp (u32char_t* lstr,
              u32char_t* rstr,
              size_t num);
 
 int
-u32_strncasecmp (u32char_t* lstr,
+ucm_strncasecmp (u32char_t* lstr,
                  u32char_t* rstr,
                  size_t num);
 
 void
-u32_strupcase (u32char_t* str);
+ucm_strupcase (u32char_t* str);
 
 void
-u32_strlowcase (u32char_t* str);
+ucm_strlowcase (u32char_t* str);
 
 void
-u32_strcpy (u32char_t* dest,
+ucm_strcpy (u32char_t* dest,
             u32char_t* src);
 
 void
-u32_strncpy (u32char_t* dest,
+ucm_strncpy (u32char_t* dest,
              u32char_t* src,
              size_t   num);
 
 void
-u32_strcat (u32char_t* dest,
+ucm_strcat (u32char_t* dest,
             u32char_t* src);
 
 void
-u32_strncat (u32char_t* dest,
+ucm_strncat (u32char_t* dest,
              u32char_t* src,
              size_t   num);
 
 void
-u32_vstrcat (u32char_t* dest,
+ucm_vstrcat (u32char_t* dest,
              unsigned num,
              va_list va);
 
 void
-u32_mstrcat (u32char_t* dest,
+ucm_mstrcat (u32char_t* dest,
              unsigned num,
              ...);
 
 u32char_t*
-u32_strchr (u32char_t* str,
+ucm_strchr (u32char_t* str,
             u32char_t  chr);
 
 u32char_t*
-u32_strrchr (u32char_t* str,
+ucm_strrchr (u32char_t* str,
              u32char_t  chr);
 
 u32char_t*
-u32_strjoin (u32char_t* str1,
+ucm_strjoin (u32char_t* str1,
              u32char_t* str2);
 
 u32char_t*
-u32_vstrjoin (size_t   num,
+ucm_vstrjoin (size_t   num,
               va_list  va);
 
 u32char_t*
-u32_mstrjoin (size_t   num,
+ucm_mstrjoin (size_t   num,
               ...);
 
 u32char_t*
-u32_strbrkjoin (u32char_t* str1,
+ucm_strbrkjoin (u32char_t* str1,
                 u32char_t* str2,
                 u32char_t  brk);
 
 u32char_t*
-u32_vstrbrkjoin (size_t   num,
+ucm_vstrbrkjoin (size_t   num,
                  u32char_t  brk,
                  va_list  va);
 
 u32char_t*
-u32_mstrbrkjoin (u32char_t  brk,
+ucm_mstrbrkjoin (u32char_t  brk,
                  size_t   num,
                  ...);
 
 int64_t
-u32_strstr (u32char_t* str,
+ucm_strstr (u32char_t* str,
             u32char_t* sstr);
 
 int64_t
-u32_strcasestr (u32char_t* str,
+ucm_strcasestr (u32char_t* str,
                 u32char_t* sstr);
 #endif

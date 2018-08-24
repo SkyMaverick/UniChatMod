@@ -129,7 +129,7 @@ ucs4_encode_u8 (u32char_t* str,
         } else {
             while (*str) str++, buf_size++;
         }
-        *ret = (u8char_t*)u32_strdup (str);
+        *ret = (u8char_t*)ucm_strdup (str);
         enc_len = utf8proc_reencode ((utf8proc_int32_t*) *ret,
                                       buf_size,
                                       UTF8PROC_STRIPCC
@@ -149,18 +149,18 @@ ucs4_encode_u8 (u32char_t* str,
 // ==========================================
 
 size_t
-u32_strlen (u32char_t* str)
+ucm_strlen (u32char_t* str)
 {
     return _intrnl_u32strlen (str);
 }
 
 u32char_t*
-u32_strdup (u32char_t* str)
+ucm_strdup (u32char_t* str)
 {
     u32char_t* buf = NULL;
 
     if (str) {
-        size_t buf_size = (u32_strlen (str) + 1)  * U32CHAR_SIZE;
+        size_t buf_size = (ucm_strlen (str) + 1)  * U32CHAR_SIZE;
         buf = ucm_malloc (buf_size);
         if (buf)
             memcpy (buf, str, buf_size);
@@ -173,7 +173,7 @@ u32_strdup (u32char_t* str)
 // ==========================================
 
 int
-u32_strcmp (u32char_t* lstr,
+ucm_strcmp (u32char_t* lstr,
             u32char_t* rstr)
 {
     while (*lstr && (*lstr == *rstr)) lstr++, rstr++;
@@ -181,7 +181,7 @@ u32_strcmp (u32char_t* lstr,
 }
 
 int
-u32_strcasecmp (u32char_t* lstr,
+ucm_strcasecmp (u32char_t* lstr,
                 u32char_t* rstr)
 {
     while (*lstr && (utf8proc_tolower(*lstr) == utf8proc_tolower(*rstr)))
@@ -190,7 +190,7 @@ u32_strcasecmp (u32char_t* lstr,
 }
 
 int
-u32_strncmp (u32char_t* lstr,
+ucm_strncmp (u32char_t* lstr,
              u32char_t* rstr,
              size_t num)
 {
@@ -200,7 +200,7 @@ u32_strncmp (u32char_t* lstr,
 }
 
 int
-u32_strncasecmp (u32char_t* lstr,
+ucm_strncasecmp (u32char_t* lstr,
                  u32char_t* rstr,
                  size_t num)
 {
@@ -215,14 +215,14 @@ u32_strncasecmp (u32char_t* lstr,
 // ==========================================
 
 void
-u32_strupcase (u32char_t* str)
+ucm_strupcase (u32char_t* str)
 {
     while(*str)
         utf8proc_toupper(*str++);
 }
 
 void
-u32_strlowcase (u32char_t* str)
+ucm_strlowcase (u32char_t* str)
 {
     while(*str)
         utf8proc_tolower(*str++);
@@ -233,14 +233,14 @@ u32_strlowcase (u32char_t* str)
 // ==========================================
 
 void
-u32_strcpy (u32char_t* dest,
+ucm_strcpy (u32char_t* dest,
             u32char_t* src)
 {
     _intrnl_u32strcpy (dest, src, 0);
 }
 
 void
-u32_strncpy (u32char_t* dest,
+ucm_strncpy (u32char_t* dest,
              u32char_t* src,
              size_t   num)
 {
@@ -252,7 +252,7 @@ u32_strncpy (u32char_t* dest,
 // ==========================================
 
 void
-u32_strcat (u32char_t* dest,
+ucm_strcat (u32char_t* dest,
             u32char_t* src)
 {
     size_t dest_size = _intrnl_u32strlen(dest);
@@ -260,7 +260,7 @@ u32_strcat (u32char_t* dest,
 }
 
 void
-u32_strncat (u32char_t* dest,
+ucm_strncat (u32char_t* dest,
              u32char_t* src,
              size_t   num)
 {
@@ -269,7 +269,7 @@ u32_strncat (u32char_t* dest,
 }
 
 void
-u32_vstrcat (u32char_t* dest,
+ucm_vstrcat (u32char_t* dest,
              unsigned num,
              va_list va)
 {
@@ -287,13 +287,13 @@ u32_vstrcat (u32char_t* dest,
 }
 
 void
-u32_mstrcat (u32char_t* dest,
+ucm_mstrcat (u32char_t* dest,
              unsigned num,
              ...)
 {
     va_list strs;
     va_start (strs, num);
-    u32_vstrcat (dest, num, strs);
+    ucm_vstrcat (dest, num, strs);
     va_end (strs);
 }
 
@@ -302,7 +302,7 @@ u32_mstrcat (u32char_t* dest,
 // ==========================================
 
 u32char_t*
-u32_strchr (u32char_t* str,
+ucm_strchr (u32char_t* str,
             u32char_t  chr)
 {
     if (!str)
@@ -314,7 +314,7 @@ u32_strchr (u32char_t* str,
 }
 
 u32char_t*
-u32_strrchr (u32char_t* str,
+ucm_strrchr (u32char_t* str,
              u32char_t  chr)
 {
     if (!str)
@@ -331,7 +331,7 @@ u32_strrchr (u32char_t* str,
 // ==========================================
 
 u32char_t*
-u32_strjoin (u32char_t* str1,
+ucm_strjoin (u32char_t* str1,
              u32char_t* str2)
 {
     u32char_t* result = NULL;
@@ -350,7 +350,7 @@ u32_strjoin (u32char_t* str1,
 }
 
 u32char_t*
-u32_vstrjoin (size_t   num,
+ucm_vstrjoin (size_t   num,
               va_list  va)
 {
     u32char_t* buf = NULL;
@@ -382,7 +382,7 @@ u32_vstrjoin (size_t   num,
 }
 
 u32char_t*
-u32_mstrjoin (size_t   num,
+ucm_mstrjoin (size_t   num,
               ...)
 {
     u32char_t* ret = NULL;
@@ -390,7 +390,7 @@ u32_mstrjoin (size_t   num,
     va_list strs;
     va_start (strs, num);
 
-    ret = u32_vstrjoin (num, strs);
+    ret = ucm_vstrjoin (num, strs);
 
     va_end (strs);
     return ret;
@@ -401,7 +401,7 @@ u32_mstrjoin (size_t   num,
 // ==========================================
 
 u32char_t*
-u32_strbrkjoin (u32char_t* str1,
+ucm_strbrkjoin (u32char_t* str1,
                 u32char_t* str2,
                 u32char_t  brk)
 {
@@ -420,7 +420,7 @@ u32_strbrkjoin (u32char_t* str1,
 }
 
 u32char_t*
-u32_vstrbrkjoin (size_t   num,
+ucm_vstrbrkjoin (size_t   num,
                  u32char_t  brk,
                  va_list  va)
 {
@@ -453,7 +453,7 @@ u32_vstrbrkjoin (size_t   num,
 }
 
 u32char_t*
-u32_mstrbrkjoin (u32char_t  brk,
+ucm_mstrbrkjoin (u32char_t  brk,
                  size_t   num,
                  ...)
 {
@@ -462,7 +462,7 @@ u32_mstrbrkjoin (u32char_t  brk,
     va_list strs;
     va_start (strs, num);
 
-    ret = u32_vstrbrkjoin (num, brk, strs);
+    ret = ucm_vstrbrkjoin (num, brk, strs);
 
     va_end (strs);
     return ret;
@@ -474,7 +474,7 @@ u32_mstrbrkjoin (u32char_t  brk,
 // ==========================================
 
 int64_t
-u32_strstr (u32char_t* str,
+ucm_strstr (u32char_t* str,
             u32char_t* sstr)
 {
     if (str && sstr) {
@@ -512,7 +512,7 @@ u32_strstr (u32char_t* str,
 }
 
 int64_t
-u32_strcasestr (u32char_t* str,
+ucm_strcasestr (u32char_t* str,
                 u32char_t* sstr)
 {
     #define __U8LCASE(X) utf8proc_tolower(X)
