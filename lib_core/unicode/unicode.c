@@ -55,6 +55,96 @@ _intrnl_u32strncpy (u32char_t* dest,
 }
 
 // ==========================================
+//     CONVERT FUNCTIONS
+// ==========================================
+
+/*  Decode UTF8 buffer to allocated USC4 buffer
+    str - UTF8 buffer
+    str_len - UTF8 string lenght (maybe 0 for NULLTERM string)
+    ret - pointer for decoded USC4 buffer */
+
+int64_t
+u8_decode_usc4 (u8char_t* str,
+                const int64_t   str_len,
+                u32char_t**     ret)
+{
+    int64_t buf_len = 0;
+    const int infinite = ( str_len > 0) ? 0 : UTF8PROC_NULLTERM;
+
+    if ( str ) {
+        if ( str_len <= 0 ) {
+            // calculate assumed buffer size
+            u8char_t* tmp = str;
+            while (*tmp) tmp++, buf_len++;  // bytes in string
+            buf_len /= 2;
+        } else 
+            buf_len = str_len;
+        *ret = ucm_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
+        if (*ret) {
+            for (;;){
+                int64_t dec_len = 0;
+                dec_len = utf8proc_decompose ( (utf8proc_uint8_t*) str,
+                                               str_len,
+                                               (utf8proc_int32_t*) *ret,
+                                               buf_len,
+                                               UTF8PROC_DECOMPOSE 
+                                              |UTF8PROC_STABLE
+                                              |infinite );
+                if (dec_len < 0){
+                    ucm_free_null (*ret);
+                    return dec_len;
+                }
+                
+                if (dec_len == buf_len)
+                    return dec_len;
+                
+                if (dec_len < buf_len) {
+                    if ( ucm_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE) ) {
+                       ucm_free_null(*ret);
+                       return 0;
+                    } else
+                        return dec_len;
+                }
+
+                if ( ucm_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE ) ) {
+                    ucm_free_null(*ret);
+                    return 0;
+                }
+            }
+        }
+    }
+    return buf_len;
+}
+
+int64_t
+ucs4_encode_u8 (u32char_t* str,
+                const int64_t    str_len,
+                u8char_t**       ret)
+{
+    int64_t enc_len = 0;
+    if ( str && *ret ) {
+        int64_t buf_size = 0;
+        if (str_len > 0) {
+            buf_size = str_len;
+        } else {
+            while (*str) str++, buf_size++;
+        }
+        *ret = (u8char_t*)u32_strdup (str);
+        enc_len = utf8proc_reencode ((utf8proc_int32_t*) *ret,
+                                      buf_size,
+                                      UTF8PROC_STRIPCC
+                                     |UTF8PROC_COMPOSE
+                                     |UTF8PROC_STABLE
+                                     );
+        if ( ucm_realloc ( (void**) ret, (enc_len + 1) * U8CHAR_SIZE) ) {
+            ucm_free_null (*ret);
+            return 0;
+        }
+    }
+    return enc_len;
+}
+
+// ==========================================
 //     BASIC FUNCTIONS
 // ==========================================
 

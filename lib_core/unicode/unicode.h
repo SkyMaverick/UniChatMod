@@ -4,8 +4,18 @@
 #include <stdarg.h>
 #include <inttypes.h>
 #include "utf8proc.h"
-#include "uconv.h"
 #include "ucm.h"
+
+
+int64_t
+u8_decode_usc4 (u8char_t*       str,
+                const int64_t   str_len,
+                u32char_t**     ret);
+
+int64_t
+ucs4_encode_u8 (u32char_t*       str,
+                const int64_t    str_len,
+                u8char_t**       ret);
 
 size_t
 u32_strlen (u32char_t* str);
