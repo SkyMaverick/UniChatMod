@@ -64,7 +64,7 @@ _intrnl_u32strncpy (u32char_t* dest,
     ret - pointer for decoded USC4 buffer */
 
 int64_t
-u8_decode_usc4 (u8char_t* str,
+u8_decode_ucs4 (u8char_t* str,
                 const int64_t   str_len,
                 u32char_t**     ret)
 {

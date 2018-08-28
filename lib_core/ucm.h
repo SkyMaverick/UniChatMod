@@ -289,6 +289,31 @@ typedef struct _ucm_functions_s {
     int (*rwlock_wlock)(uintptr_t _rwl);
     int (*rwlock_unlock)(uintptr_t _rwl);
 
+    /* Unicode operations. USC4 and convertors */
+    int64_t     (*U8toU32)     (u8char_t* str,   const int64_t str_len, u32char_t** ret);
+    int64_t     (*U32toU8)     (u32char_t* str,  const int64_t str_len, u8char_t** ret);
+    size_t      (*ustrlen)     (u32char_t* str); 
+    u32char_t*  (*ustrdup)     (u32char_t* str);
+    int         (*ustrcmp)     (u32char_t* lstr, u32char_t* rstr);
+    int         (*ustrcasecmp) (u32char_t* lstr, u32char_t* rstr);
+    int         (*ustrncmp)    (u32char_t* lstr, u32char_t* rst, size_t num);
+    int         (*ustrncasecmp)(u32char_t* lstr, u32char_t* rstr, size_t num);
+    void        (*ustrupcase)  (u32char_t* str);
+    void        (*ustrlowcase) (u32char_t* str);
+    void        (*ustrcpy)     (u32char_t* dest, u32char_t* src);
+    void        (*ustrncpy)    (u32char_t* dest, u32char_t* src, size_t num);
+    void        (*ustrcat)     (u32char_t* dest, u32char_t* src);
+    void        (*ustrncat)    (u32char_t* dest, u32char_t* src, size_t num);
+    void        (*umstrcat)    (u32char_t* dest, unsigned num,  ...);
+    u32char_t*  (*ustrchr)     (u32char_t* str,  u32char_t chr);
+    u32char_t*  (*ustrrchr)    (u32char_t* str,  u32char_t chr);
+    u32char_t*  (*ustrjoin)    (u32char_t* str1, u32char_t* str2);
+    u32char_t*  (*umstrjoin)   (size_t     num,  ...);
+    u32char_t*  (*ustrbrkjoin) (u32char_t* str1, u32char_t* str2, u32char_t brk);
+    u32char_t*  (*umstrbrkjoin)(u32char_t brk,   size_t num, ...);
+    int64_t     (*ustrstr)     (u32char_t* str,  u32char_t* sstr);
+    int64_t     (*ustrcasestr) (u32char_t* str,  u32char_t* sstr);
+
     /*! low-level settings provider functions */
     int (*get_int) (char* key, int def);
     int64_t (*get_int64) (char* key, int64_t def);

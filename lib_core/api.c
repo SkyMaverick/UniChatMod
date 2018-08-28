@@ -6,6 +6,7 @@
 #include "threading.h"
 #include "plugmgr.h"
 #include "evhook.h"
+#include "unicode/unicode.h"
 
 char ucm_path[UCM_PATH_MAX];
 char ucm_path_store[UCM_PATH_MAX];
@@ -59,6 +60,30 @@ static ucm_functions_t core_api = {
     .rwlock_rlock         = rwlock_rlock   ,
     .rwlock_wlock         = rwlock_wlock   ,
     .rwlock_unlock        = rwlock_unlock  ,
+
+    .U8toU32              = u8_decode_ucs4  ,
+    .U32toU8              = ucs4_encode_u8  ,
+    .ustrlen              = ucm_strlen      ,
+    .ustrdup              = ucm_strdup      ,
+    .ustrcmp              = ucm_strcmp      ,
+    .ustrcasecmp          = ucm_strcasecmp  ,
+    .ustrncmp             = ucm_strncmp     ,
+    .ustrncasecmp         = ucm_strncasecmp ,
+    .ustrupcase           = ucm_strupcase   ,
+    .ustrlowcase          = ucm_strlowcase  ,
+    .ustrcpy              = ucm_strcpy      ,
+    .ustrncpy             = ucm_strncpy     ,
+    .ustrcat              = ucm_strcat      ,
+    .ustrncat             = ucm_strncat     ,
+    .umstrcat             = ucm_mstrcat     ,
+    .ustrchr              = ucm_strchr      ,
+    .ustrrchr             = ucm_strrchr     ,
+    .ustrjoin             = ucm_strjoin     ,
+    .umstrjoin            = ucm_mstrjoin    ,
+    .ustrbrkjoin          = ucm_strbrkjoin  ,
+    .umstrbrkjoin         = ucm_mstrbrkjoin ,
+    .ustrstr              = ucm_strstr      ,
+    .ustrcasestr          = ucm_strcasestr  ,
 
     /*! settings provider functions */
     .get_int              = NULL,

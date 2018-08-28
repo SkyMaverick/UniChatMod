@@ -8,7 +8,7 @@
 
 
 int64_t
-u8_decode_usc4 (u8char_t*       str,
+u8_decode_ucs4 (u8char_t*       str,
                 const int64_t   str_len,
                 u32char_t**     ret);
 
@@ -22,10 +22,6 @@ ucm_strlen (u32char_t* str);
 
 u32char_t*
 ucm_strdup (u32char_t* str);
-
-int
-ucm_strcmp (u32char_t* lstr,
-            u32char_t* rstr);
 
 int
 ucm_strcmp (u32char_t* lstr,
