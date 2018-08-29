@@ -6,8 +6,6 @@
 
 #define zmalloc(size) calloc(1, size);
 
-
-
 typedef struct _event_hook_s {
     unsigned  mask;                      // events selector mask
     void*     ctx;                       // callback context pointer
