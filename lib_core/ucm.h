@@ -72,8 +72,9 @@
 #define UCM_CONTACT_ID_MAX   256
 #define UCM_CONTACT_NAME_MAX 1024
 
-/* CORE structures *******************************************************
-*/
+// *********************************************************
+//      CORE STRUCTURES 
+// *********************************************************
 
 // TODO check uchar.h enabled
 #if 1
@@ -113,9 +114,9 @@ enum {
     UCM_TYPE_LOG_ERROR = 1 << 2
 };
 
-// ######################################################################
+// *********************************************************
 //      BASE STRUCTURES 
-// ######################################################################
+// *********************************************************
 
 // Events ---------------------
 enum {
@@ -157,9 +158,9 @@ typedef struct ucm_msg_s {
     } data;
 } ucm_message_t;
 
-// ######################################################################
+// *********************************************************
 //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
-// ######################################################################
+// *********************************************************
 
 #define _EVENT_SENDER(obj)\
     ((ucm_plugin_t*)(((ucm_ev_t*)obj)->sender))
@@ -167,10 +168,11 @@ typedef struct ucm_msg_s {
 /*! Enums what defines the plugin area */
 enum {
     UCM_TYPE_PLUG_DB       = 1 << 0,
-    UCM_TYPE_PLUG_NET      = 1 << 1,
+    UCM_TYPE_PLUG_PROTO    = 1 << 1,
     UCM_TYPE_PLUG_CRYPTO   = 1 << 2,
     UCM_TYPE_PLUG_HIST     = 1 << 3,
-    UCM_TYPE_PLUG_STUFF    = 1 << 4
+    UCM_TYPE_PLUG_GUIHLP   = 1 << 4,
+    UCM_TYPE_PLUG_STUFF    = 1 << 5
 };
 
 /*! Usage API version */
@@ -249,9 +251,10 @@ typedef struct {
     // TODO
 } ucm_dbplugin_t;
 
-// ######################################################################
+
+// *********************************************************
 //      CHAT FUNCTIONALITY STRUCTURES
-// ######################################################################
+// *********************************************************
 
 //typedef struct {
 //    uint8_t sid;
@@ -259,9 +262,9 @@ typedef struct {
 //    ucm_plugin_t* output_chain;
 //} ucm_session_t;
 //
-// ######################################################################
+// *********************************************************
 //      MAIN APPLICATION API STRUCTURE
-// ######################################################################
+// *********************************************************
 
 /*! API structure. Provide for all plugins */
 typedef struct _ucm_functions_s {
@@ -348,7 +351,7 @@ typedef struct _ucm_functions_s {
     /*! get plugins by category */
     const ucm_plugin_t* (*get_plugins_all)   (void);
     const ucm_plugin_t* (*get_plugins_db)    (void);
-    const ucm_plugin_t* (*get_plugins_net)   (void);
+    const ucm_plugin_t* (*get_plugins_proto) (void);
     const ucm_plugin_t* (*get_plugins_crypt) (void);
     const ucm_plugin_t* (*get_plugins_hist)  (void);
     const ucm_plugin_t* (*get_plugins_stuff) (void);
@@ -366,9 +369,9 @@ typedef struct _ucm_functions_s {
 
 } ucm_functions_t;
 
-// ######################################################################
+// *********************************************************
 //      START/STOP/INFO MODULE
-// ######################################################################
+// *********************************************************
 
 const ucm_functions_t*
 ucm_core_start (const char* path_abs,

@@ -33,8 +33,8 @@ static size_t plugins_count        = 0;
 static ucm_plugin_t* plugins_all   [UCM_DEF_PLUG_COUNT];
 static size_t plugins_db_count     = 0;
 static ucm_plugin_t* plugins_db    [UCM_DEF_PLUG_COUNT];
-static size_t plugins_net_count    = 0;
-static ucm_plugin_t* plugins_net   [UCM_DEF_PLUG_COUNT];
+static size_t plugins_proto_count  = 0;
+static ucm_plugin_t* plugins_proto [UCM_DEF_PLUG_COUNT];
 static size_t plugins_cript_count  = 0;
 static ucm_plugin_t* plugins_crypt [UCM_DEF_PLUG_COUNT];
 static size_t plugins_hist_count   = 0;
@@ -114,9 +114,9 @@ _plugin_registry_add (ucm_plugin_t* plugin)
                             plugins_db [plugins_db_count++] = plugin;
                             break;
                         }
-                    case UCM_TYPE_PLUG_NET:
+                    case UCM_TYPE_PLUG_PROTO:
                         {
-                            plugins_net [plugins_net_count++] = plugin;
+                            plugins_proto [plugins_proto_count++] = plugin;
                             break;
                         }
                     case UCM_TYPE_PLUG_CRYPTO:
@@ -222,7 +222,7 @@ plugins_stop_all (void)
     }
     ucm_zmemory (plugins_all,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
     ucm_zmemory (plugins_db,    sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_net,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_zmemory (plugins_proto, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
     ucm_zmemory (plugins_crypt, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
     ucm_zmemory (plugins_hist,  sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
     ucm_zmemory (plugins_stuff, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
@@ -256,9 +256,9 @@ plugins_get_db (void)
 }
 
 const ucm_plugin_t*
-plugins_get_net (void)
+plugins_get_proto (void)
 {
-    return (ucm_plugin_t*) plugins_net;
+    return (ucm_plugin_t*) plugins_proto;
 }
 
 const ucm_plugin_t*

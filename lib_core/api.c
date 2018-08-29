@@ -118,7 +118,7 @@ static ucm_functions_t core_api = {
 
     .get_plugins_all    = plugins_get_all   ,
     .get_plugins_db     = plugins_get_db    ,
-    .get_plugins_net    = plugins_get_net   ,
+    .get_plugins_proto  = plugins_get_proto ,
     .get_plugins_crypt  = plugins_get_crypt ,
     .get_plugins_hist   = plugins_get_hist  ,
     .get_plugins_stuff  = plugins_get_stuff ,

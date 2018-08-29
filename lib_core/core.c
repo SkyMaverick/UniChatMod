@@ -12,7 +12,6 @@
 
 typedef struct {
     ucm_plugin_t        base;           // base plugin functionality (start/stop/mq)
-    ucm_plugin_t        DB;             // selected architect plugins refs (db etc...)
 } ucm_core_t;
 
 static uintptr_t tid_loop_core = 0;

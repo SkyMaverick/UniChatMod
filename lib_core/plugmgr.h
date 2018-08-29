@@ -27,7 +27,7 @@ const ucm_plugin_t*
 plugins_get_db (void);
 
 const ucm_plugin_t*
-plugins_get_net (void);
+plugins_get_proto (void);
 
 const ucm_plugin_t*
 plugins_get_crypt (void);
