@@ -222,6 +222,10 @@ typedef struct _ucm_plugin_s {
     void              (*msg_process)(void);
 } ucm_plugin_t;
 
+// *********************************************************
+//      DataBase plugins functionality
+// *********************************************************
+
 enum {
     UCM_FLAG_DB_READONLY    = 1 << 0,
     UCM_FLAG_DB_NEEDCHAECK  = 1 << 1,
@@ -251,6 +255,18 @@ typedef struct {
     // TODO
 } ucm_dbplugin_t;
 
+// *********************************************************
+//      Protocol plugins functionality
+// *********************************************************
+
+typedef struct {
+    ucm_plugin_t    core;
+    char*   (*get_signature)(void);
+
+    UCM_RET (*connect)      (uintptr_t ctx);
+    UCM_RET (*disconnect)   (uintptr_t ctx);
+    int     (*get_status)   (void);
+} ucm_pclplugin_t;
 
 // *********************************************************
 //      CHAT FUNCTIONALITY STRUCTURES
