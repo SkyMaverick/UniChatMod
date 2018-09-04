@@ -60,6 +60,11 @@ static ucm_pclplugin_t plugin = {
     .core.run                = _run_proto,
     .core.stop               = _stop_proto,
     .core.message            = _message,
+    .flags                   =  UCM_FLAG_NET_IAMSERVERMODE
+                              | UCM_FLAG_NET_GROUP
+                              | UCM_FLAG_NET_CRYPT
+                              | UCM_FLAG_NET_BROADCAST
+                              | UCM_FLAG_NET_MULTYSESSION
 };
 
 ucm_plugin_t* _init_plugin(const ucm_functions_t* api){

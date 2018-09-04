@@ -3,6 +3,8 @@ plug_name = 'net_legacy'
 net_legacy_src = files('''
     network.c
     network.h
+    protocol.c
+    protocol.h
     net_legacy.h
     net_legacy.c
 '''.split()) + core_header_c
