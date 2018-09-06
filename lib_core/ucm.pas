@@ -299,6 +299,7 @@ function UCMCoreInfo(): PUCMPluginInfo; cdecl;
 {$ELSE}
    {$IFDEF FPC}
 TUCMCB_CoreStart = function (const PathAbs: PChar;
+    const UCMPathPlugAbs: PChar;    
     const UCMPathStoreAbs: PChar): PUCMFunctions; cdecl;
 TUCMCB_CoreStop = function (): TUCMRetStatus; cdecl;
 TUCMCB_CoreInfo = function (): PUCMPluginInfo; cdecl;

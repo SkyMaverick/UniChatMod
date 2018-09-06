@@ -405,6 +405,7 @@ typedef struct _ucm_functions_s {
 
 const ucm_functions_t*
 ucm_core_start (const char* path_abs,
+                const char* path_plug_abs,
                 const char* path_store_abs);
 
 UCM_RET
