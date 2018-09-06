@@ -32,11 +32,6 @@ g_plugins_path (void)
     return ucm_path_plugs;
 }
 
-static const char*
-g_doc_path (void)
-{
-    return ucm_path_doc;
-}
 
 static ucm_functions_t core_api = {
     .thread_create        = thread_create  ,
@@ -127,7 +122,6 @@ static ucm_functions_t core_api = {
     .get_startup_path   = g_startup_path ,
     .get_store_path     = g_store_path   ,
     .get_plugins_path   = g_plugins_path ,
-    .get_doc_path       = g_doc_path     ,
 };
 
 ucm_functions_t* ucm_api = &core_api;
