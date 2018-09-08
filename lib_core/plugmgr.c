@@ -7,6 +7,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <stdint.h>
+#include <wchar.h>
 
 #include "ucm.h"
 #include "core.h"
@@ -57,7 +58,7 @@ _plugin_verify (ucm_plugin_t* plugin)
     }
     // TODO strongly PID validation
     if (plugin->info.pid) {
-        if ( strcmp (plugin->info.pid, "") == 0 ) {
+        if ( wcscmp (plugin->info.pid, L"") == 0 ) {
             return UCM_RET_NOOBJECT;
         }
     }
@@ -149,7 +150,7 @@ plugins_load_registry (char* plug_path)
 
     DIR* plugs_dir = opendir(plug_path);
     if (!plugs_dir) {
-        ucm_etrace("%s %s: %s\n", _("Not found path"), plug_path, strerror(errno));
+        ucm_etrace("%ls %ls: %ls\n", _("Not found path"), plug_path, strerror(errno));
         return UCM_RET_WRONGPARAM;
     }
 

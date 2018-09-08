@@ -389,9 +389,9 @@ typedef struct _ucm_functions_s {
     const ucm_plugin_t* (*get_plugins_stuff) (void);
 
     /*! get global paths */
-    const char* (*get_startup_path) (void);
-    const char* (*get_store_path)   (void);
-    const char* (*get_plugins_path) (void);
+    const wchar_t* (*get_startup_path) (void);
+    const wchar_t* (*get_store_path)   (void);
+    const wchar_t* (*get_plugins_path) (void);
 
     /*! user API */
     const ucm_plugin_info_t*    (*get_plugin_info)  (char* pid);

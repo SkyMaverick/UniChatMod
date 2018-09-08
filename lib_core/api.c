@@ -2,6 +2,7 @@
 
 #include "ucm.h"
 #include "api.h"
+#include "alloc.h"
 
 #include "logger.h"
 #include "mainloop.h"
@@ -16,19 +17,19 @@ wchar_t ucm_path_plugs  [UCM_PATH_MAX];
 wchar_t ucm_path_doc    [UCM_PATH_MAX];
 
 // application global parameters (paths, vars, etc.)
-static const char*
+static const wchar_t*
 g_startup_path (void)
 {
     return ucm_path;
 }
 
-static const char*
+static const wchar_t*
 g_store_path (void)
 {
     return ucm_path_store;
 }
 
-static const char*
+static const wchar_t*
 g_plugins_path (void)
 {
     return ucm_path_plugs;
