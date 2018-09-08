@@ -13,6 +13,8 @@ option ('limit_plugins_count', type: 'integer', min: 10, max: 200, value: 100,
 
 option ('build_bundle', type: 'boolean', value: 'true',
         description: 'build single path application or classic *nix')
+option ('base_inbundle', type: 'boolean', value: 'true',
+        description: 'build basepath into bandle (full portable app)')
 option ('path_modules_lookup', type: 'string', value: 'mods',
         description: 'modules (plugins) subdir')
 option ('path_devels_lookup', type: 'string', value: 'include',
@@ -30,6 +32,7 @@ option ('build_with_tests', type: 'boolean', value: 'true',
 
 option ('build_with_syslibs', type: 'boolean', value: 'false',
         description: 'build with target system libraries if available')
+
 option ('build_with_full_commit', type: 'boolean', value: 'true',
         description: 'full (without --short key) rev-value commit code in plugin options')
 
@@ -37,5 +40,7 @@ option ('build_with_gui', type: 'boolean', value: 'true',
         description: 'build standart gui')
 option ('gui_enable_lazarus', type: 'boolean', value: 'true',
         description: 'enable lazarus based gui as variant')
+option ('gui_enable_cli', type: 'boolean', value: 'true',
+        description: 'enable cli interface')
 option ('auto_generate_icons', type: 'boolean', value: 'false',
         description: 'create all icons set automaticaly or each size manual')

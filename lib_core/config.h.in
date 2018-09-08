@@ -1,6 +1,7 @@
 #ifndef _UCM_CONFIG_H_
 #define _UCM_CONFIG_H_
 
+#define UCM_APPNAME             @appname@
 #define UCM_VERSION             @version@
 #define UCM_VERSION_MAJOR       @version_major@
 #define UCM_VERSION_MINOR       @version_minor@

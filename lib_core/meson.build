@@ -73,12 +73,13 @@ lib_core_version_full = '@0@_@1@_@2@'.format (
                             lib_core_time)
 
 lib_core_conf = configuration_data()
+
+lib_core_conf.set_quoted ('appname'         , meson.project_name())
 lib_core_conf.set_quoted ('version'         , meson.project_version())
 lib_core_conf.set        ('version_major'   , lib_core_version[0])
 lib_core_conf.set        ('version_minor'   , lib_core_version[1])
 lib_core_conf.set        ('version_patch'   , lib_core_version[2])
 lib_core_conf.set_quoted ('version_full'    , lib_core_version_full)
-lib_core_conf.set10      ('enable_bundle'   , get_option ('build_bundle'))
 lib_core_conf.set_quoted ('path_modules'    , get_option ('path_modules_lookup'))
 lib_core_conf.set_quoted ('path_docs'       , get_option ('path_docs_lookup'))
 lib_core_conf.set_quoted ('build_commit'    , lib_core_commit)
