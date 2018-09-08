@@ -1,3 +1,5 @@
+#include <wchar.h>
+
 #include "ucm.h"
 #include "api.h"
 #include "defs.h"
@@ -116,13 +118,13 @@ static ucm_core_t core_lib = {
     },
     .base.info.flags       = 0,
 
-    .base.info.pid         = "ucm_core",
-    .base.info.name        = "UniChatMod core plugin",
-    .base.info.developer   = "SkyMaverick",
-    .base.info.description = "UniChatMod core library plugin",
-    .base.info.copyright   = "Zlib",
-    .base.info.email       = "",
-    .base.info.website     = "",
+    .base.info.pid         = L"ucm_core",
+    .base.info.name        = L"UniChatMod core plugin",
+    .base.info.developer   = L"SkyMaverick",
+    .base.info.description = L"UniChatMod core library plugin",
+    .base.info.copyright   = L"Zlib",
+    .base.info.email       = L"",
+    .base.info.website     = L"",
 
     .base.run         = _run_core,
     .base.stop        = _stop_core,

@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <limits.h>
+#include <wchar.h>
 
 #ifdef __cplusplus
     extern "C" {
@@ -184,29 +185,29 @@ enum {
 };
 
 typedef struct {
-    const ucm_vapi_t  api;                /// plugin release api version (required)
-    const uint8_t     sys;                /// plugin subsystem (required)
-    const uint16_t    vmajor;             /// major plugin version (required)
-    const uint16_t    vminor;             /// minor plugin version (required)
-    const uint16_t    vpatch;             /// patch plugin version (required)
-    const char* const pid;                /// plugin id for internal ident (required)
-    uint32_t flags;                       /// plugin flags
+    const ucm_vapi_t     api;                /// plugin release api version (required)
+    const uint8_t        sys;                /// plugin subsystem (required)
+    const uint16_t       vmajor;             /// major plugin version (required)
+    const uint16_t       vminor;             /// minor plugin version (required)
+    const uint16_t       vpatch;             /// patch plugin version (required)
+    const wchar_t* const pid;                /// plugin id for internal ident (required)
+    uint32_t             flags;                       /// plugin flags
     // build info.
     struct {
-        const char* commit;               /// commit in repository
-        const char* datetime;             /// build datetime
-        const char* target;               /// build target platform
-        const char* compiler;             /// build this compiler
-        const char* options;              /// build options
-        const char* flags;                /// build with flags
+        const wchar_t*   commit;             /// commit in repository
+        const wchar_t*   datetime;           /// build datetime
+        const wchar_t*   target;             /// build target platform
+        const wchar_t*   compiler;           /// build this compiler
+        const wchar_t*   options;            /// build options
+        const wchar_t*   flags;              /// build with flags
     } build;
     // developer info
-    const char* const name;               /// plugin name for user
-    const char* const developer;          /// developer name
-    const char* const description;        /// plugin description and more info
-    const char* const copyright;          /// plugin license
-    const char* const email;              /// support email
-    const char* const website;            /// official website
+    const wchar_t* const name;               /// plugin name for user
+    const wchar_t* const developer;          /// developer name
+    const wchar_t* const description;        /// plugin description and more info
+    const wchar_t* const copyright;          /// plugin license
+    const wchar_t* const email;              /// support email
+    const wchar_t* const website;            /// official website
 } ucm_plugin_info_t;
 
 /*! Structure what defines base plugin interface*/

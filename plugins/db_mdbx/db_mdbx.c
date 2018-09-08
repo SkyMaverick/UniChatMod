@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "ucm.h"
 #include "alloc.h"
@@ -109,13 +110,13 @@ static ucm_dbplugin_t plugin = {
         .options             = UCM_BUILD_OPTS,
         .flags               = UCM_BUILD_FLAGS,
     },
-    .core.info.pid           = "dbmdbx",
-    .core.info.name          = "Storage mdbx plugin",
-    .core.info.developer     = "SkyMaverick",
-    .core.info.description   = "System standart storage plugin (based on libmdbx).",
-    .core.info.copyright     = "Zlib + ReOpenLDAP",
-    .core.info.email         = "mail@mail.ru",
-    .core.info.website       = "http://null.org",
+    .core.info.pid           = L"dbmdbx",
+    .core.info.name          = L"Storage mdbx plugin",
+    .core.info.developer     = L"SkyMaverick",
+    .core.info.description   = L"System standart storage plugin (based on libmdbx).",
+    .core.info.copyright     = L"Zlib + ReOpenLDAP",
+    .core.info.email         = L"mail@mail.ru",
+    .core.info.website       = L"http://null.org",
 
     .core.run                = _run_dbmdbx,
     .core.stop               = _stop_dbmdbx,
