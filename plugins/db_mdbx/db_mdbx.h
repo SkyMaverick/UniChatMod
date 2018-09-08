@@ -2,6 +2,8 @@
 #define _DB_MDBX_HEADER_
 
 #include <inttypes.h>
+#include <wchar.h>
+
 #include "ucm.h"
 #include "libmdbx/mdbx.h"
 
