@@ -1,3 +1,5 @@
+#include <wchar.h>
+
 #include "ucm.h"
 #include "api.h"
 
@@ -8,10 +10,10 @@
 #include "evhook.h"
 #include "unicode/unicode.h"
 
-char ucm_path[UCM_PATH_MAX];
-char ucm_path_store[UCM_PATH_MAX];
-char ucm_path_plugs[UCM_PATH_MAX];
-char ucm_path_doc[UCM_PATH_MAX];
+wchar_t ucm_path        [UCM_PATH_MAX];
+wchar_t ucm_path_store  [UCM_PATH_MAX];
+wchar_t ucm_path_plugs  [UCM_PATH_MAX];
+wchar_t ucm_path_doc    [UCM_PATH_MAX];
 
 // application global parameters (paths, vars, etc.)
 static const char*

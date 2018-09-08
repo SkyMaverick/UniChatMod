@@ -13,16 +13,15 @@ ucm_core_start (const char* path_abs,
                 const char* path_store_abs)
 {
     //TODO build plugin stack, init and start core plugin
-    extern char ucm_path [UCM_PATH_MAX];
-    extern char ucm_path_store[UCM_PATH_MAX];
-    extern char ucm_path_plugs[UCM_PATH_MAX];
+    extern wchar_t ucm_path [UCM_PATH_MAX];
+    extern wchar_t ucm_path_store[UCM_PATH_MAX];
+    extern wchar_t ucm_path_plugs[UCM_PATH_MAX];
 
     if (path_abs && path_plug_abs && path_store_abs) {
-        snprintf (ucm_path,       UCM_PATH_MAX, "%s", path_abs);
-        snprintf (ucm_path_plugs, UCM_PATH_MAX, "%s", path_plug_abs);
-        snprintf (ucm_path_store, UCM_PATH_MAX, "%s", path_store_abs);
-    } else {
-        return NULL;
+        if (!(     (mbstowcs (ucm_path      , path_abs      , UCM_PATH_MAX)) > 0
+                && (mbstowcs (ucm_path_store, path_plug_abs , UCM_PATH_MAX)) > 0
+                && (mbstowcs (ucm_path_plugs, path_store_abs, UCM_PATH_MAX)) > 0 ) )
+            return NULL;
     }
 
     plugins_load_registry(ucm_path_plugs);

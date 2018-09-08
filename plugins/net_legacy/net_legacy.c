@@ -1,3 +1,5 @@
+#include <wchar.h>
+
 #include "ucm.h"
 #include "alloc.h"
 #include "config.h"
@@ -49,13 +51,13 @@ static ucm_pclplugin_t plugin = {
         .options             = UCM_BUILD_OPTS,
         .flags               = UCM_BUILD_FLAGS,
     },
-    .core.info.pid           = "unichat_legacy",
-    .core.info.name          = "Legacy UniChat 1.46 protocol plugin",
-    .core.info.developer     = "SkyMaverick",
-    .core.info.description   = "Protocol plugin for compatibilty old UniChat 1.46 client programm",
-    .core.info.copyright     = "Zlib",
-    .core.info.email         = "mail@mail.ru",
-    .core.info.website       = "http://null.org",
+    .core.info.pid           = L"unichat_legacy",
+    .core.info.name          = L"Legacy UniChat 1.46 protocol plugin",
+    .core.info.developer     = L"SkyMaverick",
+    .core.info.description   = L"Protocol plugin for compatibilty old UniChat 1.46 client programm",
+    .core.info.copyright     = L"Zlib",
+    .core.info.email         = L"mail@mail.ru",
+    .core.info.website       = L"http://null.org",
 
     .core.run                = _run_proto,
     .core.stop               = _stop_proto,
