@@ -16,12 +16,18 @@ endif
 if get_option('enable_traces')
     add_global_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
 endif
+if get_option('build_bundle')
+    add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
+endif
+if get_option('base_inbundle')
+    add_global_arguments ('-DBASE_INBUNDLE', language: 'c')
+endif
 
 # --- compiler arguments ----------
 c_args = [
     '-Wall',
     '-Winline',
-    '-Wextra'
+    '-Wextra',
 ]
 
 if get_option('buildtype').startswith('debug')

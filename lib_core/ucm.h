@@ -73,7 +73,7 @@
 #define UCM_CONTACT_NAME_MAX 1024
 
 // *********************************************************
-//      CORE STRUCTURES 
+//      CORE STRUCTURES
 // *********************************************************
 
 // TODO check uchar.h enabled
@@ -115,7 +115,7 @@ enum {
 };
 
 // *********************************************************
-//      BASE STRUCTURES 
+//      BASE STRUCTURES
 // *********************************************************
 
 // Events ---------------------
@@ -326,7 +326,7 @@ typedef struct _ucm_functions_s {
     /* Unicode operations. USC4 and convertors */
     int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);
     int64_t     (*U32toU8)      (u32char_t* str,  const int64_t str_len, u8char_t** ret);
-    size_t      (*ustrlen)      (u32char_t* str); 
+    size_t      (*ustrlen)      (u32char_t* str);
     u32char_t*  (*ustrdup)      (u32char_t* str);
     int         (*ustrcmp)      (u32char_t* lstr, u32char_t* rstr);
     int         (*ustrcasecmp)  (u32char_t* lstr, u32char_t* rstr);

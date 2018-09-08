@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <Compiler Value="/usr/bin/fpc" Date="1526926378"/>
-  <Params Value=" -MObjFPC -Scgi -Cg -O1 -g -gl -Xg -l -vewnhibq -Fi/usr/share/lazarus/1.8.4/lcl/include -Fu/usr/share/lazarus/1.8.4/packager/units/x86_64-linux -Fu/usr/share/lazarus/1.8.4/components/lazutils/lib/x86_64-linux -Fu/usr/share/lazarus/1.8.4/lcl/units/x86_64-linux -Fu/usr/share/lazarus/1.8.4/lcl/units/x86_64-linux/gtk2 -Fu/home/alex/projects/UniChatMod/gui/lazarus/deps/FolderImList/ -FU/home/alex/projects/UniChatMod/gui/lazarus/deps/FolderImList/lib/x86_64-linux/ -dLCL -dLCLgtk2 folderimagelist.pas"/>
+  <Params Value=" -MObjFPC -Scgi -Cg -O1 -g -gl -Xg -l -vewnhibq -Fi/usr/share/lazarus/1.8.4/lcl/include -Fu/home/alex/.lazarus/lib/units/x86_64-linux -Fu/home/alex/.lazarus/lib/LazUtils/lib/x86_64-linux -Fu/home/alex/.lazarus/lib/LCLBase/units/x86_64-linux -Fu/home/alex/.lazarus/lib/units/x86_64-linux/gtk2 -Fu/home/alex/projects/UniChatMod/gui/lazarus/deps/FolderImList/ -FU/home/alex/projects/UniChatMod/gui/lazarus/deps/FolderImList/lib/x86_64-linux/ -dLCL -dLCLgtk2 -dBUILD_BUNDLE folderimagelist.pas"/>
 </CONFIG>

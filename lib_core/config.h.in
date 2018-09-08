@@ -1,13 +1,13 @@
 #ifndef _UCM_CONFIG_H_
 #define _UCM_CONFIG_H_
 
+#define UCM_APPNAME             @appname@
 #define UCM_VERSION             @version@
 #define UCM_VERSION_MAJOR       @version_major@
 #define UCM_VERSION_MINOR       @version_minor@
 #define UCM_VERSION_PATCH       @version_patch@
 #define UCM_VERSION_FULL        @version_full@
 
-#define UCM_ENABLE_BUNDLE       @enable_bundle@
 #define UCM_PATH_MODULES        @path_modules@
 #define UCM_PATH_DOCS           @path_docs@
 
