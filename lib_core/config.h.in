@@ -8,15 +8,16 @@
 #define UCM_VERSION_PATCH       @version_patch@
 #define UCM_VERSION_FULL        @version_full@
 
-#define UCM_PATH_MODULES        @path_modules@
-#define UCM_PATH_DOCS           @path_docs@
+#define UCM_ENABLE_BUNDLE       @enable_bundle@
+#define UCM_PATH_MODULES        L@path_modules@
+#define UCM_PATH_DOCS           L@path_docs@
 
-#define UCM_BUILD_COMMIT        @build_commit@
-#define UCM_BUILD_TIME          @build_time@
-#define UCM_BUILD_TARGET        @build_target@
-#define UCM_BUILD_CC            @build_cc@
-#define UCM_BUILD_OPTS          @build_opts@
-#define UCM_BUILD_FLAGS         @build_flags@
+#define UCM_BUILD_COMMIT        L@build_commit@
+#define UCM_BUILD_TIME          L@build_time@
+#define UCM_BUILD_TARGET        L@build_target@
+#define UCM_BUILD_CC            L@build_cc@
+#define UCM_BUILD_OPTS          L@build_opts@
+#define UCM_BUILD_FLAGS         L@build_flags@
 
 #define UCM_DEF_PLUG_COUNT      @limit_plugins@
 #define UCM_DEF_SESSION_COUNT   @session_count@
