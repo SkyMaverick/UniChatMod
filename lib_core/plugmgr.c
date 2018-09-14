@@ -142,6 +142,42 @@ _plugin_registry_add (ucm_plugin_t* plugin)
 //      PUBLIC API IMPLEMENTATION
 // ######################################################################
 
+void
+plugins_run_all (void)
+{
+    ucm_module_t* m_tmp = modules.next;
+
+    for ( ; m_tmp; m_tmp = m_tmp->next) {
+        if ( plugins_limit > plugins_count ) {
+            if ( m_tmp->plugin->run() == UCM_RET_SUCCESS ) {
+                _plugin_registry_add(m_tmp->plugin);
+                plugins_count += 1;
+            } else {
+                ucm_etrace("%ls: %s\n", m_tmp->plugin->info.pid,
+                     _("plugin start missing. Ignore this plugin."));
+            }
+        }
+    }
+}
+
+void
+plugins_stop_all (void)
+{
+    for (size_t i = 0; i < UCM_DEF_PLUG_COUNT; i++) {
+        if (plugins_all[i] != NULL) {
+            plugins_all[i]->stop();
+        } else {
+            break;
+        }
+    }
+    ucm_zmemory (plugins_all,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_zmemory (plugins_db,    sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_zmemory (plugins_proto, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_zmemory (plugins_crypt, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_zmemory (plugins_hist,  sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_zmemory (plugins_stuff, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+}
+
 UCM_RET
 plugins_load_registry (const char* plug_path)
 {
@@ -194,42 +230,6 @@ plugins_release_registry (void)
 }
 
 void
-plugins_run_all (void)
-{
-    ucm_module_t* m_tmp = modules.next;
-
-    for ( ; m_tmp; m_tmp = m_tmp->next) {
-        if ( plugins_limit > plugins_count ) {
-            if ( m_tmp->plugin->run() == UCM_RET_SUCCESS ) {
-                _plugin_registry_add(m_tmp->plugin);
-                plugins_count += 1;
-            } else {
-                ucm_etrace("%ls: %s\n", m_tmp->plugin->info.pid,
-                     _("plugin start missing. Ignore this plugin."));
-            }
-        }
-    }
-}
-
-void
-plugins_stop_all (void)
-{
-    for (size_t i = 0; i < UCM_DEF_PLUG_COUNT; i++) {
-        if (plugins_all[i] != NULL) {
-            plugins_all[i]->stop();
-        } else {
-            break;
-        }
-    }
-    ucm_zmemory (plugins_all,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_db,    sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_proto, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_crypt, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_hist,  sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_stuff, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-}
-
-void
 plugins_message_dispatch (const uint32_t* id,
                           const uintptr_t* ctx,
                           const uint32_t* x1,
@@ -238,7 +238,7 @@ plugins_message_dispatch (const uint32_t* id,
     modules.plugin->message(*id, *ctx, *x1, *x2);   // core receive message first
 
     for ( size_t i = 0; i < plugins_count; i++ ) {
-        if (plugins_all[i]->message) {
+        if (plugins_all[i] && plugins_all[i]->message) {
             plugins_all[i]->message (*id, *ctx, *x1, *x2);
         }
     }

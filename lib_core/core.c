@@ -59,8 +59,8 @@ _run_core (void)
         log_init();
         hooks_event_init();
 
-        tid_loop_core = ucm_api->thread_create(loop_core, NULL);
         plugins_run_all();
+        tid_loop_core = ucm_api->thread_create(loop_core, NULL);
     }
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
@@ -71,10 +71,10 @@ _stop_core (void)
 {
     // send TERM message for stop systems and plugins prepare
     ucm_api->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
-    // stop all plugins
-    plugins_stop_all();
     // stop main message loop
     ucm_api->thread_join(tid_loop_core);
+    // stop all plugins 
+    plugins_stop_all();
     ucm_mloop_free();
 
     log_release();

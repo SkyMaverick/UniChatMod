@@ -41,6 +41,7 @@ ucm_core_stop (void)
 {
     //TODO stop core plugin, cleanup and release plugin stack
     ucm_core->stop();
+    
     plugins_release_registry();
     log_release();
     return UCM_RET_SUCCESS;
