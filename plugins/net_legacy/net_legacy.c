@@ -42,6 +42,7 @@ static ucm_pclplugin_t plugin = {
     .core.info.vmajor        = UCM_VERSION_MAJOR,
     .core.info.vminor        = UCM_VERSION_MINOR,
     .core.info.vpatch        = UCM_VERSION_PATCH,
+    .core.info.flags         = 0,
     .core.info.build         =
     {
         .commit              = UCM_BUILD_COMMIT,
