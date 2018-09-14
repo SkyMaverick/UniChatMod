@@ -1,5 +1,5 @@
 #-- options ----------------------------------
-option ('enable_traces', type: 'boolean', value: true,
+option ('enable_traces', type: 'boolean', value: 'true',
         description: 'use stdio messages in wfft lib')
 option ('message_queue_size', type: 'integer', min: 50, max: 32575, value: 200,
         description: 'messages queues blocks count')
@@ -38,7 +38,7 @@ option ('build_with_full_commit', type: 'boolean', value: 'true',
 
 option ('build_with_gui', type: 'boolean', value: 'true',
         description: 'build standart gui')
-option ('gui_enable_lazarus', type: 'boolean', value: 'true',
+option ('gui_enable_lazarus', type: 'boolean', value: 'false',
         description: 'enable lazarus based gui as variant')
 option ('gui_enable_cli', type: 'boolean', value: 'true',
         description: 'enable cli interface')

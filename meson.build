@@ -1,5 +1,5 @@
 project ('ucm', 'c',
-         version: '0.0.1',
+         version: '0.1.1',
          license: 'Zlib',
          default_options:[
             'c_std=gnu11'
@@ -27,7 +27,7 @@ endif
 c_args = [
     '-Wall',
     '-Winline',
-    '-Wextra',
+    '-Wextra'
 ]
 
 if get_option('buildtype').startswith('debug')

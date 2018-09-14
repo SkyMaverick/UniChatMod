@@ -4,7 +4,7 @@
 #include "ucm.h"
 
 UCM_RET
-plugins_load_registry (char* plug_path);
+plugins_load_registry (const char* plug_path);
 
 void
 plugins_release_registry (void);

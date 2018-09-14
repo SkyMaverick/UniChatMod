@@ -115,7 +115,7 @@ static ucm_core_t core_lib = {
         .options      = UCM_BUILD_OPTS,
         .flags        = UCM_BUILD_FLAGS,
     },
-    .base.info.flags       = 0,
+    .base.info.flags       = UCM_FLAG_PLUG_LOGGED,
 
     .base.info.pid         = L"ucm_core",
     .base.info.name        = L"UniChatMod core plugin",

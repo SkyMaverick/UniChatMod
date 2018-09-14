@@ -404,10 +404,26 @@ typedef struct _ucm_functions_s {
 //      START/STOP/INFO MODULE
 // *********************************************************
 
+typedef struct {
+    char* path_abs;
+    char* path_plug_abs;
+    char* path_store_abs;
+} ucm_cargs_t;
+
+typedef const ucm_functions_t*
+(*ucm_cstart_func) (ucm_cargs_t* args);
+#define UCM_START_FUNC  "ucm_core_start"
+
+typedef UCM_RET
+(*ucm_cstop_func) (void);
+#define UCM_STOP_FUNC  "ucm_core_stop"
+
+typedef const ucm_plugin_info_t*
+(*ucm_cinfo_func) (void);
+#define UCM_INFO_FUNC  "ucm_core_info"
+
 const ucm_functions_t*
-ucm_core_start (const char* path_abs,
-                const char* path_plug_abs,
-                const char* path_store_abs);
+ucm_core_start (ucm_cargs_t* args);
 
 UCM_RET
 ucm_core_stop (void);

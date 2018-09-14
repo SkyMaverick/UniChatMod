@@ -143,7 +143,7 @@ _plugin_registry_add (ucm_plugin_t* plugin)
 // ######################################################################
 
 UCM_RET
-plugins_load_registry (char* plug_path)
+plugins_load_registry (const char* plug_path)
 {
     modules.plugin = ucm_core;
     ucm_module_t* tmp_module = &modules;
@@ -200,11 +200,11 @@ plugins_run_all (void)
 
     for ( ; m_tmp; m_tmp = m_tmp->next) {
         if ( plugins_limit > plugins_count ) {
-            if ( m_tmp->plugin->run() ) {
+            if ( m_tmp->plugin->run() == UCM_RET_SUCCESS ) {
                 _plugin_registry_add(m_tmp->plugin);
                 plugins_count += 1;
             } else {
-                ucm_etrace("%s: %s\n", m_tmp->plugin->info.pid,
+                ucm_etrace("%ls: %s\n", m_tmp->plugin->info.pid,
                      _("plugin start missing. Ignore this plugin."));
             }
         }

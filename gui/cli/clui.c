@@ -16,12 +16,12 @@
 #define LIBCORE_API_MAJVER  0
 #define LIBCORE_API_MINVER  0
 
-char start_path [PATH_MAX];
-char plugs_path [PATH_MAX];
-char store_path [PATH_MAX];
+char start_path [UCM_PATH_MAX];
+char plugs_path [UCM_PATH_MAX];
+char store_path [UCM_PATH_MAX];
 
 static void* core_handle;
-static const ucm_plugin_info_t* core_info;
+static const ucm_plugin_info_t* info;
 const ucm_functions_t* core;
 
 int portable = 0;
@@ -49,7 +49,7 @@ _args_parse (int argc, char* argv[])
                 {
                     struct stat st;
                     char tmp [PATH_MAX];
-                    
+
                     if ( !realpath (optarg, tmp) ) {
                         snprintf (tmp, PATH_MAX, "%s", optarg);
                     }
@@ -83,7 +83,7 @@ main (int argc, char* argv[])
     }
 
     char* e = strrchr(start_path, '/');
-    if (e) *e = 0;
+    if (e) *e = '\0';
 
     /* check portable application objects */
     while (!portable || !portable_base) {
@@ -95,19 +95,22 @@ main (int argc, char* argv[])
             snprintf (tmp, PATH_MAX, "%s/%s", start_path, CLI_PATH_MODS);
             if (stat(tmp, &st) || !S_ISDIR(st.st_mode))
                 break;
-            strncpy (plugs_path, tmp, PATH_MAX);
             portable = 1;
         }
         if (!portable_base) {
             snprintf (tmp, PATH_MAX, "%s/%s.mdbx", start_path, CLI_APP_NAME);
             if (stat(tmp, &st) || !S_ISREG(st.st_mode))
                 break;
-            strncpy (store_path, tmp, PATH_MAX);
             portable_base = 1;
         }
         break;
     }
     _args_parse (argc, argv);
+
+    if (portable)
+        snprintf (plugs_path, PATH_MAX, "%s/%s", start_path, CLI_PATH_MODS);
+    if (portable_base)
+        snprintf (store_path, PATH_MAX, "%s/%s.mdbx", start_path, CLI_APP_NAME);
 // *********************************************************
 //      LOAD CORE LIBRARY
 // *********************************************************
@@ -118,21 +121,31 @@ main (int argc, char* argv[])
         return UCM_RET_NOOBJECT;
     }
 
-    core = ucm_core_start (start_path, plugs_path, store_path);
+    ucm_cstart_func core_start = dlsym (core_handle, UCM_START_FUNC);
+    ucm_cstop_func  core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
+    ucm_cinfo_func  core_info =  dlsym (core_handle, UCM_INFO_FUNC);
+
+    ucm_cargs_t args = {
+        start_path,
+        plugs_path,
+        store_path
+    };
+
+    core = core_start (&args);
     if (core) {
-        core_info = ucm_core_info();
+        info = core_info();
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
-        if (   (core_info)
-            && (core_info->api.vmajor >= LIBCORE_API_MAJVER)
-            && (core_info->api.vminor >= LIBCORE_API_MINVER))
+        if (   (info)
+            && (info->api.vmajor >= LIBCORE_API_MAJVER)
+            && (info->api.vminor >= LIBCORE_API_MINVER))
         {
             //TODO
         } else {
             fprintf (stderr, "%s\n", "Core information load FAIL");
         }
 #pragma GCC diagnostic pop
-        ucm_core_stop();
+        core_stop();
     } else {
         fprintf (stderr, "%s\n", "Core API load FAIL");
     }
@@ -140,3 +153,18 @@ main (int argc, char* argv[])
     dlclose(core_handle);
     return UCM_RET_SUCCESS;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

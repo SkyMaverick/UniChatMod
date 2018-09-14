@@ -1,7 +1,7 @@
 cliapp_name = 'ucm_cli'
 cliapp_src = files('''
     clui.c
-'''.split())
+'''.split()) + core_header_c
 
 cliapp_dep = [
     cc.find_library('dl', required: true)
@@ -22,8 +22,8 @@ if get_option('build_bundle')
                  cliapp_src,
                  include_directories: lib_core_inc,
                  dependencies: cliapp_dep,
-                 link_with: libcore,
-                 build_rpath: '.',
+                 build_rpath: '$ORIGIN/.',
+                 install_rpath: '$ORIGIN/.',
                  install: true,
                  install_dir: install_path_root
              )
@@ -32,7 +32,6 @@ else
                  cliapp_src,
                  include_directories: lib_core_inc,
                  dependencies: cliapp_dep,
-                 link_with: libcore,
                  install: true,
                  install_dir: install_path_root
              )
