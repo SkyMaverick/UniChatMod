@@ -3,7 +3,7 @@ if get_option('gui_enable_lazarus')
     subdir('lazarus')
 endif
 
-if get_option('gui_enable_cli')
+if get_option('gui_enable_ncurses')
     message ('Build console user interface for target platform: @0@'.format(target_machine.system()))
-    subdir('cli')
+    subdir('ncurses')
 endif

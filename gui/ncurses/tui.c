@@ -10,7 +10,7 @@
 
 #include "ucm.h"
 #include "alloc.h"
-#include "cli_config.h"
+#include "tui_config.h"
 #include "gettext.h"
 
 #define LIBCORE_NAME "libucm.so"
@@ -40,7 +40,7 @@ const ucm_functions_t* core;
 static inline void
 _display_help (void)
 {
-    fprintf (stdout, _("Usage UniChatMod cli mode: ucm_cli [options]\n"));
+    fprintf (stdout, _("Usage UniChatMod tui mode: ucmc [options]\n"));
     fprintf (stdout, _("Options:\n"));
     fprintf (stdout, _("    -?              help\n"));
     fprintf (stdout, _("    -v              program version\n"));
@@ -55,7 +55,7 @@ _display_help (void)
 static inline void
 _display_version (void)
 {
-    fprintf (stdout, "%s\n",CLI_APP_VERSION);
+    fprintf (stdout, "%s\n", TUI_APP_NAME);
 }
 
 static void
@@ -136,13 +136,13 @@ main (int argc, char* argv[])
 
         if (!portable) {
             // TODO
-            snprintf (tmp, UCM_PATH_MAX, "%s/%s", args.path_abs, CLI_PATH_MODS);
+            snprintf (tmp, UCM_PATH_MAX, "%s/%s", args.path_abs, TUI_PATH_MODS);
             if (stat(tmp, &st) || !S_ISDIR(st.st_mode))
                 break;
             portable = 1;
         }
         if (!portable_base) {
-            snprintf (tmp, UCM_PATH_MAX, "%s/%s.mdbx", args.path_abs, CLI_APP_NAME);
+            snprintf (tmp, UCM_PATH_MAX, "%s/%s.mdbx", args.path_abs, TUI_APP_NAME);
             if (stat(tmp, &st) || !S_ISREG(st.st_mode))
                 break;
             portable_base = 1;
@@ -151,13 +151,13 @@ main (int argc, char* argv[])
     }
 
     if (portable) {
-        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s/%s", args.path_abs, CLI_PATH_MODS);
+        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s/%s", args.path_abs, TUI_PATH_MODS);
     } else {
         //TODO
     }
 
     if (portable_base ) {
-        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s/%s.mdbx", args.path_abs, CLI_APP_NAME);
+        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s/%s.mdbx", args.path_abs, TUI_APP_NAME);
     } else {
         // TODO
     }
@@ -180,40 +180,28 @@ main (int argc, char* argv[])
     ucm_cstop_func  core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
     ucm_cinfo_func  core_info =  dlsym (core_handle, UCM_INFO_FUNC);
 
-    core = core_start (&args);
-    if (core) {
-        info = core_info();
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-        if (   (info)
-            && (info->api.vmajor >= LIBCORE_API_MAJVER)
-            && (info->api.vminor >= LIBCORE_API_MINVER))
-        {
-            //TODO
+    if ( core_start && core_stop && core_info ) {
+        core = core_start (&args);
+        if (core) {
+            info = core_info();
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wtype-limits"
+            if (   (info)
+                && (info->api.vmajor >= LIBCORE_API_MAJVER)
+                && (info->api.vminor >= LIBCORE_API_MINVER))
+            {
+                //TODO
+            } else {
+                fprintf (stderr, "%s\n", "Core information load FAIL");
+            }
+    #pragma GCC diagnostic pop
+            core_stop();
         } else {
-            fprintf (stderr, "%s\n", "Core information load FAIL");
+            fprintf (stderr, "%s\n", "Core API load FAIL");
         }
-#pragma GCC diagnostic pop
-        core_stop();
-    } else {
-        fprintf (stderr, "%s\n", "Core API load FAIL");
+
+        dlclose(core_handle);
+        return UCM_RET_SUCCESS;
     }
-
-    dlclose(core_handle);
-    return UCM_RET_SUCCESS;
+    return UCM_RET_NOOBJECT;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
