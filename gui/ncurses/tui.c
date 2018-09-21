@@ -7,8 +7,11 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <signal.h>
 
 #include "ucm.h"
+#include "tui.h"
+#include "main.h"
 #include "alloc.h"
 #include "tui_config.h"
 #include "gettext.h"
@@ -28,14 +31,14 @@ static ucm_cargs_t args = {
    .options         = 0
 };
 
-static void* core_handle;
-static const ucm_plugin_info_t* info;
+static void*        core_handle;
+static const        ucm_plugin_info_t* info;
 
 static int portable = 0;
 static int portable_base = 0;
 static int terminated = 0;
 
-const ucm_functions_t* core;
+extern const ucm_functions_t* core;
 
 static inline void
 _display_help (void)
@@ -46,10 +49,6 @@ _display_help (void)
     fprintf (stdout, _("    -v              program version\n"));
     fprintf (stdout, _("    -r              read-only database mode\n"));
     fprintf (stdout, _("    -p <base path>  load or create external database file\n"));
-//    fprintf (stdout, _());
-//    fprintf (stdout, _());
-//    fprintf (stdout, _());
-//    fprintf (stdout, _());
 }
 
 static inline void
@@ -111,6 +110,7 @@ _args_parse (int argc, char* argv[])
 int
 main (int argc, char* argv[])
 {
+    int ret_status = UCM_RET_SUCCESS;
 // *********************************************************
 //      DEFINE STARTUP FILES AND CHECK ENV PATHS
 // *********************************************************
@@ -165,43 +165,56 @@ main (int argc, char* argv[])
     _args_parse (argc, argv);
 
     if (terminated)
-        return UCM_RET_SUCCESS;
+        return ret_status;
+// *********************************************************
+//      SIGNAL HANDLERS
+// *********************************************************
+
+    signal (SIGINT, finish_curses_app);
+
 // *********************************************************
 //      LOAD CORE LIBRARY
 // *********************************************************
 
     core_handle = dlopen (LIBCORE_NAME, RTLD_LAZY);
-    if (!core_handle) {
-        fprintf (stderr, "%s: %s\n", "Don't load core library", LIBCORE_NAME);
-        return UCM_RET_NOOBJECT;
-    }
+    if (core_handle) {
+        ucm_cstart_func core_start = dlsym (core_handle, UCM_START_FUNC);
+        ucm_cstop_func  core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
+        ucm_cinfo_func  core_info =  dlsym (core_handle, UCM_INFO_FUNC);
 
-    ucm_cstart_func core_start = dlsym (core_handle, UCM_START_FUNC);
-    ucm_cstop_func  core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
-    ucm_cinfo_func  core_info =  dlsym (core_handle, UCM_INFO_FUNC);
-
-    if ( core_start && core_stop && core_info ) {
-        core = core_start (&args);
-        if (core) {
-            info = core_info();
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wtype-limits"
-            if (   (info)
-                && (info->api.vmajor >= LIBCORE_API_MAJVER)
-                && (info->api.vminor >= LIBCORE_API_MINVER))
-            {
-                //TODO
+        if ( core_start && core_stop && core_info ) {
+            core = core_start (&args);
+            if (core) {
+                info = core_info();
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wtype-limits"
+                if (   (info)
+                    && (info->api.vmajor >= LIBCORE_API_MAJVER)
+                    && (info->api.vminor >= LIBCORE_API_MINVER))
+                {
+                    //TODO start curses
+//                    if (start_curses_app (&args) != UCM_RET_SUCCESS) {
+//                        fprintf (stderr, "%s\n", "Curses GUI start fail");
+//                        ret_status = UCM_RET_EXCEPTION;
+//                    }
+    //                hwnd = core->thread_create (start_curses_app, (void*)&args);
+    //                core->thread_join (hwnd);
+                } else {
+                    fprintf (stderr, "%s\n", "Core information load FAIL");
+                    ret_status = UCM_RET_EMPTY;
+                }
+        #pragma GCC diagnostic pop
+                core_stop();
             } else {
-                fprintf (stderr, "%s\n", "Core information load FAIL");
+                fprintf (stderr, "%s\n", "Core API load FAIL");
+                ret_status = UCM_RET_UNREALIZED;
             }
-    #pragma GCC diagnostic pop
-            core_stop();
-        } else {
-            fprintf (stderr, "%s\n", "Core API load FAIL");
         }
-
         dlclose(core_handle);
-        return UCM_RET_SUCCESS;
     }
-    return UCM_RET_NOOBJECT;
+    else {
+        fprintf (stderr, "%s: %s\n", "Don't load core library", LIBCORE_NAME);
+        ret_status = UCM_RET_NOOBJECT;
+    }
+    return ret_status;
 }

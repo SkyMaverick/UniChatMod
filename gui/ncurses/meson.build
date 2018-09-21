@@ -1,6 +1,9 @@
 tuiapp_name = 'ucmc'
 tuiapp_src = files('''
     tui.c
+    tui.h
+    main.c
+    main.h
 '''.split()) + core_header_c
 
 tuiapp_dep = [
