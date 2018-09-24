@@ -26,7 +26,7 @@ _log_core (ucm_plugin_t* plug,
 {
     switch (type){
         case UCM_TYPE_LOG_DEBUG:
-                #ifdef ENABLE_DEBUG
+                #ifdef DEBUG
                         fwrite(txt,strlen(txt),1,stdout);
                         break;
                 #endif

@@ -1,8 +1,0 @@
-#ifndef _CLI_CONFIG_H_
-#define _CLI_CONFIG_H_
-
-#define CLI_APP_NAME @appname@
-#define CLI_APP_VERSION @version@
-#define CLI_PATH_MODS @path_modules@
-
-#endif

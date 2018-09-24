@@ -192,8 +192,7 @@ typedef struct {
     const uint16_t       vmajor;             /// major plugin version (required)
     const uint16_t       vminor;             /// minor plugin version (required)
     const uint16_t       vpatch;             /// patch plugin version (required)
-    const wchar_t* const pid;                /// plugin id for internal ident (required)
-    uint32_t             flags;                       /// plugin flags
+    uint32_t             flags;              /// plugin flags
     // build info.
     struct {
         const wchar_t*   commit;             /// commit in repository
@@ -203,6 +202,7 @@ typedef struct {
         const wchar_t*   options;            /// build options
         const wchar_t*   flags;              /// build with flags
     } build;
+    const wchar_t* const pid;                /// plugin id for internal ident (required)
     // developer info
     const wchar_t* const name;               /// plugin name for user
     const wchar_t* const developer;          /// developer name
@@ -404,11 +404,21 @@ typedef struct _ucm_functions_s {
 //      START/STOP/INFO MODULE
 // *********************************************************
 
+enum {
+    UCM_FLAG_CORE_DBNEW = 1 << 0,
+    UCM_FLAG_CORE_DBRO  = 1 << 1,
+};
+
+// core start arguments
 typedef struct {
-    char* path_abs;
-    char* path_plug_abs;
-    char* path_store_abs;
+    char*    path_abs;
+    char*    path_plug_abs;
+    char*    path_store_abs;
+
+    uint64_t options;
 } ucm_cargs_t;
+
+// ******* DYNAMIC LOAD FUNCTIONS ***********
 
 typedef const ucm_functions_t*
 (*ucm_cstart_func) (ucm_cargs_t* args);
@@ -422,6 +432,7 @@ typedef const ucm_plugin_info_t*
 (*ucm_cinfo_func) (void);
 #define UCM_INFO_FUNC  "ucm_core_info"
 
+// ******* STATIC LOAD FUNCTIONS ************
 const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args);
 

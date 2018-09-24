@@ -27,13 +27,13 @@ db_object_t* UCM_DB = NULL;
 // ######################################################################
 
 void
-_assert_func (const MDBX_env *env, 
+_assert_func (const MDBX_env *env,
               const char     *msg,
               const char     *function,
               unsigned       line)
 {
     UNUSED (env);
-    trace_err(_("%s. Assert in %s (line: %d)\n"), msg, function, line); 
+    trace_err(_("%s. Assert in %s (line: %d)\n"), msg, function, line);
 }
 // ######################################################################
 //      STANDART PLUGIN API IMPLEMENTATION
@@ -43,7 +43,7 @@ static UCM_RET
 _run_dbmdbx (void)
 {
     UCM_DB = ucm_zmalloc (sizeof(db_object_t));
-    if ( UCM_DB == NULL ) 
+    if ( UCM_DB == NULL )
         return UCM_RET_NONALLOC;
     UCM_DB->mtx = app->rwlock_create ();
     return UCM_RET_SUCCESS;
@@ -101,6 +101,7 @@ static ucm_dbplugin_t plugin = {
     .core.info.vmajor        = UCM_VERSION_MAJOR,
     .core.info.vminor        = UCM_VERSION_MINOR,
     .core.info.vpatch        = UCM_VERSION_PATCH,
+    .core.info.flags         = 0,
     .core.info.build         =
     {
         .commit              = UCM_BUILD_COMMIT,
