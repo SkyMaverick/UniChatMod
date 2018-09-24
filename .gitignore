@@ -24,3 +24,15 @@ ABOUT
 *.out
 test_app
 notes
+Makefile
+config.h
+*.log
+*.status
+*.deps/
+*.libs/
+*.la
+*.lo
+/plugins/net_legacy/ucl/examples/simple
+/plugins/net_legacy/ucl/examples/uclpack
+stamp-h1
+libtool
