@@ -1,0 +1,325 @@
+/* config.hin.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if your machine is big endian. */
+#mesondefine ACC_ENDIAN_BIG_ENDIAN
+
+/* Define to 1 if your machine is little endian. */
+#mesondefine ACC_ENDIAN_LITTLE_ENDIAN
+
+/* Define to 1 if you have the `access' function. */
+#mesondefine HAVE_ACCESS
+
+/* Define to 1 if you have the `alloca' function. */
+#mesondefine HAVE_ALLOCA
+
+/* Define to 1 if you have the <assert.h> header file. */
+#mesondefine HAVE_ASSERT_H
+
+/* Define to 1 if you have the `atexit' function. */
+#mesondefine HAVE_ATEXIT
+
+/* Define to 1 if you have the `atoi' function. */
+#mesondefine HAVE_ATOI
+
+/* Define to 1 if you have the `atol' function. */
+#mesondefine HAVE_ATOL
+
+/* Define to 1 if you have the `chmod' function. */
+#mesondefine HAVE_CHMOD
+
+/* Define to 1 if you have the `chown' function. */
+#mesondefine HAVE_CHOWN
+
+/* Define to 1 if you have the `ctime' function. */
+#mesondefine HAVE_CTIME
+
+/* Define to 1 if you have the <ctype.h> header file. */
+#mesondefine HAVE_CTYPE_H
+
+/* Define to 1 if you have the `difftime' function. */
+#mesondefine HAVE_DIFFTIME
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#mesondefine HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#mesondefine HAVE_DLFCN_H
+
+/* Define to 1 if you have the <errno.h> header file. */
+#mesondefine HAVE_ERRNO_H
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#mesondefine HAVE_FCNTL_H
+
+/* Define to 1 if you have the `fstat' function. */
+#mesondefine HAVE_FSTAT
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#mesondefine HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the `gmtime' function. */
+#mesondefine HAVE_GMTIME
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#mesondefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <limits.h> header file. */
+#mesondefine HAVE_LIMITS_H
+
+/* Define to 1 if you have the `localtime' function. */
+#mesondefine HAVE_LOCALTIME
+
+/* Define to 1 if you have the `longjmp' function. */
+#mesondefine HAVE_LONGJMP
+
+/* Define to 1 if you have the `lstat' function. */
+#mesondefine HAVE_LSTAT
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#mesondefine HAVE_MALLOC_H
+
+/* Define to 1 if you have the `memcmp' function. */
+#mesondefine HAVE_MEMCMP
+
+/* Define to 1 if you have the `memcpy' function. */
+#mesondefine HAVE_MEMCPY
+
+/* Define to 1 if you have the `memmove' function. */
+#mesondefine HAVE_MEMMOVE
+
+/* Define to 1 if you have the <memory.h> header file. */
+#mesondefine HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#mesondefine HAVE_MEMSET
+
+/* Define to 1 if you have the `mktime' function. */
+#mesondefine HAVE_MKTIME
+
+/* Define to 1 if you have the `qsort' function. */
+#mesondefine HAVE_QSORT
+
+/* Define to 1 if you have the `raise' function. */
+#mesondefine HAVE_RAISE
+
+/* Define to 1 if you have the `setjmp' function. */
+#mesondefine HAVE_SETJMP
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#mesondefine HAVE_SETJMP_H
+
+/* Define to 1 if you have the `signal' function. */
+#mesondefine HAVE_SIGNAL
+
+/* Define to 1 if you have the <signal.h> header file. */
+#mesondefine HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `snprintf' function. */
+#mesondefine HAVE_SNPRINTF
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#mesondefine HAVE_STDARG_H
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#mesondefine HAVE_STDDEF_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#mesondefine HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#mesondefine HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#mesondefine HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#mesondefine HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strchr' function. */
+#mesondefine HAVE_STRCHR
+
+/* Define to 1 if you have the `strdup' function. */
+#mesondefine HAVE_STRDUP
+
+/* Define to 1 if you have the `strerror' function. */
+#mesondefine HAVE_STRERROR
+
+/* Define to 1 if you have the `strftime' function. */
+#mesondefine HAVE_STRFTIME
+
+/* Define to 1 if you have the `stricmp' function. */
+#mesondefine HAVE_STRICMP
+
+/* Define to 1 if you have the <strings.h> header file. */
+#mesondefine HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#mesondefine HAVE_STRING_H
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#mesondefine HAVE_STRNCASECMP
+
+/* Define to 1 if you have the `strnicmp' function. */
+#mesondefine HAVE_STRNICMP
+
+/* Define to 1 if you have the `strrchr' function. */
+#mesondefine HAVE_STRRCHR
+
+/* Define to 1 if you have the `strstr' function. */
+#mesondefine HAVE_STRSTR
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#mesondefine HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#mesondefine HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#mesondefine HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the `time' function. */
+#mesondefine HAVE_TIME
+
+/* Define to 1 if you have the <time.h> header file. */
+#mesondefine HAVE_TIME_H
+
+/* Define to 1 if you have the `umask' function. */
+#mesondefine HAVE_UMASK
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#mesondefine HAVE_UNISTD_H
+
+/* Define to 1 if you have the `utime' function. */
+#mesondefine HAVE_UTIME
+
+/* Define to 1 if you have the <utime.h> header file. */
+#mesondefine HAVE_UTIME_H
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#mesondefine HAVE_VSNPRINTF
+
+/* Name of package */
+#mesondefine PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#mesondefine PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#mesondefine PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#mesondefine PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#mesondefine PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#mesondefine PACKAGE_VERSION
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#mesondefine RETSIGTYPE
+
+/* The size of a `char *', as computed by sizeof. */
+#mesondefine SIZEOF_CHAR_P
+
+/* The size of a `dev_t', as computed by sizeof. */
+#mesondefine SIZEOF_DEV_T
+
+/* The size of a `double', as computed by sizeof. */
+#mesondefine SIZEOF_DOUBLE
+
+/* The size of a `float', as computed by sizeof. */
+#mesondefine SIZEOF_FLOAT
+
+/* The size of a `fpos_t', as computed by sizeof. */
+#mesondefine SIZEOF_FPOS_T
+
+/* The size of a `int', as computed by sizeof. */
+#mesondefine SIZEOF_INT
+
+/* The size of a `intmax_t', as computed by sizeof. */
+#mesondefine SIZEOF_INTMAX_T
+
+/* The size of a `intptr_t', as computed by sizeof. */
+#mesondefine SIZEOF_INTPTR_T
+
+/* The size of a `long', as computed by sizeof. */
+#mesondefine SIZEOF_LONG
+
+/* The size of a `long double', as computed by sizeof. */
+#mesondefine SIZEOF_LONG_DOUBLE
+
+/* The size of a `long long', as computed by sizeof. */
+#mesondefine SIZEOF_LONG_LONG
+
+/* The size of a `mode_t', as computed by sizeof. */
+#mesondefine SIZEOF_MODE_T
+
+/* The size of a `off_t', as computed by sizeof. */
+#mesondefine SIZEOF_OFF_T
+
+/* The size of a `ptrdiff_t', as computed by sizeof. */
+#mesondefine SIZEOF_PTRDIFF_T
+
+/* The size of a `short', as computed by sizeof. */
+#mesondefine SIZEOF_SHORT
+
+/* The size of a `size_t', as computed by sizeof. */
+#mesondefine SIZEOF_SIZE_T
+
+/* The size of a `ssize_t', as computed by sizeof. */
+#mesondefine SIZEOF_SSIZE_T
+
+/* The size of a `time_t', as computed by sizeof. */
+#mesondefine SIZEOF_TIME_T
+
+/* The size of a `uintmax_t', as computed by sizeof. */
+#mesondefine SIZEOF_UINTMAX_T
+
+/* The size of a `uintptr_t', as computed by sizeof. */
+#mesondefine SIZEOF_UINTPTR_T
+
+/* The size of a `unsigned long long', as computed by sizeof. */
+#mesondefine SIZEOF_UNSIGNED_LONG_LONG
+
+/* The size of a `unsigned __int32', as computed by sizeof. */
+#mesondefine SIZEOF_UNSIGNED___INT32
+
+/* The size of a `unsigned __int64', as computed by sizeof. */
+#mesondefine SIZEOF_UNSIGNED___INT64
+
+/* The size of a `void *', as computed by sizeof. */
+#mesondefine SIZEOF_VOID_P
+
+/* The size of a `__int32', as computed by sizeof. */
+#mesondefine SIZEOF___INT32
+
+/* The size of a `__int64', as computed by sizeof. */
+#mesondefine SIZEOF___INT64
+
+/* Define to 1 if you have the ANSI C header files. */
+#mesondefine STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#mesondefine TIME_WITH_SYS_TIME
+
+/* Version number of package */
+#mesondefine VERSION
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#mesondefine _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#mesondefine _LARGE_FILES
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#mesondefine const
+
+/* Define to `long' if <sys/types.h> does not define. */
+#mesondefine off_t
+
+/* Define to `long' if <sys/types.h> does not define. */
+#mesondefine ptrdiff_t
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#mesondefine size_t

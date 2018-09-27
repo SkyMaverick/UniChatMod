@@ -1,6 +1,6 @@
 plug_name = 'net_legacy'
 
-net_legacy_src = files('''
+nl_src = files('''
     network.c
     network.h
     protocol.c
@@ -9,11 +9,19 @@ net_legacy_src = files('''
     net_legacy.c
 '''.split()) + core_header_c
 
-net_legacy_dep = cc.find_library('pthread', required: true)
+# subdir ('ucl')
 
-net_legacy_mdbx = shared_library(plug_name,
-                             net_legacy_src,
-                             dependencies: net_legacy_dep,
+nl_dep = cc.find_library('pthread', required: true)
+
+if get_option('build_with_syslibs')
+    nl_ucl_dep = cc.find_library('ucl', required: false)
+else
+    nl_ucl_dep = dependency('ucl', fallback:['ucl','ucl_dep'])
+endif
+
+nl_mdbx = shared_library(plug_name,
+                             nl_src,
+                             dependencies: [nl_dep, nl_ucl_dep],
                              include_directories: lib_core_inc,
                              install: true,
                              install_dir: install_path_mods)

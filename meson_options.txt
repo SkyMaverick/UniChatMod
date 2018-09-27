@@ -30,7 +30,7 @@ option ('build_with_tests', type: 'boolean', value: 'true',
 # === ATTENTION !!! ===
 # It is not guaranteed that the assembly will be correct with the versions of the libraries that differ from those offered.
 
-option ('build_with_syslibs', type: 'boolean', value: 'false',
+option ('build_with_syslibs', type: 'boolean', value: 'true',
         description: 'build with target system libraries if available')
 
 option ('build_with_full_commit', type: 'boolean', value: 'true',
