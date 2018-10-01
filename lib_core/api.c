@@ -10,6 +10,7 @@
 #include "plugmgr.h"
 #include "evhook.h"
 #include "unicode/unicode.h"
+#include "cpentupd.h"
 
 wchar_t ucm_path        [UCM_PATH_MAX];
 wchar_t ucm_path_store  [UCM_PATH_MAX];
@@ -120,6 +121,8 @@ static ucm_functions_t core_api = {
     .get_plugins_crypt  = plugins_get_crypt ,
     .get_plugins_hist   = plugins_get_hist  ,
     .get_plugins_stuff  = plugins_get_stuff ,
+
+    .get_entropy        = get_ucm_entropy,
 
     /*! get global paths */
     .get_startup_path   = g_startup_path ,

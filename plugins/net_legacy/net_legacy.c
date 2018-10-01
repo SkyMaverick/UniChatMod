@@ -13,7 +13,6 @@ static ucm_pclplugin_t plugin;
 static UCM_RET
 _run_proto (void)
 {
-    srand (UINT_MAX);
     return UCM_RET_SUCCESS;
 }
 

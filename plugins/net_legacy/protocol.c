@@ -7,6 +7,7 @@
 #include "alloc.h"
 
 #include "network.h"
+#include "net_legacy.h"
 #include "protocol.h"
 #include "rc6/rc6.h"
 
@@ -167,7 +168,7 @@ ssize_t
 send_data (void*  buffer,
            size_t lenght)
 {
-    uint32_t salt       = rand();
+    uint32_t salt       = app->get_entropy();
     uint8_t  long_flag  = 0;
     Rc6Context  rc6ctx;
 
@@ -195,7 +196,7 @@ send_message (void*  buffer,
               size_t buffer_lenght)
 {
     ssize_t res_size = 0;
-    if ((create_packet (buffer)) > 0) {
+    if ((send_data (buffer, buffer_lenght)) > 0) {
         // TODO
     } else {
         // TODO send error trace message

@@ -6,27 +6,29 @@ lib_utf8proc = files ('''
 '''.split())
 
 libcore_src = files('''
-  alloc.h
-  api.c
-  api.h
-  core.c
-  core.h
-  defs.h
-  evhook.c
-  evhook.h
-  mainloop.c
-  mainloop.h
-  gettext.h
-  logger.c
-  logger.h
-  mqueue.c
-  mqueue.h
-  plugmgr.c
-  plugmgr.h
-  threading.c
-  threading.h
-  ucm.c
-  ucm.h
+    alloc.h
+    api.c
+    api.h
+    core.c
+    core.h
+    cpentupd.c
+    cpentupd.h
+    defs.h
+    evhook.c
+    evhook.h
+    mainloop.c
+    mainloop.h
+    gettext.h
+    logger.c
+    logger.h
+    mqueue.c
+    mqueue.h
+    plugmgr.c
+    plugmgr.h
+    threading.c
+    threading.h
+    ucm.c
+    ucm.h
 '''.split()) + lib_utf8proc
 
 libcore_deps = [

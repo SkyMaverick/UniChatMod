@@ -393,6 +393,9 @@ typedef struct _ucm_functions_s {
     const wchar_t* (*get_store_path)   (void);
     const wchar_t* (*get_plugins_path) (void);
 
+    /*! system entropy functions */
+    int (*get_entropy) (void);
+
     /*! user API */
     const ucm_plugin_info_t*    (*get_plugin_info)  (char* pid);
     UCM_RET                     (*ucm_send_message) (void);   //TODO

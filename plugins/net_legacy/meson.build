@@ -20,10 +20,11 @@ if get_option('build_with_syslibs')
 else
     nl_ucl_dep = dependency('ucl', fallback:['ucl','ucl_dep'])
 endif
+rc6_ucl_dep = dependencies('rc6', fallback:['rc6', 'rc6_dep'])
 
 nl_mdbx = shared_library(plug_name,
                              nl_src,
-                             dependencies: [nl_dep, nl_ucl_dep],
+                             dependencies: [nl_dep, nl_ucl_dep, rc6_dep],
                              include_directories: lib_core_inc,
                              install: true,
                              install_dir: install_path_mods)

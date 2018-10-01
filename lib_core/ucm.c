@@ -8,6 +8,7 @@
 #include "core.h"
 #include "logger.h"
 #include "defs.h"
+#include "cpentupd.h"
 
 const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args)
@@ -24,6 +25,8 @@ ucm_core_start (ucm_cargs_t* args)
             return NULL;
     }
     log_init();
+    init_ucm_entropy();
+
     plugins_load_registry (args->path_plug_abs);
     ucm_dtrace ("%s : %s\n", "Path in LIB", args->path_plug_abs);
     ucm_core->run();
@@ -43,6 +46,8 @@ ucm_core_stop (void)
     ucm_core->stop();
     
     plugins_release_registry();
+    
+    free_ucm_entropy();
     log_release();
     return UCM_RET_SUCCESS;
 }
