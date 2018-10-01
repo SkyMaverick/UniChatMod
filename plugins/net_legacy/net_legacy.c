@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <time.h>
+#include <limits.h>
 #include <wchar.h>
 
 #include "ucm.h"
@@ -10,6 +13,7 @@ static ucm_pclplugin_t plugin;
 static UCM_RET
 _run_proto (void)
 {
+    srand (UINT_MAX);
     return UCM_RET_SUCCESS;
 }
 

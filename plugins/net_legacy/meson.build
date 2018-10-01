@@ -7,6 +7,8 @@ nl_src = files('''
     protocol.h
     net_legacy.h
     net_legacy.c
+    rc6/rc6.c
+    rc6/rc6.h
 '''.split()) + core_header_c
 
 # subdir ('ucl')
