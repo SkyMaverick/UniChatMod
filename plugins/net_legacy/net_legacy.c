@@ -10,6 +10,14 @@
 const ucm_functions_t* app;
 static ucm_pclplugin_t plugin;
 
+static const char* interface [] = {"proto_ucl",NULL};
+
+static const char**
+_get_proto_interface (void)
+{
+    return interface;
+}
+
 static UCM_RET
 _run_proto (void)
 {
@@ -70,7 +78,8 @@ static ucm_pclplugin_t plugin = {
                               | UCM_FLAG_NET_GROUP
                               | UCM_FLAG_NET_CRYPT
                               | UCM_FLAG_NET_BROADCAST
-                              | UCM_FLAG_NET_MULTYSESSION
+                              | UCM_FLAG_NET_MULTYSESSION,
+    .get_interface           = _get_proto_interface
 };
 
 ucm_plugin_t* _init_plugin(const ucm_functions_t* api){

@@ -277,11 +277,10 @@ typedef struct {
     ucm_plugin_t    core;
     uint32_t        flags;
 
-    char*   (*get_signature)(void);
-
-    ucm_conptr_t (*connect) (uintptr_t ctx);
-    UCM_RET (*disconnect)   (ucm_conptr_t* cptr);
-    int     (*get_status)   (void);
+    const char**    (*get_interface)    (void);
+    ucm_conptr_t    (*connect)          (uintptr_t ctx);
+    UCM_RET         (*disconnect)       (ucm_conptr_t* cptr);
+    int             (*get_status)       (void);
 } ucm_pclplugin_t;
 
 // *********************************************************
