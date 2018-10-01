@@ -136,15 +136,15 @@ static void readhdr(void) {
       ptr = memchr(dbuf.iov_base, '\n', dbuf.iov_len);
       if (ptr)
         *ptr = '\0';
-      i = sscanf((char *)dbuf.iov_base + STRLENOF("mapsize="), "%" PRIu64 "",
+      i = sscanf((char *)dbuf.iov_base + STRLENOF("mapsize="), "%" PRIu64,
                  &envinfo.mi_mapsize);
       if (i != 1) {
         fprintf(stderr, "%s: line %" PRIiSIZE ": invalid mapsize %s\n", prog,
                 lineno, (char *)dbuf.iov_base + STRLENOF("mapsize="));
         exit(EXIT_FAILURE);
       }
-    } else if (!strncmp(dbuf.iov_base, "maxreaders=",
-                        STRLENOF("maxreaders="))) {
+    } else if (!strncmp(dbuf.iov_base,
+                        "maxreaders=", STRLENOF("maxreaders="))) {
       int i;
       ptr = memchr(dbuf.iov_base, '\n', dbuf.iov_len);
       if (ptr)
