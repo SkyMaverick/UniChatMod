@@ -8,7 +8,7 @@
 #include "config.h"
 
 const ucm_functions_t* app;
-static ucm_pclplugin_t plugin;
+const ucm_pclplugin_t* UCL;
 
 static const char* interface [] = {"proto_ucl",NULL};
 
@@ -43,7 +43,7 @@ _message(uint32_t id,
     UNUSED(x2);
 }
 
-static ucm_pclplugin_t plugin = {
+static const ucm_pclplugin_t plugin = {
     .core.info.api           =
     {
         .vmajor              = UCM_API_MAJOR_VER,

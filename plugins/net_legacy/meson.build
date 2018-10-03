@@ -11,8 +11,6 @@ nl_src = files('''
     rc6/rc6.h
 '''.split()) + core_header_c
 
-# subdir ('ucl')
-
 nl_dep = cc.find_library('pthread', required: true)
 
 if get_option('build_with_syslibs')

@@ -159,6 +159,18 @@ typedef struct ucm_msg_s {
     } data;
 } ucm_message_t;
 
+// Users ----------------------
+enum {
+    UCM_USER_STATUS_INACTIVE    = 0,
+    UCM_USER_STATUS_ACTIVE      = 1 << 0,
+    UCM_USER_STATUS_ABSENT      = 1 << 1,
+    UCM_USER_STATUS_NAVIALABLE  = 1 << 2,
+    UCM_USER_STATUS_BUSY        = 1 << 3,
+    UCM_USER_STATUS_DNTDISTURB  = 1 << 4,
+    UCM_USER_STATUS_MAYTALK     = 1 << 5,
+    UCM_USER_STATUS_INVISIBLE   = 1 << 6,
+};
+
 // *********************************************************
 //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
 // *********************************************************
@@ -261,6 +273,12 @@ typedef struct {
 // *********************************************************
 
 typedef uintptr_t ucm_conptr_t;
+
+enum {
+    UCM_FLAG_NETSTAT_OFF     = 0,
+    UCM_FLAG_NETSTAT_ON      = 1,
+    UCM_FLAG_NETSTAT_LISTEN  = 2
+};
 
 enum {
     UCM_FLAG_NET_IAMSERVERMODE = 1 << 0 ,

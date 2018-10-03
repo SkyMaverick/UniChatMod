@@ -1,25 +1,26 @@
 #ifndef _UCM_NETWORK_LEGACY_H_
 #define _UCM_NETWORK_LEGACY_H_
 
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <netinet/in.h>
 
 #include "ucm.h"
 
-enum {
-    UCL_NETSTAT_OFF     = 0,
-    UCL_NETSTAT_ON      = 1,
-    UCL_NETSTAT_LISTEN  = 2
-};
-
 typedef struct {
-    int socket;
-    struct sockaddr_un address;
+    struct {
+        int socket;
+        struct sockaddr_in addr;
+    } ip;
 
-    int net_status;
-    int lan_status;
+    struct {
+        int is_server;
+        int net_status;
+        int lan_status;
+    } proto;
 
-    uintptr_t tid_listen;
+    uintptr_t tid_select;
+    uintptr_t mtx;
 } ucl_connection_t;
 
 ucm_conptr_t
