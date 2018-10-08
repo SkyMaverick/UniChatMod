@@ -11,6 +11,14 @@
     extern "C" {
 #endif
 
+extern const ucm_functions_t* app;
+extern const ucm_dbplugin_t* pldb;
+
+#define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
+#define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
+#define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
+
+
 enum {
     DB_VALUE_BYTE   ,
     DB_VALUE_WORD   ,

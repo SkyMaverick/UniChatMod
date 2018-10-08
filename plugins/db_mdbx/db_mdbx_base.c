@@ -36,7 +36,7 @@ db_map ()
                         | MDBX_WRITEMAP
                         | MDBX_NOSYNC
                         | MDBX_COALESCE
-                        // | MDBX_EXCLUSIVE
+                        | MDBX_EXCLUSIVE
                         ;
     if (UCM_DB->flags | DB_FLAG_READONLY) {
         mode |= MDBX_RDONLY;

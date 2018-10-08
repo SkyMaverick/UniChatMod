@@ -14,11 +14,7 @@
 #include "db_mdbx.h"
 
 const ucm_functions_t* app;
-static ucm_dbplugin_t plugin;
-
-#define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
-#define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&plugin), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
+const ucm_dbplugin_t* pldb;
 
 db_object_t* UCM_DB = NULL;
 
