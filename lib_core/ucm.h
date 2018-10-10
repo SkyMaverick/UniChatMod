@@ -159,6 +159,10 @@ typedef struct ucm_msg_s {
     } data;
 } ucm_message_t;
 
+typedef struct ucm_cont_s {
+    // TODO
+} ucm_contact_t;
+
 // Users ----------------------
 enum {
     UCM_USER_STATUS_INACTIVE    = 0,
@@ -245,6 +249,43 @@ enum {
     UCM_FLAG_DB_NEEDBACKUP  = 1 << 2,
 };
 
+enum {
+    UCM_DBVAL_U8      = 0,
+    UCM_DBVAL_U16     = 1,
+    UCM_DBVAL_U32     = 2,
+    UCM_DBVAL_FLOAT   = 3,
+    UCM_DBVAL_DOUBLE  = 4,
+    UCM_DBVAL_ASCIIZ  = 5,
+    UCM_DBVAL_WIDESZ  = 6,
+    UCM_DBVAL_U8SZ    = 7,
+    UCM_DBVAL_BLOB    = 8
+};
+
+typedef struct {
+    uint8_t type;
+    union {
+        uint8_t  u8Val;
+        uint16_t u16Val;
+        uint32_t u32Val;
+        
+        float    fVal;
+        double   dVal;
+
+        struct {
+            union {
+                char*       szaVal;
+                wchar_t*    szwVal;
+                u8char_t*   sz8Val;
+            };
+            size_t szSize;
+        };
+        struct {
+           uint8_t* bVal;
+           size_t   bSize;
+        };
+    };
+} ucm_dbval_t;
+
 typedef struct {
     ucm_plugin_t core;
 
@@ -254,18 +295,16 @@ typedef struct {
     UCM_RET   (*db_flush) (void);
     UCM_RET   (*db_close) (void);
 
-    // low-level API. Use simple config elements. Use in case of emergency
-    int     (*get_int)   (char* key, int def);
-    int64_t (*get_int64) (char* key, int64_t def);
-    float   (*get_float) (char* key, float def);
-    char*   (*get_str)   (char* key, char* def);
-    void    (*set_int)   (char* key, int value);
-    void    (*set_int64) (char* key, int64_t value);
-    void    (*set_float) (char* key, float value);
-    void    (*set_str)   (char* key, char* value);
-    void    (*item_del)  (char* key);
     // hight-level API. Use app structures config with one API function
-    // TODO
+    ucm_dbval_t* (*get_db_object) (ucm_contact_t* contact,
+                                   ucm_plugin_t*  module,
+                                   char*          setting,
+                                   ucm_dbval_t*   defVal);
+
+    UCM_RET      (*set_db_object) (ucm_contact_t* contact,
+                                   ucm_plugin_t*  module,
+                                   char*          setting,
+                                   ucm_dbval_t*   value);
 } ucm_dbplugin_t;
 
 // *********************************************************
@@ -367,15 +406,20 @@ typedef struct _ucm_functions_s {
     int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
 
     /*! low-level settings provider functions */
-    int         (*get_int)      (char* key, int def);
-    int64_t     (*get_int64)    (char* key, int64_t def);
-    float       (*get_float)    (char* key, float def);
-    char*       (*get_str)      (char* key, char* def);
-    void        (*set_int)      (char* key, int value);
-    void        (*set_int64)    (char* key, int64_t value);
-    void        (*set_float)    (char* key, float value);
-    void        (*set_str)      (char* key, char* value);
-    void        (*item_del)     (char* key);
+    int         (*get_int)      (ucm_plugin_t* obj, char* key, int def);
+    int64_t     (*get_int64)    (ucm_plugin_t* obj, char* key, int64_t def);
+    float       (*get_float)    (ucm_plugin_t* obj, char* key, float def);
+    char*       (*get_str)      (ucm_plugin_t* obj, char* key, char* def);
+    wchar_t*    (*get_wstr)     (ucm_plugin_t* obj, char* key, wchar_t* def);
+    uintptr_t   (*get_blob)     (ucm_plugin_t* obj, char* key, size_t* size);
+    void        (*set_int)      (ucm_plugin_t* obj, char* key, int value);
+    void        (*set_int64)    (ucm_plugin_t* obj, char* key, int64_t value);
+    void        (*set_float)    (ucm_plugin_t* obj, char* key, float value);
+    void        (*set_str)      (ucm_plugin_t* obj, char* key, char* value);
+    wchar_t*    (*set_wstr)     (ucm_plugin_t* obj, char* key, wchar_t* value);
+    void        (*set_blob)     (ucm_plugin_t* obj, char* key, uintptr_t blob, size_t size);
+
+    void        (*item_del)     (ucm_plugin_t* obj, char* key);
 
     /*! general queue access */
     int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);

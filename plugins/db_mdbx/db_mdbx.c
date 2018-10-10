@@ -123,16 +123,6 @@ static ucm_dbplugin_t plugin = {
     .db_check                = NULL,
     .db_flush                = NULL,
     .db_close                = mdbx_db_close,
-
-    .get_int                 = NULL,
-    .get_int64               = NULL,
-    .get_float               = NULL,
-    .get_str                 = NULL,
-    .set_int                 = NULL,
-    .set_int64               = NULL,
-    .set_float               = NULL,
-    .set_str                 = NULL,
-    .item_del                = NULL
 };
 
 ucm_plugin_t* _init_plugin(const ucm_functions_t* api){

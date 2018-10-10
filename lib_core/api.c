@@ -89,10 +89,15 @@ static ucm_functions_t core_api = {
     .get_int64            = NULL,
     .get_float            = NULL,
     .get_str              = NULL,
+    .get_wstr             = NULL,
+    .get_blob             = NULL,
     .set_int              = NULL,
     .set_int64            = NULL,
     .set_float            = NULL,
     .set_str              = NULL,
+    .set_wstr             = NULL,
+    .set_blob             = NULL,
+    
     .item_del             = NULL,
 
     /*! general queue access */
