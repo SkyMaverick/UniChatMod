@@ -4,7 +4,6 @@
 #include <wchar.h>
 
 #include "ucm.h"
-#include "alloc.h"
 #include "config.h"
 
 const ucm_functions_t* app;

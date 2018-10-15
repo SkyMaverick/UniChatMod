@@ -350,6 +350,7 @@ typedef struct {
 //    ucm_plugin_t* output_chain;
 //} ucm_session_t;
 //
+
 // *********************************************************
 //      MAIN APPLICATION API STRUCTURE
 // *********************************************************
@@ -357,6 +358,15 @@ typedef struct {
 /*! API structure. Provide for all plugins */
 typedef struct _ucm_functions_s {
     /*! CORE infrastructure API */
+
+    /*! memory functions */
+    void*       (*malloc)           (size_t size);
+    void*       (*zmalloc)          (size_t size);
+    void*       (*calloc)           (size_t nmem, size_t size);
+    void        (*free)             (void* obj);
+    void        (*zmemory)          (void* mem, size_t size);
+    int         (*realloc)          (void** mem, size_t size);
+
     /*! pthread API functions*/
     intptr_t    (*thread_create)    (void(*func)(void* ctx), void* ctx);
     int         (*thread_detach)    (intptr_t tid);
@@ -463,6 +473,19 @@ typedef struct _ucm_functions_s {
     UCM_RET                     (*ucm_recv_message) (void);   //TODO
 
 } ucm_functions_t;
+
+#define ucm_malloc(PAPI,X)       ucm_api->malloc((X))
+#define ucm_zmalloc(PAPI,X)      ucm_api->zmalloc((X))
+#define ucm_calloc(PAPI,N,X)     ucm_api->malloc((N),(X))
+#define ucm_free(PAPI,X)         ucm_api->free((X))
+#define ucm_zmemory(PAPI,X,S)    ucm_api->zmemory((X),(S))
+#define ucm_realloc(PAPI,X,S)    ucm_api->realloc((X),(S))
+
+#define ucm_free_null(PAPI,X)   \
+    do {                        \
+        (PAPI)->free(X);        \
+        X = NULL;               \
+    } while (0);                \
 
 // *********************************************************
 //      START/STOP/INFO MODULE

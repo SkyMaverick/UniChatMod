@@ -5,38 +5,32 @@
 #include <string.h>
 
 static inline void*
-ucm_malloc (size_t size)
+ucm_kmalloc (size_t size)
 {
     return malloc(size);
 }
 
 static inline void*
-ucm_zmalloc (size_t size)
+ucm_kzmalloc (size_t size)
 {
     return calloc (1, size);
 }
 
 static inline void*
-ucm_calloc (size_t nmem, 
+ucm_kcalloc (size_t nmem, 
             size_t size)
 {
     return calloc (nmem, size);
 }
 
 static inline void
-ucm_free (void* obj)
+ucm_kfree (void* obj)
 {
     free (obj);
 }
 
-#define ucm_free_null(X) \
-    do {                 \
-        free(X);         \
-        X = NULL;        \
-    } while (0);         \
-
 static inline void
-ucm_zmemory (void*  mem,
+ucm_kzmemory (void*  mem,
              size_t size)
 {
     if (size) {
@@ -52,7 +46,7 @@ ucm_zmemory (void*  mem,
 }
 
 static inline int
-ucm_realloc (void**  mem,
+ucm_krealloc (void**  mem,
              size_t size)
 {
     void* nblk = realloc(*mem, size);

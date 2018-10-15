@@ -12,7 +12,6 @@
 #include "ucm.h"
 #include "tui.h"
 #include "main.h"
-#include "alloc.h"
 #include "tui_config.h"
 #include "gettext.h"
 
@@ -38,7 +37,7 @@ static int portable = 0;
 static int portable_base = 0;
 static int terminated = 0;
 
-extern const ucm_functions_t* core;
+extern const ucm_functions_t* app;
 
 static inline void
 _display_help (void)

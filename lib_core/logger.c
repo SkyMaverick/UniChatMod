@@ -5,7 +5,7 @@
 #include "ucm.h"
 #include "config.h"
 #include "logger.h"
-#include "alloc.h"
+#include "api.h"
 #include "threading.h"
 
 typedef struct _logger_s {
@@ -61,7 +61,7 @@ _log_flush (ucm_logger_t** list)
     while((*list)){
         tmp = *list;
         (*list)=(*list)->next;
-        ucm_free_null(tmp);
+        ucm_kfree_null (tmp);
     }
 }
 
@@ -130,7 +130,7 @@ ucm_log (const char* fmt,
 void
 logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
-    ucm_logger_t* tmp = ucm_zmalloc (sizeof(ucm_logger_t));
+    ucm_logger_t* tmp = ucm_kzmalloc (sizeof(ucm_logger_t));
     if (tmp) {
         rwlock_wlock(lock_mtx);
         tmp->cb_log = callback;
@@ -153,7 +153,7 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
             }else{
                 log = i->next;
             }
-            ucm_free(i);
+            ucm_kfree(i);
             break;
         }
     }

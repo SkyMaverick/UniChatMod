@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
+
 #include "ucm.h"
+#include "api.h"
+
 #include "defs.h"
 #include "config.h"
 #include "mqueue.h"
 #include "mainloop.h"
-#include "alloc.h"
 #include "gettext.h"
 
 static struct mq_block_s* messages;
@@ -80,7 +82,7 @@ ucm_mloop_event_alloc (int id)
     }
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
-        event = ucm_zmalloc(size);
+        event = ucm_kzmalloc(size);
         event->ev = id;
         event->size = size;
         event->sender = NULL;
@@ -97,7 +99,7 @@ ucm_mloop_event_free (ucm_ev_t** event)
         switch ((*event)->ev){
             // TODO
         }
-        ucm_free_null(*event);
+        ucm_kfree_null(*event);
     }
 }
 

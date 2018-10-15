@@ -33,10 +33,11 @@
 
 //Dependencies
 #include <stddef.h>
-#include <stdint.h>
+#include <string.h>
+#include "../net_legacy.h"
 
 #include "rc6.h"
-#include "alloc.h"
+#include "ucm.h"
 
 //RC6 magic constants
 #define P32 0xB7E15163
@@ -67,7 +68,7 @@ int rc6Init(Rc6Context *context, const uint8_t *key, size_t keyLen)
       return ERROR_INVALID_KEY_LENGTH;
 
    //Convert the secret key from bytes to words
-   ucm_zmemory (context->l, RC6_MAX_KEY_SIZE);
+   app->zmemory (context->l, RC6_MAX_KEY_SIZE);
    memcpy (context->l, key, keyLen);
 
    //Calculate the length of the key in words

@@ -13,7 +13,6 @@
 #include "core.h"
 #include "defs.h"
 #include "api.h"
-#include "alloc.h"
 
 typedef struct ucm_module_s {
     ucm_plugin_t* plugin;
@@ -86,7 +85,7 @@ _plugin_load (char* filename)
         ucm_plugin_t* plug = cb_init_plugin(ucm_api);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
-                module = ucm_malloc (sizeof(ucm_module_t));
+                module = ucm_kmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
                     module->handle = handle;
@@ -170,12 +169,12 @@ plugins_stop_all (void)
             break;
         }
     }
-    ucm_zmemory (plugins_all,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_db,    sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_proto, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_crypt, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_hist,  sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_zmemory (plugins_stuff, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_kzmemory (plugins_all,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_kzmemory (plugins_db,    sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_kzmemory (plugins_proto, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_kzmemory (plugins_crypt, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_kzmemory (plugins_hist,  sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    ucm_kzmemory (plugins_stuff, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
 }
 
 UCM_RET
@@ -225,7 +224,7 @@ plugins_release_registry (void)
         m_tmp = m_tmp->next;
 
         dlclose(m_del->handle);
-        ucm_free(m_del);
+        ucm_kfree(m_del);
     }
 }
 

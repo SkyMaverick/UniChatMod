@@ -6,7 +6,6 @@ lib_utf8proc = files ('''
 '''.split())
 
 libcore_src = files('''
-    alloc.h
     api.c
     api.h
     core.c

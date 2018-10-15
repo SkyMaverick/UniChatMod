@@ -5,7 +5,7 @@
 #include "CUnit/Basic.h"
 
 #include "unicode.h"
-#include "alloc.h"
+#include "api.h"
 
 //  ************************************
 //     STRLEN TESTS
@@ -40,7 +40,7 @@ _TEST (strdup_normal)
 
     CU_ASSERT_EQUAL(ucm_strlen(A),
                     ucm_strlen(B));
-    ucm_free (B);
+    ucm_kfree (B);
 }
 
 _TEST (strdup_null)
@@ -54,7 +54,7 @@ _TEST (strdup_empty)
     u32char_t* B = ucm_strdup (A);
     CU_ASSERT_PTR_NOT_NULL_FATAL(B);
     CU_ASSERT_EQUAL(ucm_strlen(B), 0);
-    ucm_free(B);
+    ucm_kfree(B);
 }
 
 //  ************************************
@@ -156,7 +156,7 @@ _TEST (strjoin_normal)
     u32char_t* C = ucm_strjoin(A,B);
     CU_ASSERT_PTR_NOT_NULL_FATAL(C);
     CU_ASSERT_EQUAL(ucm_strcmp(C, U"abcABC"),0);
-    ucm_free (C);
+    ucm_kfree (C);
 }
 
 _TEST (strjoin_mv_normal)
@@ -166,7 +166,7 @@ _TEST (strjoin_mv_normal)
     u32char_t* C = ucm_mstrjoin(4, A, B, U"XYZ", U"xyz");
     CU_ASSERT_PTR_NOT_NULL_FATAL(C);
     CU_ASSERT_EQUAL(ucm_strcmp(C, U"abcABCXYZxyz"),0);
-    ucm_free (C);
+    ucm_kfree (C);
 }
 
 _TEST (strjoin_mv_null)
@@ -176,11 +176,11 @@ _TEST (strjoin_mv_null)
     u32char_t* C = ucm_mstrjoin (4, A, B, NULL, U"xyz");
     CU_ASSERT_PTR_NOT_NULL_FATAL(C);
     CU_ASSERT_EQUAL(ucm_strcmp(C, U"abcABCxyz"),0);
-    ucm_free (C);
+    ucm_kfree (C);
 
     C = ucm_mstrjoin (4, A, B, NULL, U"");
     CU_ASSERT_EQUAL(ucm_strcmp(C, U"abcABC"),0);
-    ucm_free (C);
+    ucm_kfree (C);
 }
 
 
@@ -191,7 +191,7 @@ _TEST (strbrkjoin_normal)
     u32char_t* C = ucm_strbrkjoin (A,B,U'/');
     CU_ASSERT_PTR_NOT_NULL(C);
     CU_ASSERT_EQUAL(ucm_strcmp(C, U"abc/ABC"),0);
-    ucm_free(C);
+    ucm_kfree(C);
 }
 
 _TEST (strbrkjoin_mv_normal)
@@ -200,7 +200,7 @@ _TEST (strbrkjoin_mv_normal)
     u32char_t* B = ucm_mstrbrkjoin (U'/' ,3 , A, U"ABC", U"xyz");
     CU_ASSERT_PTR_NOT_NULL(B);
     CU_ASSERT_EQUAL(ucm_strcmp(B, U"abc/ABC/xyz/"),0);
-    ucm_free(B);
+    ucm_kfree(B);
 }
 
 _TEST (strcat_normal)

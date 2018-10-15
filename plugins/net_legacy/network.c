@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 #ifdef __linux__
@@ -12,7 +13,6 @@
 #include <netinet/in.h>
 
 #include "ucm.h"
-#include "alloc.h"
 #include "network.h"
 #include "net_legacy.h"
 
@@ -89,7 +89,7 @@ _create_socket (ucl_connection_t* Con,
 ucm_conptr_t
 ucl_connect ()
 {
-    ucl_connection_t* con_s = ucm_zmalloc (sizeof(ucl_connection_t));
+    ucl_connection_t* con_s = app->zmalloc (sizeof(ucl_connection_t));
     if (con_s) {
         // TODO get connection propeties in DB
         uint32_t ip = 0;
@@ -99,13 +99,13 @@ ucl_connect ()
             con_s->tid_select = app->thread_create (__select_func, (void*) con_s);
             if (con_s->tid_select <= 0) {
                 trace_err ("%s : %s\n", "Don't create select thread", strerror(errno));
-                ucm_free_null (con_s);
+                ucm_free_null (app, con_s);
             };
             trace_dbg ("%s : %zu\n", "Create select thread", con_s->tid_select);
+            con_s->proto.net_status = UCM_FLAG_NETSTAT_ON;
         } else  {
-            ucm_free_null (con_s);
+            ucm_free_null (app, con_s);
         }
-        con_s->proto.net_status = UCM_FLAG_NETSTAT_ON;
     }
     return (uintptr_t) con_s;
 }
@@ -120,7 +120,7 @@ ucl_disconnect (ucm_conptr_t* Con)
         uCon->proto.net_status = UCM_FLAG_NETSTAT_OFF;
         app->thread_join (uCon->tid_select);
 
-        ucm_free (uCon);
+        app->free (uCon);
         *Con = 0;
     }
     return UCM_RET_SUCCESS;

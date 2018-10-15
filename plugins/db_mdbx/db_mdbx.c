@@ -6,7 +6,6 @@
 #include <wchar.h>
 
 #include "ucm.h"
-#include "alloc.h"
 #include "config.h"
 #include "gettext.h"
 #include "libmdbx/mdbx.h"
@@ -38,7 +37,7 @@ _assert_func (const MDBX_env *env,
 static UCM_RET
 _run_dbmdbx (void)
 {
-    UCM_DB = ucm_zmalloc (sizeof(db_object_t));
+    UCM_DB = app->zmalloc (sizeof(db_object_t));
     if ( UCM_DB == NULL )
         return UCM_RET_NONALLOC;
     UCM_DB->mtx = app->rwlock_create ();
@@ -49,7 +48,7 @@ static UCM_RET
 _stop_dbmdbx (void)
 {
     app->rwlock_free ( UCM_DB->mtx );
-    ucm_free_null (UCM_DB);
+    ucm_free_null (app, UCM_DB);
     return UCM_RET_SUCCESS;
 }
 
