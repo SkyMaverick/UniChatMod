@@ -106,13 +106,22 @@ typedef enum _ucm_status_return_e {
     UCM_RET_OVERFLOW,
     UCM_RET_EMPTY,
     UCM_RET_DUPLICATE,
-    UCM_RET_BUSY
+    UCM_RET_BUSY,
+    UCM_RET_INVALID
 } UCM_RET;
 
 enum {
     UCM_TYPE_LOG_INFO  = 1 << 0,
     UCM_TYPE_LOG_DEBUG = 1 << 1,
     UCM_TYPE_LOG_ERROR = 1 << 2
+};
+
+enum {
+    UCM_TYPE_OBJECT_PLUGIN  = 1 << 0,
+    UCM_TYPE_OBJECT_EVENT   = 1 << 1,
+    UCM_TYPE_OBJECT_CONTACT = 1 << 2,
+    UCM_TYPE_OBJECT_MESSAGE = 1 << 3,
+    UCM_TYPE_OBJECT_CONNECT = 1 << 4
 };
 
 // *********************************************************
@@ -128,6 +137,8 @@ enum {
 };
 
 typedef struct {
+    uint8_t oid;
+
     uint8_t ev;
     size_t  size;
     void*   sender;
@@ -149,6 +160,8 @@ enum {
 };
 
 typedef struct ucm_msg_s {
+    const uint8_t oid;
+
     uint8_t     type;
     // TODO sender info
     time_t      time;
@@ -230,11 +243,13 @@ typedef struct {
 
 /*! Structure what defines base plugin interface*/
 typedef struct _ucm_plugin_s {
+    uint8_t           oid;                                      /// ucm system object identificator
+
     ucm_plugin_info_t info;
-    UCM_RET           (*run)(void);                 /// activate plugin (with context for hot-plug) (required)
-    UCM_RET           (*stop)(void);                /// deactivate plugin (required)
+    UCM_RET           (*run)(void);                             /// activate plugin (with context for hot-plug) (required)
+    UCM_RET           (*stop)(void);                            /// deactivate plugin (required)
     void              (*message)(uint32_t id, uintptr_t ctx,
-                                 uint32_t x1, uint32_t x2);    /// recieve system messages callback
+                                 uint32_t x1, uint32_t x2);     /// recieve system messages callback
     // TODO define this prototype
     void              (*msg_process)(void);
 } ucm_plugin_t;
@@ -268,7 +283,7 @@ typedef struct {
         uint8_t  u8Val;
         uint16_t u16Val;
         uint32_t u32Val;
-        
+
         float    fVal;
         double   dVal;
 

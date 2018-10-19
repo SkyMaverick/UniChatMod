@@ -43,6 +43,7 @@ _message(uint32_t id,
 }
 
 static const ucm_pclplugin_t plugin = {
+    .core.oid                = UCM_TYPE_OBJECT_PLUGIN,
     .core.info.api           =
     {
         .vmajor              = UCM_API_MAJOR_VER,

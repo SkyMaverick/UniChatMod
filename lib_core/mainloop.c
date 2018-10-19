@@ -83,6 +83,8 @@ ucm_mloop_event_alloc (int id)
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
         event = ucm_kzmalloc(size);
+
+        event->oid = UCM_TYPE_OBJECT_EVENT;
         event->ev = id;
         event->size = size;
         event->sender = NULL;

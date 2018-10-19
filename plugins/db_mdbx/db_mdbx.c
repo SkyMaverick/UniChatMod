@@ -87,6 +87,7 @@ mdbx_db_close (void)
 }
 
 static ucm_dbplugin_t plugin = {
+    .core.oid                = UCM_TYPE_OBJECT_PLUGIN,
     .core.info.api           =
     {
         .vmajor              = UCM_API_MAJOR_VER,

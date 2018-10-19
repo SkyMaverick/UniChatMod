@@ -100,6 +100,7 @@ _message_core(uint32_t id,
 }
 
 static ucm_core_t core_lib = {
+    .base.oid              = UCM_TYPE_OBJECT_PLUGIN,
     .base.info.api.vmajor  = UCM_API_MAJOR_VER,
     .base.info.api.vminor  = UCM_API_MINOR_VER,
     .base.info.sys         = 0,

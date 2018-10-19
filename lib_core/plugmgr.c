@@ -49,6 +49,10 @@ static ucm_plugin_t* plugins_stuff [UCM_DEF_PLUG_COUNT];
 static UCM_RET
 _plugin_verify (ucm_plugin_t* plugin)
 {
+    if (plugin->oid != UCM_TYPE_OBJECT_PLUGIN) {
+        return UCM_RET_INVALID;
+    }
+
     if (plugin->info.api.vmajor != UCM_API_MAJOR_VER) {
         return UCM_RET_UNREALIZED;
     }
@@ -91,14 +95,13 @@ _plugin_load (char* filename)
                     module->handle = handle;
                     return module;
                 }
-            }
-       } else {
-           ucm_etrace ("%s: %s", filename, _("this plugin broken"));
-       }
-    } else {
-        ucm_etrace ("%s: %s", filename, _("this plugin broken initialization"));
+           } else {
+               ucm_etrace ("%s: %s\n", filename, _("this plugin broken"));
+           }
+        } else {
+            ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
+        }
     }
-
     dlclose (handle);
     return module;
 }
@@ -203,9 +206,10 @@ plugins_load_registry (const char* plug_path)
         }
         snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls->d_name);
         tmp_module->next = _plugin_load(buffer);
-        if ( tmp_module->next )
+        if ( tmp_module->next ) {
             tmp_module = tmp_module->next;
-        plugs_count++;
+            plugs_count++;
+        }
     }
 
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
