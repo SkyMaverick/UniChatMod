@@ -245,8 +245,9 @@ typedef struct _ucm_plugin_s {
 
 enum {
     UCM_FLAG_DB_READONLY    = 1 << 0,
-    UCM_FLAG_DB_NEEDCHAECK  = 1 << 1,
-    UCM_FLAG_DB_NEEDBACKUP  = 1 << 2,
+    UCM_FLAG_DB_CREATENEW   = 1 << 1,
+    UCM_FLAG_DB_NEEDCHECK   = 1 << 2,
+    UCM_FLAG_DB_NEEDBACKUP  = 1 << 3,
 };
 
 enum {
