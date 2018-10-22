@@ -32,7 +32,8 @@ option ('build_with_tests', type: 'boolean', value: 'true',
 
 option ('build_with_syslibs', type: 'boolean', value: 'true',
         description: 'build with target system libraries if available')
-
+option ('build_with_hidden_api', type: 'boolean', value: 'true',
+        description: 'build with hidden internal API')
 option ('build_with_full_commit', type: 'boolean', value: 'true',
         description: 'full (without --short key) rev-value commit code in plugin options')
 

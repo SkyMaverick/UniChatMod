@@ -51,6 +51,52 @@
     #define DEPRECATED_01
 #endif
 
+// === IMPORT / EXPORT ====================
+
+#ifndef __has_attribute
+    #define __has_attribute(x) (0)
+#endif
+
+#ifndef __ucm_export
+    #if defined(_WIN32) || defined(__CYGWIN__)
+        #if defined(__GNUC__) || __has_attribute(dllexport)
+            #define __ucm_export __attribute__((dllexport))
+        #elif defined(_MSC_VER)
+            #define __ucm_export __declspec(dllexport)
+        #else
+            #define __ucm_export
+        #endif
+    #elif defined(__GNUC__) || __has_attribute(visibility)
+        #define __ucm_export __attribute__((visibility("default")))
+    #else
+        #define __ucm_export
+    #endif
+#endif /* __ucm_export */
+
+#ifndef __ucm_import
+    #if defined(_WIN32) || defined(__CYGWIN__)
+        #if defined(__GNUC__) || __has_attribute(dllimport)
+            #define __ucm_import __attribute__((dllimport))
+        #elif defined(_MSC_VER)
+            #define __ucm_import __declspec(dllimport)
+        #else
+            #define __ucm_import
+        #endif
+    #else
+        #define __ucm_import
+    #endif
+#endif /* __ucm_import */
+
+#if defined(LIBUCM_EXPORTS)
+    #define LIBUCM_API __ucm_export
+#elif defined(LIBMDBX_IMPORTS)
+    #define LIBUCM_API __ucm_import
+#else
+    #define LIBUCM_API
+#endif
+
+// === CONSTANTS ========================
+
 #if defined(PATH_MAX)
     #define UCM_PATH_MAX PATH_MAX
 #elif defined(_UCM_CONFIG_H_)
@@ -536,15 +582,14 @@ typedef const ucm_plugin_info_t*
 #define UCM_INFO_FUNC  "ucm_core_info"
 
 // ******* STATIC LOAD FUNCTIONS ************
-const ucm_functions_t*
+LIBUCM_API const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args);
 
-UCM_RET
+LIBUCM_API UCM_RET
 ucm_core_stop (void);
 
-const ucm_plugin_info_t*
+LIBUCM_API const ucm_plugin_info_t*
 ucm_core_info (void);
-
 
 #undef UCM_DEPRECATED
 

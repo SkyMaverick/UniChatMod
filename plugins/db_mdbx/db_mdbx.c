@@ -125,7 +125,7 @@ static ucm_dbplugin_t plugin = {
     .db_close                = mdbx_db_close,
 };
 
-ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
+LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;
     return (ucm_plugin_t*)(&plugin);
 }

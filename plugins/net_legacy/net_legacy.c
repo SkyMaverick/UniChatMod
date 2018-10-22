@@ -82,7 +82,7 @@ static const ucm_pclplugin_t plugin = {
     .get_interface           = _get_proto_interface
 };
 
-ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
+LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;
     return (ucm_plugin_t*)(&plugin);
 }

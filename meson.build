@@ -23,12 +23,21 @@ if get_option('base_inbundle')
     add_global_arguments ('-DBASE_INBUNDLE', language: 'c')
 endif
 
+if get_option('build_with_hidden_api')
+    add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
+endif
+
 # --- compiler arguments ----------
 c_args = [
     '-Wall',
-    '-Winline',
     '-Wextra'
 ]
+
+if get_option('build_with_hidden_api')
+    c_args += [
+        '-fvisibility=hidden'
+    ]
+endif
 
 if get_option('buildtype').startswith('debug')
     foreach arg : [
