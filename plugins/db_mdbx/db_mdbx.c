@@ -8,9 +8,11 @@
 #include "ucm.h"
 #include "config.h"
 #include "gettext.h"
+
 #include "libmdbx/mdbx.h"
 
 #include "db_mdbx.h"
+#include "db_mdbx_base.h"
 
 const ucm_functions_t* app;
 const ucm_dbplugin_t* pldb;
@@ -73,10 +75,17 @@ static UCM_RET
 mdbx_db_open  (char*    file,
                uint32_t flags)
 {
-    UNUSED(flags);
-    snprintf (UCM_DB->file_apath, PATH_MAX, "%s", file);
+    int ret = UCM_RET_SUCCESS;
 
-    return UCM_RET_SUCCESS;
+    app->rwlock_wlock (UCM_DB->mtx);
+
+    snprintf (UCM_DB->faPath, UCM_PATH_MAX, "%s", file);
+    UCM_DB->flags   =   flags;
+    ret = db_open(UCM_DB);
+
+    app->rwlock_unlock (UCM_DB->mtx);
+
+    return ret;
 }
 
 static UCM_RET

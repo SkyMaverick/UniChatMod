@@ -153,7 +153,8 @@ typedef enum _ucm_status_return_e {
     UCM_RET_EMPTY,
     UCM_RET_DUPLICATE,
     UCM_RET_BUSY,
-    UCM_RET_INVALID
+    UCM_RET_INVALID,
+    UCM_RET_BADVERSION
 } UCM_RET;
 
 enum {
@@ -218,7 +219,15 @@ typedef struct ucm_msg_s {
     } data;
 } ucm_message_t;
 
+typedef uint64_t HCONTACT;
+
 typedef struct ucm_cont_s {
+    uint8_t     oid;            // ucm system object ID
+
+    HCONTACT    cid;            // global contact ID
+    struct {
+
+    }  info;
     // TODO
 } ucm_contact_t;
 
@@ -312,15 +321,16 @@ enum {
 };
 
 enum {
-    UCM_DBVAL_U8      = 0,
-    UCM_DBVAL_U16     = 1,
-    UCM_DBVAL_U32     = 2,
-    UCM_DBVAL_FLOAT   = 3,
-    UCM_DBVAL_DOUBLE  = 4,
-    UCM_DBVAL_ASCIIZ  = 5,
-    UCM_DBVAL_WIDESZ  = 6,
-    UCM_DBVAL_U8SZ    = 7,
-    UCM_DBVAL_BLOB    = 8
+    UCM_DBVAL_FAIL    = 0,
+    UCM_DBVAL_U8      = 1,
+    UCM_DBVAL_U16     = 2,
+    UCM_DBVAL_U32     = 3,
+    UCM_DBVAL_FLOAT   = 4,
+    UCM_DBVAL_DOUBLE  = 5,
+    UCM_DBVAL_ASCIIZ  = 6,
+    UCM_DBVAL_WIDESZ  = 7,
+    UCM_DBVAL_U8SZ    = 8,
+    UCM_DBVAL_BLOB    = 9,
 };
 
 typedef struct {
@@ -348,6 +358,12 @@ typedef struct {
     };
 } ucm_dbval_t;
 
+typedef struct _dbkey_s {
+    HCONTACT    contact;
+    wchar_t*    pid;
+    char*       setting;
+} ucm_dbkey_t;
+
 typedef struct {
     ucm_plugin_t core;
 
@@ -358,15 +374,16 @@ typedef struct {
     UCM_RET   (*db_close) (void);
 
     // hight-level API. Use app structures config with one API function
-    ucm_dbval_t* (*get_db_object) (ucm_contact_t* contact,
-                                   ucm_plugin_t*  module,
-                                   char*          setting,
-                                   ucm_dbval_t*   defVal);
+    ucm_dbval_t* (*get_setting) (HCONTACT       contact,
+                                 wchar_t*       pid,
+                                 const char*    pName,
+                                 ucm_dbval_t    defVal);
 
-    UCM_RET      (*set_db_object) (ucm_contact_t* contact,
-                                   ucm_plugin_t*  module,
-                                   char*          setting,
-                                   ucm_dbval_t*   value);
+    UCM_RET      (*set_setting) (HCONTACT       contact,
+                                 ucm_plugin_t*  module,
+                                 char*          setting,
+                                 ucm_dbval_t*   value);
+    //TODO Events, contacts, logs iterators
 } ucm_dbplugin_t;
 
 // *********************************************************

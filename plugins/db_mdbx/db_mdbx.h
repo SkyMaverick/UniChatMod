@@ -14,6 +14,12 @@
 extern const ucm_functions_t* app;
 extern const ucm_dbplugin_t* pldb;
 
+#define DBSYS_VERSION_MAJOR 0
+#define DBSYS_VERSION_MINOR 1
+
+#define DBSYS_VERSION   DBSYS_VERSION_MAJOR##'.'##DBSYS_VERSION_MINOR
+#define DBSYS_HEADER_SIGNATURE 0x4DBAC0DE
+
 #define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
 #define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
 #define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
@@ -44,17 +50,13 @@ typedef struct {
 
 typedef struct {
     uint32_t    signature;
-    uint32_t    version;
+    uint64_t    version;
 } db_header_t;
-
-enum {
-    DB_FLAG_READONLY = 1 << 0
-};
 
 typedef struct {
     struct {
         MDBX_env*       env;
-        MDBX_txn*       txn;
+        MDBX_txn*       txn_ro;
 
         MDBX_dbi        dbi_global;
         MDBX_cursor*    cur_global;
@@ -65,22 +67,64 @@ typedef struct {
         MDBX_dbi        dbi_contacts;
         MDBX_cursor*    cur_contacts;
 
-        MDBX_dbi        dbi_plugins;
-        MDBX_cursor*    cur_plugins;
+        MDBX_dbi        dbi_settings;
+        MDBX_cursor*    cur_settings;
+
+        MDBX_dbi        dbi_logs;
+        MDBX_cursor*    cur_logs;
     } mdbx;
+
+    struct {
+        // TODO events variables
+    } events;
+
+    struct {
+        // TODO logs variables
+    } logs;
+
+    struct {
+        // TODO contacts variables
+    } contacts;
 
     db_header_t header;
 
     uintptr_t   mtx;
-    char        file_apath [PATH_MAX];
+    char        faPath [UCM_PATH_MAX];
     uint32_t    flags;
 } db_object_t;
+
+#define DBTABLE_NAME_GLOBAL     "global"
+#define DBTABLE_NAME_SETTINGS   "settings"
+#define DBTABLE_NAME_EVENTS     "events"
+#define DBTABLE_NAME_CONTACTS   "contacts"
+#define DBTABLE_NAME_LOGS       "logs"
 
 extern const ucm_functions_t* app;
 extern db_object_t* UCM_DB;
 
+static inline MDBX_txn*
+StartTxn (db_object_t* db)
+{
+    MDBX_txn *res = 0;
+    int rc = mdbx_txn_begin (
+                db->mdbx.env,
+                NULL,
+                (db->flags | UCM_FLAG_DB_READONLY) ? MDBX_RDONLY : 0,
+                &res );
+    // TODO exception
+    UNUSED (rc);
+    return res;
+}
+
+static inline uint64_t
+MakeLong    (uint32_t x,
+             uint32_t y)
+{
+    return (((uint64_t)(x)) << 32) | (y);
+}
+
 void
-_assert_func (const MDBX_env *env, 
+_assert_func (const MDBX_env *env,
               const char     *msg,
               const char     *function,
               unsigned       line);
