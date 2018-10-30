@@ -531,12 +531,12 @@ typedef struct _ucm_functions_s {
     void        (*logger_disconnect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*));
 
     /*! get plugins by category */
-    const ucm_plugin_t* (*get_plugins_all)   (void);
-    const ucm_plugin_t* (*get_plugins_db)    (void);
-    const ucm_plugin_t* (*get_plugins_proto) (void);
-    const ucm_plugin_t* (*get_plugins_crypt) (void);
-    const ucm_plugin_t* (*get_plugins_hist)  (void);
-    const ucm_plugin_t* (*get_plugins_stuff) (void);
+    const ucm_plugin_t** (*get_plugins_all)   (void);
+    const ucm_plugin_t** (*get_plugins_db)    (void);
+    const ucm_plugin_t** (*get_plugins_proto) (void);
+    const ucm_plugin_t** (*get_plugins_crypt) (void);
+    const ucm_plugin_t** (*get_plugins_hist)  (void);
+    const ucm_plugin_t** (*get_plugins_stuff) (void);
 
     /*! get global paths */
     const wchar_t* (*get_startup_path) (void);

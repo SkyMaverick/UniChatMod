@@ -21,6 +21,7 @@ typedef struct ucm_module_s {
 } ucm_module_t;
 
 #define PLUGIN(X) X->plugin
+#define NULL_REG(X) ucm_kzmemory ((X),   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
 
 ucm_module_t modules = {
     .plugin = NULL,
@@ -30,17 +31,17 @@ ucm_module_t modules = {
 
 static size_t plugins_limit        = UCM_DEF_PLUG_COUNT;
 static size_t plugins_count        = 0;
-static ucm_plugin_t* plugins_all   [UCM_DEF_PLUG_COUNT];
+static ucm_plugin_t* plugins_all   [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_db_count     = 0;
-static ucm_plugin_t* plugins_db    [UCM_DEF_PLUG_COUNT];
+static ucm_plugin_t* plugins_db    [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_proto_count  = 0;
-static ucm_plugin_t* plugins_proto [UCM_DEF_PLUG_COUNT];
+static ucm_plugin_t* plugins_proto [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_cript_count  = 0;
-static ucm_plugin_t* plugins_crypt [UCM_DEF_PLUG_COUNT];
+static ucm_plugin_t* plugins_crypt [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_hist_count   = 0;
-static ucm_plugin_t* plugins_hist  [UCM_DEF_PLUG_COUNT];
+static ucm_plugin_t* plugins_hist  [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_stuff_count  = 0;
-static ucm_plugin_t* plugins_stuff [UCM_DEF_PLUG_COUNT];
+static ucm_plugin_t* plugins_stuff [UCM_DEF_PLUG_COUNT + 1];
 
 // ######################################################################
 //      PRIVATE API IMPLEMENTATION
@@ -147,6 +148,13 @@ _plugin_registry_add (ucm_plugin_t* plugin)
 void
 plugins_run_all (void)
 {
+    NULL_REG (plugins_all);
+    NULL_REG (plugins_db);
+    NULL_REG (plugins_proto);
+    NULL_REG (plugins_crypt);
+    NULL_REG (plugins_hist);
+    NULL_REG (plugins_stuff);
+
     ucm_module_t* m_tmp = modules.next;
 
     for ( ; m_tmp; m_tmp = m_tmp->next) {
@@ -172,12 +180,12 @@ plugins_stop_all (void)
             break;
         }
     }
-    ucm_kzmemory (plugins_all,   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_kzmemory (plugins_db,    sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_kzmemory (plugins_proto, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_kzmemory (plugins_crypt, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_kzmemory (plugins_hist,  sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
-    ucm_kzmemory (plugins_stuff, sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT);
+    NULL_REG (plugins_all);
+    NULL_REG (plugins_db);
+    NULL_REG (plugins_proto);
+    NULL_REG (plugins_crypt);
+    NULL_REG (plugins_hist);
+    NULL_REG (plugins_stuff);
 }
 
 UCM_RET
@@ -247,38 +255,38 @@ plugins_message_dispatch (const uint32_t* id,
     }
 }
 
-const ucm_plugin_t*
+const ucm_plugin_t**
 plugins_get_all (void)
 {
-    return (ucm_plugin_t*) plugins_all;
+    return (const ucm_plugin_t**) plugins_all;
 }
 
-const ucm_plugin_t*
+const ucm_plugin_t**
 plugins_get_db (void)
 {
-    return (ucm_plugin_t*) plugins_db;
+    return (const ucm_plugin_t**) plugins_db;
 }
 
-const ucm_plugin_t*
+const ucm_plugin_t**
 plugins_get_proto (void)
 {
-    return (ucm_plugin_t*) plugins_proto;
+    return (const ucm_plugin_t**) plugins_proto;
 }
 
-const ucm_plugin_t*
+const ucm_plugin_t**
 plugins_get_crypt (void)
 {
-    return (ucm_plugin_t*) plugins_crypt;
+    return (const ucm_plugin_t**) plugins_crypt;
 }
 
-const ucm_plugin_t*
+const ucm_plugin_t**
 plugins_get_hist (void)
 {
-    return (ucm_plugin_t*) plugins_hist;
+    return (const ucm_plugin_t**) plugins_hist;
 }
 
-const ucm_plugin_t*
+const ucm_plugin_t**
 plugins_get_stuff (void)
 {
-    return (ucm_plugin_t*) plugins_stuff;
+    return (const ucm_plugin_t**) plugins_stuff;
 }

@@ -13,6 +13,8 @@ libcore_src = files('''
     cpentupd.c
     cpentupd.h
     defs.h
+    db.c
+    db.h
     evhook.c
     evhook.h
     mainloop.c

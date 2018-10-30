@@ -49,7 +49,7 @@ static const ucm_pclplugin_t plugin = {
         .vmajor              = UCM_API_MAJOR_VER,
         .vminor              = UCM_API_MINOR_VER
     },
-    .core.info.sys           = UCM_TYPE_PLUG_DB,
+    .core.info.sys           = UCM_TYPE_PLUG_PROTO,
     .core.info.vmajor        = UCM_VERSION_MAJOR,
     .core.info.vminor        = UCM_VERSION_MINOR,
     .core.info.vpatch        = UCM_VERSION_PATCH,

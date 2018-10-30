@@ -29,8 +29,8 @@ ucm_core_start (ucm_cargs_t* args)
 
     plugins_load_registry (args->path_plug_abs);
     ucm_dtrace ("%s : %s\n", "Path in LIB", args->path_plug_abs);
-    ucm_core->run();
-    return ucm_api;
+
+    return (ucm_core->run() == UCM_RET_SUCCESS) ? ucm_api : NULL;
 }
 
 const ucm_plugin_info_t*
@@ -44,9 +44,9 @@ ucm_core_stop (void)
 {
     //TODO stop core plugin, cleanup and release plugin stack
     ucm_core->stop();
-    
+
     plugins_release_registry();
-    
+
     free_ucm_entropy();
     log_release();
     return UCM_RET_SUCCESS;

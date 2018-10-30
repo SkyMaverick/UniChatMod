@@ -45,7 +45,7 @@ static ucm_functions_t core_api = {
     .free                   = ucm_kfree         ,
     .zmemory                = ucm_kzmemory      ,
     .realloc                = ucm_krealloc      ,
-    
+
     .thread_create          = thread_create     ,
     .thread_detach          = thread_detach     ,
     .thread_exit            = thread_exit       ,
@@ -105,7 +105,7 @@ static ucm_functions_t core_api = {
     .set_str                = NULL              ,
     .set_wstr               = NULL              ,
     .set_blob               = NULL              ,
-    
+
     .item_del               = NULL              ,
 
     /*! general queue access */

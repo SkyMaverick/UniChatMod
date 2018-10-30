@@ -11,6 +11,7 @@
 #include "plugmgr.h"
 #include "evhook.h"
 #include "logger.h"
+#include "db.h"
 
 typedef struct {
     ucm_plugin_t        base;           // base plugin functionality (start/stop/mq)
@@ -51,35 +52,49 @@ loop_core (void* ctx)
 }
 
 static UCM_RET
-_run_core (void)
-{
-    // start main message loop
-    if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
-
-        log_init();
-        hooks_event_init();
-
-        plugins_run_all();
-        tid_loop_core = ucm_api->thread_create(loop_core, NULL);
-    }
-    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
-    return UCM_RET_SUCCESS;
-}
-
-static UCM_RET
 _stop_core (void)
 {
-    // send TERM message for stop systems and plugins prepare
-    ucm_api->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
-    // stop main message loop
-    ucm_api->thread_join(tid_loop_core);
-    // stop all plugins 
+
+    if (tid_loop_core > 0) {
+        ucm_api->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
+        ucm_api->thread_join(tid_loop_core);
+    }
+    db_close();
     plugins_stop_all();
     ucm_mloop_free();
 
     log_release();
     hooks_event_release();
 
+    return UCM_RET_SUCCESS;
+}
+
+static UCM_RET
+_run_core (void)
+{
+    extern wchar_t ucm_path_store [UCM_PATH_MAX];
+    char* aPath = NULL;
+
+    if ( wcstombs(aPath, ucm_path_store, UCM_PATH_MAX) <= 0) {
+        ucm_etrace ("%s: %s\n", "Don't parse database file path", aPath);
+        return UCM_RET_WRONGPARAM;
+    }
+    // start main message loop
+    if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
+
+        log_init();
+        hooks_event_init();
+        plugins_run_all();
+
+        if ( db_open(aPath, 0) != UCM_RET_SUCCESS) {
+            ucm_etrace ("%s: %s\n", "Couldn't open this database file", aPath);
+            _stop_core();
+            return UCM_RET_WRONGPARAM;
+        }
+
+        tid_loop_core = ucm_api->thread_create(loop_core, NULL);
+    }
+    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
 

@@ -14,7 +14,7 @@ extern ucm_functions_t* ucm_api;
     do {                    \
         ucm_kfree(X);       \
         X = NULL;           \
-    } while (0)               
+    } while (0)
 
 #ifdef __cplusplus
     }
