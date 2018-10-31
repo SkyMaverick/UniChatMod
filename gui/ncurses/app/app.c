@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <signal.h>
+#include <execinfo.h>
 
 #include "ucm.h"
 #include "app.h"
@@ -17,6 +18,8 @@
 #define LIBCORE_NAME "libucm.so"
 #define LIBCORE_API_MAJVER  0
 #define LIBCORE_API_MINVER  0
+
+#define STACK_TRACE_BUFFER  4096
 
 static char pa_buf  [UCM_PATH_MAX];
 static char ppa_buf [UCM_PATH_MAX];
@@ -36,8 +39,6 @@ static const        ucm_plugin_info_t* info;
 static int portable = 0;
 static int portable_base = 0;
 static int terminated = 0;
-
-extern const ucm_functions_t* app;
 
 static inline void
 _display_help (void)
@@ -106,11 +107,33 @@ _args_parse (int argc, char* argv[])
     }
 }
 
-static void
-_finish_app (int sig)
+static inline void
+_stack_trace (int sig)
 {
-    UNUSED (sig);
-    // TODO
+    fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch SEGV signal ..."));
+    void* buf[STACK_TRACE_BUFFER];
+    char** strs;
+    
+    int ptrs = backtrace(buf, STACK_TRACE_BUFFER);
+    if (ptrs)
+        fprintf (stderr, "%s: %d\n",_("Trace last addresses"), ptrs);
+
+    strs = backtrace_symbols(buf, ptrs);
+    if (strs != NULL) {
+        for (int i=0; i < ptrs; i++) 
+            fprintf (stderr, "%s\n", strs[i]);
+    } else fprintf (stderr, "%s\n",_("backtrace symbols error"));
+    free(strs);
+}
+
+static void
+_crash_handler (int sig)
+{
+#ifdef DEBUG
+    _stack_trace (sig);
+#endif
+    // TODO maybe clean
+    exit (UCM_RET_EXCEPTION);
 }
 
 int
@@ -176,7 +199,8 @@ main (int argc, char* argv[])
 //      SIGNAL HANDLERS
 // *********************************************************
 
-    signal (SIGINT, _finish_app);
+    signal (SIGINT, _crash_handler);
+    signal (SIGSEGV, _crash_handler);
 
 // *********************************************************
 //      LOAD CORE LIBRARY
@@ -198,13 +222,8 @@ main (int argc, char* argv[])
                     && (info->api.vmajor >= LIBCORE_API_MAJVER)
                     && (info->api.vminor >= LIBCORE_API_MINVER))
                 {
-                    //TODO start curses
-//                    if (start_curses_app (&args) != UCM_RET_SUCCESS) {
-//                        fprintf (stderr, "%s\n", "Curses GUI start fail");
-//                        ret_status = UCM_RET_EXCEPTION;
-//                    }
-    //                hwnd = core->thread_create (start_curses_app, (void*)&args);
-    //                core->thread_join (hwnd);
+                    // start curses
+                    core->mainloop_msg_send (UCM_EVENT_START_GUI, (uintptr_t)L"uincurses",0,0);
                 } else {
                     fprintf (stderr, "%s\n", "Core information load FAIL");
                     ret_status = UCM_RET_EMPTY;

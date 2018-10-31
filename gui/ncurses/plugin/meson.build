@@ -1,4 +1,4 @@
-tuilib_name = 'ucmc'
+tuilib_name = 'ui_ucmc'
 tuilib_src = files('''
     tui.c
     tui.h

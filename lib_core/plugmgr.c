@@ -132,17 +132,17 @@ _plugin_registry_add (ucm_plugin_t* plugin)
                         }
                     case UCM_TYPE_PLUG_HIST:
                         {
-                            plugins_db [plugins_hist_count++] = plugin;
+                            plugins_hist [plugins_hist_count++] = plugin;
                             break;
                         }
                     case UCM_TYPE_PLUG_GUI:
                         {
-                            plugins_db [plugins_gui_count++] = plugin;
+                            plugins_gui [plugins_gui_count++] = plugin;
                             break;
                         }
                     case UCM_TYPE_PLUG_STUFF:
                         {
-                            plugins_db [plugins_stuff_count++] = plugin;
+                            plugins_stuff [plugins_stuff_count++] = plugin;
                             break;
                         }
                 }

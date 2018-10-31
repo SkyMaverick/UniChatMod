@@ -44,6 +44,12 @@ loop_core (void* ctx)
                         ucm_dtrace ("%s\n", "Catch TERM message. Core loop exit.");
                         break;
                     }
+                case UCM_EVENT_START_GUI:
+                    {
+                        ucm_dtrace ("%s: %S\n", "Catch start GUI signal", (wchar_t*)lctx);
+                        // TODO start select GUI plugin or default
+                        break;
+                    }
             }
         }
         if (term) break;
@@ -73,7 +79,7 @@ static UCM_RET
 _run_core (void)
 {
     extern wchar_t ucm_path_store [UCM_PATH_MAX];
-    char* aPath = NULL;
+    char aPath [UCM_PATH_MAX];
 
     if ( wcstombs(aPath, ucm_path_store, UCM_PATH_MAX) <= 0) {
         ucm_etrace ("%s: %s\n", "Don't parse database file path", aPath);
@@ -105,7 +111,9 @@ _message_core(uint32_t id,
               uint32_t x2)
 
 {
-    UNUSED(id);
+    switch (id) {
+        // TODO
+    };
     UNUSED(ctx);
     UNUSED(x1);
     UNUSED(x2);

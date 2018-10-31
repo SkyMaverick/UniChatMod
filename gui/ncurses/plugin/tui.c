@@ -70,6 +70,9 @@ finish_curses_app (int sig)
     // TODO
 }
 
+// *********************************************************
+//      PLUGIN FUNCTIONS
+// *********************************************************
 
 static UCM_RET
 _run_plugin (void)
@@ -89,8 +92,9 @@ _message (uint32_t  id,
           uint32_t  x1,
           uint32_t  x2)
 {
-    //TODO
-    UNUSED(id);
+    switch (id) {
+        // TODO
+    };
     UNUSED(ctx);
     UNUSED(x1);
     UNUSED(x2);

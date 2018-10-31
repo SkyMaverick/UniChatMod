@@ -94,6 +94,12 @@ mdbx_db_close (void)
     return UCM_RET_SUCCESS;
 }
 
+static UCM_RET
+mdbx_db_flush (void)
+{
+    return UCM_RET_SUCCESS;
+}
+
 static ucm_plugdb_t plugin = {
     .core.oid                = UCM_TYPE_OBJECT_PLUGIN,
     .core.info.api           =
@@ -129,7 +135,7 @@ static ucm_plugdb_t plugin = {
 
     .db_open                 = mdbx_db_open,
     .db_check                = NULL,
-    .db_flush                = NULL,
+    .db_flush                = mdbx_db_flush,
     .db_close                = mdbx_db_close,
 };
 

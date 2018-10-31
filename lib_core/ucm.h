@@ -180,7 +180,9 @@ enum {
     UCM_EVENT_TERM              = 0,
     UCM_EVENT_RUN               = 1 << 0,
     UCM_EVENT_INFO              = 1 << 1,
-    UCM_EVENT_LOAD_SUCCESS      = 1 << 2
+    UCM_EVENT_LOAD_SUCCESS      = 1 << 2,
+    UCM_EVENT_START_GUI         = 1 << 3,
+    UCM_EVENT_START_GUI2        = 1 << 4
 };
 
 typedef struct {
