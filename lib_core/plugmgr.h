@@ -36,6 +36,9 @@ const ucm_plugin_t**
 plugins_get_hist (void);
 
 const ucm_plugin_t**
+plugins_get_gui (void);
+
+const ucm_plugin_t**
 plugins_get_stuff (void);
 
 #endif

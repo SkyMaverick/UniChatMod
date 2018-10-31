@@ -40,6 +40,8 @@ static size_t plugins_cript_count  = 0;
 static ucm_plugin_t* plugins_crypt [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_hist_count   = 0;
 static ucm_plugin_t* plugins_hist  [UCM_DEF_PLUG_COUNT + 1];
+static size_t plugins_gui_count    = 0;
+static ucm_plugin_t* plugins_gui   [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_stuff_count  = 0;
 static ucm_plugin_t* plugins_stuff [UCM_DEF_PLUG_COUNT + 1];
 
@@ -283,6 +285,12 @@ const ucm_plugin_t**
 plugins_get_hist (void)
 {
     return (const ucm_plugin_t**) plugins_hist;
+}
+
+const ucm_plugin_t**
+plugins_get_gui (void)
+{
+    return (const ucm_plugin_t**) plugins_gui;
 }
 
 const ucm_plugin_t**

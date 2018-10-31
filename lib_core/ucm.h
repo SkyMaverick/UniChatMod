@@ -113,7 +113,7 @@
     #define UCM_NAME_MAX 256
 #endif
 
-#define UCM_PID_MAX 33
+#define UCM_PID_MAX 100 * sizeof(wchar_t)
 #define UNUSED(x) (void)(x);
 
 #define UCM_CONTACT_ID_MAX   256
@@ -256,7 +256,7 @@ enum {
     UCM_TYPE_PLUG_PROTO    = 1 << 1,
     UCM_TYPE_PLUG_CRYPTO   = 1 << 2,
     UCM_TYPE_PLUG_HIST     = 1 << 3,
-    UCM_TYPE_PLUG_GUIHLP   = 1 << 4,
+    UCM_TYPE_PLUG_GUI      = 1 << 4,
     UCM_TYPE_PLUG_STUFF    = 1 << 5
 };
 
@@ -536,6 +536,7 @@ typedef struct _ucm_functions_s {
     const ucm_plugin_t** (*get_plugins_proto) (void);
     const ucm_plugin_t** (*get_plugins_crypt) (void);
     const ucm_plugin_t** (*get_plugins_hist)  (void);
+    const ucm_plugin_t** (*get_plugins_gui)   (void);
     const ucm_plugin_t** (*get_plugins_stuff) (void);
 
     /*! get global paths */
@@ -577,9 +578,9 @@ enum {
 
 // core start arguments
 typedef struct {
-    char*    path_abs;
-    char*    path_plug_abs;
-    char*    path_store_abs;
+    char*    path_abs       ;
+    char*    path_plug_abs  ;
+    char*    path_store_abs ;
 
     uint64_t options;
 } ucm_cargs_t;

@@ -133,6 +133,7 @@ static ucm_functions_t core_api = {
     .get_plugins_proto      = plugins_get_proto ,
     .get_plugins_crypt      = plugins_get_crypt ,
     .get_plugins_hist       = plugins_get_hist  ,
+    .get_plugins_gui        = plugins_get_gui   ,
     .get_plugins_stuff      = plugins_get_stuff ,
 
     .get_entropy            = get_ucm_entropy,
