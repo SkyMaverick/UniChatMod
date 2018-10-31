@@ -15,7 +15,6 @@
 #include "db_mdbx_base.h"
 
 const ucm_functions_t* app;
-const ucm_dbplugin_t* pldb;
 
 db_object_t* UCM_DB = NULL;
 
@@ -133,6 +132,8 @@ static ucm_dbplugin_t plugin = {
     .db_flush                = NULL,
     .db_close                = mdbx_db_close,
 };
+
+const ucm_dbplugin_t* pldb = &plugin;
 
 LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;

@@ -7,7 +7,6 @@
 #include "config.h"
 
 const ucm_functions_t* app;
-const ucm_pclplugin_t* UCL;
 
 static const char* interface [] = {"proto_ucl",NULL};
 
@@ -81,6 +80,8 @@ static const ucm_pclplugin_t plugin = {
                               | UCM_FLAG_NET_MULTYSESSION,
     .get_interface           = _get_proto_interface
 };
+
+const ucm_pclplugin_t* plucl = &plugin;
 
 LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;
