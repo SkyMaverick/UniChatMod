@@ -135,6 +135,11 @@ _plugin_registry_add (ucm_plugin_t* plugin)
                             plugins_db [plugins_hist_count++] = plugin;
                             break;
                         }
+                    case UCM_TYPE_PLUG_GUI:
+                        {
+                            plugins_db [plugins_gui_count++] = plugin;
+                            break;
+                        }
                     case UCM_TYPE_PLUG_STUFF:
                         {
                             plugins_db [plugins_stuff_count++] = plugin;
