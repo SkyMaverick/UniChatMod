@@ -29,8 +29,7 @@ endif
 
 # --- compiler arguments ----------
 c_args = [
-    '-Wall',
-    '-Wextra'
+    '-Wall'
 ]
 
 if get_option('build_with_hidden_api')

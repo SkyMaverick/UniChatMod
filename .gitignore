@@ -32,6 +32,7 @@ config.h
 *.libs/
 *.la
 *.lo
+/Dockerfile
 /plugins/net_legacy/ucl/examples/simple
 /plugins/net_legacy/ucl/examples/uclpack
 stamp-h1
