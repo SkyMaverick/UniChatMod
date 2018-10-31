@@ -41,7 +41,7 @@ _message(uint32_t id,
     UNUSED(x2);
 }
 
-static const ucm_pclplugin_t plugin = {
+static const ucm_plugproto_t plugin = {
     .core.oid                = UCM_TYPE_OBJECT_PLUGIN,
     .core.info.api           =
     {
@@ -81,7 +81,7 @@ static const ucm_pclplugin_t plugin = {
     .get_interface           = _get_proto_interface
 };
 
-const ucm_pclplugin_t* plucl = &plugin;
+const ucm_plugproto_t* plucl = &plugin;
 
 LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;

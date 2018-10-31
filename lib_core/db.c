@@ -4,7 +4,7 @@
 #include "defs.h"
 
 typedef struct {
-    ucm_dbplugin_t* worker;
+    ucm_plugdb_t* worker;
 } ucm_db_t;
 
 static ucm_db_t db;
@@ -16,7 +16,7 @@ db_open ( char*      aPath,
     if (aPath == NULL)
         return UCM_RET_WRONGPARAM;
 
-    ucm_dbplugin_t** plugins = (ucm_dbplugin_t**) (ucm_api->get_plugins_db());
+    ucm_plugdb_t** plugins = (ucm_plugdb_t**) (ucm_api->get_plugins_db());
     unsigned ret = 0;
 
     while (*plugins) {

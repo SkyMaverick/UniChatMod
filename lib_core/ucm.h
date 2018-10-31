@@ -384,7 +384,7 @@ typedef struct {
                                  char*          setting,
                                  ucm_dbval_t*   value);
     //TODO Events, contacts, logs iterators
-} ucm_dbplugin_t;
+} ucm_plugdb_t;
 
 // *********************************************************
 //      Protocol plugins functionality
@@ -417,7 +417,7 @@ typedef struct {
     ucm_conptr_t    (*connect)          (uintptr_t ctx);
     UCM_RET         (*disconnect)       (ucm_conptr_t* cptr);
     int             (*get_status)       (void);
-} ucm_pclplugin_t;
+} ucm_plugproto_t;
 
 // *********************************************************
 //      User interface plugins functionality
@@ -426,7 +426,7 @@ typedef struct {
 typedef struct {
     ucm_plugin_t core;
     // TODO
-} ucm_uiplugin_t;
+} ucm_plugui_t;
 
 // *********************************************************
 //      CHAT FUNCTIONALITY STRUCTURES

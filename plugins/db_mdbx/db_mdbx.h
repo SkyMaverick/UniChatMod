@@ -12,7 +12,7 @@
 #endif
 
 extern const ucm_functions_t* app;
-extern const ucm_dbplugin_t* pldb;
+extern const ucm_plugdb_t* pldb;
 
 #define DBSYS_VERSION_MAJOR 0
 #define DBSYS_VERSION_MINOR 1

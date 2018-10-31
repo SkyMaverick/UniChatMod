@@ -96,7 +96,7 @@ _message (uint32_t  id,
     UNUSED(x2);
 }
 
-static ucm_uiplugin_t plugin = {
+static ucm_plugui_t plugin = {
     .core.oid                = UCM_TYPE_OBJECT_PLUGIN,
     .core.info.api           =
     {
@@ -130,7 +130,7 @@ static ucm_uiplugin_t plugin = {
     .core.message            = _message,
 };
 
-const ucm_uiplugin_t*  hplug = &plugin;
+const ucm_plugui_t*  hplug = &plugin;
 
 LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;

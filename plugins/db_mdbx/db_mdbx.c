@@ -94,7 +94,7 @@ mdbx_db_close (void)
     return UCM_RET_SUCCESS;
 }
 
-static ucm_dbplugin_t plugin = {
+static ucm_plugdb_t plugin = {
     .core.oid                = UCM_TYPE_OBJECT_PLUGIN,
     .core.info.api           =
     {
@@ -133,7 +133,7 @@ static ucm_dbplugin_t plugin = {
     .db_close                = mdbx_db_close,
 };
 
-const ucm_dbplugin_t* pldb = &plugin;
+const ucm_plugdb_t* pldb = &plugin;
 
 LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api){
     app = api;
