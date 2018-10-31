@@ -3,10 +3,7 @@
 
 #include "ucm.h"
 
-UCM_RET
-start_curses_app (void* ctx);
-
-void
-finish_curses_app (int sig);
+extern const ucm_functions_t* app;
+extern const ucm_uiplugin_t*  hplug;
 
 #endif

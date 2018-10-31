@@ -420,6 +420,15 @@ typedef struct {
 } ucm_pclplugin_t;
 
 // *********************************************************
+//      User interface plugins functionality
+// *********************************************************
+
+typedef struct {
+    ucm_plugin_t core;
+    // TODO
+} ucm_uiplugin_t;
+
+// *********************************************************
 //      CHAT FUNCTIONALITY STRUCTURES
 // *********************************************************
 

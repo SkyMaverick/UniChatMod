@@ -1,8 +1,0 @@
-#ifndef _TUI_CONFIG_H_
-#define _TUI_CONFIG_H_
-
-#define TUI_APP_NAME @appname@
-#define TUI_APP_VERSION @version@
-#define TUI_PATH_MODS @path_modules@
-
-#endif

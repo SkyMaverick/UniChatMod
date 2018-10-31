@@ -10,9 +10,8 @@
 #include <signal.h>
 
 #include "ucm.h"
-#include "tui.h"
-#include "main.h"
-#include "tui_config.h"
+#include "app.h"
+#include "config.h"
 #include "gettext.h"
 
 #define LIBCORE_NAME "libucm.so"
@@ -27,6 +26,7 @@ static ucm_cargs_t args = {
    .path_abs        = pa_buf,
    .path_plug_abs   = ppa_buf,
    .path_store_abs  = psa_buf,
+
    .options         = 0
 };
 
@@ -53,7 +53,7 @@ _display_help (void)
 static inline void
 _display_version (void)
 {
-    fprintf (stdout, "%s\n", TUI_APP_NAME);
+    fprintf (stdout, "%s\n", UCM_VERSION);
 }
 
 static void
@@ -106,6 +106,13 @@ _args_parse (int argc, char* argv[])
     }
 }
 
+static void
+_finish_app (int sig)
+{
+    UNUSED (sig);
+    // TODO
+}
+
 int
 main (int argc, char* argv[])
 {
@@ -135,7 +142,7 @@ main (int argc, char* argv[])
 
         if (!portable) {
             // TODO
-            snprintf (tmp, UCM_PATH_MAX, "%s/%s", args.path_abs, TUI_PATH_MODS);
+            snprintf (tmp, UCM_PATH_MAX, "%s/%S", args.path_abs, UCM_PATH_MODULES);
             if (stat(tmp, &st) || !S_ISDIR(st.st_mode))
                 break;
             portable = 1;
@@ -150,7 +157,7 @@ main (int argc, char* argv[])
     }
 
     if (portable) {
-        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s/%s", args.path_abs, TUI_PATH_MODS);
+        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s/%S", args.path_abs, UCM_PATH_MODULES);
     } else {
         //TODO
     }
@@ -169,7 +176,7 @@ main (int argc, char* argv[])
 //      SIGNAL HANDLERS
 // *********************************************************
 
-    signal (SIGINT, finish_curses_app);
+    signal (SIGINT, _finish_app);
 
 // *********************************************************
 //      LOAD CORE LIBRARY
