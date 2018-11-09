@@ -12,13 +12,32 @@ language:
 services:
   - docker
 
+env:
+    global:
+        - COVERITY_KEY = OkOCdrtKTwZCUMuMcdQyS48kB9Lu5/alnbkiarK7Av/VX+vl17AmpTriasS6KqzWmOyfeWHNTouk57x7womWaUo+YxWrkxNb3hlDDLseqGEveYQcm7NNHtO8vaM9Md+vxEFfgLgtswR2cIDWxZrkJ6mCvVLPKk6YBNcHFE6CMnWMkwitE01fMPXDeOgaFo8SnBB+g8fPKLTge7ec2BdwrtSNIUDwEpgYX09yNtcVBTNk/v99VJmKl+Fe3SYjGRR9X0ev018vy/mf9hJ2TbuPv8eQSFrlCPxUOHjaQJKv5UX7raVNWWMAnh+yqqMC+YU754IVWEi3WmGgy3T1OSOVc6pAWEfminYfhgeQcD9CEr3jBn58GGptXXMiiNpIGpPdV5LxCkC+bLE1huo+2+Bc6/e1LS0myeNNF8rlFUhaHi/xUFHQz+oAUyMWA4H8FaQHgwlkkRp9x+noIS8xxrtdiRwzSU60DlRp42cGWYCy794S4ypz4e3JOf5j6i2Dc75Fz4ZkwPA5usPiYa9ONbNEWsui9wPPn1cAubcbDamsN9DW/gW5FvlHNTdNVJxYlXmYAHaRvkZMaoAV/ryeKZSkGFb8OAwUWY9b/FaDzyGu3D5yOeIHB+4cq94axtTBZ3CG9HTkNOlBM1d6WoKUQVPioybO7WpIVTAJ5WIdnXc+AOo=
+
+branches:
+    only:
+        - master
+        - release
+        - coverity
+
+
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull skymaverick/meson-ucm:xenial; fi
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        echo FROM skymaverick/meson-ucm:xenial >> Dockerfile;
-        echo ADD . /root >> Dockerfile;
-        docker build -t ucmbuild:single .;
-        docker run -t ucmbuild:single /bin/sh -c "cd /root && ./build.sh debug"; 
-    fi
+    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+            sh -c "./run.sh travis_daily";
+        fi
+      fi
+    - if [[ "$TRAVIS_BRANCH" == "release" ]]; then
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+            echo "Pass";
+        fi
+      fi
+    - if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+            echo "Pass";
+        fi
+      fi
