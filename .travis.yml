@@ -27,17 +27,19 @@ before_install:
 
 script:
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-            sh -c "./run.sh travis_daily";
-        fi
-      fi
-    - if [[ "$TRAVIS_BRANCH" == "release" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-            echo "Pass";
-        fi
-      fi
-    - if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-            echo "Pass";
-        fi
-      fi
+          if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+              sh -c "./run.sh travis_daily";
+          fi;
+      else
+          if [[ "$TRAVIS_BRANCH" == "release" ]]; then
+              if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+                  echo "Pass";
+              fi;
+          else
+              if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
+                  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+                      echo "Pass";
+                  fi;
+              fi;
+          fi;
+      fi;
