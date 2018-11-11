@@ -2,7 +2,7 @@
 
 current_dir=`pwd`
 build_dir="$current_dir/build"
-tools_dir="$current_dir/tools"
+travis_tools_dir="$current_dir/tools/travis"
 pkg_dir="$current_dir/pkgs"
 pkg_src_dir="$pkg_dir/src_pkg"
 
@@ -11,7 +11,7 @@ msn_log="$build_dir/meson-logs/meson-log.txt"
 msn_test_log="$build_dir/meson-logs/testlog.txt"
 msn_pack_dir="$build_dir/meson-dist"
 
-sh_manager="$tools_dir/manager.sh"
+travis_manager="$travis_tools_dir/manager.sh"
 
 info() {
     echo "\033[36;1m$1\033[0m"
@@ -139,31 +139,31 @@ else
         travis_daily)
             info "Start travis-ci daily build in: $build_dir"
             RM_DIR ${build_dir}
-            if [ -d $tools_dir ]
+            if [ -d $travis_tools_dir ]
             then
-                ${sh_manager} CREATE_FAST
-                ${sh_manager} RUN_DEBUG
-                ${sh_manager} CLEANUP
+                ${travis_manager} CREATE_FAST
+                ${travis_manager} RUN_DEBUG
+                ${travis_manager} CLEANUP
             fi
         ;;
         travis_release)
             info "Start travis-ci release build in: $build_dir"
             RM_DIR ${build_dir}
-            if [ -d $tools_dir ]
+            if [ -d $travis_tools_dir ]
             then
-                ${sh_manager} CREATE
-                ${sh_manager} RUN_RELEASE
-                ${sh_manager} CLEANUP
+                ${travis_manager} CREATE
+                ${travis_manager} RUN_RELEASE
+                ${travis_manager} CLEANUP
             fi
         ;;
         travis_coverity)
             info "Start travis-ci coverity check build in: $build_dir"
             RM_DIR ${build_dir}
-            if [ -d $tools_dir ]
+            if [ -d $travis_tools_dir ]
             then
-                ${sh_manager} CREATE
-                ${sh_manager} RUN_COVERITY
-                ${sh_manager} CLEANUP
+                ${travis_manager} CREATE
+                ${travis_manager} RUN_COVERITY
+                ${travis_manager} CLEANUP
             fi
         ;;
 
@@ -172,9 +172,9 @@ else
 # ==================================================
         docker_hub)
             info "Update docker image on DockerHub (signin if need)"
-            if [ -d $tools_dir ]
+            if [ -d $travis_tools_dir ]
             then
-                ${sh_manager} UPDATE_DH
+                ${travis_manager} UPDATE_DH
             fi
         ;;
 # ==================================================

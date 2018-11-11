@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 ROOT=`pwd`
 
@@ -6,8 +6,8 @@ CI_IMAGE=ucmbuild:single
 CI_IMAGE_REMOTE=skymaverick/meson-ucm:xenial
 
 CI_NAME="ucmdocker-worker"
-CI_CONFIG="${ROOT}/Dockerfile"
-CI_GENERATOR="${ROOT}/tools/echo_docker_template.sh"
+CI_CONFIG="Dockerfile"
+CI_GENERATOR="/tools/travis/echo_docker_template.sh"
 
 info() {
     echo "\033[33;1m$1\033[0m"
@@ -23,9 +23,9 @@ CREATE_DOCKER_FILE() {
 
 CI_CREATE_NEW() {
     info "Create docker image ${1} as ${2} in ${ROOT} "
-    echo   " ADD . /root "    >> $CI_CONFIG
+    CREATE_DOCKER_FILE && echo  "ADD . /root"    >> $CI_CONFIG
 
-    CREATE_DOCKER_FILE && docker build -t $1 ${ROOT}
+    docker build -t ${1} ${ROOT}
 }
 
 CI_CREATE_FAST() {
@@ -70,8 +70,10 @@ case $1 in
         docker exec -ti ${CI_NAME} ./run.sh build release
     ;;
     RUN_COVERITY)
-# TODO 
-        docker exec -ti ${CI_NAME} 
+#docker exec -ti ${CI_NAME} ./run.sh debug
+        docker exec -ti ${CI_NAME} mkdir cov-build && meson cov-build
+        docker exec -ti ${CI_NAME} ./tools/travis/coverity.sh build
+        docker exec -ti ${CI_NAME} ./tools/travis/coverity.sh upload
     ;;
     CLEANUP)
         CI_CLEANUP $CI_NAME

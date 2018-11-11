@@ -1,6 +1,3 @@
-# language: c
-# sudo: required
-# matrix:
 sudo: false
 
 os:
@@ -14,7 +11,17 @@ services:
 
 env:
     global:
-        - COVERITY_KEY = OkOCdrtKTwZCUMuMcdQyS48kB9Lu5/alnbkiarK7Av/VX+vl17AmpTriasS6KqzWmOyfeWHNTouk57x7womWaUo+YxWrkxNb3hlDDLseqGEveYQcm7NNHtO8vaM9Md+vxEFfgLgtswR2cIDWxZrkJ6mCvVLPKk6YBNcHFE6CMnWMkwitE01fMPXDeOgaFo8SnBB+g8fPKLTge7ec2BdwrtSNIUDwEpgYX09yNtcVBTNk/v99VJmKl+Fe3SYjGRR9X0ev018vy/mf9hJ2TbuPv8eQSFrlCPxUOHjaQJKv5UX7raVNWWMAnh+yqqMC+YU754IVWEi3WmGgy3T1OSOVc6pAWEfminYfhgeQcD9CEr3jBn58GGptXXMiiNpIGpPdV5LxCkC+bLE1huo+2+Bc6/e1LS0myeNNF8rlFUhaHi/xUFHQz+oAUyMWA4H8FaQHgwlkkRp9x+noIS8xxrtdiRwzSU60DlRp42cGWYCy794S4ypz4e3JOf5j6i2Dc75Fz4ZkwPA5usPiYa9ONbNEWsui9wPPn1cAubcbDamsN9DW/gW5FvlHNTdNVJxYlXmYAHaRvkZMaoAV/ryeKZSkGFb8OAwUWY9b/FaDzyGu3D5yOeIHB+4cq94axtTBZ3CG9HTkNOlBM1d6WoKUQVPioybO7WpIVTAJ5WIdnXc+AOo=
+        - CI_TOOLS="$TRAVIS_BUILD_DIR/travis/tools"
+        # Coverity env variables
+        - PLATFORM="$(uname)"
+        - TOOL_ARCHIVE="/var/tmp/cov-analysis-$PLATFORM.tgz
+        - SCAN_URL="https://scan.coverity.com"
+        - UPLOAD_URL="https://scan.coverity.com/builds"
+        - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
+        - COVERITY_SCAN_NOTIFICATION_EMAIL="skymaverickas@gmail.com"
+        - COVERITY_SCAN_BRANCH_PATTERN="$TRAVIS_BRANCH"
+        
+        - secure: OkOCdrtKTwZCUMuMcdQyS48kB9Lu5/alnbkiarK7Av/VX+vl17AmpTriasS6KqzWmOyfeWHNTouk57x7womWaUo+YxWrkxNb3hlDDLseqGEveYQcm7NNHtO8vaM9Md+vxEFfgLgtswR2cIDWxZrkJ6mCvVLPKk6YBNcHFE6CMnWMkwitE01fMPXDeOgaFo8SnBB+g8fPKLTge7ec2BdwrtSNIUDwEpgYX09yNtcVBTNk/v99VJmKl+Fe3SYjGRR9X0ev018vy/mf9hJ2TbuPv8eQSFrlCPxUOHjaQJKv5UX7raVNWWMAnh+yqqMC+YU754IVWEi3WmGgy3T1OSOVc6pAWEfminYfhgeQcD9CEr3jBn58GGptXXMiiNpIGpPdV5LxCkC+bLE1huo+2+Bc6/e1LS0myeNNF8rlFUhaHi/xUFHQz+oAUyMWA4H8FaQHgwlkkRp9x+noIS8xxrtdiRwzSU60DlRp42cGWYCy794S4ypz4e3JOf5j6i2Dc75Fz4ZkwPA5usPiYa9ONbNEWsui9wPPn1cAubcbDamsN9DW/gW5FvlHNTdNVJxYlXmYAHaRvkZMaoAV/ryeKZSkGFb8OAwUWY9b/FaDzyGu3D5yOeIHB+4cq94axtTBZ3CG9HTkNOlBM1d6WoKUQVPioybO7WpIVTAJ5WIdnXc+AOo=
 
 branches:
     only:
@@ -24,7 +31,13 @@ branches:
 
 
 before_install:
+    - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- 
 
+install:
+    - if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
+        $CI_TOOLS/get_coverity.sh;
+        env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
+      fi
 script:
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -33,12 +46,12 @@ script:
       else
           if [[ "$TRAVIS_BRANCH" == "release" ]]; then
               if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-                  echo "Pass";
+                  sh -c "./run.sh travis_release";
               fi;
           else
               if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
                   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-                      echo "Pass";
+                      sh -c "./run.sh travis_coverity";
                   fi;
               fi;
           fi;
