@@ -1,8 +1,8 @@
-#!/bin/env bash
-
+#!/bin/bash
 # The official unmodified version of the script can be found at
 # https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh
 
+# Modify for Python 3.5 on Xenial. Use python3 as python
 set -e
 
 # Declare build command
@@ -42,11 +42,11 @@ if [ "$AUTH_RES" = "Access denied" ]; then
   echo -e "\033[33;1mCoverity Scan API access denied. Check COVERITY_SCAN_PROJECT_NAME and COVERITY_SCAN_TOKEN.\033[0m"
   exit 1
 else
-  AUTH=`echo $AUTH_RES | python -c "import sys, json; print(json.load(sys.stdin)['upload_permitted'])"`
+  AUTH=`echo $AUTH_RES | python3 -c "import sys, json; print(json.load(sys.stdin)['upload_permitted'])"`
   if [ "$AUTH" = "True" ]; then
     echo -e "\033[33;1mCoverity Scan analysis authorized per quota.\033[0m"
   else
-    WHEN=`echo $AUTH_RES | python -c "import sys, json; print(json.load(sys.stdin)['next_upload_permitted_at'])"`
+    WHEN=`echo $AUTH_RES | python3 -c "import sys, json; print(json.load(sys.stdin)['next_upload_permitted_at'])"`
     echo -e "\033[33;1mCoverity Scan analysis NOT authorized until $WHEN.\033[0m"
     exit 1
   fi

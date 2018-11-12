@@ -11,7 +11,7 @@ services:
 
 env:
     global:
-        - CI_TOOLS="$TRAVIS_BUILD_DIR/travis/tools"
+        - CI_TOOLS="$TRAVIS_BUILD_DIR/tools/travis"
         # Coverity env variables
         - PLATFORM="$(uname)"
         - TOOL_ARCHIVE="/var/tmp/cov-analysis-$PLATFORM.tgz
@@ -35,7 +35,6 @@ before_install:
 
 install:
     - if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-        $CI_TOOLS/get_coverity.sh;
         env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
       fi
 script:

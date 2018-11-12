@@ -7,7 +7,13 @@ CI_IMAGE_REMOTE=skymaverick/meson-ucm:xenial
 
 CI_NAME="ucmdocker-worker"
 CI_CONFIG="Dockerfile"
+<<<<<<< HEAD:tools/travis/manager.sh
 CI_GENERATOR="/tools/travis/echo_docker_template.sh"
+=======
+CI_GENERATOR="./tools/travis/echo_docker_template.sh"
+CI_COVERITY="./tools/travis/coverity.sh"
+CI_COVERITY_LOADER="./tools/travis/get_coverity.sh"
+>>>>>>> coverity:tools/travis/manager.sh
 
 info() {
     echo "\033[33;1m$1\033[0m"
@@ -51,10 +57,20 @@ CI_CLEANUP() {
 case $1 in
     CREATE)
         CI_CREATE_NEW $CI_IMAGE $CI_NAME
-        docker run -dit -v ${ROOT}/build:/root/build \
-                   -w /root --privileged=true \
-                   --net=host \
-                   --name ${CI_NAME} ${CI_IMAGE} /sbin/init
+        ENV_FILE=".cov-env"
+        if [ -f ${ENV_FILE} ]
+        then
+            docker run -dit -v ${ROOT}/build:/root/build \
+                       -w /root --privileged=true \
+                       --net=host \
+                       --env-file=${ENV_FILE} \
+                       --name ${CI_NAME} ${CI_IMAGE} /sbin/init
+        else
+            docker run -dit -v ${ROOT}/build:/root/build \
+                       -w /root --privileged=true \
+                       --net=host \
+                       --name ${CI_NAME} ${CI_IMAGE} /sbin/init
+        fi
     ;;
     CREATE_FAST)
         CI_CREATE_FAST $CI_IMAGE $CI_IMAGE_REMOTE $CI_NAME
@@ -70,16 +86,25 @@ case $1 in
         docker exec -ti ${CI_NAME} ./run.sh build release
     ;;
     RUN_COVERITY)
+<<<<<<< HEAD:tools/travis/manager.sh
 #docker exec -ti ${CI_NAME} ./run.sh debug
         docker exec -ti ${CI_NAME} mkdir cov-build && meson cov-build
         docker exec -ti ${CI_NAME} ./tools/travis/coverity.sh build
         docker exec -ti ${CI_NAME} ./tools/travis/coverity.sh upload
+=======
+        docker exec -ti ${CI_NAME} sh -c "mkdir cov-build && meson cov-build"
+        docker exec -ti ${CI_NAME} ${CI_COVERITY_LOADER}
+        docker exec -ti ${CI_NAME} ${CI_COVERITY} build
+        docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
+>>>>>>> coverity:tools/travis/manager.sh
     ;;
     CLEANUP)
         CI_CLEANUP $CI_NAME
     ;;
     UPDATE_DH)
-        CREATE_DOCKER_FILE
+        CREATE_DOCKER_FILE  >> ${CI_CONFIG}
+        
+        docker build -t $CI_IMAGE_REMOTE .
         docker push $CI_IMAGE_REMOTE
     ;;
     *)
