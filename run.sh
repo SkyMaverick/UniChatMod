@@ -141,7 +141,9 @@ else
             RM_DIR ${build_dir}
             if [ -d $travis_tools_dir ]
             then
+                set -e
                 ${travis_manager} CREATE_FAST
+                set +e
                 ${travis_manager} RUN_DEBUG
                 ${travis_manager} CLEANUP
             fi
@@ -151,7 +153,9 @@ else
             RM_DIR ${build_dir}
             if [ -d $travis_tools_dir ]
             then
+                set -e
                 ${travis_manager} CREATE
+                set +e
                 ${travis_manager} RUN_RELEASE
                 ${travis_manager} CLEANUP
             fi
@@ -161,7 +165,10 @@ else
             RM_DIR ${build_dir}
             if [ -d $travis_tools_dir ]
             then
+                
+                set -e
                 ${travis_manager} CREATE
+                set +e
                 ${travis_manager} RUN_COVERITY
                 ${travis_manager} CLEANUP
             fi
@@ -174,7 +181,9 @@ else
             info "Update docker image on DockerHub (signin if need)"
             if [ -d $travis_tools_dir ]
             then
+                set -e
                 ${travis_manager} UPDATE_DH
+                set +e
             fi
         ;;
 # ==================================================

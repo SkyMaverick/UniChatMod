@@ -231,4 +231,3 @@ elif [[ $CMD == 'upload' ]]; then
 	done
 
 fi
-

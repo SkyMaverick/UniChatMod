@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 ROOT=`pwd`
 
@@ -7,13 +7,9 @@ CI_IMAGE_REMOTE=skymaverick/meson-ucm:xenial
 
 CI_NAME="ucmdocker-worker"
 CI_CONFIG="Dockerfile"
-<<<<<<< HEAD:tools/travis/manager.sh
-CI_GENERATOR="/tools/travis/echo_docker_template.sh"
-=======
 CI_GENERATOR="./tools/travis/echo_docker_template.sh"
 CI_COVERITY="./tools/travis/coverity.sh"
 CI_COVERITY_LOADER="./tools/travis/get_coverity.sh"
->>>>>>> coverity:tools/travis/manager.sh
 
 info() {
     echo "\033[33;1m$1\033[0m"
@@ -86,17 +82,10 @@ case $1 in
         docker exec -ti ${CI_NAME} ./run.sh build release
     ;;
     RUN_COVERITY)
-<<<<<<< HEAD:tools/travis/manager.sh
-#docker exec -ti ${CI_NAME} ./run.sh debug
-        docker exec -ti ${CI_NAME} mkdir cov-build && meson cov-build
-        docker exec -ti ${CI_NAME} ./tools/travis/coverity.sh build
-        docker exec -ti ${CI_NAME} ./tools/travis/coverity.sh upload
-=======
         docker exec -ti ${CI_NAME} sh -c "mkdir cov-build && meson cov-build"
         docker exec -ti ${CI_NAME} ${CI_COVERITY_LOADER}
         docker exec -ti ${CI_NAME} ${CI_COVERITY} build
         docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
->>>>>>> coverity:tools/travis/manager.sh
     ;;
     CLEANUP)
         CI_CLEANUP $CI_NAME
