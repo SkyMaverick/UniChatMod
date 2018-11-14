@@ -24,3 +24,4 @@ subdir('suites')
 testbot = run_target ('test_bot',
                       depends: [test_app],
                       command: [test_app])
+test ('test_bot framewrok', test_app)

@@ -109,7 +109,7 @@ StartTxn (db_object_t* db)
     int rc = mdbx_txn_begin (
                 db->mdbx.env,
                 NULL,
-                (db->flags | UCM_FLAG_DB_READONLY) ? MDBX_RDONLY : 0,
+                (db->flags & UCM_FLAG_DB_READONLY) ? MDBX_RDONLY : 0,
                 &res );
     // TODO exception
     UNUSED (rc);

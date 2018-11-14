@@ -40,7 +40,7 @@ __db_map (db_object_t* db)
                         | MDBX_COALESCE
                         | MDBX_EXCLUSIVE
                         ;
-    if (db->flags | UCM_FLAG_DB_READONLY) {
+    if (db->flags & UCM_FLAG_DB_READONLY) {
         mode |= MDBX_RDONLY;
     }
 
@@ -130,13 +130,17 @@ __db_intrnl_load (db_object_t* db)
 UCM_RET
 db_open (db_object_t* db)
 {
+    int fhandle;
+    if (db->faPath == NULL)
+        return UCM_RET_INVALID;
     if ( access(db->faPath, F_OK) < 0) {
         if (!(db->flags & UCM_FLAG_DB_READONLY)) {
-            if ( creat(db->faPath, 0664) < 0) {
+            if ( ( fhandle = creat(db->faPath, 0664) ) < 0) {
                 trace_err ("%s: %s\n", "Database error: ", strerror(errno));
                 return UCM_RET_NOACCESS;
             } else {
                 db->flags |= UCM_FLAG_DB_CREATENEW;
+                close (fhandle);
             }
         } else {
             trace_err ("%s: %s\n", "Database error: ", strerror(errno));

@@ -13,17 +13,21 @@
 
 #define PATH_MAX 4096
 
+typedef void (*cb_suite)(void);
+
 typedef struct modules_list {
+    void* handle;
+    cb_suite start_func;
+
     char* module_path;
     struct modules_list* next;
 } module_t;
-
-void (*runSuite)(void);
 
 size_t lookup_suites (char* lookup_dir, module_t** found_suites) {
     size_t suites_count = 0;
     DIR *suites_path = opendir(lookup_dir);
     struct dirent *ls = NULL;
+    cb_suite func_suite = NULL;
     
     if(!suites_path) {
         fprintf(stderr,"%s error: %s\n",lookup_dir, strerror(errno));
@@ -46,7 +50,7 @@ size_t lookup_suites (char* lookup_dir, module_t** found_suites) {
             continue;
         }
 
-        runSuite = dlsym(h_module, "runSuite");
+        func_suite = dlsym(h_module, "_run_suite");
         error = dlerror();
         if (error) {
             fprintf(stderr, "Couldn't load module: %s\n", error);
@@ -65,7 +69,10 @@ size_t lookup_suites (char* lookup_dir, module_t** found_suites) {
         }
         
         fprintf(stdout, "Found test suite: %s\n", ls->d_name);
-        new_module->module_path=strdup(buf_path);
+
+        new_module->handle      = h_module;
+        new_module->start_func  = func_suite;
+        new_module->module_path = strdup(buf_path);
     
         suites_count++;
     }
@@ -112,17 +119,11 @@ int main (int argc, char* argv[]) {
 
     CUnitInitialize();
     
-    module_t* suite = suites_list;
-    while(suite) {
-        void* h_suite = dlopen(suite->module_path, RTLD_LAZY);
-        if(!h_suite) {
-            fprintf(stderr, "Module '%s'\n", strerror(errno));
-            continue;
-        }
-        runSuite = dlsym(h_suite, "runSuite");
-        runSuite();
-        dlclose(h_suite);
-        suite=suite->next;
+    for (module_t* suite = suites_list;
+         suite;
+         suite = suite->next ) 
+    {
+        suite->start_func();
     }
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -136,7 +137,10 @@ int main (int argc, char* argv[]) {
             suites_list=suites_list->next;}
         else
             suites_list=NULL;
+
         fprintf(stdout, "Free module: %s\n",tmp_suites->module_path);
+        
+        dlclose(tmp_suites->handle);
         free(tmp_suites->module_path);
         free(tmp_suites);
     }

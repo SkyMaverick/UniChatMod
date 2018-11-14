@@ -171,7 +171,7 @@ send_data (void*  buffer,
     uint8_t  long_flag  = 0;
     Rc6Context  rc6ctx;
 
-    char* passkey = "";
+    char passkey [SHUFFLE_BUFFER_SIZE] = {};
     // TODO get passkey into database
     _shuffle_key (salt, passkey, strlen (passkey));
     rc6Init (&rc6ctx, (uint8_t*) passkey, 96);
@@ -200,5 +200,6 @@ send_message (void*  buffer,
     } else {
         // TODO send error trace message
     }
+    return UCM_RET_SUCCESS;
 }
 

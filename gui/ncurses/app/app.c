@@ -165,7 +165,7 @@ main (int argc, char* argv[])
 
         if (!portable) {
             // TODO
-            snprintf (tmp, UCM_PATH_MAX, "%s/%S", args.path_abs, UCM_PATH_MODULES);
+            snprintf (tmp, UCM_PATH_MAX, "%s/%ls", args.path_abs, UCM_PATH_MODULES);
             if (stat(tmp, &st) || !S_ISDIR(st.st_mode))
                 break;
             portable = 1;
@@ -180,7 +180,7 @@ main (int argc, char* argv[])
     }
 
     if (portable) {
-        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s/%S", args.path_abs, UCM_PATH_MODULES);
+        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s/%ls", args.path_abs, UCM_PATH_MODULES);
     } else {
         //TODO
     }

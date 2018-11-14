@@ -62,13 +62,7 @@ else
             if [ -d $build_dir ]
             then
                 info "Start test appliction in : $build_dir"
-                cd $build_dir && ninja test &>/dev/null && cd $current_dir
-                if [ -f $msn_test_log ]
-                then
-                    cat $msn_test_log
-                else
-                    info "Test report create FAILED"
-                fi
+                cd $build_dir && ninja test_bot && cd $current_dir
             else
                 info "Make build application as first step"
             fi

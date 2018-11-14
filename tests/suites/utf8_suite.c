@@ -36,10 +36,11 @@ _TEST (strdup_normal)
     u32char_t* A = U"01234_abcD";
     u32char_t* B = ucm_strdup (A);
 
-    CU_ASSERT_PTR_NOT_NULL_FATAL(ucm_strdup(B));
-
-    CU_ASSERT_EQUAL(ucm_strlen(A),
-                    ucm_strlen(B));
+    CU_ASSERT_PTR_NOT_NULL(ucm_strdup(B));
+    if (B) {
+        CU_ASSERT_EQUAL(ucm_strlen(A),
+                        ucm_strlen(B));
+    }
     ucm_kfree (B);
 }
 
@@ -52,8 +53,10 @@ _TEST (strdup_empty)
 {
     u32char_t* A = U"";
     u32char_t* B = ucm_strdup (A);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(B);
-    CU_ASSERT_EQUAL(ucm_strlen(B), 0);
+    CU_ASSERT_PTR_NOT_NULL(B);
+    if (B) {
+        CU_ASSERT_EQUAL(ucm_strlen(B), 0);
+    }
     ucm_kfree(B);
 }
 
@@ -224,7 +227,8 @@ _TEST (strstr_normal) {
     CU_ASSERT_EQUAL(ucm_strcasestr(A, U"BBB"), 4);
 }
 
-void runSuite (void) {
+LIBUCM_API void
+_run_suite (void) {
     // ... all startup functionality
     CU_pSuite suite=CUnitCreateSuite("Unicode functions tests");
     if(suite) {
