@@ -78,8 +78,19 @@ ucm_mloop_event_alloc (int id)
     size_t size = 0;
     ucm_ev_t* event = NULL;
     switch (id) {
-        // TODO
+        case UCM_EVENT_START_GUI:
+        case UCM_EVENT_START_GUI2:
+            {
+                size = sizeof (ucm_evgui_t);
+                break;
+            };
+        default:
+            {
+                ucm_etrace("%s: %d. %s\n", _("Don't create event:"),id,_("Use message push interface"));
+                return NULL;
+            };
     }
+
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
         event = ucm_kzmalloc(size);
@@ -88,8 +99,8 @@ ucm_mloop_event_alloc (int id)
         event->ev = id;
         event->size = size;
         event->sender = NULL;
-    }else
-        ucm_etrace("%s: %d. %s\n", _("Don't create event:"),id,_("Use message push interface"));
+    };
+
     return event;
 }
 

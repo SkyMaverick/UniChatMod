@@ -174,7 +174,7 @@ send_data (void*  buffer,
     char passkey [SHUFFLE_BUFFER_SIZE] = {};
     // TODO get passkey into database
     _shuffle_key (salt, passkey, strlen (passkey));
-    rc6Init (&rc6ctx, (uint8_t*) passkey, 96);
+    rc6Init (&rc6ctx, (uint8_t*) passkey, SHUFFLE_BUFFER_SIZE);
 
     char*  adata = (char*) buffer;
     // TODO create message AData

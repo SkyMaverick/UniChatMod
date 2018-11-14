@@ -17,7 +17,7 @@
 
 #define ENABLE_WARN_DEPRECATED 1
 
-#define UCM_API_MAJOR_VER 0
+#define UCM_API_MAJOR_VER 1
 #define UCM_API_MINOR_VER 1
 
 #if defined(__clang__)
@@ -192,6 +192,11 @@ typedef struct {
     size_t  size;
     void*   sender;
 } ucm_ev_t;
+
+typedef struct {
+    ucm_ev_t base;
+    // TODO
+} ucm_evgui_t;
 
 // Messages -------------------
 enum {

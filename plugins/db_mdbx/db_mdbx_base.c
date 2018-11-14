@@ -131,7 +131,7 @@ UCM_RET
 db_open (db_object_t* db)
 {
     int fhandle;
-    if (db->faPath == NULL)
+    if (!db || ((char*)(db->faPath) == NULL))
         return UCM_RET_INVALID;
     if ( access(db->faPath, F_OK) < 0) {
         if (!(db->flags & UCM_FLAG_DB_READONLY)) {

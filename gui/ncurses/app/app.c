@@ -16,8 +16,8 @@
 #include "gettext.h"
 
 #define LIBCORE_NAME "libucm.so"
-#define LIBCORE_API_MAJVER  0
-#define LIBCORE_API_MINVER  0
+#define LIBCORE_API_MAJVER  1
+#define LIBCORE_API_MINVER  1
 
 #define STACK_TRACE_BUFFER  4096
 
@@ -216,8 +216,6 @@ main (int argc, char* argv[])
             core = core_start (&args);
             if (core) {
                 info = core_info();
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wtype-limits"
                 if (   (info)
                     && (info->api.vmajor >= LIBCORE_API_MAJVER)
                     && (info->api.vminor >= LIBCORE_API_MINVER))
@@ -228,7 +226,6 @@ main (int argc, char* argv[])
                     fprintf (stderr, "%s\n", "Core information load FAIL");
                     ret_status = UCM_RET_EMPTY;
                 }
-        #pragma GCC diagnostic pop
                 core_stop();
             } else {
                 fprintf (stderr, "%s\n", "Core API load FAIL");

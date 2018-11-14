@@ -38,7 +38,7 @@ _assert_func (const MDBX_env *env,
 static UCM_RET
 _run_dbmdbx (void)
 {
-    UCM_DB = app->zmalloc (sizeof(db_object_t));
+    UCM_DB = app->zmalloc (sizeof(db_object_t) + (UCM_PATH_MAX * sizeof(char)));
     if ( UCM_DB == NULL )
         return UCM_RET_NONALLOC;
     UCM_DB->mtx = app->rwlock_create ();

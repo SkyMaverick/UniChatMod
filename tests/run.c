@@ -77,6 +77,8 @@ size_t lookup_suites (char* lookup_dir, module_t** found_suites) {
         suites_count++;
     }
 
+    closedir (suites_path);
+
     return suites_count;
 }
 
