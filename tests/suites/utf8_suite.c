@@ -36,7 +36,7 @@ _TEST (strdup_normal)
     u32char_t* A = U"01234_abcD";
     u32char_t* B = ucm_strdup (A);
 
-    CU_ASSERT_PTR_NOT_NULL(ucm_strdup(B));
+    CU_ASSERT_PTR_NOT_NULL(B);
     if (B) {
         CU_ASSERT_EQUAL(ucm_strlen(A),
                         ucm_strlen(B));
