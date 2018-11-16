@@ -89,8 +89,9 @@ typedef struct {
     db_header_t header;
 
     uintptr_t   mtx;
-    char        faPath [UCM_PATH_MAX];
     uint32_t    flags;
+    
+    char        faPath [1];
 } db_object_t;
 
 #define DBTABLE_NAME_GLOBAL     "global"
