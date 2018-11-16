@@ -119,6 +119,8 @@
 #define UCM_CONTACT_ID_MAX   256
 #define UCM_CONTACT_NAME_MAX 1024
 
+#define UCM_DB_DEFAULT_NAME "ucmdb"
+
 // *********************************************************
 //      CORE STRUCTURES
 // *********************************************************

@@ -186,7 +186,7 @@ main (int argc, char* argv[])
     }
 
     if (portable_base ) {
-        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s/%s.mdbx", args.path_abs, TUI_APP_NAME);
+        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s/%s.mdbx", args.path_abs, UCM_DB_DEFAULT_NAME);
     } else {
         // TODO
     }
