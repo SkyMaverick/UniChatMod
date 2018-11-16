@@ -98,7 +98,8 @@ __db_intrnl_load (db_object_t* db)
                 {
                     db->header.signature = DBSYS_HEADER_SIGNATURE;
                     db->header.version   = MakeLong (DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
-                    data.iov_base = &(db->header), data.iov_len = sizeof(db_header_t);
+
+                    data.iov_base = (void*)(&(db->header)), data.iov_len = sizeof(db_header_t);
                     if ( mdbx_put(txn_tmp, DBMDBX.dbi_global, &key, &data, 0) == MDBX_SUCCESS ) {
                         db_flush (db);
                     } else {
@@ -131,7 +132,7 @@ UCM_RET
 db_open (db_object_t* db)
 {
     int fhandle;
-    if (!db || ((char*)(db->faPath) == NULL))
+    if (!db || (db->faPath[0] == '\0'))
         return UCM_RET_INVALID;
     if ( access(db->faPath, F_OK) < 0) {
         if (!(db->flags & UCM_FLAG_DB_READONLY)) {
