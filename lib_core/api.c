@@ -8,7 +8,7 @@
 #include "threading.h"
 #include "plugmgr.h"
 #include "evhook.h"
-#include "unicode/unicode.h"
+#include "unicode.h"
 #include "cpentupd.h"
 
 #include "alloc.c"

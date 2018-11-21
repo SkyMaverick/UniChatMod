@@ -1,0 +1,2309 @@
+Build started at 2018-11-19T14:36:01.778513
+Main binary: /usr/bin/python3
+Python system: Linux
+The Meson build system
+Version: 0.48.2
+Source dir: /home/alex/projects/UniChatMod/subprojects/ucl
+Build dir: /home/alex/projects/UniChatMod/subprojects/ucl/build
+Build type: native build
+Project name: ucl
+Project version: 1.3.0
+Sanity testing C compiler: cc
+Is cross compiler: False.
+Sanity check compiler command line: cc /home/alex/projects/UniChatMod/subprojects/ucl/build/meson-private/sanitycheckc.c -o /home/alex/projects/UniChatMod/subprojects/ucl/build/meson-private/sanitycheckc.exe
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/alex/projects/UniChatMod/subprojects/ucl/build/meson-private/sanitycheckc.exe
+Native C compiler: cc (gcc 7.3.0 "cc (Ubuntu 7.3.0-27ubuntu1~18.04) 7.3.0")
+Build machine cpu family: x86_64
+Build machine cpu: x86_64
+Running compile:
+Working directory:  /tmp/tmp6l12xv3v
+Command line:  cc /tmp/tmp6l12xv3v/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp6l12xv3v/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define access meson_disable_define_of_access
+        
+        #include <limits.h>
+        #undef access
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char access ();
+        
+        #if defined __stub_access || defined __stub___access
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return access ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "access" : YES
+Running compile:
+Working directory:  /tmp/tmp1frkmqac
+Command line:  cc /tmp/tmp1frkmqac/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp1frkmqac/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define alloca meson_disable_define_of_alloca
+        
+        #include <limits.h>
+        #undef alloca
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char alloca ();
+        
+        #if defined __stub_alloca || defined __stub___alloca
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return alloca ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/cclz2GTX.o: In function `main':
+testfile.c:(.text+0x1d): undefined reference to `alloca'
+collect2: error: ld returned 1 exit status
+
+Running compile:
+Working directory:  /tmp/tmpib6jjhja
+Command line:  cc /tmp/tmpib6jjhja/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpib6jjhja/output.exe -O0 -std=c89 
+
+Code:
+ 
+        int main() {
+        #ifdef __has_builtin
+            #if !__has_builtin(__builtin_alloca)
+                #error "__builtin_alloca not found"
+            #endif
+        #elif ! defined(alloca)
+            /* Check for __builtin_alloca only if no includes were added to the
+             * prefix above, which means no definition of alloca can be found.
+             * We would always check for this, but we get false positives on
+             * MSYS2 if we do. Their toolchain is broken, but we can at least
+             * give them a workaround. */
+            #if 1
+                __builtin_alloca;
+            #else
+                #error "No definition for __builtin_alloca found in the prefix"
+            #endif
+        #endif
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "alloca" : YES
+Running compile:
+Working directory:  /tmp/tmpoib4ku1s
+Command line:  cc /tmp/tmpoib4ku1s/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("assert.h")
+          #error "Header 'assert.h' could not be found"
+         #endif
+        #else
+         #include <assert.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "assert.h": YES
+Running compile:
+Working directory:  /tmp/tmp9psemntt
+Command line:  cc /tmp/tmp9psemntt/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp9psemntt/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define atexit meson_disable_define_of_atexit
+        
+        #include <limits.h>
+        #undef atexit
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char atexit ();
+        
+        #if defined __stub_atexit || defined __stub___atexit
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return atexit ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "atexit" : YES
+Running compile:
+Working directory:  /tmp/tmpukhm1zf7
+Command line:  cc /tmp/tmpukhm1zf7/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpukhm1zf7/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define atoi meson_disable_define_of_atoi
+        
+        #include <limits.h>
+        #undef atoi
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char atoi ();
+        
+        #if defined __stub_atoi || defined __stub___atoi
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return atoi ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "atoi" : YES
+Running compile:
+Working directory:  /tmp/tmp3e3qo9y8
+Command line:  cc /tmp/tmp3e3qo9y8/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp3e3qo9y8/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define atol meson_disable_define_of_atol
+        
+        #include <limits.h>
+        #undef atol
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char atol ();
+        
+        #if defined __stub_atol || defined __stub___atol
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return atol ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "atol" : YES
+Running compile:
+Working directory:  /tmp/tmprmd9el47
+Command line:  cc /tmp/tmprmd9el47/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmprmd9el47/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define chmod meson_disable_define_of_chmod
+        
+        #include <limits.h>
+        #undef chmod
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char chmod ();
+        
+        #if defined __stub_chmod || defined __stub___chmod
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return chmod ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "chmod" : YES
+Running compile:
+Working directory:  /tmp/tmpvypyoz0b
+Command line:  cc /tmp/tmpvypyoz0b/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpvypyoz0b/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define chown meson_disable_define_of_chown
+        
+        #include <limits.h>
+        #undef chown
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char chown ();
+        
+        #if defined __stub_chown || defined __stub___chown
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return chown ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "chown" : YES
+Running compile:
+Working directory:  /tmp/tmpka5p6yax
+Command line:  cc /tmp/tmpka5p6yax/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpka5p6yax/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define ctime meson_disable_define_of_ctime
+        
+        #include <limits.h>
+        #undef ctime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char ctime ();
+        
+        #if defined __stub_ctime || defined __stub___ctime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return ctime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "ctime" : YES
+Running compile:
+Working directory:  /tmp/tmp37935zku
+Command line:  cc /tmp/tmp37935zku/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("ctype.h")
+          #error "Header 'ctype.h' could not be found"
+         #endif
+        #else
+         #include <ctype.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "ctype.h": YES
+Running compile:
+Working directory:  /tmp/tmpj2_cc5ro
+Command line:  cc /tmp/tmpj2_cc5ro/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpj2_cc5ro/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define difftime meson_disable_define_of_difftime
+        
+        #include <limits.h>
+        #undef difftime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char difftime ();
+        
+        #if defined __stub_difftime || defined __stub___difftime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return difftime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "difftime" : YES
+Running compile:
+Working directory:  /tmp/tmpj5_bkqad
+Command line:  cc /tmp/tmpj5_bkqad/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("dirent.h")
+          #error "Header 'dirent.h' could not be found"
+         #endif
+        #else
+         #include <dirent.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "dirent.h": YES
+Running compile:
+Working directory:  /tmp/tmpvc0hoipz
+Command line:  cc /tmp/tmpvc0hoipz/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("dlfcn.h")
+          #error "Header 'dlfcn.h' could not be found"
+         #endif
+        #else
+         #include <dlfcn.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "dlfcn.h": YES
+Running compile:
+Working directory:  /tmp/tmpry717g4k
+Command line:  cc /tmp/tmpry717g4k/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("errno.h")
+          #error "Header 'errno.h' could not be found"
+         #endif
+        #else
+         #include <errno.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "errno.h": YES
+Running compile:
+Working directory:  /tmp/tmp6g2rfx9s
+Command line:  cc /tmp/tmp6g2rfx9s/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("fcntl.h")
+          #error "Header 'fcntl.h' could not be found"
+         #endif
+        #else
+         #include <fcntl.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "fcntl.h": YES
+Running compile:
+Working directory:  /tmp/tmpzpg21_fz
+Command line:  cc /tmp/tmpzpg21_fz/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpzpg21_fz/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define fstat meson_disable_define_of_fstat
+        
+        #include <limits.h>
+        #undef fstat
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char fstat ();
+        
+        #if defined __stub_fstat || defined __stub___fstat
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return fstat ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "fstat" : YES
+Running compile:
+Working directory:  /tmp/tmpiqaivr0i
+Command line:  cc /tmp/tmpiqaivr0i/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpiqaivr0i/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define gettimeofday meson_disable_define_of_gettimeofday
+        
+        #include <limits.h>
+        #undef gettimeofday
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char gettimeofday ();
+        
+        #if defined __stub_gettimeofday || defined __stub___gettimeofday
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return gettimeofday ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "gettimeofday" : YES
+Running compile:
+Working directory:  /tmp/tmpy8ogrn2_
+Command line:  cc /tmp/tmpy8ogrn2_/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpy8ogrn2_/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define gmtime meson_disable_define_of_gmtime
+        
+        #include <limits.h>
+        #undef gmtime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char gmtime ();
+        
+        #if defined __stub_gmtime || defined __stub___gmtime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return gmtime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "gmtime" : YES
+Running compile:
+Working directory:  /tmp/tmpmk4mnfnt
+Command line:  cc /tmp/tmpmk4mnfnt/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("inttypes.h")
+          #error "Header 'inttypes.h' could not be found"
+         #endif
+        #else
+         #include <inttypes.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "inttypes.h": YES
+Running compile:
+Working directory:  /tmp/tmp0z85r3bp
+Command line:  cc /tmp/tmp0z85r3bp/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("limits.h")
+          #error "Header 'limits.h' could not be found"
+         #endif
+        #else
+         #include <limits.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "limits.h": YES
+Running compile:
+Working directory:  /tmp/tmpa0w8zyzv
+Command line:  cc /tmp/tmpa0w8zyzv/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpa0w8zyzv/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define localtime meson_disable_define_of_localtime
+        
+        #include <limits.h>
+        #undef localtime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char localtime ();
+        
+        #if defined __stub_localtime || defined __stub___localtime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return localtime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "localtime" : YES
+Running compile:
+Working directory:  /tmp/tmp0wtrrmuk
+Command line:  cc /tmp/tmp0wtrrmuk/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp0wtrrmuk/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define longjmp meson_disable_define_of_longjmp
+        
+        #include <limits.h>
+        #undef longjmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char longjmp ();
+        
+        #if defined __stub_longjmp || defined __stub___longjmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return longjmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "longjmp" : YES
+Running compile:
+Working directory:  /tmp/tmpk_sfyopp
+Command line:  cc /tmp/tmpk_sfyopp/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpk_sfyopp/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define lstat meson_disable_define_of_lstat
+        
+        #include <limits.h>
+        #undef lstat
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char lstat ();
+        
+        #if defined __stub_lstat || defined __stub___lstat
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return lstat ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "lstat" : YES
+Running compile:
+Working directory:  /tmp/tmp77fk1ruv
+Command line:  cc /tmp/tmp77fk1ruv/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("malloc.h")
+          #error "Header 'malloc.h' could not be found"
+         #endif
+        #else
+         #include <malloc.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "malloc.h": YES
+Running compile:
+Working directory:  /tmp/tmpy1j3je6g
+Command line:  cc /tmp/tmpy1j3je6g/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpy1j3je6g/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define memcmp meson_disable_define_of_memcmp
+        
+        #include <limits.h>
+        #undef memcmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char memcmp ();
+        
+        #if defined __stub_memcmp || defined __stub___memcmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return memcmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpy1j3je6g/testfile.c:10:14: warning: conflicting types for built-in function 'memcmp' [-Wbuiltin-declaration-mismatch]
+         char memcmp ();
+              ^~~~~~
+
+Checking for function "memcmp" : YES
+Running compile:
+Working directory:  /tmp/tmplvg13ps5
+Command line:  cc /tmp/tmplvg13ps5/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmplvg13ps5/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define memcpy meson_disable_define_of_memcpy
+        
+        #include <limits.h>
+        #undef memcpy
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char memcpy ();
+        
+        #if defined __stub_memcpy || defined __stub___memcpy
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return memcpy ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmplvg13ps5/testfile.c:10:14: warning: conflicting types for built-in function 'memcpy' [-Wbuiltin-declaration-mismatch]
+         char memcpy ();
+              ^~~~~~
+
+Checking for function "memcpy" : YES
+Running compile:
+Working directory:  /tmp/tmpdfpab8no
+Command line:  cc /tmp/tmpdfpab8no/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpdfpab8no/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define memmove meson_disable_define_of_memmove
+        
+        #include <limits.h>
+        #undef memmove
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char memmove ();
+        
+        #if defined __stub_memmove || defined __stub___memmove
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return memmove ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpdfpab8no/testfile.c:10:14: warning: conflicting types for built-in function 'memmove' [-Wbuiltin-declaration-mismatch]
+         char memmove ();
+              ^~~~~~~
+
+Checking for function "memmove" : YES
+Running compile:
+Working directory:  /tmp/tmp6h91ovun
+Command line:  cc /tmp/tmp6h91ovun/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("memory.h")
+          #error "Header 'memory.h' could not be found"
+         #endif
+        #else
+         #include <memory.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "memory.h": YES
+Running compile:
+Working directory:  /tmp/tmphurvrjjx
+Command line:  cc /tmp/tmphurvrjjx/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmphurvrjjx/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define memset meson_disable_define_of_memset
+        
+        #include <limits.h>
+        #undef memset
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char memset ();
+        
+        #if defined __stub_memset || defined __stub___memset
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return memset ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmphurvrjjx/testfile.c:10:14: warning: conflicting types for built-in function 'memset' [-Wbuiltin-declaration-mismatch]
+         char memset ();
+              ^~~~~~
+
+Checking for function "memset" : YES
+Running compile:
+Working directory:  /tmp/tmpvnr5dwcq
+Command line:  cc /tmp/tmpvnr5dwcq/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpvnr5dwcq/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define mktime meson_disable_define_of_mktime
+        
+        #include <limits.h>
+        #undef mktime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char mktime ();
+        
+        #if defined __stub_mktime || defined __stub___mktime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return mktime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "mktime" : YES
+Running compile:
+Working directory:  /tmp/tmpv1qupqfc
+Command line:  cc /tmp/tmpv1qupqfc/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpv1qupqfc/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define qsort meson_disable_define_of_qsort
+        
+        #include <limits.h>
+        #undef qsort
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char qsort ();
+        
+        #if defined __stub_qsort || defined __stub___qsort
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return qsort ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "qsort" : YES
+Running compile:
+Working directory:  /tmp/tmpso56iuri
+Command line:  cc /tmp/tmpso56iuri/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpso56iuri/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define raise meson_disable_define_of_raise
+        
+        #include <limits.h>
+        #undef raise
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char raise ();
+        
+        #if defined __stub_raise || defined __stub___raise
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return raise ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "raise" : YES
+Running compile:
+Working directory:  /tmp/tmpeyn09c0f
+Command line:  cc /tmp/tmpeyn09c0f/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpeyn09c0f/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define setjmp meson_disable_define_of_setjmp
+        
+        #include <limits.h>
+        #undef setjmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char setjmp ();
+        
+        #if defined __stub_setjmp || defined __stub___setjmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return setjmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "setjmp" : YES
+Running compile:
+Working directory:  /tmp/tmpj09qcu9_
+Command line:  cc /tmp/tmpj09qcu9_/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("setjmp.h")
+          #error "Header 'setjmp.h' could not be found"
+         #endif
+        #else
+         #include <setjmp.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "setjmp.h": YES
+Running compile:
+Working directory:  /tmp/tmpty2b3cqp
+Command line:  cc /tmp/tmpty2b3cqp/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpty2b3cqp/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define signal meson_disable_define_of_signal
+        
+        #include <limits.h>
+        #undef signal
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char signal ();
+        
+        #if defined __stub_signal || defined __stub___signal
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return signal ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "signal" : YES
+Running compile:
+Working directory:  /tmp/tmpkmx7gb5t
+Command line:  cc /tmp/tmpkmx7gb5t/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("signal.h")
+          #error "Header 'signal.h' could not be found"
+         #endif
+        #else
+         #include <signal.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "signal.h": YES
+Running compile:
+Working directory:  /tmp/tmpcj1g9o6d
+Command line:  cc /tmp/tmpcj1g9o6d/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpcj1g9o6d/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define snprintf meson_disable_define_of_snprintf
+        
+        #include <limits.h>
+        #undef snprintf
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char snprintf ();
+        
+        #if defined __stub_snprintf || defined __stub___snprintf
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return snprintf ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "snprintf" : YES
+Running compile:
+Working directory:  /tmp/tmpqk_4p7ul
+Command line:  cc /tmp/tmpqk_4p7ul/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stdarg.h")
+          #error "Header 'stdarg.h' could not be found"
+         #endif
+        #else
+         #include <stdarg.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "stdarg.h": YES
+Running compile:
+Working directory:  /tmp/tmp_lr_nkw8
+Command line:  cc /tmp/tmp_lr_nkw8/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stddef.h")
+          #error "Header 'stddef.h' could not be found"
+         #endif
+        #else
+         #include <stddef.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "stddef.h": YES
+Running compile:
+Working directory:  /tmp/tmpib0xoj28
+Command line:  cc /tmp/tmpib0xoj28/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stdint.h")
+          #error "Header 'stdint.h' could not be found"
+         #endif
+        #else
+         #include <stdint.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "stdint.h": YES
+Running compile:
+Working directory:  /tmp/tmp0f__p5va
+Command line:  cc /tmp/tmp0f__p5va/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stdio.h")
+          #error "Header 'stdio.h' could not be found"
+         #endif
+        #else
+         #include <stdio.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "stdio.h": YES
+Running compile:
+Working directory:  /tmp/tmpnk6jgcz1
+Command line:  cc /tmp/tmpnk6jgcz1/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stdlib.h")
+          #error "Header 'stdlib.h' could not be found"
+         #endif
+        #else
+         #include <stdlib.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "stdlib.h": YES
+Running compile:
+Working directory:  /tmp/tmpbhaonwjd
+Command line:  cc /tmp/tmpbhaonwjd/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpbhaonwjd/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strcasecmp meson_disable_define_of_strcasecmp
+        
+        #include <limits.h>
+        #undef strcasecmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strcasecmp ();
+        
+        #if defined __stub_strcasecmp || defined __stub___strcasecmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strcasecmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "strcasecmp" : YES
+Running compile:
+Working directory:  /tmp/tmpnpvct_qb
+Command line:  cc /tmp/tmpnpvct_qb/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpnpvct_qb/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strchr meson_disable_define_of_strchr
+        
+        #include <limits.h>
+        #undef strchr
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strchr ();
+        
+        #if defined __stub_strchr || defined __stub___strchr
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strchr ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpnpvct_qb/testfile.c:10:14: warning: conflicting types for built-in function 'strchr' [-Wbuiltin-declaration-mismatch]
+         char strchr ();
+              ^~~~~~
+
+Checking for function "strchr" : YES
+Running compile:
+Working directory:  /tmp/tmp_6dhggq7
+Command line:  cc /tmp/tmp_6dhggq7/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp_6dhggq7/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strdup meson_disable_define_of_strdup
+        
+        #include <limits.h>
+        #undef strdup
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strdup ();
+        
+        #if defined __stub_strdup || defined __stub___strdup
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strdup ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "strdup" : YES
+Running compile:
+Working directory:  /tmp/tmp44bipbb4
+Command line:  cc /tmp/tmp44bipbb4/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp44bipbb4/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strerror meson_disable_define_of_strerror
+        
+        #include <limits.h>
+        #undef strerror
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strerror ();
+        
+        #if defined __stub_strerror || defined __stub___strerror
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strerror ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "strerror" : YES
+Running compile:
+Working directory:  /tmp/tmpjoamqxcf
+Command line:  cc /tmp/tmpjoamqxcf/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpjoamqxcf/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strftime meson_disable_define_of_strftime
+        
+        #include <limits.h>
+        #undef strftime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strftime ();
+        
+        #if defined __stub_strftime || defined __stub___strftime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strftime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpjoamqxcf/testfile.c:10:14: warning: conflicting types for built-in function 'strftime' [-Wbuiltin-declaration-mismatch]
+         char strftime ();
+              ^~~~~~~~
+
+Checking for function "strftime" : YES
+Running compile:
+Working directory:  /tmp/tmpgutqx_3f
+Command line:  cc /tmp/tmpgutqx_3f/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpgutqx_3f/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define stricmp meson_disable_define_of_stricmp
+        
+        #include <limits.h>
+        #undef stricmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char stricmp ();
+        
+        #if defined __stub_stricmp || defined __stub___stricmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return stricmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/ccwbSKxE.o: In function `main':
+testfile.c:(.text+0xa): undefined reference to `stricmp'
+collect2: error: ld returned 1 exit status
+
+Running compile:
+Working directory:  /tmp/tmp2e81ii96
+Command line:  cc /tmp/tmp2e81ii96/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp2e81ii96/output.exe -O0 -std=c89 
+
+Code:
+ 
+        int main() {
+        #ifdef __has_builtin
+            #if !__has_builtin(__builtin_stricmp)
+                #error "__builtin_stricmp not found"
+            #endif
+        #elif ! defined(stricmp)
+            /* Check for __builtin_stricmp only if no includes were added to the
+             * prefix above, which means no definition of stricmp can be found.
+             * We would always check for this, but we get false positives on
+             * MSYS2 if we do. Their toolchain is broken, but we can at least
+             * give them a workaround. */
+            #if 1
+                __builtin_stricmp;
+            #else
+                #error "No definition for __builtin_stricmp found in the prefix"
+            #endif
+        #endif
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmp2e81ii96/testfile.c: In function 'main':
+/tmp/tmp2e81ii96/testfile.c:14:17: error: '__builtin_stricmp' undeclared (first use in this function); did you mean '__builtin_strcmp'?
+                 __builtin_stricmp;
+                 ^~~~~~~~~~~~~~~~~
+                 __builtin_strcmp
+/tmp/tmp2e81ii96/testfile.c:14:17: note: each undeclared identifier is reported only once for each function it appears in
+
+Checking for function "stricmp" : NO
+Running compile:
+Working directory:  /tmp/tmp33o0q5t5
+Command line:  cc /tmp/tmp33o0q5t5/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("strings.h")
+          #error "Header 'strings.h' could not be found"
+         #endif
+        #else
+         #include <strings.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "strings.h": YES
+Running compile:
+Working directory:  /tmp/tmpmsaqnhrn
+Command line:  cc /tmp/tmpmsaqnhrn/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("string.h")
+          #error "Header 'string.h' could not be found"
+         #endif
+        #else
+         #include <string.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "string.h": YES
+Running compile:
+Working directory:  /tmp/tmp4br44kj1
+Command line:  cc /tmp/tmp4br44kj1/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp4br44kj1/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strncasecmp meson_disable_define_of_strncasecmp
+        
+        #include <limits.h>
+        #undef strncasecmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strncasecmp ();
+        
+        #if defined __stub_strncasecmp || defined __stub___strncasecmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strncasecmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "strncasecmp" : YES
+Running compile:
+Working directory:  /tmp/tmpj7fr3q_3
+Command line:  cc /tmp/tmpj7fr3q_3/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpj7fr3q_3/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strnicmp meson_disable_define_of_strnicmp
+        
+        #include <limits.h>
+        #undef strnicmp
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strnicmp ();
+        
+        #if defined __stub_strnicmp || defined __stub___strnicmp
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strnicmp ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/cc828icO.o: In function `main':
+testfile.c:(.text+0xa): undefined reference to `strnicmp'
+collect2: error: ld returned 1 exit status
+
+Running compile:
+Working directory:  /tmp/tmpg45tf5e4
+Command line:  cc /tmp/tmpg45tf5e4/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpg45tf5e4/output.exe -O0 -std=c89 
+
+Code:
+ 
+        int main() {
+        #ifdef __has_builtin
+            #if !__has_builtin(__builtin_strnicmp)
+                #error "__builtin_strnicmp not found"
+            #endif
+        #elif ! defined(strnicmp)
+            /* Check for __builtin_strnicmp only if no includes were added to the
+             * prefix above, which means no definition of strnicmp can be found.
+             * We would always check for this, but we get false positives on
+             * MSYS2 if we do. Their toolchain is broken, but we can at least
+             * give them a workaround. */
+            #if 1
+                __builtin_strnicmp;
+            #else
+                #error "No definition for __builtin_strnicmp found in the prefix"
+            #endif
+        #endif
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpg45tf5e4/testfile.c: In function 'main':
+/tmp/tmpg45tf5e4/testfile.c:14:17: error: '__builtin_strnicmp' undeclared (first use in this function); did you mean '__builtin_strncmp'?
+                 __builtin_strnicmp;
+                 ^~~~~~~~~~~~~~~~~~
+                 __builtin_strncmp
+/tmp/tmpg45tf5e4/testfile.c:14:17: note: each undeclared identifier is reported only once for each function it appears in
+
+Checking for function "strnicmp" : NO
+Running compile:
+Working directory:  /tmp/tmpb9tf3h5s
+Command line:  cc /tmp/tmpb9tf3h5s/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpb9tf3h5s/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strrchr meson_disable_define_of_strrchr
+        
+        #include <limits.h>
+        #undef strrchr
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strrchr ();
+        
+        #if defined __stub_strrchr || defined __stub___strrchr
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strrchr ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpb9tf3h5s/testfile.c:10:14: warning: conflicting types for built-in function 'strrchr' [-Wbuiltin-declaration-mismatch]
+         char strrchr ();
+              ^~~~~~~
+
+Checking for function "strrchr" : YES
+Running compile:
+Working directory:  /tmp/tmpwwt31_8z
+Command line:  cc /tmp/tmpwwt31_8z/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpwwt31_8z/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define strstr meson_disable_define_of_strstr
+        
+        #include <limits.h>
+        #undef strstr
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char strstr ();
+        
+        #if defined __stub_strstr || defined __stub___strstr
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return strstr ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpwwt31_8z/testfile.c:10:14: warning: conflicting types for built-in function 'strstr' [-Wbuiltin-declaration-mismatch]
+         char strstr ();
+              ^~~~~~
+
+Checking for function "strstr" : YES
+Running compile:
+Working directory:  /tmp/tmpqo98l_tj
+Command line:  cc /tmp/tmpqo98l_tj/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/stat.h")
+          #error "Header 'sys/stat.h' could not be found"
+         #endif
+        #else
+         #include <sys/stat.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "sys/stat.h": YES
+Running compile:
+Working directory:  /tmp/tmpx_93n0zx
+Command line:  cc /tmp/tmpx_93n0zx/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/time.h")
+          #error "Header 'sys/time.h' could not be found"
+         #endif
+        #else
+         #include <sys/time.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "sys/time.h": YES
+Running compile:
+Working directory:  /tmp/tmpnk80t7dd
+Command line:  cc /tmp/tmpnk80t7dd/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/types.h")
+          #error "Header 'sys/types.h' could not be found"
+         #endif
+        #else
+         #include <sys/types.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "sys/types.h": YES
+Running compile:
+Working directory:  /tmp/tmpkkcx9h0u
+Command line:  cc /tmp/tmpkkcx9h0u/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpkkcx9h0u/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define time meson_disable_define_of_time
+        
+        #include <limits.h>
+        #undef time
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char time ();
+        
+        #if defined __stub_time || defined __stub___time
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return time ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "time" : YES
+Running compile:
+Working directory:  /tmp/tmp5ii7xje4
+Command line:  cc /tmp/tmp5ii7xje4/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("time.h")
+          #error "Header 'time.h' could not be found"
+         #endif
+        #else
+         #include <time.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "time.h": YES
+Running compile:
+Working directory:  /tmp/tmp6z7r9t0o
+Command line:  cc /tmp/tmp6z7r9t0o/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp6z7r9t0o/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define umask meson_disable_define_of_umask
+        
+        #include <limits.h>
+        #undef umask
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char umask ();
+        
+        #if defined __stub_umask || defined __stub___umask
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return umask ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "umask" : YES
+Running compile:
+Working directory:  /tmp/tmpq37q7yqw
+Command line:  cc /tmp/tmpq37q7yqw/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("unistd.h")
+          #error "Header 'unistd.h' could not be found"
+         #endif
+        #else
+         #include <unistd.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "unistd.h": YES
+Running compile:
+Working directory:  /tmp/tmpzztivy5j
+Command line:  cc /tmp/tmpzztivy5j/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpzztivy5j/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define utime meson_disable_define_of_utime
+        
+        #include <limits.h>
+        #undef utime
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char utime ();
+        
+        #if defined __stub_utime || defined __stub___utime
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return utime ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "utime" : YES
+Running compile:
+Working directory:  /tmp/tmpse4pa3c3
+Command line:  cc /tmp/tmpse4pa3c3/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -E -P -O0 -std=c89 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("utime.h")
+          #error "Header 'utime.h' could not be found"
+         #endif
+        #else
+         #include <utime.h>
+        #endif
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Has header "utime.h": YES
+Running compile:
+Working directory:  /tmp/tmp966zma2w
+Command line:  cc /tmp/tmp966zma2w/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp966zma2w/output.exe -O0 -std=c89 
+
+Code:
+ 
+        #define vsnprintf meson_disable_define_of_vsnprintf
+        
+        #include <limits.h>
+        #undef vsnprintf
+        
+        #ifdef __cplusplus
+        extern "C"
+        #endif
+        char vsnprintf ();
+        
+        #if defined __stub_vsnprintf || defined __stub___vsnprintf
+        fail fail fail this function is not going to work
+        #endif
+        
+        int main () {
+          return vsnprintf ();
+        }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Checking for function "vsnprintf" : YES
+Running compile:
+Working directory:  /tmp/tmpwyv9uzkj
+Command line:  cc /tmp/tmpwyv9uzkj/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpwyv9uzkj/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(char*)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "char*": 8
+Running compile:
+Working directory:  /tmp/tmp2588dw7p
+Command line:  cc /tmp/tmp2588dw7p/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp2588dw7p/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <sys/types.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(dev_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "dev_t": 8
+Running compile:
+Working directory:  /tmp/tmpriavyf6v
+Command line:  cc /tmp/tmpriavyf6v/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpriavyf6v/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(double)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "double": 8
+Running compile:
+Working directory:  /tmp/tmphm82g94c
+Command line:  cc /tmp/tmphm82g94c/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmphm82g94c/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(float)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+4
+
+Program stderr:
+
+
+Checking for size of "float": 4
+Running compile:
+Working directory:  /tmp/tmpty7feh61
+Command line:  cc /tmp/tmpty7feh61/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpty7feh61/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(fpos_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+16
+
+Program stderr:
+
+
+Checking for size of "fpos_t": 16
+Running compile:
+Working directory:  /tmp/tmpq67jqn4c
+Command line:  cc /tmp/tmpq67jqn4c/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpq67jqn4c/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(int)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+4
+
+Program stderr:
+
+
+Checking for size of "int": 4
+Running compile:
+Working directory:  /tmp/tmpzh8z64mb
+Command line:  cc /tmp/tmpzh8z64mb/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpzh8z64mb/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(intmax_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "intmax_t": 8
+Running compile:
+Working directory:  /tmp/tmpz_sg7kza
+Command line:  cc /tmp/tmpz_sg7kza/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpz_sg7kza/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(intptr_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "intptr_t": 8
+Running compile:
+Working directory:  /tmp/tmp8ffnnvmm
+Command line:  cc /tmp/tmp8ffnnvmm/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp8ffnnvmm/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(long)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "long": 8
+Running compile:
+Working directory:  /tmp/tmpl171uidk
+Command line:  cc /tmp/tmpl171uidk/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpl171uidk/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(long double)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+16
+
+Program stderr:
+
+
+Checking for size of "long double": 16
+Running compile:
+Working directory:  /tmp/tmph99gdojo
+Command line:  cc /tmp/tmph99gdojo/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmph99gdojo/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(long long)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "long long": 8
+Running compile:
+Working directory:  /tmp/tmppfj4f1lm
+Command line:  cc /tmp/tmppfj4f1lm/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmppfj4f1lm/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <sys/types.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(mode_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+4
+
+Program stderr:
+
+
+Checking for size of "mode_t": 4
+Running compile:
+Working directory:  /tmp/tmpze4baton
+Command line:  cc /tmp/tmpze4baton/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpze4baton/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <sys/types.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(off_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "off_t": 8
+Running compile:
+Working directory:  /tmp/tmp6te3tf87
+Command line:  cc /tmp/tmp6te3tf87/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp6te3tf87/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(ptrdiff_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "ptrdiff_t": 8
+Running compile:
+Working directory:  /tmp/tmp2lvr2dr6
+Command line:  cc /tmp/tmp2lvr2dr6/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp2lvr2dr6/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(short)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+2
+
+Program stderr:
+
+
+Checking for size of "short": 2
+Running compile:
+Working directory:  /tmp/tmpne_9q1m4
+Command line:  cc /tmp/tmpne_9q1m4/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpne_9q1m4/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(size_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "size_t": 8
+Running compile:
+Working directory:  /tmp/tmp4hrmtcax
+Command line:  cc /tmp/tmp4hrmtcax/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp4hrmtcax/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(ssize_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmp4hrmtcax/testfile.c: In function 'main':
+/tmp/tmp4hrmtcax/testfile.c:4:43: error: 'ssize_t' undeclared (first use in this function); did you mean 'size_t'?
+             printf("%ld\n", (long)(sizeof(ssize_t)));
+                                           ^~~~~~~
+                                           size_t
+/tmp/tmp4hrmtcax/testfile.c:4:43: note: each undeclared identifier is reported only once for each function it appears in
+
+Could not compile test file /tmp/tmp4hrmtcax/testfile.c: 1
+
+Checking for size of "ssize_t": -1
+Running compile:
+Working directory:  /tmp/tmpn4p7mg5e
+Command line:  cc /tmp/tmpn4p7mg5e/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpn4p7mg5e/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <time.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(time_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "time_t": 8
+Running compile:
+Working directory:  /tmp/tmpoap8mx16
+Command line:  cc /tmp/tmpoap8mx16/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpoap8mx16/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(uintmax_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "uintmax_t": 8
+Running compile:
+Working directory:  /tmp/tmpod5zla_r
+Command line:  cc /tmp/tmpod5zla_r/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpod5zla_r/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(uintptr_t)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "uintptr_t": 8
+Running compile:
+Working directory:  /tmp/tmp8ks3jekv
+Command line:  cc /tmp/tmp8ks3jekv/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp8ks3jekv/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stdint.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(unsigned long long)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "unsigned long long": 8
+Running compile:
+Working directory:  /tmp/tmp1hh_3ypg
+Command line:  cc /tmp/tmp1hh_3ypg/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp1hh_3ypg/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(unsigned __int32)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmp1hh_3ypg/testfile.c: In function 'main':
+/tmp/tmp1hh_3ypg/testfile.c:4:52: error: expected ')' before '__int32'
+             printf("%ld\n", (long)(sizeof(unsigned __int32)));
+                                                    ^~~~~~~
+
+Could not compile test file /tmp/tmp1hh_3ypg/testfile.c: 1
+
+Checking for size of "unsigned __int32": -1
+Running compile:
+Working directory:  /tmp/tmp8ruz7iaz
+Command line:  cc /tmp/tmp8ruz7iaz/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp8ruz7iaz/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(unsigned __int64)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmp8ruz7iaz/testfile.c: In function 'main':
+/tmp/tmp8ruz7iaz/testfile.c:4:52: error: expected ')' before '__int64'
+             printf("%ld\n", (long)(sizeof(unsigned __int64)));
+                                                    ^~~~~~~
+
+Could not compile test file /tmp/tmp8ruz7iaz/testfile.c: 1
+
+Checking for size of "unsigned __int64": -1
+Running compile:
+Working directory:  /tmp/tmpv_7ocl74
+Command line:  cc /tmp/tmpv_7ocl74/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpv_7ocl74/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(void*)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Checking for size of "void*": 8
+Running compile:
+Working directory:  /tmp/tmp49vltos1
+Command line:  cc /tmp/tmp49vltos1/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmp49vltos1/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(__int32)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmp49vltos1/testfile.c: In function 'main':
+/tmp/tmp49vltos1/testfile.c:4:43: error: '__int32' undeclared (first use in this function); did you mean '__int32_t'?
+             printf("%ld\n", (long)(sizeof(__int32)));
+                                           ^~~~~~~
+                                           __int32_t
+/tmp/tmp49vltos1/testfile.c:4:43: note: each undeclared identifier is reported only once for each function it appears in
+
+Could not compile test file /tmp/tmp49vltos1/testfile.c: 1
+
+Checking for size of "__int32": -1
+Running compile:
+Working directory:  /tmp/tmpcgu2xvmi
+Command line:  cc /tmp/tmpcgu2xvmi/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpcgu2xvmi/output.exe -O0 -std=c89 
+
+Code:
+ #include<stdio.h>
+        #include <stddef.h>
+        int main(int argc, char **argv) {
+            printf("%ld\n", (long)(sizeof(__int64)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ /tmp/tmpcgu2xvmi/testfile.c: In function 'main':
+/tmp/tmpcgu2xvmi/testfile.c:4:43: error: '__int64' undeclared (first use in this function); did you mean '__int64_t'?
+             printf("%ld\n", (long)(sizeof(__int64)));
+                                           ^~~~~~~
+                                           __int64_t
+/tmp/tmpcgu2xvmi/testfile.c:4:43: note: each undeclared identifier is reported only once for each function it appears in
+
+Could not compile test file /tmp/tmpcgu2xvmi/testfile.c: 1
+
+Checking for size of "__int64": -1
+Configuring config.h using configuration
+Build targets in project: 1
+Found ninja-1.8.2 at /usr/bin/ninja
+Running compile:
+Working directory:  /tmp/tmpek9xf5g7
+Command line:  cc /tmp/tmpek9xf5g7/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -c -o /tmp/tmpek9xf5g7/output.obj -O0 --print-search-dirs 
+
+Code:
+ 
+Compiler stdout:
+ install: /usr/lib/gcc/x86_64-linux-gnu/7/
+programs: =/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/bin/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/bin/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/bin/
+libraries: =/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/7/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/7/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+
+Compiler stderr:
+ 

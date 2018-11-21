@@ -9,7 +9,6 @@ project ('ucm', 'c',
 cc = meson.get_compiler('c')
 
 # --- compiler preferences ----------
-add_global_arguments('-DUTF8PROC_STATIC', language: 'c')
 if get_option('buildtype').startswith('debug')
     add_global_arguments ('-DDEBUG', language: 'c')
 endif
@@ -22,15 +21,15 @@ endif
 if get_option('base_inbundle')
     add_global_arguments ('-DBASE_INBUNDLE', language: 'c')
 endif
-
 if get_option('build_with_hidden_api')
     add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
 endif
 
 # --- compiler arguments ----------
-c_args = [
-    '-Wall'
-]
+c_args = '''
+    -Wall
+    -Wextra
+'''.split()
 
 if get_option('build_with_hidden_api')
     c_args += [
@@ -64,13 +63,19 @@ foreach arg : c_args
     endif
 endforeach
 
+lib_inc = [
+    join_paths ('.',''),
+    join_paths ('.', 'lib_core'),
+    join_paths ('.', 'lib_core', 'include'),
+]
+
+foreach lib : get_option ('custom_libs')
+    custom_path = join_paths ('.', 'deps', lib)
+    lib_inc += custom_path
+endforeach
+
 # --- include headers paths ----------
-lib_core_inc = include_directories ('''
-    ./
-    ./lib_core
-    ./lib_core/md5
-    ./lib_core/unicode
-'''.split())
+lib_core_inc = include_directories (lib_inc)
 
 # --- install paths resolve ----------
 if get_option ('build_bundle')

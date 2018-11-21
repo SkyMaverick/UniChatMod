@@ -15,6 +15,8 @@ option ('build_bundle', type: 'boolean', value: 'true',
         description: 'build single path application or classic *nix')
 option ('base_inbundle', type: 'boolean', value: 'true',
         description: 'build basepath into bandle (full portable app)')
+option ('path_libs_lookup', type: 'string', value: 'libs',
+        description: 'libraries subdir')
 option ('path_modules_lookup', type: 'string', value: 'mods',
         description: 'modules (plugins) subdir')
 option ('path_devels_lookup', type: 'string', value: 'include',
@@ -30,7 +32,7 @@ option ('build_with_tests', type: 'boolean', value: 'true',
 # === ATTENTION !!! ===
 # It is not guaranteed that the assembly will be correct with the versions of the libraries that differ from those offered.
 
-option ('build_with_syslibs', type: 'boolean', value: 'true',
+option ('custom_libs', type: 'array', value: ['utf8proc'],
         description: 'build with target system libraries if available')
 option ('build_with_hidden_api', type: 'boolean', value: 'true',
         description: 'build with hidden internal API')
