@@ -2,6 +2,9 @@
 
 import os, sys, subprocess, shutil, fnmatch
 
+from colorize import info, error
+from deps.builder import build_dep as dependency
+
 path_script = os.path.abspath (os.path.curdir)
 path_build  = os.path.join (path_script, 'build')
 file_shell_travis = os.path.join(path_script, 'tools', 'travis', 'manager.sh')
@@ -19,11 +22,6 @@ _clean = '''
 # ==================================================
 # SERVICE FUNCTIONS 
 # ==================================================
-
-def info (arg):
-    print ('{blue}{txt}{endcolor}'.format (blue='\033[36;1m', txt=arg, endcolor='\033[0m'))
-def error (arg):
-    print ('{red}{txt}{endcolor}'.format (red='\033[31;1m', txt=arg, endcolor='\033[0m'))
 
 def ninja_cmd (*args):
     if os.path.exists ( os.path.join (path_build, 'build.ninja')):
@@ -67,6 +65,16 @@ def remove_dir (path):
 def action_build ():
     meson_cmd()
     ninja_cmd()
+
+def action_build_dep():
+    if not os.path.exists (path_build):
+        os.mkdir(path_build)
+    dependency ('utf8proc', path_build, '')
+    dependency ('ucl', path_build, ''' 
+                --enable-static
+                --with-gnu-ld
+                --with-pic
+            '''.split())
 
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
@@ -154,6 +162,7 @@ def action_dummy ():
 
 actions = {
         'build'             : action_build,
+        'build_dep'         : action_build_dep,
         'new'               : action_new,
         'clean'             : action_clean,
         'test'              : action_test,
