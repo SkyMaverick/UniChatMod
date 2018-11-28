@@ -2,7 +2,7 @@
 
 import os, sys, subprocess, shutil, fnmatch
 
-from colorize import info, error
+from colorize import *
 from deps.builder import build_dep as dependency
 
 path_script = os.path.abspath (os.path.curdir)
@@ -19,7 +19,7 @@ _clean = '''
     *.dbg
 '''.split()
 
-# ==================================================
+# =================================================
 # SERVICE FUNCTIONS 
 # ==================================================
 
@@ -69,12 +69,15 @@ def action_build ():
 def action_build_dep():
     if not os.path.exists (path_build):
         os.mkdir(path_build)
-    dependency ('utf8proc', path_build, '')
-    dependency ('ucl', path_build, ''' 
-                --enable-static
-                --with-gnu-ld
-                --with-pic
-            '''.split())
+    dependency ('utf8proc', path_build, [])
+    dependency ('ucl', path_build,
+                ''' 
+                    --enable-static=no
+                    --enable-shared=yes
+                    --with-gnu-ld
+                    --with-pic
+                '''.split())
+    dependency ('mdbx', path_build, [])
 
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
