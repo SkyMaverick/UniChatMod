@@ -32,7 +32,7 @@ option ('build_with_tests', type: 'boolean', value: 'true',
 # === ATTENTION !!! ===
 # It is not guaranteed that the assembly will be correct with the versions of the libraries that differ from those offered.
 
-option ('custom_libs', type: 'array', value: ['utf8proc'],
+option ('custom_libs', type: 'array', value: ['utf8proc', 'mdbx'],
         description: 'build with target system libraries if available')
 option ('build_with_hidden_api', type: 'boolean', value: 'true',
         description: 'build with hidden internal API')

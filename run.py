@@ -7,6 +7,7 @@ from deps.builder import build_dep as dependency
 
 path_script = os.path.abspath (os.path.curdir)
 path_build  = os.path.join (path_script, 'build')
+
 file_shell_travis = os.path.join(path_script, 'tools', 'travis', 'manager.sh')
 
 _clean = '''

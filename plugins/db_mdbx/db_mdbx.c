@@ -9,7 +9,7 @@
 #include "config.h"
 #include "gettext.h"
 
-#include "libmdbx/mdbx.h"
+#include "mdbx.h"
 
 #include "db_mdbx.h"
 #include "db_mdbx_base.h"

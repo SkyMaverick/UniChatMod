@@ -5,7 +5,7 @@
 #include <wchar.h>
 
 #include "ucm.h"
-#include "libmdbx/mdbx.h"
+#include "mdbx.h"
 
 #ifdef __cplusplus
     extern "C" {
