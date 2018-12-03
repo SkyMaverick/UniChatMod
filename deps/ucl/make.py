@@ -23,6 +23,7 @@ def job (path_target, args):
     if os.path.exists(file_configure):
         os.chdir (path_current)
         if (configure_proc (args) == 0) and os.path.exists (file_make):
+            bs_make (path_current, ['clean'])
             if bs_make (path_current, []) == 0:
                 bs_result (path_current, path_target)
         else:

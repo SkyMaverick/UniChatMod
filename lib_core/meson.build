@@ -17,7 +17,7 @@ libcore_deps = [
     cc.find_library('pthread', required: true),
     cc.find_library('dl', required: true),
     cc.find_library('utf8proc', required: true,
-                    dirs: meson.build_root())
+                    dirs: path_deps_lookup)
 ]
 
 # split project version for move to config.h
@@ -93,6 +93,14 @@ libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
                           include_directories: lib_core_inc,
+                          build_rpath: ':'.join ([
+                                                    join_paths ('$ORIGIN','.'),
+                                                    join_paths ('$ORIGIN', 'libs', '.')
+                                                ]),
+                          install_rpath: ':'.join ([
+                                                    join_paths ('$ORIGIN','.'),
+                                                    join_paths ('$ORIGIN', 'libs', '.')
+                                                ]),
                           install: true,
                           install_dir: install_path_root)
 

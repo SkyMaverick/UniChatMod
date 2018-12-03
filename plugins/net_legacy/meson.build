@@ -14,7 +14,7 @@ nl_src = files('''
 nl_dep = [
     cc.find_library('pthread', required: true),
     cc.find_library('ucl', required: true,
-                    dirs: meson.build_root())
+                    dirs: path_deps_lookup)
 ]
 
 nl_mdbx = shared_library(plug_name,

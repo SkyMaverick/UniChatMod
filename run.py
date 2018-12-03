@@ -7,6 +7,7 @@ from deps.builder import build_dep as dependency
 
 path_script = os.path.abspath (os.path.curdir)
 path_build  = os.path.join (path_script, 'build')
+path_libs  = os.path.join (path_build, 'libs')
 
 file_shell_travis = os.path.join(path_script, 'tools', 'travis', 'manager.sh')
 
@@ -68,17 +69,17 @@ def action_build ():
     ninja_cmd()
 
 def action_build_dep():
-    if not os.path.exists (path_build):
-        os.mkdir(path_build)
-    dependency ('utf8proc', path_build, [])
-    dependency ('ucl', path_build,
+    if not os.path.exists (path_libs):
+        os.makedirs (path_libs)
+    dependency ('utf8proc', path_libs, [])
+    dependency ('ucl', path_libs,
                 ''' 
                     --enable-static=no
                     --enable-shared=yes
                     --with-gnu-ld
                     --with-pic
                 '''.split())
-    dependency ('mdbx', path_build, [])
+    dependency ('mdbx', path_libs, [])
 
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))

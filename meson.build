@@ -83,6 +83,9 @@ if get_option ('build_bundle')
     install_path_mods = join_paths (install_path_root, get_option ('path_modules_lookup'))
     install_path_docs = join_paths (install_path_root, get_option ('path_docs_lookup'))
     install_path_devs = join_paths (install_path_root, get_option ('path_devels_lookup'))
+    
+    path_deps_lookup = join_paths (meson.build_root(), 'libs')
+    install_subdir (path_deps_lookup, install_dir: install_path_root)
 endif
 
 # --- walk in subdirs ----------

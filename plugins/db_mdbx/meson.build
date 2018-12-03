@@ -21,7 +21,7 @@ endif
 db_mdbx_dep = [
     cc.find_library('pthread', required: true),
     cc.find_library('mdbx', required: true,
-                    dirs: meson.build_root()),
+                    dirs: path_deps_lookup),
 ]
 
 lib_db_mdbx = shared_library(plug_name,
