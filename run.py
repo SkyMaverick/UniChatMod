@@ -50,7 +50,7 @@ def shell_cmd (shell, *args):
     if sys.platform.lower() == 'windows':
         cmd = ['cmd', shell]
     else:
-        cmd = ['sh', '-x', shell]
+        cmd = ['sh', '-c', shell]
 
     for i in args:
        cmd += [i]
@@ -117,7 +117,7 @@ def action_travis_daily ():
     if os.path.exists (file_shell_travis):
         if ( shell_cmd(file_shell_travis, 'CREATE_FAST') == 0 ):
             shell_cmd(file_shell_travis, 'RUN_DEBUG')
-        shell_cmd(file_shell_travis, 'RUN_CLEANUP')
+        shell_cmd(file_shell_travis, 'CLEANUP')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
 
@@ -127,7 +127,7 @@ def action_travis_release ():
     if os.path.exists (file_shell_travis):
         if ( shell_cmd(file_shell_travis, 'CREATE') == 0 ):
             shell_cmd(file_shell_travis, 'RUN_RELEASE')
-        shell_cmd(file_shell_travis, 'RUN_CLEANUP')
+        shell_cmd(file_shell_travis, 'CLEANUP')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
 
@@ -137,7 +137,7 @@ def action_travis_coverity ():
     if os.path.exists (file_shell_travis):
         if ( shell_cmd(file_shell_travis, 'CREATE') == 0 ):
             shell_cmd(file_shell_travis, 'RUN_COVERITY')
-        shell_cmd(file_shell_travis, 'RUN_CLEANUP')
+        shell_cmd(file_shell_travis, 'CLEANUP')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
  
