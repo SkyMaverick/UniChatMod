@@ -17,7 +17,7 @@ libcore_deps = [
     cc.find_library('pthread', required: true),
     cc.find_library('dl', required: true),
     cc.find_library('utf8proc', required: true,
-                    dirs: path_deps_lookup)
+                    dirs: paths_custom_libs)
 ]
 
 # split project version for move to config.h

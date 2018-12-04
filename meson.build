@@ -69,9 +69,23 @@ lib_inc = [
     join_paths ('.', 'lib_core', 'include'),
 ]
 
+paths_custom_libs = []
+
+custom_libs_dirname = 'deps'
+
 foreach lib : get_option ('custom_libs')
-    custom_path = join_paths ('.', 'deps', lib)
+    custom_path = join_paths ('.', custom_libs_dirname, lib)
     lib_inc += custom_path
+
+    custom_path = join_paths (
+                meson.source_root(),
+                custom_libs_dirname,
+                lib,
+                target_machine.system(),
+                target_machine.cpu_family()
+            )
+    paths_custom_libs += custom_path
+    message ('Use custom static library in: @0@'.format(custom_path))
 endforeach
 
 # --- include headers paths ----------
@@ -83,9 +97,6 @@ if get_option ('build_bundle')
     install_path_mods = join_paths (install_path_root, get_option ('path_modules_lookup'))
     install_path_docs = join_paths (install_path_root, get_option ('path_docs_lookup'))
     install_path_devs = join_paths (install_path_root, get_option ('path_devels_lookup'))
-    
-    path_deps_lookup = join_paths (meson.build_root(), 'libs')
-    install_subdir (path_deps_lookup, install_dir: install_path_root)
 endif
 
 # --- walk in subdirs ----------

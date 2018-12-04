@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys, subprocess, shutil, fnmatch
-
 from colorize import *
-from deps.builder import build_dep as dependency
 
 path_script = os.path.abspath (os.path.curdir)
 path_build  = os.path.join (path_script, 'build')
@@ -20,6 +18,10 @@ _clean = '''
     *.lo
     *.dbg
 '''.split()
+
+_ignore_paths = [
+    'deps'
+]
 
 # =================================================
 # SERVICE FUNCTIONS 
@@ -68,23 +70,13 @@ def action_build ():
     meson_cmd()
     ninja_cmd()
 
-def action_build_dep():
-    if not os.path.exists (path_libs):
-        os.makedirs (path_libs)
-    dependency ('utf8proc', path_libs, [])
-    dependency ('ucl', path_libs,
-                ''' 
-                    --enable-static=no
-                    --enable-shared=yes
-                    --with-gnu-ld
-                    --with-pic
-                '''.split())
-    dependency ('mdbx', path_libs, [])
-
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
     remove_dir (path_build)
     for path_base, dirs, files in os.walk (path_script):
+        for item in dirs:
+            if item in _ignore_paths:
+                dirs.remove (item)
         for fname in files:
             for i in _clean:
                 strName = os.path.join(path_base, fname)
@@ -167,7 +159,6 @@ def action_dummy ():
 
 actions = {
         'build'             : action_build,
-        'build_dep'         : action_build_dep,
         'new'               : action_new,
         'clean'             : action_clean,
         'test'              : action_test,

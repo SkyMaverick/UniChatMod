@@ -21,7 +21,7 @@ endif
 db_mdbx_dep = [
     cc.find_library('pthread', required: true),
     cc.find_library('mdbx', required: true,
-                    dirs: path_deps_lookup),
+                    dirs: paths_custom_libs),
 ]
 
 lib_db_mdbx = shared_library(plug_name,

@@ -14,7 +14,7 @@ nl_src = files('''
 nl_dep = [
     cc.find_library('pthread', required: true),
     cc.find_library('ucl', required: true,
-                    dirs: path_deps_lookup)
+                    dirs: paths_custom_libs)
 ]
 
 nl_mdbx = shared_library(plug_name,
