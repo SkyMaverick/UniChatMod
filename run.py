@@ -28,34 +28,32 @@ _ignore_paths = [
 # ==================================================
 
 def ninja_cmd (*args):
+    result = 1
     if os.path.exists ( os.path.join (path_build, 'build.ninja')):
         os.chdir (path_build)
 
         cmd = ['ninja']
         for i in args:
             cmd += [i]
-        subprocess.call(cmd)
+        result = subprocess.call(' '.join(cmd), shell=True)
 
         os.chdir (path_script)
     else:
         error ('Meson configure files don\'t create')
+    return result
 
 def meson_cmd (*args):
     cmd = ['meson'] + ['.'] + [path_build]
     for i in args:
         cmd += [i]
-    subprocess.call(cmd)
+    return subprocess.call(' '.join(cmd), shell=True)
 
 def shell_cmd (shell, *args):
-    if sys.platform.lower() == 'windows':
-        cmd = ['cmd', shell]
-    else:
-        cmd = ['sh', '-c', shell]
-
+    cmd = [shell]
     for i in args:
        cmd += [i]
 
-    subprocess.call (cmd)
+    return subprocess.call (' '.join(cmd), shell=True)
 
 
 def remove_dir (path):
@@ -68,7 +66,7 @@ def remove_dir (path):
 
 def action_build ():
     meson_cmd()
-    ninja_cmd()
+    return ninja_cmd()
 
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
@@ -87,11 +85,11 @@ def action_clean():
 
 def action_new():
     action_clean()
-    action_build()
+    return action_build()
 
 def action_test():
     info ('Start test framework in: {path}'.format(path=path_build))
-    ninja_cmd('test_bot')
+    return ninja_cmd('test_bot')
 
 def action_log():
     info ('Meson system build log in: {path}'.format(path=path_build))
@@ -105,49 +103,57 @@ def action_log():
 
 def action_install():
     info ('Install application into: {path}'.format(path=path_build))
-    ninja_cmd('install')
+    return ninja_cmd('install')
     
 def action_uninstall():
     info ('Uninstall application into: {path}'.format(path=path_build))
-    ninja_cmd('uninstall')
+    return ninja_cmd('uninstall')
 
 def action_travis_daily ():
     info ('Start travis-ci daily build in: {path}'.format(path=path_build))
     action_clean ()
+    result = 1
     if os.path.exists (file_shell_travis):
         if ( shell_cmd(file_shell_travis, 'CREATE_FAST') == 0 ):
-            shell_cmd(file_shell_travis, 'RUN_DEBUG')
+            result = shell_cmd(file_shell_travis, 'RUN_DEBUG')
         shell_cmd(file_shell_travis, 'CLEANUP')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
+    return result
 
 def action_travis_release ():
     info ('Start travis-ci release build in: {path}'.format(path=path_build)) 
     action_clean ()
+    result = 1
     if os.path.exists (file_shell_travis):
         if ( shell_cmd(file_shell_travis, 'CREATE') == 0 ):
-            shell_cmd(file_shell_travis, 'RUN_RELEASE')
+            result = shell_cmd(file_shell_travis, 'RUN_RELEASE')
         shell_cmd(file_shell_travis, 'CLEANUP')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
+    return result
 
 def action_travis_coverity ():
     info ('Start travis-ci coverity check build in: {path}'.format(path=path_build)) 
     action_clean ()
+    result = 1
     if os.path.exists (file_shell_travis):
         if ( shell_cmd(file_shell_travis, 'CREATE') == 0 ):
-            shell_cmd(file_shell_travis, 'RUN_COVERITY')
+            result = shell_cmd(file_shell_travis, 'RUN_COVERITY')
         shell_cmd(file_shell_travis, 'CLEANUP')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
+    return result
  
 def action_dockerhub ():
     info ('Update docker image on DockerHub (signin if need)')
     action_clean ()
+    result = 1
     if os.path.exists (file_shell_travis):
-        shell_cmd(file_shell_travis, 'UPDATE_DH')
+        result = shell_cmd(file_shell_travis, 'UPDATE_DH')
     else:
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
+    return result
 
 def action_dummy ():
     info ("Run dummy function for test")
@@ -182,5 +188,6 @@ try:
     action = actions [sys.argv[1]]
 except KeyError as e:
     print ("I don't know this command: {}".format(sys.argv[1]))
+    exit (1)
 else:
-    action()
+    exit (action())

@@ -76,10 +76,10 @@ case $1 in
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init
     ;;
     RUN_DEBUG)
-        docker exec -ti ${CI_NAME} ./run.sh build debug
+        docker exec -ti ${CI_NAME} ./run.py build debug
     ;;
     RUN_RELEASE)
-        docker exec -ti ${CI_NAME} ./run.sh build release
+        docker exec -ti ${CI_NAME} ./run.py build release
     ;;
     RUN_COVERITY)
         docker exec -ti ${CI_NAME} sh -c "mkdir cov-build && meson cov-build"
