@@ -2,8 +2,9 @@ project ('ucm', 'c',
          version: '0.1.1',
          license: 'Zlib',
          default_options:[
-            'c_std=gnu11'
+            'c_std=gnu11',
          ],
+         subproject_dir: 'deps',
          meson_version: '>=0.46')
 
 cc = meson.get_compiler('c')
@@ -68,32 +69,20 @@ lib_inc = [
     join_paths ('.', 'lib_core', 'include'),
 ]
 
-paths_custom_libs = []
-
-custom_libs_dirname = 'deps'
-
-foreach lib : get_option ('custom_libs')
-    custom_path = join_paths ('.', custom_libs_dirname, lib)
-    lib_inc += custom_path
-
-    custom_path = join_paths (
-                meson.source_root(),
-                custom_libs_dirname,
-                lib,
-                target_machine.system(),
-                target_machine.cpu_family()
-            )
-    paths_custom_libs += custom_path
-    message ('Use custom static library in: @0@'.format(custom_path))
-endforeach
+libs_rpath = ':'.join ([
+    join_paths ('$ORIGIN','.'),
+    join_paths ('$ORIGIN', '..', 'libs', '.'),
+    join_paths ('$ORIGIN', '..', 'mods', '.')
+])
 
 # --- include headers paths ----------
 lib_core_inc = include_directories (lib_inc)
 
 # --- install paths resolve ----------
 if get_option ('build_bundle')
-    install_path_root = join_paths (meson.source_root(), 'bundle', meson.project_name())
+    install_path_root = join_paths (meson.source_root(), 'bundle', meson.project_name ())
     install_path_mods = join_paths (install_path_root, get_option ('path_modules_lookup'))
+    install_path_libs = join_paths (install_path_root, get_option ('path_libs_lookup'))
     install_path_docs = join_paths (install_path_root, get_option ('path_docs_lookup'))
     install_path_devs = join_paths (install_path_root, get_option ('path_devels_lookup'))
 endif

@@ -16,9 +16,19 @@ libcore_src = files('''
 libcore_deps = [
     cc.find_library('pthread', required: true),
     cc.find_library('dl', required: true),
-    cc.find_library('utf8proc', required: true,
-                    dirs: paths_custom_libs)
 ]
+
+if not get_option('custom_libs')
+    u8dep = cc.find_library('utf8proc', required: false)
+    if not u8dep.found()
+        u8proc_lib = subproject('utf8proc', default_options: ['='.join (['path_install', install_path_libs])])
+        u8dep = u8proc_lib.get_variable('u8proc_dep')
+    endif
+else
+    u8proc_lib = subproject('utf8proc', default_options: ['='.join (['path_install', install_path_libs])])
+    u8dep = u8proc_lib.get_variable('u8proc_dep')
+endif
+libcore_deps += u8dep
 
 # split project version for move to config.h
 lib_core_version = meson.project_version().split('.')
@@ -93,14 +103,8 @@ libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
                           include_directories: lib_core_inc,
-                          build_rpath: ':'.join ([
-                                                    join_paths ('$ORIGIN','.'),
-                                                    join_paths ('$ORIGIN', 'libs', '.')
-                                                ]),
-                          install_rpath: ':'.join ([
-                                                    join_paths ('$ORIGIN','.'),
-                                                    join_paths ('$ORIGIN', 'libs', '.')
-                                                ]),
+                          build_rpath: libs_rpath,
+                          install_rpath: libs_rpath,
                           install: true,
                           install_dir: install_path_root)
 
