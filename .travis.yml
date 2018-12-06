@@ -12,6 +12,7 @@ services:
 env:
     global:
         - CI_TOOLS="$TRAVIS_BUILD_DIR/tools/travis"
+        - CI_MANAGER="$CI_TOOLS/manager.sh"
         # Coverity env variables
         - PLATFORM="$(uname)"
         - TOOL_ARCHIVE="/var/tmp/cov-analysis-$PLATFORM.tgz
@@ -42,20 +43,20 @@ install:
         env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
       fi
 script:
-    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-          if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-              ${TRAVIS_BUILD_DIR}/run.py travis_daily;
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+          if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+            ${CI_MANAGER} CREATE_FAST;
+            ${CI_MANAGER} RUN_DEBUG;
+            ${CI_MANAGER} CLEANUP;
           fi;
-      else
           if [[ "$TRAVIS_BRANCH" == "release" ]]; then
-              if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-                  ${TRAVIS_BUILD_DIR}/run.py travis_release;
-              fi;
-          else
-              if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-                  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-                      ${TRAVIS_BUILD_DIR}/run.py travis_coverity;
-                  fi;
-              fi;
+            ${CI_MANAGER} CREATE;
+            ${CI_MANAGER} RUN_RELEASE;
+            ${CI_MANAGER} CLEANUP;
+          fi;
+          if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
+            ${CI_MANAGER} CREATE;
+            ${CI_MANAGER} RUN_COVERITY;
+            ${CI_MANAGER} CLEANUP;
           fi;
       fi;

@@ -52,8 +52,8 @@ def shell_cmd (shell, *args):
     cmd = [shell]
     for i in args:
        cmd += [i]
-
-    return subprocess.call (' '.join(cmd), shell=True)
+    
+    return subprocess.call (' '.join(cmd), env=os.environ.copy(), shell=True)
 
 
 def remove_dir (path):
@@ -109,42 +109,6 @@ def action_uninstall():
     info ('Uninstall application into: {path}'.format(path=path_build))
     return ninja_cmd('uninstall')
 
-def action_travis_daily ():
-    info ('Start travis-ci daily build in: {path}'.format(path=path_build))
-    action_clean ()
-    result = 1
-    if os.path.exists (file_shell_travis):
-        if ( shell_cmd(file_shell_travis, 'CREATE_FAST') == 0 ):
-            result = shell_cmd(file_shell_travis, 'RUN_DEBUG')
-        shell_cmd(file_shell_travis, 'CLEANUP')
-    else:
-        error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
-    return result
-
-def action_travis_release ():
-    info ('Start travis-ci release build in: {path}'.format(path=path_build)) 
-    action_clean ()
-    result = 1
-    if os.path.exists (file_shell_travis):
-        if ( shell_cmd(file_shell_travis, 'CREATE') == 0 ):
-            result = shell_cmd(file_shell_travis, 'RUN_RELEASE')
-        shell_cmd(file_shell_travis, 'CLEANUP')
-    else:
-        error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
-    return result
-
-def action_travis_coverity ():
-    info ('Start travis-ci coverity check build in: {path}'.format(path=path_build)) 
-    action_clean ()
-    result = 1
-    if os.path.exists (file_shell_travis):
-        if ( shell_cmd(file_shell_travis, 'CREATE') == 0 ):
-            result = shell_cmd(file_shell_travis, 'RUN_COVERITY')
-        shell_cmd(file_shell_travis, 'CLEANUP')
-    else:
-        error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
-    return result
- 
 def action_dockerhub ():
     info ('Update docker image on DockerHub (signin if need)')
     action_clean ()
@@ -173,9 +137,6 @@ actions = {
         'laz_gui'           : action_dummy,
         'install'           : action_install,
         'uninstall'         : action_uninstall,
-        'travis_daily'      : action_travis_daily,
-        'travis_release'    : action_travis_release,
-        'travis_coverity'   : action_travis_coverity,
         'docker_hub'        : action_dockerhub,
 }
 
