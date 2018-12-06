@@ -1,4 +1,5 @@
 /build/
+*/build/
 /ext_libs/
 /bundle/
 /clipart/
@@ -33,8 +34,6 @@ config.h
 *.la
 *.lo
 /Dockerfile
-/plugins/net_legacy/ucl/examples/simple
-/plugins/net_legacy/ucl/examples/uclpack
 stamp-h1
 libtool
 /cov-build/

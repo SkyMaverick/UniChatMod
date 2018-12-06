@@ -1,41 +1,34 @@
-lib_utf8proc = files ('''
-    unicode/unicode.c
-    unicode/unicode.h
-    unicode/utf8proc.c
-    unicode/utf8proc.h
-'''.split())
-
 libcore_src = files('''
     api.c
-    api.h
     core.c
-    core.h
     cpentupd.c
-    cpentupd.h
-    defs.h
     db.c
-    db.h
     evhook.c
-    evhook.h
     mainloop.c
-    mainloop.h
-    gettext.h
     logger.c
-    logger.h
     mqueue.c
-    mqueue.h
     plugmgr.c
-    plugmgr.h
     threading.c
-    threading.h
     ucm.c
-    ucm.h
-'''.split()) + lib_utf8proc
+    unicode.c
+'''.split())
 
 libcore_deps = [
     cc.find_library('pthread', required: true),
-    cc.find_library('dl', required: true)
+    cc.find_library('dl', required: true),
 ]
+
+if not get_option('custom_libs')
+    u8dep = cc.find_library('utf8proc', required: false)
+    if not u8dep.found()
+        u8proc_lib = subproject('utf8proc', default_options: ['='.join (['path_install', install_path_libs])])
+        u8dep = u8proc_lib.get_variable('u8proc_dep')
+    endif
+else
+    u8proc_lib = subproject('utf8proc', default_options: ['='.join (['path_install', install_path_libs])])
+    u8dep = u8proc_lib.get_variable('u8proc_dep')
+endif
+libcore_deps += u8dep
 
 # split project version for move to config.h
 lib_core_version = meson.project_version().split('.')
@@ -100,16 +93,18 @@ configure_file (input: 'config.h.in',
                 output: 'config.h',
                 configuration: lib_core_conf)
 
-core_header_c = files('ucm.h')
-core_header_pas = files('ucm.pas')
+core_header_c = files(join_paths('.', 'include', 'ucm.h'))
+core_header_pas = files(join_paths('.', 'bindings', 'fpc', 'ucm.pas'))
 
-install_headers ('ucm.h', 'ucm.pas', join_paths (meson.current_build_dir(), 'config.h'),
+install_headers (core_header_c, core_header_pas, join_paths (meson.current_build_dir(), 'config.h'),
                  install_dir: install_path_devs)
 
 libcore = shared_library (meson.project_name(),
                           libcore_src,
                           dependencies: libcore_deps,
                           include_directories: lib_core_inc,
+                          build_rpath: libs_rpath,
+                          install_rpath: libs_rpath,
                           install: true,
                           install_dir: install_path_root)
 

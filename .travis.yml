@@ -4,7 +4,7 @@ os:
   - linux
 
 language:
-  - c
+    - c
 
 services:
   - docker
@@ -29,6 +29,10 @@ branches:
         - release
         - coverity
 
+addons:
+    apt:
+        packages:
+            - python3
 
 before_install:
     - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- 
@@ -40,17 +44,17 @@ install:
 script:
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-              sh -c "./run.sh travis_daily";
+              ${TRAVIS_BUILD_DIR}/run.py travis_daily;
           fi;
       else
           if [[ "$TRAVIS_BRANCH" == "release" ]]; then
               if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-                  sh -c "./run.sh travis_release";
+                  ${TRAVIS_BUILD_DIR}/run.py travis_release;
               fi;
           else
               if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
                   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-                      sh -c "./run.sh travis_coverity";
+                      ${TRAVIS_BUILD_DIR}/run.py travis_coverity;
                   fi;
               fi;
           fi;

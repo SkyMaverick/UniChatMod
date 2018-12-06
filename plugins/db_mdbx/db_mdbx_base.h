@@ -2,7 +2,7 @@
 #define _DB_MDBX_BASE_OPERATIONS_H_
 
 #include "ucm.h"
-#include "libmdbx/mdbx.h"
+#include "mdbx.h"
 
 UCM_RET
 db_open (db_object_t* db);

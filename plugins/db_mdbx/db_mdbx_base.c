@@ -9,7 +9,7 @@
 #include "db_mdbx.h"
 #include "db_mdbx_base.h"
 
-#include "libmdbx/mdbx.h"
+#include "mdbx.h"
 
 const ucm_functions_t* app;
 #define DBMDBX db->mdbx
