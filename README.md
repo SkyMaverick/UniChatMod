@@ -11,7 +11,7 @@ Now syntax check status (Coverity) [![Coverity Scan Build Status](https://scan.c
 The following instruction assume that commands are executed in UniChatMod repository folder
 
 * Install Python (>3.5), meson, gcc, libcunit1 libcunit1-dev (if enabled tests). As options libucl1, libucl1-dev, libncurses5, libncurses5-dev
-* Run shell script **run.sh <option>**. Now supported options:
+* Run shell script **run.py <option>**. Now supported options:
     * ** ** - empty option rebuild meson directory
     * **build** - build application
         * *new* - create new debug build

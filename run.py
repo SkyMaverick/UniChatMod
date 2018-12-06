@@ -9,7 +9,7 @@ path_libs  = os.path.join (path_build, 'libs')
 
 file_shell_travis = os.path.join(path_script, 'tools', 'travis', 'manager.sh')
 
-_clean = '''
+_clean_files = '''
     *.so
     *.a
     *.bak
@@ -17,6 +17,12 @@ _clean = '''
     *.la
     *.lo
     *.dbg
+'''.split()
+
+_clean_paths = '''
+    build
+    pkgs
+    bundle
 '''.split()
 
 _ignore_paths = [
@@ -64,8 +70,12 @@ def remove_dir (path):
 #   ACTIONS
 # ==================================================
 
-def action_build ():
+def action_debug ():
     meson_cmd()
+    return ninja_cmd()
+
+def action_release ():
+    meson_cmd('--buildtype=release')
     return ninja_cmd()
 
 def action_clean():
@@ -75,8 +85,10 @@ def action_clean():
         for item in dirs:
             if item in _ignore_paths:
                 dirs.remove (item)
+            if item in _clean_paths:
+                remove_dir (item)
         for fname in files:
-            for i in _clean:
+            for i in _clean_files:
                 strName = os.path.join(path_base, fname)
                 if fnmatch.fnmatch(os.path.basename(strName), i): 
                     if os.access(strName, os.W_OK):
@@ -128,8 +140,8 @@ def action_dummy ():
 # ==================================================
 
 actions = {
-        'build'             : action_build,
-        'new'               : action_new,
+        'debug'             : action_debug,
+        'release'           : action_release,
         'clean'             : action_clean,
         'test'              : action_test,
         'log'               : action_log,
