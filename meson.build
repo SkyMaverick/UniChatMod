@@ -19,49 +19,49 @@ endif
 if get_option('build_bundle')
     add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
 endif
-if get_option('base_inbundle')
-    add_global_arguments ('-DBASE_INBUNDLE', language: 'c')
-endif
 if get_option('build_with_hidden_api')
     add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
 endif
 
 # --- compiler arguments ----------
-c_args = '''
+cc_args = '''
     -Wall
 '''.split()
 
-if get_option('build_with_hidden_api')
-    c_args += [
-        '-fvisibility=hidden'
-    ]
-endif
+cc_link_args = '''
+'''.split()
 
 if get_option('buildtype').startswith('debug')
-    foreach arg : [
-            '-O0',
-            '-g'
-        ]
-        if cc.has_argument(arg)
-            add_project_arguments(arg, language : 'c')
-        endif
-    endforeach
+    cc_args += '''
+                -O0
+                -g
+              '''.split()
 elif get_option('buildtype').startswith('release')
-    foreach arg : [
-            '-O3',
-            '-s'
-        ]
-        if cc.has_argument(arg)
-            add_project_arguments(arg, language : 'c')
-        endif
-    endforeach
+    cc_args += '''
+                -O3
+                -s
+            '''.split()
 endif
 
-foreach arg : c_args
+if get_option('build_with_hidden_api')
+    cc_args += '''
+        -fvisibility=hidden
+    '''.split()
+endif
+
+# --- Add all switches in project command line -----------
+foreach arg : cc_args
     if cc.has_argument(arg)
-        add_project_arguments(arg, language : 'c')
+        add_project_arguments(arg, language: 'c')
     endif
 endforeach
+
+foreach arg : cc_link_args
+    if cc.has_link_argument (arg)
+        add_project_link_arguments(arg, language: 'c')
+    endif
+endforeach
+
 
 lib_inc = [
     join_paths ('.',''),
@@ -85,6 +85,23 @@ if get_option ('build_bundle')
     install_path_libs = join_paths (install_path_root, get_option ('path_libs_lookup'))
     install_path_docs = join_paths (install_path_root, get_option ('path_docs_lookup'))
     install_path_devs = join_paths (install_path_root, get_option ('path_devels_lookup'))
+endif
+
+# --- resolve some popularity dependencies ----------
+
+if target_machine.system() == 'windows'
+    system_library_threads = cc.find_library ('pthread', required: false)
+    if not system_library_threads.found()
+        message ('Use custom posix thread library')
+        # do subprojects
+    else
+        error ('Posix threads dependency error')
+    endif
+    
+    system_library_dynload = []
+else
+    system_library_threads = cc.find_library ('pthread', required: true)
+    system_library_dynload = cc.find_library ('dl', required: true)
 endif
 
 # --- walk in subdirs ----------

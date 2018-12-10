@@ -14,8 +14,8 @@ libcore_src = files('''
 '''.split())
 
 libcore_deps = [
-    cc.find_library('pthread', required: true),
-    cc.find_library('dl', required: true),
+    system_library_threads,
+    system_library_dynload
 ]
 
 if not get_option('custom_libs')

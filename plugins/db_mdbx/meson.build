@@ -10,7 +10,6 @@ db_mdbx_src = files('''
 '''.split()) + core_header_c
 
 db_mdbx_dep = [
-    cc.find_library('pthread', required: true),
 ]
 
 if not get_option('custom_libs')

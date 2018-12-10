@@ -72,10 +72,13 @@ foreach arg : cc_link_args
     endif
 endforeach
 
-mdbx_deps = [
-    cc.find_library ('pthread', required: true),
-    cc.find_library ('rt', required: true)
-]
+mdbx_deps = []
+if not (target_machine.system() == 'windows')
+    mdbx_deps += [
+        cc.find_library ('pthread', required: true),
+        cc.find_library ('rt', required: true)
+    ]
+endif
 
 mdbx_inc = include_directories('.')
 

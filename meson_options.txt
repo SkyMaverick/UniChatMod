@@ -26,7 +26,7 @@ option ('path_docs_lookup', type: 'string', value: 'docs',
 
 option ('build_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
-option ('build_with_tests', type: 'boolean', value: 'true',
+option ('build_with_tests', type: 'boolean', value: 'false',
         description: 'build and run enabled tests')
 
 # === ATTENTION !!! ===
@@ -39,7 +39,7 @@ option ('build_with_hidden_api', type: 'boolean', value: 'true',
 option ('build_with_full_commit', type: 'boolean', value: 'true',
         description: 'full (without --short key) rev-value commit code in plugin options')
 
-option ('build_with_gui', type: 'boolean', value: 'true',
+option ('build_with_gui', type: 'boolean', value: 'false',
         description: 'build standart gui')
 option ('gui_enable_lazarus', type: 'boolean', value: 'false',
         description: 'enable lazarus based gui as variant')
