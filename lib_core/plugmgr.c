@@ -92,7 +92,7 @@ _plugin_load (char* filename)
         ucm_plugin_t* plug = cb_init_plugin(ucm_api);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
-                module = ucm_kmalloc (sizeof(ucm_module_t));
+                module = ucm_kzmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
                     module->handle = handle;
