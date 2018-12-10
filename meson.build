@@ -98,7 +98,7 @@ if target_machine.system() == 'windows'
         error ('Posix threads dependency error')
     endif
     
-    system_library_dynload = []
+    system_library_dynload = cc.find_library ('dl', required: false)
 else
     system_library_threads = cc.find_library ('pthread', required: true)
     system_library_dynload = cc.find_library ('dl', required: true)

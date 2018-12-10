@@ -70,13 +70,16 @@ def remove_dir (path):
 #   ACTIONS
 # ==================================================
 
+def action_build ():
+    return ninja_cmd()
+
 def action_debug ():
     meson_cmd()
-    return ninja_cmd()
+    return action_build()
 
 def action_release ():
     meson_cmd('--buildtype=release')
-    return ninja_cmd()
+    return action_build()
 
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
@@ -94,10 +97,6 @@ def action_clean():
                     if os.access(strName, os.W_OK):
                         os.remove(strName)
           
-
-def action_new():
-    action_clean()
-    return action_build()
 
 def action_test():
     info ('Start test framework in: {path}'.format(path=path_build))
@@ -140,6 +139,7 @@ def action_dummy ():
 # ==================================================
 
 actions = {
+        'build'             : action_build,
         'debug'             : action_debug,
         'release'           : action_release,
         'clean'             : action_clean,
