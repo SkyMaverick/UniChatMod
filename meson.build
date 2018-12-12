@@ -18,6 +18,7 @@ if get_option('enable_traces')
 endif
 if get_option('build_bundle')
     add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
+    add_global_arguments ('-DENABLE_BASE_BUNDLE', language: 'c')
 endif
 if get_option('build_with_hidden_api')
     add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')

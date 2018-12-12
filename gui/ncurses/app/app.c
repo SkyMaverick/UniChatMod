@@ -146,7 +146,7 @@ main (int argc, char* argv[])
 
 #ifdef ENABLE_BUNDLE
     portable = 1;
-    #ifdef BASE_INBUNDLE
+    #ifdef ENABLE_BASE_BUNDLE
         portable_base = 1;
     #endif
 #endif
