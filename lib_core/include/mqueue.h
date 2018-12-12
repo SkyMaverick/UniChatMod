@@ -1,5 +1,5 @@
-#ifndef _MQUEUE_H_
-#define _MQUEUE_H_
+#pragma once
+
 #include "stdint.h"
 
 /*! create new messages queue and allocate memory for this */
@@ -22,5 +22,3 @@ int mq_noempty (struct mq_block_s *h);
 
 /*! release messages queue */
 void mq_free (struct mq_block_s *h);
-
-#endif

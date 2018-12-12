@@ -1,5 +1,4 @@
-#ifndef _UCM_PLUGMGR_H_
-#define _UCM_PLUGMGR_H_
+#pragma once
 
 #include "ucm.h"
 
@@ -40,5 +39,3 @@ plugins_get_gui (void);
 
 const ucm_plugin_t**
 plugins_get_stuff (void);
-
-#endif

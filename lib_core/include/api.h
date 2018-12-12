@@ -1,5 +1,4 @@
-#ifndef _UCM_API_H_
-#define _UCM_API_H_
+#pragma once
 
 #include "ucm.h"
 #include "osal.h"
@@ -18,6 +17,4 @@ extern ucm_functions_t* UniAPI;
 
 #ifdef __cplusplus
     }
-#endif
-
 #endif

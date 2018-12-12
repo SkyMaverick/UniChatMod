@@ -1,6 +1,3 @@
-#ifndef _UCM_IOQS_H_
-#define _UCM_IOQS_H_
+#pragma once
 
 ucm_msg_t
-
-#endif

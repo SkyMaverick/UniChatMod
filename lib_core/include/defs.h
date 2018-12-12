@@ -1,5 +1,5 @@
-#ifndef _MACRO_H_
-#define _MACRO_H_
+#pragma once
+
 #include <stdio.h>
 #include <limits.h>
 #include "ucm.h"
@@ -19,6 +19,4 @@
 
 #ifndef _countof
     #define _countof(x) (sizeof(x)/sizeof(x[0]))
-#endif
-
 #endif

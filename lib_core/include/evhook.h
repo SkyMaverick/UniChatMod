@@ -1,5 +1,4 @@
-#ifndef _UCM_EVENT_HOOK_H_
-#define _UCM_EVENT_HOOK_H_
+#pragma once
 
 #include <stddef.h>
 #include <inttypes.h>
@@ -28,5 +27,3 @@ hooks_event_attach (cb_evhook  hook,
 
 void
 hooks_event_detach (cb_evhook hook);
-
-#endif

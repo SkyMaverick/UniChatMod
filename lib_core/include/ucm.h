@@ -1,5 +1,4 @@
-#ifndef _UCM_H_
-#define _UCM_H_
+#pragma once
 
 /* GhostCommander (gc) - simple, modular, scalable file manager */
 
@@ -620,5 +619,3 @@ ucm_core_info (void);
 #ifdef __cplusplus
     }
 #endif
-
-#endif /*_ucm_H_*/

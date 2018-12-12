@@ -1,5 +1,4 @@
-#ifndef _UCM_SYSTEM_ENTROPY_UPDATE_H_
-#define _UCM_SYSTEM_ENTROPY_UPDATE_H_
+#pragma once
 
 #include "ucm.h"
 
@@ -11,5 +10,3 @@ get_ucm_entropy (void);
 
 void
 free_ucm_entropy (void);
-
-#endif

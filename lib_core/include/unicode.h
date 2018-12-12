@@ -1,5 +1,4 @@
-#ifndef _UCM_UNICODE_FUNCS_H_
-#define _UCM_UNICODE_FUNCS_H_
+#pragma once
 
 #include <stdarg.h>
 #include <inttypes.h>
@@ -117,4 +116,3 @@ ucm_strstr (u32char_t* str,
 int64_t
 ucm_strcasestr (u32char_t* str,
                 u32char_t* sstr);
-#endif

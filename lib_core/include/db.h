@@ -1,5 +1,4 @@
-#ifndef _UCM_DATABASE_H_
-#define _UCM_DATABASE_H_
+#pragma once
 
 UCM_RET
 db_open ( char*      aPath,
@@ -7,5 +6,3 @@ db_open ( char*      aPath,
 
 UCM_RET
 db_close (void);
-
-#endif
