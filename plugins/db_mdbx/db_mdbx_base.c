@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "ucm.h"
-#include "api.h"
 #include "threading.h"
 #include "db_mdbx.h"
 #include "db_mdbx_base.h"

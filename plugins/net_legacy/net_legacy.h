@@ -10,4 +10,10 @@ extern const ucm_plugproto_t* plucl;
 #define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(plucl), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
 #define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(plucl), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
 
+#define ucm_free_null(X)    \
+    do {                    \
+        app->free(X);       \
+        X = NULL;           \
+    } while (0)
+
 #endif

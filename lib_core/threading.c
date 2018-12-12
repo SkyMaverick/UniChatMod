@@ -70,7 +70,7 @@ thread_join (intptr_t tid)
 uintptr_t
 mutex_create_nonrecursive (void)
 {
-    pthread_mutex_t* mtx= ucm_kmalloc(sizeof(pthread_mutex_t));
+    pthread_mutex_t* mtx= ucm_malloc(sizeof(pthread_mutex_t));
     if (mtx) {
         pthread_mutexattr_t attr;
         pthread_mutexattr_init(&attr);
@@ -80,7 +80,7 @@ mutex_create_nonrecursive (void)
         int fail=pthread_mutex_init(mtx,&attr);
         if (fail) {
             ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
-            ucm_kfree_null(mtx);
+            ucm_free_null(mtx);
         }
         pthread_mutexattr_destroy (&attr);
     }
@@ -90,7 +90,7 @@ mutex_create_nonrecursive (void)
 uintptr_t
 mutex_create (void)
 {
-    pthread_mutex_t* mtx= ucm_kmalloc(sizeof(pthread_mutex_t));
+    pthread_mutex_t* mtx= ucm_malloc(sizeof(pthread_mutex_t));
     if (mtx) {
         pthread_mutexattr_t attr;
         pthread_mutexattr_init(&attr);
@@ -100,7 +100,7 @@ mutex_create (void)
         int fail=pthread_mutex_init(mtx,&attr);
         if (fail) {
             ucm_etrace("%s. %s\n","Failed in pthread_mutex_init", strerror(fail));
-            ucm_kfree_null(mtx);
+            ucm_free_null(mtx);
         }
         pthread_mutexattr_destroy (&attr);
     }
@@ -113,7 +113,7 @@ mutex_free (uintptr_t _mtx)
     if (_mtx) {
         pthread_mutex_t* mtx = (pthread_mutex_t*)_mtx;
         pthread_mutex_destroy(mtx);
-        ucm_kfree(mtx);
+        ucm_free(mtx);
     }
 }
 
@@ -140,12 +140,12 @@ mutex_unlock(uintptr_t _mtx)
 uintptr_t
 cond_create (void)
 {
-    pthread_cond_t *cond = ucm_kmalloc(sizeof(pthread_cond_t));
+    pthread_cond_t *cond = ucm_malloc(sizeof(pthread_cond_t));
     if (cond) {
         int fail = pthread_cond_init(cond, NULL);
         if (fail) {
             ucm_etrace("%s. %s\n","Failed in pthread_cond_create", strerror(fail));
-            ucm_kfree_null(cond);
+            ucm_free_null(cond);
         }
     }
     return (uintptr_t)cond;
@@ -157,7 +157,7 @@ cond_free(uintptr_t _cond)
     if (_cond) {
         pthread_cond_t* cond = (pthread_cond_t*)_cond;
         pthread_cond_destroy(cond);
-        ucm_kfree(cond);
+        ucm_free(cond);
     }
 }
 
@@ -209,7 +209,7 @@ rwlock_create (void)
         int fail = pthread_rwlock_init(rwl,&attr);
         if(fail){
             ucm_etrace("%s. %s\n","Failed in rwlock_create", strerror(fail));
-            ucm_kfree_null(rwl);
+            ucm_free_null(rwl);
         }
         pthread_rwlockattr_destroy(&attr);
     }
@@ -222,7 +222,7 @@ rwlock_free (uintptr_t _rwl)
     if (_rwl) {
         pthread_rwlock_t* rwl = (pthread_rwlock_t*)_rwl;
         pthread_rwlock_destroy(rwl);
-        ucm_kfree(rwl);
+        ucm_free(rwl);
     }
 }
 

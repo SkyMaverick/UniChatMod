@@ -62,8 +62,8 @@ _stop_core (void)
 {
 
     if (tid_loop_core > 0) {
-        ucm_api->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
-        ucm_api->thread_join(tid_loop_core);
+        UniAPI->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
+        UniAPI->thread_join(tid_loop_core);
     }
     db_close();
     plugins_stop_all();
@@ -98,7 +98,7 @@ _run_core (void)
             return UCM_RET_WRONGPARAM;
         }
 
-        tid_loop_core = ucm_api->thread_create(loop_core, NULL);
+        tid_loop_core = UniAPI->thread_create(loop_core, NULL);
     }
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;

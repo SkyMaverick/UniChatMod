@@ -462,7 +462,8 @@ typedef struct _ucm_functions_s {
     void*       (*calloc)           (size_t nmem, size_t size);
     void        (*free)             (void* obj);
     void        (*zmemory)          (void* mem, size_t size);
-    int         (*realloc)          (void** mem, size_t size);
+    void*       (*realloc)          (void* mem, size_t size);
+    char*       (*strdup)           (const char* str);
 
     /*! pthread API functions*/
     intptr_t    (*thread_create)    (void(*func)(void* ctx), void* ctx);
@@ -571,19 +572,6 @@ typedef struct _ucm_functions_s {
     UCM_RET                     (*ucm_recv_message) (void);   //TODO
 
 } ucm_functions_t;
-
-#define ucm_malloc(PAPI,X)       ucm_api->malloc((X))
-#define ucm_zmalloc(PAPI,X)      ucm_api->zmalloc((X))
-#define ucm_calloc(PAPI,N,X)     ucm_api->malloc((N),(X))
-#define ucm_free(PAPI,X)         ucm_api->free((X))
-#define ucm_zmemory(PAPI,X,S)    ucm_api->zmemory((X),(S))
-#define ucm_realloc(PAPI,X,S)    ucm_api->realloc((X),(S))
-
-#define ucm_free_null(PAPI,X)   \
-    do {                        \
-        (PAPI)->free(X);        \
-        X = NULL;               \
-    } while (0);                \
 
 // *********************************************************
 //      START/STOP/INFO MODULE

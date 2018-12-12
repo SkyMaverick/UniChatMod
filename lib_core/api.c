@@ -11,8 +11,6 @@
 #include "unicode.h"
 #include "cpentupd.h"
 
-#include "alloc.c"
-
 wchar_t ucm_path        [UCM_PATH_MAX];
 wchar_t ucm_path_store  [UCM_PATH_MAX];
 wchar_t ucm_path_plugs  [UCM_PATH_MAX];
@@ -37,14 +35,14 @@ g_plugins_path (void)
     return ucm_path_plugs;
 }
 
-
 static ucm_functions_t core_api = {
-    .malloc                 = ucm_kmalloc       ,
-    .zmalloc                = ucm_kzmalloc      ,
-    .calloc                 = ucm_kcalloc       ,
-    .free                   = ucm_kfree         ,
-    .zmemory                = ucm_kzmemory      ,
-    .realloc                = ucm_krealloc      ,
+    .malloc                 = ucm_malloc        ,
+    .zmalloc                = ucm_zmalloc       ,
+    .calloc                 = ucm_calloc        ,
+    .free                   = ucm_free          ,
+    .zmemory                = ucm_zmemory       ,
+    .realloc                = ucm_realloc       ,
+    .strdup                 = ucm_strdup        ,
 
     .thread_create          = thread_create     ,
     .thread_detach          = thread_detach     ,
@@ -71,7 +69,7 @@ static ucm_functions_t core_api = {
     .U8toU32                = u8_decode_ucs4    ,
     .U32toU8                = ucs4_encode_u8    ,
     .ustrlen                = ucm_strlen        ,
-    .ustrdup                = ucm_strdup        ,
+    .ustrdup                = ucm_strdup2       ,
     .ustrcmp                = ucm_strcmp        ,
     .ustrcasecmp            = ucm_strcasecmp    ,
     .ustrncmp               = ucm_strncmp       ,
@@ -144,4 +142,4 @@ static ucm_functions_t core_api = {
     .get_plugins_path       = g_plugins_path ,
 };
 
-ucm_functions_t* ucm_api = &core_api;
+ucm_functions_t* UniAPI = &core_api;

@@ -37,7 +37,7 @@ _hooks_flush (ucm_evhook_t** list)
     while (*list) {
         tmp = *list;
         *list = (*list)->next;
-        ucm_kfree_null(tmp);
+        ucm_free_null(tmp);
     }
 }
 
@@ -70,7 +70,7 @@ hooks_event_attach (cb_evhook  hook,
                     void*      ctx, 
                     uint32_t   mask)
 {
-    ucm_evhook_t* eh = ucm_kzmalloc(sizeof(ucm_evhook_t));
+    ucm_evhook_t* eh = ucm_zmalloc(sizeof(ucm_evhook_t));
     if (eh) {
         eh->hook = hook;
         eh->ctx  = ctx;
@@ -96,7 +96,7 @@ hooks_event_detach (cb_evhook hook)
             } else {
                 _hooks = ev->next;
             }
-            ucm_kfree (ev);
+            ucm_free (ev);
             break;
         }
     }

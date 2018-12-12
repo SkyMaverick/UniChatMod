@@ -32,7 +32,7 @@ ucm_core_start (ucm_cargs_t* args)
         return NULL;
     }
 
-    return (ucm_core->run() == UCM_RET_SUCCESS) ? ucm_api : NULL;
+    return (ucm_core->run() == UCM_RET_SUCCESS) ? UniAPI : NULL;
 }
 
 const ucm_plugin_info_t*

@@ -21,7 +21,7 @@ typedef struct ucm_module_s {
 } ucm_module_t;
 
 #define PLUGIN(X) X->plugin
-#define NULL_REG(X) ucm_kzmemory ((X),   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
+#define NULL_REG(X) ucm_zmemory ((X),   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
 
 ucm_module_t modules = {
     .plugin = NULL,
@@ -89,10 +89,10 @@ _plugin_load (char* filename)
     char* err = NULL;
     ucm_plugin_t* (*cb_init_plugin)(ucm_functions_t* api) = dlsym(handle,"_init_plugin");
     if ( (err = dlerror()) == NULL ) {
-        ucm_plugin_t* plug = cb_init_plugin(ucm_api);
+        ucm_plugin_t* plug = cb_init_plugin(UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
-                module = ucm_kzmalloc (sizeof(ucm_module_t));
+                module = ucm_zmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
                     module->handle = handle;
@@ -243,7 +243,7 @@ plugins_release_registry (void)
         m_tmp = m_tmp->next;
 
         dlclose(m_del->handle);
-        ucm_kfree(m_del);
+        ucm_free(m_del);
     }
 }
 

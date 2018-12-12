@@ -66,6 +66,7 @@ endforeach
 lib_inc = [
     join_paths ('.',''),
     join_paths ('.', 'lib_core'),
+    join_paths ('.', 'lib_core', 'osal'),
     join_paths ('.', 'lib_core', 'include'),
 ]
 
@@ -91,13 +92,6 @@ endif
 
 if target_machine.system() == 'windows'
     system_library_threads = cc.find_library ('pthread', required: false)
-    if not system_library_threads.found()
-        message ('Use custom posix thread library')
-        # do subprojects
-    else
-        error ('Posix threads dependency error')
-    endif
-    
     system_library_dynload = cc.find_library ('dl', required: false)
 else
     system_library_threads = cc.find_library ('pthread', required: true)

@@ -2,17 +2,17 @@
 #define _UCM_API_H_
 
 #include "ucm.h"
-#include "alloc.c"
+#include "osal.h"
 
 #ifdef __cplusplus
     extern "C" {
 #endif
 
-extern ucm_functions_t* ucm_api;
+extern ucm_functions_t* UniAPI;
 
-#define ucm_kfree_null(X)   \
+#define ucm_free_null(X)    \
     do {                    \
-        ucm_kfree(X);       \
+        ucm_free(X);        \
         X = NULL;           \
     } while (0)
 

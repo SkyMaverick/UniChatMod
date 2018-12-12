@@ -13,6 +13,19 @@ libcore_src = files('''
     unicode.c
 '''.split())
 
+libcore_osal_src = '''
+        osal.h
+'''.split()
+
+if target_machine.system() == 'windows'
+    libcore_osal_src += 'osal-windows.c'
+else
+    libcore_osal_src += 'osal-linux.c'
+endif
+foreach item : libcore_osal_src
+    libcore_src += files (join_paths ('osal', item))
+endforeach
+
 libcore_deps = [
     system_library_threads,
     system_library_dynload

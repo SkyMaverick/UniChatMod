@@ -21,7 +21,7 @@ size_t
 ucm_strlen (u32char_t* str);
 
 u32char_t*
-ucm_strdup (u32char_t* str);
+ucm_strdup2 (u32char_t* str);
 
 int
 ucm_strcmp (u32char_t* lstr,

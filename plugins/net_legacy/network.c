@@ -99,12 +99,12 @@ ucl_connect ()
             con_s->tid_select = app->thread_create (__select_func, (void*) con_s);
             if (con_s->tid_select <= 0) {
                 trace_err ("%s : %s\n", "Don't create select thread", strerror(errno));
-                ucm_free_null (app, con_s);
+                ucm_free_null (con_s);
             };
             trace_dbg ("%s : %zu\n", "Create select thread", con_s->tid_select);
             con_s->proto.net_status = UCM_FLAG_NETSTAT_ON;
         } else  {
-            ucm_free_null (app, con_s);
+            ucm_free_null (con_s);
         }
     }
     return (uintptr_t) con_s;

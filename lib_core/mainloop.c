@@ -93,7 +93,7 @@ ucm_mloop_event_alloc (int id)
 
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
-        event = ucm_kzmalloc(size);
+        event = ucm_zmalloc(size);
 
         event->oid = UCM_TYPE_OBJECT_EVENT;
         event->ev = id;
@@ -112,7 +112,7 @@ ucm_mloop_event_free (ucm_ev_t** event)
         switch ((*event)->ev){
             // TODO
         }
-        ucm_kfree_null(*event);
+        ucm_free_null(*event);
     }
 }
 

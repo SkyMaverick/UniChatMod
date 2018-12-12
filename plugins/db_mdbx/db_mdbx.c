@@ -49,7 +49,7 @@ static UCM_RET
 _stop_dbmdbx (void)
 {
     app->rwlock_free ( UCM_DB->mtx );
-    ucm_free_null (app, UCM_DB);
+    ucm_free_null (UCM_DB);
     return UCM_RET_SUCCESS;
 }
 
