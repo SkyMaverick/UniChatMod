@@ -6,7 +6,7 @@
 #include "config.h"
 #include "logger.h"
 #include "api.h"
-#include "threading.h"
+#include "osal.h"
 
 typedef struct _logger_s {
     void (*cb_log)(ucm_plugin_t* plug, uint32_t type, const char* text);

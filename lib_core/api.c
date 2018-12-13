@@ -5,7 +5,6 @@
 
 #include "logger.h"
 #include "mainloop.h"
-#include "threading.h"
 #include "plugmgr.h"
 #include "evhook.h"
 #include "unicode.h"

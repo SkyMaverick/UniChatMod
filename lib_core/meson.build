@@ -8,7 +8,6 @@ libcore_src = files('''
     logger.c
     mqueue.c
     plugmgr.c
-    threading.c
     ucm.c
     unicode.c
 '''.split())

@@ -1,7 +1,7 @@
 #include "ucm.h"
 #include "api.h"
 #include "mqueue.h"
-#include "threading.h"
+#include "osal.h"
 
 #include <stdlib.h>
 #include <string.h>
