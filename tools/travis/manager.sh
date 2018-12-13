@@ -76,15 +76,15 @@ case $1 in
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init
     ;;
     RUN_DEBUG)
-        docker exec -ti ${CI_NAME} ./run.py build debug
+        docker exec -ti ${CI_NAME} ./run.py debug
     ;;
     RUN_RELEASE)
-        docker exec -ti ${CI_NAME} ./run.py build release
+        docker exec -ti ${CI_NAME} ./run.py release
     ;;
     RUN_COVERITY)
         docker exec -ti ${CI_NAME} sh -c "mkdir cov-build && meson cov-build"
         docker exec -ti ${CI_NAME} ${CI_COVERITY_LOADER}
-        docker exec -ti ${CI_NAME} ${CI_COVERITY} build
+        docker exec -ti ${CI_NAME} ${CI_COVERITY} debug
         docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
     ;;
     CLEANUP)
