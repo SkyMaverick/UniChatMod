@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "ucm.h"
-#include "threading.h"
 #include "db_mdbx.h"
 #include "db_mdbx_base.h"
 

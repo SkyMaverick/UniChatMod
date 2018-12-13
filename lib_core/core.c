@@ -19,8 +19,8 @@ typedef struct {
 
 static uintptr_t tid_loop_core = 0;
 
-static void
-loop_core (void* ctx)
+static THREAD_RESULT
+THREAD_CALL loop_core (void* ctx)
 {
     uint32_t  id;
     uintptr_t lctx;
@@ -55,6 +55,7 @@ loop_core (void* ctx)
         if (term) break;
         ucm_mloop_wait();
     }
+    return (THREAD_RESULT) 0;
 }
 
 static UCM_RET

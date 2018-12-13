@@ -14,7 +14,7 @@ _curses_cleanup (void)
     endwin();
 }
 
-static void 
+static void* 
 _curses_loop (void* ctx)
 {
     ucm_cargs_t* args = (ucm_cargs_t*) ctx;
@@ -48,6 +48,7 @@ _curses_loop (void* ctx)
     }
 
     _curses_cleanup();
+    return NULL;
 }
 
 // *********************************************************

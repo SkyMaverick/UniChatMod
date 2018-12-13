@@ -16,7 +16,7 @@
 #include "network.h"
 #include "net_legacy.h"
 
-static void
+static void*
 __select_func (void* ctx)
 {
 #ifdef __linux__
@@ -43,13 +43,14 @@ __select_func (void* ctx)
             if (retval < 0) {
                 trace_err ("%s\n", "Don't select socket" );
                 Con->proto.lan_status = UCM_FLAG_NETSTAT_OFF;
-                return;
+                return NULL;
             }
             if (retval > 0) {
                 //TODO accept connection
             }
         }
     }
+    return NULL;
 }
 
 static int

@@ -54,6 +54,8 @@ static ucm_functions_t core_api = {
     .mutex_unlock           = mutex_unlock      ,
 
     .cond_create            = cond_create       ,
+    .cond_lock              = cond_lock         ,
+    .cond_unlock            = cond_unlock       ,
     .cond_free              = cond_free         ,
     .cond_wait              = cond_wait         ,
     .cond_signal            = cond_signal       ,

@@ -11,6 +11,8 @@
 #include <string.h>
 #include <time.h>
 
+
+
 #ifndef _POSIX_C_SOURCE
     #ifdef _POSIX_SOURCE
         #define _POSIX_C_SOURCE 1
@@ -20,7 +22,7 @@
 #endif
 
 /* ======================================================================
-        CUSTOM MEMORY ALLOCATION FUNCTIONS
+        CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS 
    ====================================================================== */
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -121,29 +123,49 @@ ucm_zmemory (void*  ptr,
    ====================================================================== */
 
 #if defined(_WIN32) || defined(_WIN64)
+    #define THREAD_CALL    WINAPI
+    #define THREAD_RESULT  DWORD
 #else
+    #define THREAD_CALL
+    #define THREAD_RESULT  void *
 #endif
 
-intptr_t thread_create(void(*func)(void* ctx), void* ctx);
-int thread_detach(intptr_t tid) ;
-void thread_exit(void* ret) ;
-int thread_join(intptr_t tid) ;
+uintptr_t thread_create (
+        THREAD_RESULT ( THREAD_CALL *func)(void* ctx),
+        void* ctx);
+int thread_detach       (uintptr_t tid);
+void thread_exit        (THREAD_RESULT ret);
+int thread_join         (uintptr_t tid);
 
-uintptr_t mutex_create_nonrecursive(void) ;
-uintptr_t mutex_create(void) ;
-void mutex_free(uintptr_t _mtx) ;
-int mutex_lock(uintptr_t _mtx) ;
-int mutex_unlock(uintptr_t _mtx) ;
+uintptr_t mutex_create_nonrecursive(void);
+uintptr_t mutex_create  (void);
+void mutex_free         (uintptr_t _mtx);
+int mutex_lock          (uintptr_t _mtx);
+int mutex_unlock        (uintptr_t _mtx);
 
-uintptr_t cond_create (void) ;
-void cond_free(uintptr_t _cond) ;
-int cond_wait(uintptr_t _cond, uintptr_t _mtx) ;
-int cond_signal (uintptr_t _cond) ;
-int cond_broadcast (uintptr_t _cond) ;
+uintptr_t cond_create   (void) ;
+int cond_lock           (uintptr_t _cond);
+int cond_unlock         (uintptr_t _cond);
+void cond_free          (uintptr_t _cond);
+int cond_wait           (uintptr_t _cond);
+int cond_signal         (uintptr_t _cond);
+int cond_broadcast      (uintptr_t _cond);
 
-uintptr_t rwlock_create(void);
-void rwlock_free(uintptr_t _rwl);
-int rwlock_rlock(uintptr_t _rwl);
-int rwlock_wlock(uintptr_t _rwl);
-int rwlock_unlock(uintptr_t _rwl);
+uintptr_t rwlock_create (void);
+void rwlock_free        (uintptr_t _rwl);
+int rwlock_rlock        (uintptr_t _rwl);
+int rwlock_wlock        (uintptr_t _rwl);
+int rwlock_unlock       (uintptr_t _rwl);
 
+/* ======================================================================
+        CUSTOM FUNCTIONS
+   ====================================================================== */
+static inline int
+ucm_errno (void)
+{
+#if defined(_WIN32) || defined(_WIN64)
+    return (int) GetLastError();
+#else
+    return errno;
+#endif
+}

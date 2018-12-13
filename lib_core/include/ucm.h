@@ -120,6 +120,14 @@
 
 #define UCM_DB_DEFAULT_NAME "ucmdb"
 
+#if defined(_WIN32) || defined(_WIN64)
+    #define THREAD_CALL    WINAPI
+    #define THREAD_RESULT  DWORD
+#else
+    #define THREAD_CALL
+    #define THREAD_RESULT  void *
+#endif
+
 // *********************************************************
 //      CORE STRUCTURES
 // *********************************************************
@@ -465,10 +473,10 @@ typedef struct _ucm_functions_s {
     char*       (*strdup)           (const char* str);
 
     /*! pthread API functions*/
-    intptr_t    (*thread_create)    (void(*func)(void* ctx), void* ctx);
-    int         (*thread_detach)    (intptr_t tid);
-    void        (*thread_exit)      (void* ret);
-    int         (*thread_join)      (intptr_t tid);
+    uintptr_t   (*thread_create)    (THREAD_RESULT (THREAD_CALL *func)(void* ctx), void* ctx);
+    int         (*thread_detach)    (uintptr_t tid);
+    void        (*thread_exit)      (THREAD_RESULT ret);
+    int         (*thread_join)      (uintptr_t tid);
 
     uintptr_t   (*mutex_create)     (void);
     void        (*mutex_free)       (uintptr_t _mtx);
@@ -476,8 +484,10 @@ typedef struct _ucm_functions_s {
     int         (*mutex_unlock)     (uintptr_t _mtx);
 
     uintptr_t   (*cond_create)      (void);
+    int         (*cond_lock)        (uintptr_t _cond);
+    int         (*cond_unlock)      (uintptr_t _cond);
     void        (*cond_free)        (uintptr_t _cond);
-    int         (*cond_wait)        (uintptr_t _cond, uintptr_t _mtx);
+    int         (*cond_wait)        (uintptr_t _cond);
     int         (*cond_signal)      (uintptr_t _cond);
     int         (*cond_broadcast)   (uintptr_t _cond);
 
