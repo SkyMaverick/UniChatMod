@@ -86,7 +86,6 @@ int cond_broadcast (uintptr_t _cond)
     return 0;
 }
 
-
 uintptr_t rwlock_create (void)
 {
     return 0;

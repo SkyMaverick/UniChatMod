@@ -221,34 +221,7 @@ plugins_load_registry (const char* plug_path)
     };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
     ucm_dirclose (dir);
-//    ucm_dir_list plugs_dir = opendir(plug_path);
-//    if (!plugs_dir) {
-//        ucm_etrace("%ls %ls: %ls\n", _("Not found path"), plug_path, strerror(errno));
-//        return UCM_RET_WRONGPARAM;
-//    }
-//
-//    /* scan directory was marked as plugins container */
-//    size_t plugs_count = 0;
-//    char buffer [UCM_PATH_MAX];
-//    
-//    if (ls = ucm_dir_next()
-//    while ((ls = readdir(plugs_dir))) {
-//        if (!(strncmp (ls->d_name, ".", 1))  ||
-//            !(strncmp (ls->d_name, "..", 2)) ||
-//            !(strstr (ls->d_name, ".so")))
-//        {
-//            continue;
-//        }
-//        snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls->d_name);
-//        tmp_module->next = _plugin_load(buffer);
-//        if ( tmp_module->next ) {
-//            tmp_module = tmp_module->next;
-//            plugs_count++;
-//        }
-//    }
-//
-//    ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-//    closedir(plugs_dir);
+    
     return UCM_RET_SUCCESS;
 }
 

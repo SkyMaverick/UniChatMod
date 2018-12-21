@@ -270,10 +270,11 @@ ucm_diropen (const char*       path,
         if (pdir) {
             pdir->handle = ret;
             memcpy (pdir->path, path, strlen (path));
+        
+            list->name   = tmp->d_name;
+            list->handle = (uintptr_t) tmp;
+            list->type   = get_fso_type (pdir, list->name);
         }
-        list->name   = tmp->d_name;
-        list->handle = (uintptr_t) tmp;
-        list->type   = get_fso_type (pdir, list->name);
         return (ucm_dir_t) pdir;
     }
     ucm_zmemory (list, sizeof(ucm_fsobject_t));
