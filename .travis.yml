@@ -37,8 +37,6 @@ addons:
 
 before_install:
     - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- 
-
-install:
     - if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
         env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
       fi
@@ -55,7 +53,8 @@ script:
             ${CI_MANAGER} CLEANUP;
           fi;
           if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-            ${CI_MANAGER} CREATE;
+            echo $COVERITY_SCAN_PROJECT_NAME;
+            ${CI_MANAGER} CREATE_FAST;
             ${CI_MANAGER} RUN_COVERITY;
             ${CI_MANAGER} CLEANUP;
           fi;

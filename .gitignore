@@ -38,4 +38,5 @@ config.h
 stamp-h1
 libtool
 /cov-build/
+*.pyc
 *.CRD
