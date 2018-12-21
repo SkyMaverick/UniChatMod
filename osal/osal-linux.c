@@ -4,10 +4,10 @@
   based on deadbeef/threading_pthread by Alexey Yakovenko */
 
 #include <pthread.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
+
+/* ======================================================================
+        CUSTOM THREADING FUNCTIONS
+   ====================================================================== */
 
 typedef struct {
     pthread_mutex_t mtx;
@@ -224,4 +224,84 @@ inline int
 rwlock_unlock(uintptr_t _rwl)
 {
     return pthread_rwlock_unlock ((pthread_rwlock_t*)_rwl);
+}
+
+/* ======================================================================
+        CUSTOM FUNCTIONS
+   ====================================================================== */
+static int
+get_fso_type (posix_dir_t*  dir,
+              const char*   fso)
+{
+    struct stat sb;
+    uint32_t buffer_lenght = strlen (dir->path)  + strlen (fso) + 2;
+    char* path_fabs = ucm_zmalloc (buffer_lenght);
+    if (path_fabs) {
+        snprintf (path_fabs, buffer_lenght, "%s/%s", dir->path, fso);
+        if ( lstat(path_fabs, &sb) != -1) {
+            switch (sb.st_mode & S_IFMT) {
+                // TODO Make new type is need
+                case S_IFREG: return FO_TYPE_FILE;
+                case S_IFDIR: return FO_TYPE_DIRECTORY;
+
+                default: return FO_TYPE_UNKNOW;
+            }
+        }
+    }
+    return FO_TYPE_UNKNOW;
+}
+
+ucm_dir_t
+ucm_diropen (const char*       path,
+             ucm_fsobject_t*   list)
+{
+    if (list == NULL)
+        return 0;
+    DIR* ret = opendir (path);
+    if (ret == NULL) {
+       ucm_zmemory (list, sizeof(ucm_fsobject_t));
+       goto quit;
+    }
+    
+    struct dirent* tmp = readdir (ret);
+    if (tmp) {
+        posix_dir_t* pdir = ucm_zmalloc ((strlen(path) + 1) * sizeof(char)
+                                         + sizeof (posix_dir_t) );
+        if (pdir) {
+            pdir->handle = ret;
+            memcpy (pdir->path, path, strlen (path));
+        }
+        list->name   = tmp->d_name;
+        list->handle = (uintptr_t) tmp;
+        list->type   = get_fso_type (pdir, list->name);
+        return (ucm_dir_t) pdir;
+    }
+    ucm_zmemory (list, sizeof(ucm_fsobject_t));
+    closedir (ret);
+
+    quit: return (ucm_dir_t) ret;
+}
+
+int
+ucm_dirnext (ucm_dir_t         dir,
+             ucm_fsobject_t*   list)
+{
+    ucm_zmemory(list, sizeof(ucm_fsobject_t));
+
+    struct dirent* tmp = readdir (((posix_dir_t*)dir)->handle);
+    if (tmp == NULL)
+        return 0;
+    
+    list->name = tmp->d_name;
+    list->handle = (uintptr_t) tmp;
+    list->type   = get_fso_type ((posix_dir_t*)dir, list->name);
+
+    return 1;
+}
+
+void
+ucm_dirclose (ucm_dir_t dir)
+{
+    closedir ( ((posix_dir_t*)dir)->handle );
+    ucm_free ( (posix_dir_t*) dir);
 }

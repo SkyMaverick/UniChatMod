@@ -1,8 +1,19 @@
+from sys import platform
+
 def info (arg):
-    print ('{blue}{txt}{endcolor}'.format (blue='\033[36;1m', txt=arg, endcolor='\033[0m'))
+    if platform == 'linux':
+        print ('{blue}{txt}{endcolor}'.format (blue='\033[36;1m', txt=arg, endcolor='\033[0m'))
+    else:
+        print (arg)
 
 def error (arg):
-    print ('{red}{txt}{endcolor}'.format (red='\033[31;1m', txt=arg, endcolor='\033[0m'))
+    if platform == 'linux':
+        print ('{red}{txt}{endcolor}'.format (red='\033[31;1m', txt=arg, endcolor='\033[0m'))
+    else:
+        print (arg)
 
 def hint (arg):
-    print ('{yellow}{txt}{endcolor}'.format (yellow='\033[33;1m', txt=arg, endcolor='\033[0m'))
+    if platform == 'linux':
+        print ('{yellow}{txt}{endcolor}'.format (yellow='\033[33;1m', txt=arg, endcolor='\033[0m'))
+    else:
+        print (arg)

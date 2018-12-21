@@ -88,8 +88,6 @@ _run_core (void)
     }
     // start main message loop
     if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
-
-        log_init();
         hooks_event_init();
         plugins_run_all();
 

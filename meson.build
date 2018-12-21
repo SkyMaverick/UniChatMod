@@ -5,51 +5,63 @@ project ('ucm', 'c',
             'c_std=gnu11',
          ],
          subproject_dir: 'deps',
-         meson_version: '>=0.46')
+         meson_version: '>=0.49')
 
 cc = meson.get_compiler('c')
 
-# --- compiler preferences ----------
-if get_option('buildtype').startswith('debug')
-    add_global_arguments ('-DDEBUG', language: 'c')
-endif
-if get_option('enable_traces')
-    add_global_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
-endif
-if get_option('build_bundle')
-    add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
-    add_global_arguments ('-DENABLE_BASE_BUNDLE', language: 'c')
-endif
-if get_option('build_with_hidden_api')
-    add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
-endif
+# if cc.get_id() == 'gcc'
+    # --- compiler preferences ----------
+    if get_option('buildtype').startswith('debug')
+        add_global_arguments ('-DDEBUG', language: 'c')
+    endif
+    if get_option('enable_traces')
+        add_global_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
+    endif
+    if get_option('build_bundle')
+        add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
+        add_global_arguments ('-DENABLE_BASE_BUNDLE', language: 'c')
+    endif
+    if get_option('build_with_hidden_api')
+        add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
+    endif
 
-# --- compiler arguments ----------
-cc_args = '''
-    -Wall
-'''.split()
-
-cc_link_args = '''
-'''.split()
-
-if get_option('buildtype').startswith('debug')
-    cc_args += '''
-                -O0
-                -g
-              '''.split()
-elif get_option('buildtype').startswith('release')
-    cc_args += '''
-                -O3
-                -s
-            '''.split()
-endif
-
-if get_option('build_with_hidden_api')
-    cc_args += '''
-        -fvisibility=hidden
+    add_global_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
+    # --- compiler arguments ----------
+    cc_args = '''
+        -Wall
     '''.split()
-endif
 
+    cc_link_args = '''
+    '''.split()
+
+    if get_option('buildtype').startswith('debug')
+        cc_args += '''
+                    -O0
+                    -g
+                  '''.split()
+    elif get_option('buildtype').startswith('release')
+        cc_args += '''
+                    -O3
+                    -s
+                '''.split()
+    endif
+
+    if get_option('build_with_hidden_api')
+        cc_args += '''
+            -fvisibility=hidden
+        '''.split()
+    endif
+# elif cc.get_id() == 'clang'
+#     message ('Temporary use default case')
+# 
+#     cc_args = '''
+#     '''.split()
+# 
+#     cc_link_args = '''
+#     '''.split()
+# else
+#     error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
+# endif
 # --- Add all switches in project command line -----------
 foreach arg : cc_args
     if cc.has_argument(arg)
@@ -63,18 +75,17 @@ foreach arg : cc_link_args
     endif
 endforeach
 
-
 lib_inc = [
-    join_paths ('.',''),
-    join_paths ('.', 'lib_core'),
-    join_paths ('.', 'lib_core', 'osal'),
-    join_paths ('.', 'lib_core', 'include'),
+    '.'/'',
+    '.'/'lib_core',
+    '.'/'osal',
+    '.'/'lib_core'/'include',
 ]
 
 libs_rpath = ':'.join ([
-    join_paths ('$ORIGIN','.'),
-    join_paths ('$ORIGIN', '..', 'libs', '.'),
-    join_paths ('$ORIGIN', '..', 'mods', '.')
+    '$ORIGIN'/'.',
+    '$ORIGIN'/'..'/'libs', '.',
+    '$ORIGIN'/'..'/'mods', '.'
 ])
 
 # --- include headers paths ----------
@@ -82,11 +93,11 @@ lib_core_inc = include_directories (lib_inc)
 
 # --- install paths resolve ----------
 if get_option ('build_bundle')
-    install_path_root = join_paths (meson.source_root(), 'bundle', meson.project_name ())
-    install_path_mods = join_paths (install_path_root, get_option ('path_modules_lookup'))
-    install_path_libs = join_paths (install_path_root, get_option ('path_libs_lookup'))
-    install_path_docs = join_paths (install_path_root, get_option ('path_docs_lookup'))
-    install_path_devs = join_paths (install_path_root, get_option ('path_devels_lookup'))
+    install_path_root = meson.source_root() / 'bundle' / meson.project_name ()
+    install_path_mods = install_path_root / get_option ('path_modules_lookup')
+    install_path_libs = install_path_root / get_option ('path_libs_lookup')
+    install_path_docs = install_path_root / get_option ('path_docs_lookup')
+    install_path_devs = install_path_root / get_option ('path_devels_lookup')
 endif
 
 # --- resolve some popularity dependencies ----------

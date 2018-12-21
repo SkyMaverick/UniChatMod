@@ -21,6 +21,11 @@
     #endif
 #endif
 
+#ifndef _XOPEN_SOURCE
+    #define _XOPEN_SOURCE 0
+#endif
+
+
 /* ======================================================================
         CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS 
    ====================================================================== */
@@ -73,6 +78,7 @@
     #include <signal.h>
     #include <sys/file.h>
     #include <sys/stat.h>
+    #include <sys/select.h>
     #include <sys/types.h>
     #include <unistd.h>
     #include <fcntl.h>
@@ -85,7 +91,9 @@
     #define ucm_calloc  calloc
     #define ucm_free    free
     #define ucm_realloc realloc
-    #define ucm_strdup  strdup
+    #ifdef strdup
+        #define ucm_strdup  strdup
+    #endif
 #endif
 
 static inline void*
@@ -117,14 +125,58 @@ ucm_zmemory (void*  ptr,
 /* ======================================================================
         CUSTOM DYNAMIC LOAD LIBRARIES FUNCTIONS
    ====================================================================== */
-
+#if defined(_WIN32) || defined(_WIN64)
+    typedef HMODULE  DLHANDLE;
+    typedef FARPROC  DLSYMFUNC;
+    #ifndef ucm_dlopen
+        static inline DLHANDLE
+        ucm_dlopen (char* path, int mode)
+        {
+            return LoadLibraryExA (path, NULL, (DWORD)mode);
+        }
+    #endif
+    #ifndef ucm_dlclose
+        static inline void
+        ucm_dlclose (DLHANDLE hndl)
+        {
+            FreeLibrary (hndl);
+        }
+    #endif
+    #ifndef ucm_dlsym
+        static inline DLSYMFUNC
+        ucm_dlsym (DLHANDLE lib, const char* func)
+        {
+            return GetProcAddress (lib, func);
+        }
+    #endif
+    #ifndef ucm_dlerror
+        static inline char*
+        ucm_dlerror () {
+            char* buffer = NULL;
+            FormatMessage ( FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                            FORMAT_MESSAGE_FROM_SYSTEM |
+                            FORMAT_MESSAGE_IGNORE_INSERTS,
+                            NULL, GetLastError(),
+                            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                            (LPTSTR) buffer, 0, NULL);
+            return buffer;
+        }
+    #endif
+#else
+    typedef void*   DLHANDLE;
+    typedef void*   DLSYMFUNC;
+    #define ucm_dlopen     dlopen
+    #define ucm_dlclose    dlclose
+    #define ucm_dlsym      dlopen
+    #define ucm_dlerror    dlerror
+#endif
 /* ======================================================================
         CUSTOM THREADING FUNCTIONS
    ====================================================================== */
 
 #if defined(_WIN32) || defined(_WIN64)
-    #define THREAD_CALL    WINAPI
-    #define THREAD_RESULT  DWORD
+    #define THREAD_CALL    __stdcall
+    #define THREAD_RESULT  uint32_t
 #else
     #define THREAD_CALL
     #define THREAD_RESULT  void *
@@ -169,3 +221,43 @@ ucm_errno (void)
     return errno;
 #endif
 }
+
+#ifndef strdup
+char*
+ucm_strdup (const char* str);
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+    typedef HANDLE ucm_dir_t;
+#else
+    typedef struct {
+        DIR* handle;
+        char path [1];
+    } posix_dir_t;
+
+    typedef uintptr_t ucm_dir_t;
+#endif
+
+enum {
+    FO_TYPE_FILE,
+    FO_TYPE_DIRECTORY,
+    FO_TYPE_UNKNOW
+};
+
+typedef struct {
+    char*     name;
+    uint8_t   type;
+
+    uintptr_t handle;
+} ucm_fsobject_t;
+
+ucm_dir_t
+ucm_diropen (const char*       path,
+             ucm_fsobject_t*   fso);
+
+int
+ucm_dirnext (ucm_dir_t        dir,
+             ucm_fsobject_t*  fso);
+
+void
+ucm_dirclose (ucm_dir_t fso);

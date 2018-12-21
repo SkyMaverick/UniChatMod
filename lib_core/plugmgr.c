@@ -1,14 +1,11 @@
 #include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dlfcn.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <dirent.h>
 #include <stdint.h>
 #include <wchar.h>
 
+#include "osal.h"
 #include "ucm.h"
 #include "core.h"
 #include "defs.h"
@@ -16,7 +13,7 @@
 
 typedef struct ucm_module_s {
     ucm_plugin_t* plugin;
-    void* handle;
+    DLHANDLE handle;
     struct ucm_module_s* next;
 } ucm_module_t;
 
@@ -80,16 +77,16 @@ _plugin_load (char* filename)
 {
     ucm_module_t* module = NULL;
 
-    void* handle = dlopen (filename, RTLD_LAZY);
+    DLHANDLE handle = ucm_dlopen (filename, RTLD_LAZY);
     if (!handle) {
         ucm_etrace ("%s: %s\n", filename, _("plugin don't load"));
         return module;
     }
 
     char* err = NULL;
-    ucm_plugin_t* (*cb_init_plugin)(ucm_functions_t* api) = dlsym(handle,"_init_plugin");
+    cb_init_plugin _pfunc = dlsym(handle,"_init_plugin");
     if ( (err = dlerror()) == NULL ) {
-        ucm_plugin_t* plug = cb_init_plugin(UniAPI);
+         ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
                 module = ucm_zmalloc (sizeof(ucm_module_t));
@@ -200,35 +197,58 @@ plugins_load_registry (const char* plug_path)
 {
     modules.plugin = ucm_core;
     ucm_module_t* tmp_module = &modules;
-
-    DIR* plugs_dir = opendir(plug_path);
-    if (!plugs_dir) {
-        ucm_etrace("%ls %ls: %ls\n", _("Not found path"), plug_path, strerror(errno));
-        return UCM_RET_WRONGPARAM;
-    }
-
-    /* scan directory was marked as plugins container */
-    struct dirent* ls = NULL;
+    
     size_t plugs_count = 0;
     char buffer [UCM_PATH_MAX];
 
-    while ((ls = readdir(plugs_dir))) {
-        if (!(strncmp (ls->d_name, ".", 1))  ||
-            !(strncmp (ls->d_name, "..", 2)) ||
-            !(strstr (ls->d_name, ".so")))
-        {
-            continue;
-        }
-        snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls->d_name);
-        tmp_module->next = _plugin_load(buffer);
-        if ( tmp_module->next ) {
-            tmp_module = tmp_module->next;
-            plugs_count++;
-        }
-    }
-
+    ucm_fsobject_t ls;
+    ucm_dir_t dir = ucm_diropen (plug_path, &ls);
+    if (dir) {
+        do {
+            if (!(strncmp (ls.name, ".", 1))  ||
+                !(strncmp (ls.name, "..", 2)) ||
+                !(strstr  (ls.name, ".so")))
+            {
+                    continue;
+            }
+            snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls.name);
+            tmp_module->next = _plugin_load(buffer);
+            if ( tmp_module->next ) {
+                tmp_module = tmp_module->next;
+                plugs_count++;
+            }
+        } while (ucm_dirnext(dir, &ls));
+    };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-    closedir(plugs_dir);
+    ucm_dirclose (dir);
+//    ucm_dir_list plugs_dir = opendir(plug_path);
+//    if (!plugs_dir) {
+//        ucm_etrace("%ls %ls: %ls\n", _("Not found path"), plug_path, strerror(errno));
+//        return UCM_RET_WRONGPARAM;
+//    }
+//
+//    /* scan directory was marked as plugins container */
+//    size_t plugs_count = 0;
+//    char buffer [UCM_PATH_MAX];
+//    
+//    if (ls = ucm_dir_next()
+//    while ((ls = readdir(plugs_dir))) {
+//        if (!(strncmp (ls->d_name, ".", 1))  ||
+//            !(strncmp (ls->d_name, "..", 2)) ||
+//            !(strstr (ls->d_name, ".so")))
+//        {
+//            continue;
+//        }
+//        snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls->d_name);
+//        tmp_module->next = _plugin_load(buffer);
+//        if ( tmp_module->next ) {
+//            tmp_module = tmp_module->next;
+//            plugs_count++;
+//        }
+//    }
+//
+//    ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
+//    closedir(plugs_dir);
     return UCM_RET_SUCCESS;
 }
 

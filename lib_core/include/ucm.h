@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include <time.h>
 #include <limits.h>
 #include <wchar.h>
@@ -86,12 +86,21 @@
     #endif
 #endif /* __ucm_import */
 
-#if defined(LIBUCM_EXPORTS)
-    #define LIBUCM_API __ucm_export
-#elif defined(LIBMDBX_IMPORTS)
-    #define LIBUCM_API __ucm_import
+#if defined(_WIN32) || defined(_WIN64)
+    #define THREAD_CALL __stdcall
+    #define THREAD_RESULT  uint32_t
 #else
-    #define LIBUCM_API
+    #define THREAD_CALL
+    #define THREAD_RESULT  void *
+#endif
+#define FUNCTION_CALL THREAD_CALL
+
+#if defined(LIBUCM_EXPORTS)
+    #define LIBUCM_API FUNCTION_CALL __ucm_export
+#elif defined(LIBMDBX_IMPORTS)
+    #define LIBUCM_API FUNCTION_CALL __ucm_import
+#else
+    #define LIBUCM_API FUNCTIO_CALL
 #endif
 
 // === CONSTANTS ========================
@@ -119,14 +128,6 @@
 #define UCM_CONTACT_NAME_MAX 1024
 
 #define UCM_DB_DEFAULT_NAME "ucmdb"
-
-#if defined(_WIN32) || defined(_WIN64)
-    #define THREAD_CALL    WINAPI
-    #define THREAD_RESULT  DWORD
-#else
-    #define THREAD_CALL
-    #define THREAD_RESULT  void *
-#endif
 
 // *********************************************************
 //      CORE STRUCTURES
@@ -262,6 +263,7 @@ enum {
 // *********************************************************
 //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
 // *********************************************************
+
 
 #define _EVENT_SENDER(obj)\
     ((ucm_plugin_t*)(((ucm_ev_t*)obj)->sender))
@@ -582,6 +584,11 @@ typedef struct _ucm_functions_s {
 
 } ucm_functions_t;
 
+#if defined(_WIN32) || defined(_WIN64)
+    typedef ucm_plugin_t*(*cb_init_plugin)(ucm_functions_t*);
+#else
+    typedef ucm_plugin_t* FUNCTION_CALL (*cb_init_plugin)(ucm_functions_t*);
+#endif
 // *********************************************************
 //      START/STOP/INFO MODULE
 // *********************************************************

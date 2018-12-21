@@ -13,16 +13,16 @@ libcore_src = files('''
 '''.split())
 
 libcore_osal_src = '''
-        osal.h
+        osal.c
 '''.split()
 
 if target_machine.system() == 'windows'
     libcore_osal_src += 'osal-windows.c'
 else
-    libcore_osal_src += 'osal-linux.c'
+   libcore_osal_src += 'osal-linux.c'
 endif
 foreach item : libcore_osal_src
-    libcore_src += files (join_paths ('osal', item))
+    libcore_src += files ('..' / 'osal' / item)
 endforeach
 
 libcore_deps = [
@@ -73,7 +73,7 @@ if lib_core_time.returncode() != 0
 else
     lib_core_time = lib_core_time.stdout().strip()
 endif
-arg
+
 # full version string
 lib_core_version_full = '@0@_@1@_@2@'.format (
                             meson.project_version(),
@@ -105,10 +105,10 @@ configure_file (input: 'config.h.in',
                 output: 'config.h',
                 configuration: lib_core_conf)
 
-core_header_c = files(join_paths('.', 'include', 'ucm.h'))
-core_header_pas = files(join_paths('.', 'bindings', 'fpc', 'ucm.pas'))
+core_header_c = files('.' / 'include' / 'ucm.h')
+core_header_pas = files('.' / 'bindings' / 'fpc' / 'ucm.pas')
 
-install_headers (core_header_c, core_header_pas, join_paths (meson.current_build_dir(), 'config.h'),
+install_headers (core_header_c, core_header_pas, meson.current_build_dir() / 'config.h',
                  install_dir: install_path_devs)
 
 libcore = shared_library (meson.project_name(),

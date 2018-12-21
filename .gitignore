@@ -38,3 +38,4 @@ config.h
 stamp-h1
 libtool
 /cov-build/
+*.CRD
