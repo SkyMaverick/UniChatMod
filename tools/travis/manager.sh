@@ -1,6 +1,7 @@
 #!/bin/sh
 
 ROOT=`pwd`
+BUILD_DIR=${ROOT}/build
 
 CI_IMAGE=ucmbuild:single
 CI_IMAGE_REMOTE=skymaverick/meson-ucm:xenial
@@ -52,11 +53,16 @@ CI_CLEANUP() {
 
 case $1 in
     CREATE)
+        if ! [ -d ${BUILD_DIR} ]
+        then
+            mkdir -p ${BUILD_DIR}
+        fi
+        
         CI_CREATE_NEW $CI_IMAGE $CI_NAME
         ENV_FILE=".cov-env"
         if [ -f ${ENV_FILE} ]
         then
-            docker run -dit -v ${ROOT}/build:/root/build \
+            docker run -dit -v ${BUILD_DIR}:/root/build \
                        -w /root --privileged=true \
                        --net=host \
                        --env-file=${ENV_FILE} \
@@ -69,9 +75,15 @@ case $1 in
         fi
     ;;
     CREATE_FAST)
+        if ! [ -d ${BUILD_DIR} ]
+        then
+            mkdir -p ${BUILD_DIR}
+        fi
+        ENV_FILE=".cov-env"
         CI_CREATE_FAST $CI_IMAGE $CI_IMAGE_REMOTE $CI_NAME
-        docker run -dit -v ${ROOT}/build:/root/build \
+        docker run -dit -v ${BUILD_DIR}:/root/build \
                    -w /root --privileged=true \
+                   --env-file=${ENV_FILE} \
                    --net=host \
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init
     ;;
@@ -84,7 +96,7 @@ case $1 in
     RUN_COVERITY)
         docker exec -ti ${CI_NAME} sh -c "mkdir cov-build && meson cov-build"
         docker exec -ti ${CI_NAME} ${CI_COVERITY_LOADER}
-        docker exec -ti ${CI_NAME} ${CI_COVERITY} debug
+        docker exec -ti ${CI_NAME} ${CI_COVERITY} build
         docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
     ;;
     CLEANUP)
