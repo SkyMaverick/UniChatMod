@@ -10,7 +10,7 @@
 #include "defs.h"
 #include "cpentupd.h"
 
-const ucm_functions_t*
+LIBUCM_API const ucm_functions_t* FUNCTION_CALL
 ucm_core_start (ucm_cargs_t* args)
 {
 //  TODO build plugin stack, init and start core plugin
@@ -35,13 +35,13 @@ ucm_core_start (ucm_cargs_t* args)
     return (ucm_core->run() == UCM_RET_SUCCESS) ? UniAPI : NULL;
 }
 
-const ucm_plugin_info_t*
+LIBUCM_API const ucm_plugin_info_t* FUNCTION_CALL
 ucm_core_info (void)
 {
     return &(ucm_core->info);
 }
 
-UCM_RET
+LIBUCM_API UCM_RET FUNCTION_CALL
 ucm_core_stop (void)
 {
     //TODO stop core plugin, cleanup and release plugin stack

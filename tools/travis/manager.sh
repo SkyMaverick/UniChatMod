@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ROOT=`pwd`
-BUILD_DIR=${ROOT}/build
+BUILD_DIR=${ROOT}/build/posix
 
 CI_IMAGE=ucmbuild:single
 CI_IMAGE_REMOTE=skymaverick/meson-ucm:xenial
@@ -62,13 +62,13 @@ case $1 in
         ENV_FILE=".cov-env"
         if [ -f ${ENV_FILE} ]
         then
-            docker run -dit -v ${BUILD_DIR}:/root/build \
+            docker run -dit -v ${BUILD_DIR}:/root/build/posix \
                        -w /root --privileged=true \
                        --net=host \
                        --env-file=${ENV_FILE} \
                        --name ${CI_NAME} ${CI_IMAGE} /sbin/init
         else
-            docker run -dit -v ${ROOT}/build:/root/build \
+            docker run -dit -v ${BUILD_DIR}:/root/build/posix \
                        -w /root --privileged=true \
                        --net=host \
                        --name ${CI_NAME} ${CI_IMAGE} /sbin/init
@@ -81,7 +81,7 @@ case $1 in
         fi
         ENV_FILE=".cov-env"
         CI_CREATE_FAST $CI_IMAGE $CI_IMAGE_REMOTE $CI_NAME
-        docker run -dit -v ${BUILD_DIR}:/root/build \
+        docker run -dit -v ${BUILD_DIR}:/root/build/posix \
                    -w /root --privileged=true \
                    --env-file=${ENV_FILE} \
                    --net=host \

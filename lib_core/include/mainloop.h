@@ -1,5 +1,5 @@
-#ifndef MAINLOOP_H_
-#define MAINLOOP_H_
+#pragma once
+
 #include <stdint.h>
 
 int  ucm_mloop_init (int size);
@@ -13,4 +13,3 @@ void ucm_mloop_free (void);
 ucm_ev_t* ucm_mloop_event_alloc (int id);
 int       ucm_mloop_event_push (ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
 void      ucm_mloop_event_free (ucm_ev_t** event);
-#endif

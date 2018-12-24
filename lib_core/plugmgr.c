@@ -77,16 +77,16 @@ _plugin_load (char* filename)
 {
     ucm_module_t* module = NULL;
 
-    DLHANDLE handle = ucm_dlopen (filename, RTLD_LAZY);
+    DLHANDLE handle = ucm_dlopen (filename, DEFAULT_DLFLAGS);
     if (!handle) {
         ucm_etrace ("%s: %s\n", filename, _("plugin don't load"));
         return module;
     }
 
     char* err = NULL;
-    cb_init_plugin _pfunc = dlsym(handle,"_init_plugin");
-    if ( (err = dlerror()) == NULL ) {
-         ucm_plugin_t*plug = _pfunc (UniAPI);
+    cb_init_plugin _pfunc = (cb_init_plugin) ucm_dlsym(handle,"_init_plugin");
+    if ( (err = ucm_dlerror()) == NULL ) {
+        ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
                 module = ucm_zmalloc (sizeof(ucm_module_t));
@@ -102,7 +102,7 @@ _plugin_load (char* filename)
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
         }
     }
-    dlclose (handle);
+    ucm_dlclose (handle);
     return module;
 }
 
@@ -207,7 +207,7 @@ plugins_load_registry (const char* plug_path)
         do {
             if (!(strncmp (ls.name, ".", 1))  ||
                 !(strncmp (ls.name, "..", 2)) ||
-                !(strstr  (ls.name, ".so")))
+                !(strstr  (ls.name, LIBRARY_SUFFIX)))
             {
                     continue;
             }
@@ -235,7 +235,7 @@ plugins_release_registry (void)
         m_del = m_tmp;
         m_tmp = m_tmp->next;
 
-        dlclose(m_del->handle);
+        ucm_dlclose(m_del->handle);
         ucm_free(m_del);
     }
 }

@@ -81,14 +81,17 @@ typedef struct {
     } mdbx;
 
     struct {
+        int dummy;
         // TODO events variables
     } events;
 
     struct {
+        int dummy;
         // TODO logs variables
     } logs;
 
     struct {
+        int dummy;
         // TODO contacts variables
     } contacts;
 

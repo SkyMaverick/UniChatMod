@@ -14,7 +14,7 @@ typedef struct {
     pthread_cond_t  cond;
 } ucm_cmutex_t;
 
-uintptr_t thread_create (
+uintptr_t ucm_thread_create (
         THREAD_RESULT ( THREAD_CALL *func)(void* ctx),
         void* ctx)
 {
@@ -30,19 +30,19 @@ uintptr_t thread_create (
 
 
 inline int
-thread_detach (uintptr_t tid)
+ucm_thread_detach (uintptr_t tid)
 {
     return pthread_detach((pthread_t)tid) ? 1 : 0;
 }
 
 inline void
-thread_exit (void* ret)
+ucm_thread_exit (void* ret)
 {
     pthread_exit(ret);
 }
 
 int
-thread_join (uintptr_t tid)
+ucm_thread_join (uintptr_t tid)
 {
     void* ret;
     return pthread_join((pthread_t)tid,&ret) ? 1 : 0;
@@ -50,7 +50,7 @@ thread_join (uintptr_t tid)
 
 
 uintptr_t
-mutex_create_nonrecursive (void)
+ucm_mutex_create_nonrecursive (void)
 {
     pthread_mutex_t* mtx= ucm_malloc(sizeof(pthread_mutex_t));
     if (mtx) {
@@ -69,7 +69,7 @@ mutex_create_nonrecursive (void)
 }
 
 uintptr_t
-mutex_create (void)
+ucm_mutex_create (void)
 {
     pthread_mutex_t* mtx= ucm_malloc(sizeof(pthread_mutex_t));
     if (mtx) {
@@ -88,7 +88,7 @@ mutex_create (void)
 }
 
 void
-mutex_free (uintptr_t _mtx)
+ucm_mutex_free (uintptr_t _mtx)
 {
     if (_mtx) {
         pthread_mutex_t* mtx = (pthread_mutex_t*)_mtx;
@@ -98,19 +98,19 @@ mutex_free (uintptr_t _mtx)
 }
 
 inline int
-mutex_lock(uintptr_t _mtx)
+ucm_mutex_lock(uintptr_t _mtx)
 {
     return pthread_mutex_lock ( (pthread_mutex_t*)_mtx );
 }
 
 inline int
-mutex_unlock(uintptr_t _mtx)
+ucm_mutex_unlock(uintptr_t _mtx)
 {
     return pthread_mutex_unlock ( (pthread_mutex_t*)_mtx );
 }
 
 uintptr_t
-cond_create (void)
+ucm_cond_create (void)
 {
     ucm_cmutex_t *cmtx = ucm_malloc(sizeof(ucm_cmutex_t));
     if (cmtx) {
@@ -135,19 +135,19 @@ cond_create (void)
 }
 
 inline int
-cond_lock (uintptr_t _cond)
+ucm_cond_lock (uintptr_t _cond)
 {
-    return mutex_lock ( (uintptr_t)(&(((ucm_cmutex_t*)_cond)->mtx)) );
+    return ucm_mutex_lock ( (uintptr_t)(&(((ucm_cmutex_t*)_cond)->mtx)) );
 }
 
 inline int
-cond_unlock (uintptr_t _cond)
+ucm_cond_unlock (uintptr_t _cond)
 {
-    return mutex_unlock ( (uintptr_t)(&(((ucm_cmutex_t*)_cond)->mtx)) );
+    return ucm_mutex_unlock ( (uintptr_t)(&(((ucm_cmutex_t*)_cond)->mtx)) );
 }
 
 void
-cond_free(uintptr_t _cond)
+ucm_cond_free(uintptr_t _cond)
 {
     if (_cond) {
         ucm_cmutex_t* cmtx = (ucm_cmutex_t*)_cond;
@@ -158,29 +158,29 @@ cond_free(uintptr_t _cond)
 }
 
 int
-cond_wait (uintptr_t _cond)
+ucm_cond_wait (uintptr_t _cond)
 {
     ucm_cmutex_t* cmtx = (ucm_cmutex_t*) _cond;
-    int fail = mutex_lock ( (uintptr_t)(&(cmtx->mtx)) );
+    int fail = ucm_mutex_lock ( (uintptr_t)(&(cmtx->mtx)) );
     
     return fail ? fail : pthread_cond_wait (&(cmtx->cond),
                                             &(cmtx->mtx));
 }
 
 inline int
-cond_signal (uintptr_t _cond)
+ucm_cond_signal (uintptr_t _cond)
 {
     return pthread_cond_signal (&(((ucm_cmutex_t*) _cond)->cond));
 }
 
 inline int
-cond_broadcast (uintptr_t _cond)
+ucm_cond_broadcast (uintptr_t _cond)
 {
     return pthread_cond_broadcast ( &( ((ucm_cmutex_t*)_cond)->cond ) );
 }
 
 uintptr_t
-rwlock_create (void)
+ucm_rwlock_create (void)
 {
     pthread_rwlock_t* rwl = ucm_malloc(sizeof(pthread_rwlock_t));
     if (rwl) {
@@ -199,7 +199,7 @@ rwlock_create (void)
 }
 
 void
-rwlock_free (uintptr_t _rwl)
+ucm_rwlock_free (uintptr_t _rwl)
 {
     if (_rwl) {
         pthread_rwlock_t* rwl = (pthread_rwlock_t*)_rwl;
@@ -209,19 +209,19 @@ rwlock_free (uintptr_t _rwl)
 }
 
 inline int
-rwlock_rlock (uintptr_t _rwl)
+ucm_rwlock_rlock (uintptr_t _rwl)
 {
     return pthread_rwlock_rdlock ((pthread_rwlock_t*)_rwl);
 }
 
 inline int
-rwlock_wlock (uintptr_t _rwl)
+ucm_rwlock_wlock (uintptr_t _rwl)
 {
     return pthread_rwlock_wrlock ((pthread_rwlock_t*)_rwl);
 }
 
 inline int
-rwlock_unlock(uintptr_t _rwl)
+ucm_rwlock_unlock(uintptr_t _rwl)
 {
     return pthread_rwlock_unlock ((pthread_rwlock_t*)_rwl);
 }

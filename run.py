@@ -4,7 +4,7 @@ import os, sys, subprocess, shutil, fnmatch
 from colorize import *
 
 path_script = os.path.abspath (os.path.curdir)
-path_build  = os.path.join (path_script, 'build')
+path_build  = os.path.join (path_script, 'build', os.name)
 path_libs  = os.path.join (path_build, 'libs')
 
 file_shell_travis = os.path.join(path_script, 'tools', 'travis', 'manager.sh')
@@ -70,17 +70,6 @@ def remove_dir (path):
 #   ACTIONS
 # ==================================================
 
-def action_build ():
-    return ninja_cmd()
-
-def action_debug ():
-    meson_cmd()
-    return action_build()
-
-def action_release ():
-    meson_cmd('--buildtype=release')
-    return action_build()
-
 def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
     remove_dir (path_build)
@@ -97,6 +86,16 @@ def action_clean():
                     if os.access(strName, os.W_OK):
                         os.remove(strName)
           
+def action_build ():
+    return ninja_cmd()
+
+def action_debug ():
+    meson_cmd()
+    return action_build()
+
+def action_release ():
+    meson_cmd('--buildtype=release')
+    return action_build()
 
 def action_test():
     info ('Start test framework in: {path}'.format(path=path_build))

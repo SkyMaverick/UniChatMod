@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 
@@ -133,25 +133,28 @@ db_open (db_object_t* db)
     int fhandle;
     if (!db || (db->faPath[0] == '\0'))
         return UCM_RET_INVALID;
-    if ( access(db->faPath, F_OK) < 0) {
-        if (!(db->flags & UCM_FLAG_DB_READONLY)) {
-            if ( ( fhandle = creat(db->faPath, 0664) ) < 0) {
-                trace_err ("%s: %s\n", "Database error: ", strerror(errno));
-                return UCM_RET_NOACCESS;
-            } else {
-                db->flags |= UCM_FLAG_DB_CREATENEW;
-                close (fhandle);
-            }
-        } else {
-            trace_err ("%s: %s\n", "Database error: ", strerror(errno));
-            return UCM_RET_NOOBJECT;
-        }
-    } else {
-        if ( access (db->faPath, (db->flags & UCM_FLAG_DB_READONLY) ? R_OK: R_OK | W_OK) < 0) {
-            trace_err ("%s: %s\n", "Database error: ", strerror(errno));
-            return UCM_RET_NOACCESS;
-        }
-    }
+
+    // TODO Windows compatibility
+
+//    if ( access(db->faPath, F_OK) < 0) {
+//        if (!(db->flags & UCM_FLAG_DB_READONLY)) {
+//            if ( ( fhandle = creat(db->faPath, 0664) ) < 0) {
+//                trace_err ("%s: %s\n", "Database error: ", strerror(errno));
+//                return UCM_RET_NOACCESS;
+//            } else {
+//                db->flags |= UCM_FLAG_DB_CREATENEW;
+//                close (fhandle);
+//            }
+//        } else {
+//            trace_err ("%s: %s\n", "Database error: ", strerror(errno));
+//            return UCM_RET_NOOBJECT;
+//        }
+//    } else {
+//        if ( access (db->faPath, (db->flags & UCM_FLAG_DB_READONLY) ? R_OK: R_OK | W_OK) < 0) {
+//            trace_err ("%s: %s\n", "Database error: ", strerror(errno));
+//            return UCM_RET_NOACCESS;
+//        }
+//    }
     return __db_intrnl_load(db);
 }
 

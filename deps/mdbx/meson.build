@@ -43,22 +43,37 @@ add_project_arguments ('-DMDBX_DEBUG=0', language: 'c')
 add_project_arguments ('-DLIBMDBX_EXPORTS=1', language: 'c')
 add_project_arguments ('-D_GNU_SOURCE=1', language: 'c')
 
-cc_args = '''
-    -O2
-    -g3
-    -Wall
-    -Werror
-    -Wextra
-    -ffunction-sections
-    -fvisibility=hidden
-'''.split()
+cc_name = cc.get_id()
+if (cc_name == 'gcc') or (cc_name == 'clang')
+    # Build on linux (or difffernt *nix) system
+    cc_args = '''
+        -O2
+        -g3
+        -Wall
+        -Werror
+        -Wextra
+        -ffunction-sections
+        -fvisibility=hidden
+    '''.split()
 
-cc_link_args = '''
-    -Wl,--gc-sections
-    -z,relro
-    -O
-    -Wl,--no-as-needed
-'''.split()
+    cc_link_args = '''
+        -Wl,--gc-sections
+        -z,relro
+        -O
+        -Wl,--no-as-needed
+    '''.split()
+elif cc_name == 'msvc'
+    # Build on Windows with native Visual Studio
+    cc_args = '''
+    '''.split()
+
+    cc_link_args = '''
+    '''.split()
+else
+    # Build with default params for unknown compilator
+    cc_args = []
+    cc_link_args = []
+endif
 
 foreach arg : cc_args
     if cc.has_argument(arg)
@@ -79,6 +94,10 @@ if not (target_machine.system() == 'windows')
         cc.find_library ('rt', required: true)
     ]
 endif
+
+# ==================================================
+#   INCLUDES AND TARGETS
+# ==================================================
 
 mdbx_inc = include_directories('.')
 

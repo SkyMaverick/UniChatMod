@@ -23,18 +23,29 @@ u8proc_src = '''
 # ==================================================
 add_project_arguments ('-DUTF8PROC_EXPORTS', language: 'c')
 
-cc_args = '''
-    -O2
-    -Wall
-    -pedantic
-'''.split()
+cc_name = cc.get_id()
+if (cc_name == 'gcc') or (cc_name == 'clang')
+    # Build on linux (or difffernt *nix) system
+    cc_args = '''
+        -O2
+        -Wall
+        -pedantic
+    '''.split()
 
-cc_link_args = '''
-    -Wl,--gc-sections
-    -z,relro
-    -O
-    -Wl,--no-as-needed
-'''.split()
+    cc_link_args = '''
+    '''.split()
+elif cc_name == 'msvc'
+    # Build on Windows with native Visual Studio
+    cc_args = '''
+    '''.split()
+
+    cc_link_args = '''
+    '''.split()
+else
+    # Build with default params for unknown compilator
+    cc_args = []
+    cc_link_args = []
+endif
 
 foreach arg : cc_args
     if cc.has_argument(arg)
@@ -49,6 +60,11 @@ foreach arg : cc_link_args
 endforeach
 
 u8proc_deps = []
+
+# ==================================================
+#   INCLUDES AND TARGETS
+# ==================================================
+
 u8proc_inc = include_directories('.')
 
 if meson.is_subproject()
@@ -67,7 +83,7 @@ if meson.is_subproject()
             )    
 else
     u8proc_lib = shared_library ( meson.project_name(),
-                                u8proc_real_src,
+                                u8proc_src,
                                 dependencies: u8proc_deps,
                                 install: true
                               )

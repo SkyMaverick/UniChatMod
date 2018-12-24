@@ -35,7 +35,7 @@ mq_create (uint32_t q_count)
     int mem_sz = sizeof(mq_block_t) + (q_count - 1) * sizeof(mq_msg_t);
     mq_block_t* h = ucm_zmalloc (mem_sz);
     h->q_size = q_count;
-    h->cond = cond_create ();
+    h->cond = ucm_cond_create ();
     _mq_flush(h);
     return h;
 };
@@ -48,7 +48,7 @@ mq_push (mq_block_t* h,
          uint32_t   x2)
 {
 if(h){
-    cond_lock (h->cond);
+    ucm_cond_lock (h->cond);
     if (h->count < h->q_size){
 
         h->queue[h->tail].id  = id;
@@ -59,11 +59,11 @@ if(h){
         h->tail++; h->count++;
         if (h->tail == h->q_size) h->tail = 0;
     } else {
-        cond_unlock (h->cond);
+        ucm_cond_unlock (h->cond);
         return UCM_RET_OVERFLOW;
     }
-    cond_signal (h->cond);
-    cond_unlock (h->cond);
+    ucm_cond_signal (h->cond);
+    ucm_cond_unlock (h->cond);
     return UCM_RET_SUCCESS;
 }else
     return UCM_RET_NOOBJECT;
@@ -77,7 +77,7 @@ mq_pop (mq_block_t* h,
         uint32_t*  x2)
 {
     if (h){
-        cond_lock (h->cond);
+        ucm_cond_lock (h->cond);
             if (h->count > 0){
 
                 *id =  h->queue[h->head].id;
@@ -88,10 +88,10 @@ mq_pop (mq_block_t* h,
                 h->count--; h->head++;
                 if (h->head == h->q_size) h->head = 0;
             } else {
-                cond_unlock (h->cond);
+                ucm_cond_unlock (h->cond);
                 return UCM_RET_EMPTY;
             }
-        cond_unlock (h->cond);
+        ucm_cond_unlock (h->cond);
         return UCM_RET_SUCCESS;
     }else
         return UCM_RET_NOOBJECT;
@@ -108,8 +108,8 @@ mq_clear (mq_block_t *h)
 void
 mq_wait (mq_block_t *h)
 {
-    cond_wait(h->cond);
-    cond_unlock(h->cond);
+    ucm_cond_wait(h->cond);
+    ucm_cond_unlock(h->cond);
 };
 
 int
@@ -121,9 +121,9 @@ mq_noempty (mq_block_t *h)
 void
 mq_free (mq_block_t *h)
 {
-    cond_lock (h->cond);
+    ucm_cond_lock (h->cond);
     _mq_flush (h);
-    cond_unlock (h->cond);
-    cond_free (h->cond);
+    ucm_cond_unlock (h->cond);
+    ucm_cond_free (h->cond);
     ucm_free (h);
 };

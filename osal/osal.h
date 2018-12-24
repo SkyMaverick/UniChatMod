@@ -12,6 +12,9 @@
 #include <time.h>
 
 
+#ifdef __cplusplus
+    extern "C" {
+#endif
 
 #ifndef _POSIX_C_SOURCE
     #ifdef _POSIX_SOURCE
@@ -25,7 +28,6 @@
     #define _XOPEN_SOURCE 0
 #endif
 
-
 /* ======================================================================
         CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS 
    ====================================================================== */
@@ -36,9 +38,9 @@
     Windows specified includes
  */
 
-    #include <windows.h>
-    #include <winnt.h>
-    #include <winternl.h>
+    #include <Windows.h>
+    #include <WinNT.h>
+    #include <Winternl.h>
     #ifdef UCM_WITHOUT_RUNTIME
         #ifndef ucm_malloc 
             static inline void* 
@@ -162,13 +164,18 @@ ucm_zmemory (void*  ptr,
             return buffer;
         }
     #endif
+    #define LIBRARY_SUFFIX  ".dll"
+    #define DEFAULT_DLFLAGS 0
 #else
     typedef void*   DLHANDLE;
     typedef void*   DLSYMFUNC;
     #define ucm_dlopen     dlopen
     #define ucm_dlclose    dlclose
-    #define ucm_dlsym      dlopen
+    #define ucm_dlsym      dlsym
     #define ucm_dlerror    dlerror
+
+    #define LIBRARY_SUFFIX  ".so"
+    #define DEFAULT_DLFLAGS   RTLD_LAZY
 #endif
 /* ======================================================================
         CUSTOM THREADING FUNCTIONS
@@ -176,38 +183,38 @@ ucm_zmemory (void*  ptr,
 
 #if defined(_WIN32) || defined(_WIN64)
     #define THREAD_CALL    __stdcall
-    #define THREAD_RESULT  uint32_t
+    #define THREAD_RESULT  unsigned long
 #else
     #define THREAD_CALL
     #define THREAD_RESULT  void *
 #endif
 
-uintptr_t thread_create (
+uintptr_t ucm_thread_create (
         THREAD_RESULT ( THREAD_CALL *func)(void* ctx),
         void* ctx);
-int thread_detach       (uintptr_t tid);
-void thread_exit        (THREAD_RESULT ret);
-int thread_join         (uintptr_t tid);
+int ucm_thread_detach       (uintptr_t tid);
+void ucm_thread_exit        (THREAD_RESULT ret);
+int ucm_thread_join         (uintptr_t tid);
 
-uintptr_t mutex_create_nonrecursive(void);
-uintptr_t mutex_create  (void);
-void mutex_free         (uintptr_t _mtx);
-int mutex_lock          (uintptr_t _mtx);
-int mutex_unlock        (uintptr_t _mtx);
+uintptr_t ucm_mutex_create_nonrecursive(void);
+uintptr_t ucm_mutex_create  (void);
+void ucm_mutex_free         (uintptr_t _mtx);
+int ucm_mutex_lock          (uintptr_t _mtx);
+int ucm_mutex_unlock        (uintptr_t _mtx);
 
-uintptr_t cond_create   (void) ;
-int cond_lock           (uintptr_t _cond);
-int cond_unlock         (uintptr_t _cond);
-void cond_free          (uintptr_t _cond);
-int cond_wait           (uintptr_t _cond);
-int cond_signal         (uintptr_t _cond);
-int cond_broadcast      (uintptr_t _cond);
+uintptr_t ucm_cond_create   (void) ;
+int ucm_cond_lock           (uintptr_t _cond);
+int ucm_cond_unlock         (uintptr_t _cond);
+void ucm_cond_free          (uintptr_t _cond);
+int ucm_cond_wait           (uintptr_t _cond);
+int ucm_cond_signal         (uintptr_t _cond);
+int ucm_cond_broadcast      (uintptr_t _cond);
 
-uintptr_t rwlock_create (void);
-void rwlock_free        (uintptr_t _rwl);
-int rwlock_rlock        (uintptr_t _rwl);
-int rwlock_wlock        (uintptr_t _rwl);
-int rwlock_unlock       (uintptr_t _rwl);
+uintptr_t ucm_rwlock_create (void);
+void ucm_rwlock_free        (uintptr_t _rwl);
+int ucm_rwlock_rlock        (uintptr_t _rwl);
+int ucm_rwlock_wlock        (uintptr_t _rwl);
+int ucm_rwlock_unlock       (uintptr_t _rwl);
 
 /* ======================================================================
         CUSTOM FUNCTIONS
@@ -222,7 +229,7 @@ ucm_errno (void)
 #endif
 }
 
-#ifndef strdup
+#ifndef ucm_strdup
 char*
 ucm_strdup (const char* str);
 #endif
@@ -261,3 +268,7 @@ ucm_dirnext (ucm_dir_t        dir,
 
 void
 ucm_dirclose (ucm_dir_t fso);
+
+#ifdef __cplusplus
+    }
+#endif
