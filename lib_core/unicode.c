@@ -79,7 +79,7 @@ u8_decode_ucs4 (u8char_t* str,
             buf_len /= 2;
         } else 
             buf_len = str_len;
-        *ret = ucm_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
+        *ret = osal_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
         if (*ret) {
             for (;;){
                 int64_t dec_len = 0;
@@ -99,14 +99,14 @@ u8_decode_ucs4 (u8char_t* str,
                     return dec_len;
                 
                 if (dec_len < buf_len) {
-                    if ( ucm_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE) ) {
+                    if ( osal_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE) ) {
                        ucm_free_null(*ret);
                        return 0;
                     } else
                         return dec_len;
                 }
 
-                if ( ucm_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE ) ) {
+                if ( osal_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE ) ) {
                     ucm_free_null(*ret);
                     return 0;
                 }
@@ -136,7 +136,7 @@ ucs4_encode_u8 (u32char_t* str,
                                      |UTF8PROC_COMPOSE
                                      |UTF8PROC_STABLE
                                      );
-        if ( ucm_realloc ( (void**) ret, (enc_len + 1) * U8CHAR_SIZE) ) {
+        if ( osal_realloc ( (void**) ret, (enc_len + 1) * U8CHAR_SIZE) ) {
             ucm_free_null (*ret);
             return 0;
         }
@@ -161,7 +161,7 @@ ucm_strdup2 (u32char_t* str)
 
     if (str) {
         size_t buf_size = (ucm_strlen (str) + 1)  * U32CHAR_SIZE;
-        buf = ucm_malloc (buf_size);
+        buf = osal_malloc (buf_size);
         if (buf)
             memcpy (buf, str, buf_size);
     }
@@ -339,7 +339,7 @@ ucm_strjoin (u32char_t* str1,
         size_t str1_len = _intrnl_u32strlen (str1);
         size_t str2_len  = _intrnl_u32strlen (str2);
 
-        result = ucm_zmalloc ((str1_len + str2_len + 1) * U32CHAR_SIZE);
+        result = osal_zmalloc ((str1_len + str2_len + 1) * U32CHAR_SIZE);
 
         if ( result ) {
             _intrnl_u32strcpy (result, str1, 0);
@@ -367,7 +367,7 @@ ucm_vstrjoin (size_t   num,
     va_end (tmp_va);
 
     // copy to buffer
-    buf = ucm_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
+    buf = osal_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
     if ( buf ) {
         u32char_t* p = buf;
         for (size_t i = 0; i < num; i++) {
@@ -410,7 +410,7 @@ ucm_strbrkjoin (u32char_t* str1,
         size_t str1_len = _intrnl_u32strlen (str1);
         size_t str2_len = _intrnl_u32strlen (str2);
 
-        result = ucm_zmalloc( (str1_len + str2_len + 1) * U32CHAR_SIZE);
+        result = osal_zmalloc( (str1_len + str2_len + 1) * U32CHAR_SIZE);
         if ( result ) {
             _intrnl_u32strcpy (result, str1, brk);
             _intrnl_u32strcpy (result + str1_len + 1, str2, 0);
@@ -438,7 +438,7 @@ ucm_vstrbrkjoin (size_t   num,
     va_end (tmp_va);
 
     // copy to buffer
-    buf = ucm_zmalloc (buf_len * U32CHAR_SIZE);
+    buf = osal_zmalloc (buf_len * U32CHAR_SIZE);
     if ( buf ) {
         u32char_t* p = buf;
         for (size_t i = 0; i < num; i++) {
@@ -482,7 +482,7 @@ ucm_strstr (u32char_t* str,
         N = _intrnl_u32strlen(str);
         M = _intrnl_u32strlen(sstr);
 
-        int64_t* d = ucm_zmalloc (M * sizeof(int64_t));
+        int64_t* d = osal_zmalloc (M * sizeof(int64_t));
 
         // prefix function
         for (i = 1, j = 0; i < M; i++)
@@ -502,11 +502,11 @@ ucm_strstr (u32char_t* str,
             if ( sstr [j] == str [i] )
                 j++;
             if ( j == M) {
-                ucm_free(d);
+                osal_free(d);
                 return i - j + 1;
             }
         }
-        ucm_free (d);
+        osal_free (d);
     }
     return -1;
 }
@@ -521,7 +521,7 @@ ucm_strcasestr (u32char_t* str,
         N = _intrnl_u32strlen(str);
         M = _intrnl_u32strlen(sstr);
 
-        int64_t* d = ucm_zmalloc (M * sizeof(int64_t));
+        int64_t* d = osal_zmalloc (M * sizeof(int64_t));
 
         // prefix function
         for (i = 1, j = 0; i < M; i++)
@@ -541,11 +541,11 @@ ucm_strcasestr (u32char_t* str,
             if ( __U8LCASE( sstr [j] ) == __U8LCASE( str [i] ))
                 j++;
             if ( j == M) {
-                ucm_free(d);
+                osal_free(d);
                 return i - j + 1;
             }
         }
-        ucm_free (d);
+        osal_free (d);
     }
     return -1;
     #undef __U8LCASE

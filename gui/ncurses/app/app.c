@@ -209,9 +209,9 @@ main (int argc, char* argv[])
 
     core_handle = dlopen (LIBCORE_NAME, RTLD_LAZY);
     if (core_handle) {
-        ucm_cstart_func core_start = ucm_dlsym (core_handle, UCM_START_FUNC);
-        ucm_cstop_func  core_stop  = ucm_dlsym (core_handle, UCM_STOP_FUNC);
-        ucm_cinfo_func  core_info =  ucm_dlsym (core_handle, UCM_INFO_FUNC);
+        ucm_cstart_func core_start = osal_dlsym (core_handle, UCM_START_FUNC);
+        ucm_cstop_func  core_stop  = osal_dlsym (core_handle, UCM_STOP_FUNC);
+        ucm_cinfo_func  core_info  = osal_dlsym (core_handle, UCM_INFO_FUNC);
 
         if ( core_start && core_stop && core_info ) {
             core = core_start (&args);

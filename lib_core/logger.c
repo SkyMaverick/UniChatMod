@@ -37,10 +37,10 @@ _log_core (ucm_plugin_t* plug,
                         break;
     }
 
-    ucm_rwlock_rlock(lock_mtx);
+    osal_rwlock_rlock(lock_mtx);
     for (ucm_logger_t* i=logs; i; i=i->next)
         i->cb_log(plug,type,txt);
-    ucm_rwlock_unlock(lock_mtx);
+    osal_rwlock_unlock(lock_mtx);
 }
 
 static int
@@ -69,14 +69,14 @@ void
 log_init (void)
 {
     logs = NULL;
-    lock_mtx = ucm_rwlock_create();
+    lock_mtx = osal_rwlock_create();
 }
 
 void
 log_release (void)
 {
     _log_flush(&logs);
-    ucm_rwlock_free(lock_mtx);
+    osal_rwlock_free(lock_mtx);
 }
 
 void
@@ -130,13 +130,13 @@ ucm_log (const char* fmt,
 void
 logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
-    ucm_logger_t* tmp = ucm_zmalloc (sizeof(ucm_logger_t));
+    ucm_logger_t* tmp = osal_zmalloc (sizeof(ucm_logger_t));
     if (tmp) {
-        ucm_rwlock_wlock(lock_mtx);
+        osal_rwlock_wlock(lock_mtx);
         tmp->cb_log = callback;
         tmp->next = logs;
         logs = tmp;
-        ucm_rwlock_unlock(lock_mtx);
+        osal_rwlock_unlock(lock_mtx);
     }
 }
 
@@ -145,7 +145,7 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
     ucm_logger_t* prev = NULL;
 
-    ucm_rwlock_wlock(lock_mtx);
+    osal_rwlock_wlock(lock_mtx);
     for(ucm_logger_t* i = logs; i;prev=i,i=i->next) {
         if(i->cb_log == callback){
             if(prev){
@@ -153,9 +153,9 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
             }else{
                 logs = i->next;
             }
-            ucm_free(i);
+            osal_free(i);
             break;
         }
     }
-    ucm_rwlock_unlock(lock_mtx);
+    osal_rwlock_unlock(lock_mtx);
 }

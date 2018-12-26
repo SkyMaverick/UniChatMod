@@ -21,13 +21,13 @@ _hooks_core (uint32_t    eid,
              uint32_t    x1,
              uint32_t    x2)
 {
-    ucm_rwlock_rlock (_lock_hooks);
+    osal_rwlock_rlock (_lock_hooks);
     for (ucm_evhook_t* i = _hooks; i; i=i->next) {
         if ( i->mask | eid) {
             i->hook(eid, ev, x1, x2, i->ctx);
         }
     }
-    ucm_rwlock_unlock (_lock_hooks);
+    osal_rwlock_unlock (_lock_hooks);
 }
 
 static void
@@ -45,14 +45,14 @@ void
 hooks_event_init (void)
 {
     _hooks = NULL;
-    _lock_hooks = ucm_rwlock_create();
+    _lock_hooks = osal_rwlock_create();
 }
 
 void
 hooks_event_release (void)
 {
     _hooks_flush(&_hooks);
-    ucm_rwlock_free(_lock_hooks);
+    osal_rwlock_free(_lock_hooks);
 }
 
 void
@@ -70,16 +70,16 @@ hooks_event_attach (cb_evhook  hook,
                     void*      ctx, 
                     uint32_t   mask)
 {
-    ucm_evhook_t* eh = ucm_zmalloc(sizeof(ucm_evhook_t));
+    ucm_evhook_t* eh = osal_zmalloc(sizeof(ucm_evhook_t));
     if (eh) {
         eh->hook = hook;
         eh->ctx  = ctx;
         eh->mask = mask;
 
-        ucm_rwlock_wlock (_lock_hooks);
+        osal_rwlock_wlock (_lock_hooks);
         eh->next = _hooks;
         _hooks   = eh;
-        ucm_rwlock_unlock (_lock_hooks);
+        osal_rwlock_unlock (_lock_hooks);
     }
 }
 
@@ -88,7 +88,7 @@ hooks_event_detach (cb_evhook hook)
 {
     ucm_evhook_t* prev = NULL;
 
-    ucm_rwlock_wlock(_lock_hooks);
+    osal_rwlock_wlock(_lock_hooks);
     for (ucm_evhook_t* ev = _hooks; ev; prev = ev, ev=ev->next) {
         if ( ev->hook == hook ) {
             if (prev) {
@@ -96,9 +96,9 @@ hooks_event_detach (cb_evhook hook)
             } else {
                 _hooks = ev->next;
             }
-            ucm_free (ev);
+            osal_free (ev);
             break;
         }
     }
-    ucm_rwlock_unlock(_lock_hooks);
+    osal_rwlock_unlock(_lock_hooks);
 }
