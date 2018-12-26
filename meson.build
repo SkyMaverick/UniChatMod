@@ -9,7 +9,7 @@ project ('ucm', 'c',
 
 cc = meson.get_compiler('c')
 
-# if cc.get_id() == 'gcc'
+if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
     # --- compiler preferences ----------
     if get_option('buildtype').startswith('debug')
         add_global_arguments ('-DDEBUG', language: 'c')
@@ -24,16 +24,16 @@ cc = meson.get_compiler('c')
     if get_option('build_with_hidden_api')
         add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
     endif
-
+    
     add_global_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
     # --- compiler arguments ----------
     cc_args = '''
         -Wall
     '''.split()
-
+    
     cc_link_args = '''
     '''.split()
-
+    
     if get_option('buildtype').startswith('debug')
         cc_args += '''
                     -O0
@@ -45,23 +45,23 @@ cc = meson.get_compiler('c')
                     -s
                 '''.split()
     endif
-
+    
     if get_option('build_with_hidden_api')
         cc_args += '''
             -fvisibility=hidden
         '''.split()
     endif
-# elif cc.get_id() == 'clang'
-#     message ('Temporary use default case')
-# 
-#     cc_args = '''
-#     '''.split()
-# 
-#     cc_link_args = '''
-#     '''.split()
-# else
-#     error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
-# endif
+elif cc.get_id() == 'msvc'
+#    message ('Temporary use default case')
+
+    cc_args = '''
+    '''.split()
+
+    cc_link_args = '''
+    '''.split()
+else
+    error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
+endif
 # --- Add all switches in project command line -----------
 foreach arg : cc_args
     if cc.has_argument(arg)
@@ -76,7 +76,7 @@ foreach arg : cc_link_args
 endforeach
 
 lib_inc = [
-    '.'/'',
+    '.',
     '.'/'lib_core',
     '.'/'osal',
     '.'/'lib_core'/'include',

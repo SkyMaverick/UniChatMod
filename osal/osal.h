@@ -12,6 +12,9 @@
 #include <time.h>
 
 
+#ifdef __cplusplus
+    extern "C" {
+#endif
 
 #ifndef _POSIX_C_SOURCE
     #ifdef _POSIX_SOURCE
@@ -25,7 +28,6 @@
     #define _XOPEN_SOURCE 0
 #endif
 
-
 /* ======================================================================
         CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS 
    ====================================================================== */
@@ -36,42 +38,42 @@
     Windows specified includes
  */
 
-    #include <windows.h>
-    #include <winnt.h>
-    #include <winternl.h>
-    #ifdef UCM_WITHOUT_RUNTIME
-        #ifndef ucm_malloc 
+    #include <Windows.h>
+    #include <WinNT.h>
+    #include <Winternl.h>
+    #ifdef osal_WITHOUT_RUNTIME
+        #ifndef osal_malloc 
             static inline void* 
-            ucm_malloc (size_t bytes)
+            osal_malloc (size_t bytes)
             {
                 return LocalAlloc (LMEM_FIXED, bytes);
             }
         #endif
-        #ifndef ucm_calloc
+        #ifndef osal_calloc
             static inline void*
-            ucm_calloc (size_t nmemb,
+            osal_calloc (size_t nmemb,
                         size_t bytes)
             {
                 return LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, bytes);
             }
         #endif
-        #ifndef ucm_free
-            #define ucm_free LocalFree
+        #ifndef osal_free
+            #define osal_free LocalFree
         #endif
-        #ifndef ucm_realloc
+        #ifndef osal_realloc
             static inline void*
-            ucm_realloc (void*  ptr,
+            osal_realloc (void*  ptr,
                          size_t bytes)
             {
                 return LocalReAlloc (ptr, bytes, LMEM_MOVEABLE);
             }
         #endif
     #else
-        #define ucm_malloc  malloc
-        #define ucm_calloc  calloc
-        #define ucm_free    free
-        #define ucm_realloc realloc
-        #define ucm_strdup  _strdup
+        #define osal_malloc  malloc
+        #define osal_calloc  calloc
+        #define osal_free    free
+        #define osal_realloc realloc
+        #define osal_strdup  _strdup
     #endif
 #else
     #include <pthread.h>
@@ -87,23 +89,23 @@
     #include <dirent.h>
     #include <malloc.h>
 
-    #define ucm_malloc  malloc
-    #define ucm_calloc  calloc
-    #define ucm_free    free
-    #define ucm_realloc realloc
+    #define osal_malloc  malloc
+    #define osal_calloc  calloc
+    #define osal_free    free
+    #define osal_realloc realloc
     #ifdef strdup
-        #define ucm_strdup  strdup
+        #define osal_strdup  strdup
     #endif
 #endif
 
 static inline void*
-ucm_zmalloc (size_t bytes)
+osal_zmalloc (size_t bytes)
 {
-    return ucm_calloc (1, bytes);
+    return osal_calloc (1, bytes);
 }
 
 static inline void
-ucm_zmemory (void*  ptr,
+osal_zmemory (void*  ptr,
              size_t bytes)
 {
     if (bytes) {
@@ -128,30 +130,30 @@ ucm_zmemory (void*  ptr,
 #if defined(_WIN32) || defined(_WIN64)
     typedef HMODULE  DLHANDLE;
     typedef FARPROC  DLSYMFUNC;
-    #ifndef ucm_dlopen
+    #ifndef osal_dlopen
         static inline DLHANDLE
-        ucm_dlopen (char* path, int mode)
+        osal_dlopen (char* path, int mode)
         {
             return LoadLibraryExA (path, NULL, (DWORD)mode);
         }
     #endif
-    #ifndef ucm_dlclose
+    #ifndef osal_dlclose
         static inline void
-        ucm_dlclose (DLHANDLE hndl)
+        osal_dlclose (DLHANDLE hndl)
         {
             FreeLibrary (hndl);
         }
     #endif
-    #ifndef ucm_dlsym
+    #ifndef osal_dlsym
         static inline DLSYMFUNC
-        ucm_dlsym (DLHANDLE lib, const char* func)
+        osal_dlsym (DLHANDLE lib, const char* func)
         {
             return GetProcAddress (lib, func);
         }
     #endif
-    #ifndef ucm_dlerror
+    #ifndef osal_dlerror
         static inline char*
-        ucm_dlerror () {
+        osal_dlerror () {
             char* buffer = NULL;
             FormatMessage ( FORMAT_MESSAGE_ALLOCATE_BUFFER |
                             FORMAT_MESSAGE_FROM_SYSTEM |
@@ -162,13 +164,18 @@ ucm_zmemory (void*  ptr,
             return buffer;
         }
     #endif
+    #define LIBRARY_SUFFIX  ".dll"
+    #define DEFAULT_DLFLAGS 0
 #else
     typedef void*   DLHANDLE;
     typedef void*   DLSYMFUNC;
-    #define ucm_dlopen     dlopen
-    #define ucm_dlclose    dlclose
-    #define ucm_dlsym      dlopen
-    #define ucm_dlerror    dlerror
+    #define osal_dlopen     dlopen
+    #define osal_dlclose    dlclose
+    #define osal_dlsym      dlsym
+    #define osal_dlerror    dlerror
+
+    #define LIBRARY_SUFFIX  ".so"
+    #define DEFAULT_DLFLAGS   RTLD_LAZY
 #endif
 /* ======================================================================
         CUSTOM THREADING FUNCTIONS
@@ -176,44 +183,44 @@ ucm_zmemory (void*  ptr,
 
 #if defined(_WIN32) || defined(_WIN64)
     #define THREAD_CALL    __stdcall
-    #define THREAD_RESULT  uint32_t
+    #define THREAD_RESULT  unsigned long
 #else
     #define THREAD_CALL
     #define THREAD_RESULT  void *
 #endif
 
-uintptr_t thread_create (
+uintptr_t osal_thread_create (
         THREAD_RESULT ( THREAD_CALL *func)(void* ctx),
         void* ctx);
-int thread_detach       (uintptr_t tid);
-void thread_exit        (THREAD_RESULT ret);
-int thread_join         (uintptr_t tid);
+int osal_thread_detach       (uintptr_t tid);
+void osal_thread_exit        (THREAD_RESULT ret);
+int osal_thread_join         (uintptr_t tid);
 
-uintptr_t mutex_create_nonrecursive(void);
-uintptr_t mutex_create  (void);
-void mutex_free         (uintptr_t _mtx);
-int mutex_lock          (uintptr_t _mtx);
-int mutex_unlock        (uintptr_t _mtx);
+uintptr_t osal_mutex_create_nonrecursive(void);
+uintptr_t osal_mutex_create  (void);
+void osal_mutex_free         (uintptr_t _mtx);
+int osal_mutex_lock          (uintptr_t _mtx);
+int osal_mutex_unlock        (uintptr_t _mtx);
 
-uintptr_t cond_create   (void) ;
-int cond_lock           (uintptr_t _cond);
-int cond_unlock         (uintptr_t _cond);
-void cond_free          (uintptr_t _cond);
-int cond_wait           (uintptr_t _cond);
-int cond_signal         (uintptr_t _cond);
-int cond_broadcast      (uintptr_t _cond);
+uintptr_t osal_cond_create   (void) ;
+int osal_cond_lock           (uintptr_t _cond);
+int osal_cond_unlock         (uintptr_t _cond);
+void osal_cond_free          (uintptr_t _cond);
+int osal_cond_wait           (uintptr_t _cond);
+int osal_cond_signal         (uintptr_t _cond);
+int osal_cond_broadcast      (uintptr_t _cond);
 
-uintptr_t rwlock_create (void);
-void rwlock_free        (uintptr_t _rwl);
-int rwlock_rlock        (uintptr_t _rwl);
-int rwlock_wlock        (uintptr_t _rwl);
-int rwlock_unlock       (uintptr_t _rwl);
+uintptr_t osal_rwlock_create (void);
+void osal_rwlock_free        (uintptr_t _rwl);
+int osal_rwlock_rlock        (uintptr_t _rwl);
+int osal_rwlock_wlock        (uintptr_t _rwl);
+int osal_rwlock_unlock       (uintptr_t _rwl);
 
 /* ======================================================================
         CUSTOM FUNCTIONS
    ====================================================================== */
 static inline int
-ucm_errno (void)
+osal_errno (void)
 {
 #if defined(_WIN32) || defined(_WIN64)
     return (int) GetLastError();
@@ -222,20 +229,20 @@ ucm_errno (void)
 #endif
 }
 
-#ifndef strdup
+#ifndef osal_strdup
 char*
-ucm_strdup (const char* str);
+osal_strdup (const char* str);
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-    typedef HANDLE ucm_dir_t;
+    typedef HANDLE osal_dir_t;
 #else
     typedef struct {
         DIR* handle;
         char path [1];
     } posix_dir_t;
 
-    typedef uintptr_t ucm_dir_t;
+    typedef uintptr_t osal_dir_t;
 #endif
 
 enum {
@@ -249,15 +256,19 @@ typedef struct {
     uint8_t   type;
 
     uintptr_t handle;
-} ucm_fsobject_t;
+} osal_fsobject_t;
 
-ucm_dir_t
-ucm_diropen (const char*       path,
-             ucm_fsobject_t*   fso);
+osal_dir_t
+osal_diropen (const char*       path,
+             osal_fsobject_t*   fso);
 
 int
-ucm_dirnext (ucm_dir_t        dir,
-             ucm_fsobject_t*  fso);
+osal_dirnext (osal_dir_t        dir,
+             osal_fsobject_t*  fso);
 
 void
-ucm_dirclose (ucm_dir_t fso);
+osal_dirclose (osal_dir_t fso);
+
+#ifdef __cplusplus
+    }
+#endif

@@ -18,7 +18,7 @@ typedef struct ucm_module_s {
 } ucm_module_t;
 
 #define PLUGIN(X) X->plugin
-#define NULL_REG(X) ucm_zmemory ((X),   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
+#define NULL_REG(X) osal_zmemory ((X),   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
 
 ucm_module_t modules = {
     .plugin = NULL,
@@ -77,19 +77,19 @@ _plugin_load (char* filename)
 {
     ucm_module_t* module = NULL;
 
-    DLHANDLE handle = ucm_dlopen (filename, RTLD_LAZY);
+    DLHANDLE handle = osal_dlopen (filename, DEFAULT_DLFLAGS);
     if (!handle) {
         ucm_etrace ("%s: %s\n", filename, _("plugin don't load"));
         return module;
     }
 
     char* err = NULL;
-    cb_init_plugin _pfunc = dlsym(handle,"_init_plugin");
-    if ( (err = dlerror()) == NULL ) {
-         ucm_plugin_t*plug = _pfunc (UniAPI);
+    cb_init_plugin _pfunc = (cb_init_plugin) osal_dlsym(handle,"_init_plugin");
+    if ( (err = osal_dlerror()) == NULL ) {
+        ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
-                module = ucm_zmalloc (sizeof(ucm_module_t));
+                module = osal_zmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
                     module->handle = handle;
@@ -102,7 +102,7 @@ _plugin_load (char* filename)
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
         }
     }
-    dlclose (handle);
+    osal_dlclose (handle);
     return module;
 }
 
@@ -201,13 +201,13 @@ plugins_load_registry (const char* plug_path)
     size_t plugs_count = 0;
     char buffer [UCM_PATH_MAX];
 
-    ucm_fsobject_t ls;
-    ucm_dir_t dir = ucm_diropen (plug_path, &ls);
+    osal_fsobject_t ls;
+    osal_dir_t dir = osal_diropen (plug_path, &ls);
     if (dir) {
         do {
             if (!(strncmp (ls.name, ".", 1))  ||
                 !(strncmp (ls.name, "..", 2)) ||
-                !(strstr  (ls.name, ".so")))
+                !(strstr  (ls.name, LIBRARY_SUFFIX)))
             {
                     continue;
             }
@@ -217,38 +217,11 @@ plugins_load_registry (const char* plug_path)
                 tmp_module = tmp_module->next;
                 plugs_count++;
             }
-        } while (ucm_dirnext(dir, &ls));
+        } while (osal_dirnext(dir, &ls));
     };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-    ucm_dirclose (dir);
-//    ucm_dir_list plugs_dir = opendir(plug_path);
-//    if (!plugs_dir) {
-//        ucm_etrace("%ls %ls: %ls\n", _("Not found path"), plug_path, strerror(errno));
-//        return UCM_RET_WRONGPARAM;
-//    }
-//
-//    /* scan directory was marked as plugins container */
-//    size_t plugs_count = 0;
-//    char buffer [UCM_PATH_MAX];
-//    
-//    if (ls = ucm_dir_next()
-//    while ((ls = readdir(plugs_dir))) {
-//        if (!(strncmp (ls->d_name, ".", 1))  ||
-//            !(strncmp (ls->d_name, "..", 2)) ||
-//            !(strstr (ls->d_name, ".so")))
-//        {
-//            continue;
-//        }
-//        snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls->d_name);
-//        tmp_module->next = _plugin_load(buffer);
-//        if ( tmp_module->next ) {
-//            tmp_module = tmp_module->next;
-//            plugs_count++;
-//        }
-//    }
-//
-//    ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-//    closedir(plugs_dir);
+    osal_dirclose (dir);
+    
     return UCM_RET_SUCCESS;
 }
 
@@ -262,8 +235,8 @@ plugins_release_registry (void)
         m_del = m_tmp;
         m_tmp = m_tmp->next;
 
-        dlclose(m_del->handle);
-        ucm_free(m_del);
+        osal_dlclose(m_del->handle);
+        osal_free(m_del);
     }
 }
 
