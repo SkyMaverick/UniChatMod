@@ -230,8 +230,8 @@ osal_errno (void)
 }
 
 #ifndef osal_strdup
-char*
-osal_strdup (const char* str);
+    char*
+    osal_strdup (const char* str);
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
