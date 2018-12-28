@@ -129,7 +129,7 @@ osal_realloc2 (void** mem, size_t size)
 {
     void* old_mem = *mem;
     *mem = osal_realloc (*mem, size);
-    if (*mem != *old_mem) {
+    if (*mem != old_mem) {
         if (*mem != NULL) {
             osal_free (old_mem);
         } else {

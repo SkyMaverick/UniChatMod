@@ -77,7 +77,7 @@ u8_decode_ucs4 (u8char_t* str,
             u8char_t* tmp = str;
             while (*tmp) tmp++, buf_len++;  // bytes in string
             buf_len /= 2;
-        } else 
+        } else
             buf_len = str_len;
         *ret = osal_zmalloc ((buf_len + 1) * U32CHAR_SIZE);
         if (*ret) {
@@ -87,26 +87,26 @@ u8_decode_ucs4 (u8char_t* str,
                                                str_len,
                                                (utf8proc_int32_t*) *ret,
                                                buf_len,
-                                               UTF8PROC_DECOMPOSE 
+                                               UTF8PROC_DECOMPOSE
                                               |UTF8PROC_STABLE
                                               |infinite );
                 if (dec_len < 0){
                     ucm_free_null (*ret);
                     return dec_len;
                 }
-                
+
                 if (dec_len == buf_len)
                     return dec_len;
-                
+
                 if (dec_len < buf_len) {
-                    if ( osal_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE) ) {
+                    if ( osal_realloc2 ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE) ) {
                        ucm_free_null(*ret);
                        return 0;
                     } else
                         return dec_len;
                 }
 
-                if ( osal_realloc ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE ) ) {
+                if ( osal_realloc2 ( (void**)ret, (dec_len + 1) * U32CHAR_SIZE ) ) {
                     ucm_free_null(*ret);
                     return 0;
                 }
@@ -136,7 +136,7 @@ ucs4_encode_u8 (u32char_t* str,
                                      |UTF8PROC_COMPOSE
                                      |UTF8PROC_STABLE
                                      );
-        if ( osal_realloc ( (void**) ret, (enc_len + 1) * U8CHAR_SIZE) ) {
+        if ( osal_realloc2 ( (void**) ret, (enc_len + 1) * U8CHAR_SIZE) ) {
             ucm_free_null (*ret);
             return 0;
         }
