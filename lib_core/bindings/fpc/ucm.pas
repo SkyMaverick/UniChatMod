@@ -140,13 +140,14 @@ type
     // ######################################################################
     //  API FUNCTIONALITY
     // ######################################################################
-
+    
+    PPointer = ^Pointer;
     TUCMCB_MemAlloc = function(size: cardinal): Pointer; cdecl;
     TUCMCB_MemZeroAlloc = function(size: cardinal): Pointer; cdecl;
     TUCMCB_MemCellAlloc = function(nmem: cardinal; size: cardinal): Pointer; cdecl;
     TUCMCB_MemFree = procedure(obj: Pointer); cdecl;
     TUCMCB_MemZero = procedure(mem: Pointer; size: cardinal); cdecl;
-    TUCMCB_MemRealloc = function(mem: Pointer; size: cardinal): Pointer; cdecl;
+    TUCMCB_MemRealloc = function(mem: PPointer; size: cardinal): integer; cdecl;
     TUCMCB_StrDup = function(const str: PChar): PChar; cdecl;
 
 {$IFDEF UNIX}

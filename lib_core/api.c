@@ -41,7 +41,7 @@ static ucm_functions_t core_api = {
     .calloc                 = osal_calloc            ,
     .free                   = osal_free              ,
     .zmemory                = osal_zmemory           ,
-    .realloc                = osal_realloc           ,
+    .realloc                = osal_realloc2          ,
     .strdup                 = osal_strdup            ,
 
     .thread_create          = osal_thread_create     ,
