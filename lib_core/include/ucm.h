@@ -99,7 +99,7 @@
 #elif defined(LIBMDBX_IMPORTS)
     #define LIBUCM_API __ucm_import
 #else
-    #define LIBUCM_API 
+    #define LIBUCM_API
 #endif
 
 // === CONSTANTS ========================
