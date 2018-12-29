@@ -54,7 +54,7 @@ script:
           fi;
           if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
             echo $COVERITY_SCAN_PROJECT_NAME;
-            ${CI_MANAGER} CREATE_FAST;
+            ${CI_MANAGER} CREATE;
             ${CI_MANAGER} RUN_COVERITY;
             ${CI_MANAGER} CLEANUP;
           fi;

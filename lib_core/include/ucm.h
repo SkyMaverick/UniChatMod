@@ -99,7 +99,7 @@
 #elif defined(LIBMDBX_IMPORTS)
     #define LIBUCM_API __ucm_import
 #else
-    #define LIBUCM_API 
+    #define LIBUCM_API
 #endif
 
 // === CONSTANTS ========================
@@ -470,7 +470,7 @@ typedef struct _ucm_functions_s {
     void*       (*calloc)           (size_t nmem, size_t size);
     void        (*free)             (void* obj);
     void        (*zmemory)          (void* mem, size_t size);
-    void*       (*realloc)          (void* mem, size_t size);
+    int         (*realloc)          (void** mem, size_t size);
     char*       (*strdup)           (const char* str);
 
     /*! pthread API functions*/

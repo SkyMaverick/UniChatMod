@@ -79,11 +79,9 @@ case $1 in
         then
             mkdir -p ${BUILD_DIR}
         fi
-        ENV_FILE=".cov-env"
         CI_CREATE_FAST $CI_IMAGE $CI_IMAGE_REMOTE $CI_NAME
         docker run -dit -v ${BUILD_DIR}:/root/build/posix \
                    -w /root --privileged=true \
-                   --env-file=${ENV_FILE} \
                    --net=host \
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init
     ;;

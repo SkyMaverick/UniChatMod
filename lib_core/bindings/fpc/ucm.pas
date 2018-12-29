@@ -1,3 +1,27 @@
+{ UniChatMod Free Pascal binding.
+  Only for create GUI application (not plugin). Port only UniAPI.
+
+  Copyright (c) 2019 SkyMaverick
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+}
+
 unit ucm;
 
 interface
@@ -47,33 +71,34 @@ type
     //  PLUGINS FUNCTIOANLITY
     // ######################################################################
 
-    TUCMVAPI = record
+    TUCMVAPI = packed record
         vmajor: byte;
         vminor: byte;
     end;
 
-    TUCMPluginInfo = record
+    TUCMPluginInfo = packed record
         api: TUCMVAPI;
         sys: byte;
         vmajor: word;
         vminor: word;
         vpatch: word;
-        pid: PChar;
         flags: longword;
-        build: record
-            commit: PChar;
-            datetime: PChar;
-            target: PChar;
-            compiler: PChar;
-            options: PChar;
-            flags: PChar;
+        build: packed record
+            commit: PWideChar;
+            datetime: PWideChar;
+            target: PWideChar;
+            compiler: PWideChar;
+            options: PWideChar;
+            flags: PWideChar;
         end;
-        Name: PChar;
-        developer: PChar;
-        description: PChar;
-        copyright: PChar;
-        email: PChar;
-        website: PChar;
+        pid: PWideChar;
+
+        Name: PWideChar;
+        developer: PWideChar;
+        description: PWideChar;
+        copyright: PWideChar;
+        email: PWideChar;
+        website: PWideChar;
     end;
     PUCMPluginInfo = ^TUCMPluginInfo;
 
@@ -82,19 +107,20 @@ type
     TUCMCB_PlugMessage = procedure(id: cardinal; ctx: UIntPtr;
         x1: cardinal; x2: cardinal); cdecl;
 
-    TUCMPlugin = record
+    TUCMPlugin = packed record
         info: TUCMPluginInfo;
         run: TUCMCB_PlugFunc;
         stop: TUCMCB_PlugFunc;
         message: TUCMCB_PlugMessage;
     end;
     PUCMPlugin = ^TUCMPlugin;
+    PPUCMPlugin = ^PUCMPlugin;
 
     // ######################################################################
     //      CHAT FUNCTIONALITY API IMPLEMENTATION
     // ######################################################################
 
-    TUCMEvent = record
+    TUCMEvent = packed record
         ev: byte;
         size: QWord;
         Sender: Pointer;
@@ -102,53 +128,33 @@ type
     PUCMEvent = ^TUCMEvent;
     PPUCMEvent = ^PUCMEvent;
 
-    TUCMDatabase = record
-        fname: TUCMPath;
-        handler: PUCMPlugin;
-    end;
-    PUCMDatabase = ^TUCMDatabase;
+    // ######################################################################
+    //      CHAT FUNCTIONALITY API IMPLEMENTATION
+    // ######################################################################
 
-    TUCMCB_DbOpen = function(db: TUCMDatabase; ctx: Pointer): PUCMDatabase; cdecl;
-    TUCMCB_DbCheck = function(db: TUCMDatabase; ctx: Pointer): TUCMRetStatus; cdecl;
-    TUCMCB_DbFlush = function(db: TUCMDatabase): TUCMRetStatus; cdecl;
-    TUCMCB_DbClose = function(db: TUCMDatabase): TUCMRetStatus; cdecl;
-    TUCMCB_DbGetInt = function(db: TUCMDatabase; key: PChar;
-        def: integer): integer; cdecl;
-    TUCMCB_DbGetLInt = function(db: TUCMDatabase; key: PChar;
-        def: longint): longint; cdecl;
-    TUCMCB_DbGetSingle = function(db: TUCMDatabase; key: PChar;
-        def: single): single; cdecl;
-    TUCMCB_DbGetPChar = function(db: TUCMDatabase; key: PChar; def: PChar): PChar; cdecl;
-    TUCMCB_DbSetInt = procedure(db: TUCMDatabase; key: PChar; Value: integer); cdecl;
-    TUCMCB_DbSetLInt = procedure(db: TUCMDatabase; key: PChar; Value: longint); cdecl;
-    TUCMCB_DbSetSingle = procedure(db: TUCMDatabase; key: PChar; Value: single); cdecl;
-    TUCMCB_DbSetPChar = procedure(db: TUCMDatabase; key: PChar; Value: PChar); cdecl;
-    TUCMCB_DbItemDel = procedure(db: TUCMDatabase; key: PChar); cdecl;
-
-    TUCMDbPlugin = record
+    TUCMGui = packed record
         core: TUCMPlugin;
-        db_open: TUCMCB_DbOpen;
-        db_check: TUCMCB_DbCheck;
-        db_flush: TUCMCB_DbFlush;
-        db_close: TUCMCB_DbClose;
-
-        get_int: TUCMCB_DbGetInt;
-        get_int64: TUCMCB_DbGetLInt;
-        get_float: TUCMCB_DbGetSingle;
-        get_str: TUCMCB_DbGetPChar;
-        set_int: TUCMCB_DbSetInt;
-        set_int64: TUCMCB_DbSetLInt;
-        set_float: TUCMCB_DbSetSingle;
-        set_str: TUCMCB_DbSetPChar;
-        item_del: TUCMCB_DbItemDel;
+        // TODO
     end;
-    PUCMDbPlugin = ^TUCMDbPlugin;
 
     // ######################################################################
     //  API FUNCTIONALITY
     // ######################################################################
+    
+    PPointer = ^Pointer;
+    TUCMCB_MemAlloc = function(size: cardinal): Pointer; cdecl;
+    TUCMCB_MemZeroAlloc = function(size: cardinal): Pointer; cdecl;
+    TUCMCB_MemCellAlloc = function(nmem: cardinal; size: cardinal): Pointer; cdecl;
+    TUCMCB_MemFree = procedure(obj: Pointer); cdecl;
+    TUCMCB_MemZero = procedure(mem: Pointer; size: cardinal); cdecl;
+    TUCMCB_MemRealloc = function(mem: PPointer; size: cardinal): integer; cdecl;
+    TUCMCB_StrDup = function(const str: PChar): PChar; cdecl;
 
+{$IFDEF UNIX}
     TUCMCB_ThreadFunc = procedure(ctx: Pointer); cdecl;
+{$ELSE}
+    TUCMCB_ThreadFunc = procedure(ctx: Pointer); stdcall;
+{$ENDIF}
     TUCMCB_ThreadCreate = function(func: TUCMCB_ThreadFunc;
         ctx: Pointer): UIntPtr; cdecl;
     TUCMCB_ThreadOperation = function(tid: UIntPtr): integer; cdecl;
@@ -161,20 +167,34 @@ type
 
     TUCMCB_CondCreate = function(): UIntPtr; cdecl;
     TUCMCB_CondFree = procedure(_cond: UIntPtr) cdecl;
-    TUCMCB_CondWait = function(_cond: UIntPtr; _mtx: UIntPtr): integer; cdecl;
-    TUCMCB_CondSignal = function(_cond: UIntPtr): integer; cdecl;
-    TUCMCB_CondBroadcast = function(_cond: UIntPtr): integer; cdecl;
+    TUCMCB_CondOperation = function(_cond: UIntPtr): integer; cdecl;
 
-    TUCMCB_StoreGetInt = function(key: PChar; def: integer): integer; cdecl;
-    TUCMCB_StoreGetLongInt = function(key: PChar; def: longint): longint; cdecl;
-    TUCMCB_StoreGetSingle = function(key: PChar; def: single): single; cdecl;
-    TUCMCB_StoreGetPChar = function(key: PChar; def: PChar): PChar; cdecl;
-    TUCMCB_StoreGetPCharCopy = function(key: PChar; def: PChar): PChar; cdecl;
-    TUCMCB_StoreSetInt = procedure(key: PChar; Value: integer); cdecl;
-    TUCMCB_StoreSetLongInt = procedure(key: PChar; Value: longint); cdecl;
-    TUCMCB_StoreSetSingle = procedure(key: PChar; Value: single); cdecl;
-    TUCMCB_StoreSetPChar = procedure(key: PChar; Value: PChar); cdecl;
-    TUCMCB_StoreItemDel = procedure(key: PChar); cdecl;
+    PSize = ^cardinal;
+    TUCMCB_StoreGetInt = function(obj: PUCMPlugin; key: PChar;
+        def: integer): integer; cdecl;
+    TUCMCB_StoreGetLongInt = function(obj: PUCMPlugin; key: PChar;
+        def: longint): longint; cdecl;
+    TUCMCB_StoreGetSingle = function(obj: PUCMPlugin; key: PChar;
+        def: single): single; cdecl;
+    TUCMCB_StoreGetPChar = function(obj: PUCMPlugin; key: PChar;
+        def: PChar): PChar; cdecl;
+    TUCMCB_StoreGetPWideChar = function(obj: PUCMPlugin; key: PChar;
+        def: PWideChar): PWideChar; cdecl;
+    TUCMCB_StoreGetBlob = function(obj: PUCMPlugin; key: PChar;
+        size: PSize): UIntPtr; cdecl;
+    TUCMCB_StoreSetInt = procedure(obj: PUCMPlugin; key: PChar;
+        Value: integer); cdecl;
+    TUCMCB_StoreSetLongInt = procedure(obj: PUCMPlugin; key: PChar;
+        Value: longint); cdecl;
+    TUCMCB_StoreSetSingle = procedure(obj: PUCMPlugin; key: PChar;
+        Value: single); cdecl;
+    TUCMCB_StoreSetPChar = procedure(obj: PUCMPlugin; key: PChar;
+        Value: PChar); cdecl;
+    TUCMCB_StoreSetPWideChar = procedure(obj: PUCMPlugin; key: PChar;
+        Value: PWideChar); cdecl;
+    TUCMCB_StoreSetBlob = procedure(obj: PUCMPlugin; key: PChar;
+        Blob: UIntPtr; size: cardinal); cdecl;
+    TUCMCB_StoreItemDel = procedure(obj: PUCMPlugin; key: PChar); cdecl;
 
     TUCMCB_MLMsgSend = function(id: cardinal; ctx: UIntPtr; x1: cardinal;
         x2: cardinal): integer; cdecl;
@@ -196,9 +216,9 @@ type
     TUCMCB_LogUnitConnect = procedure(callback: TUCMCB_Logger); cdecl;
     TUCMCB_LogUnitDisconnect = procedure(callback: TUCMCB_Logger); cdecl;
 
-    TUCMCB_PluginsList = function(): PUCMPlugin; cdecl;
+    TUCMCB_PluginsList = function(): PPUCMPlugin; cdecl;
 
-    TUCMCB_PathGet = function(): PChar; cdecl;
+    TUCMCB_PathGet = function(): PWideChar; cdecl;
 
     TUCMCB_PluginInfo = function(pid: PChar): PUCMPluginInfo; cdecl;
 
@@ -210,7 +230,17 @@ type
     TUCMCB_HookAttach = procedure(hook: TUCMCB_HookEvent; ctx: Pointer); cdecl;
     TUCMCB_HookDetach = procedure(hook: TUCMCB_HookEvent); cdecl;
 
-    TUCMFunctions = record
+    TUCMCB_RandEntropy = function(): integer; cdecl;
+
+    TUCMFunctions = packed record
+        malloc: TUCMCB_MemAlloc;
+        zmalloc: TUCMCB_MemZeroAlloc;
+        calloc: TUCMCB_MemCellAlloc;
+        Free: TUCMCB_MemFree;
+        zmemory: TUCMCB_MemZero;
+        realloc: TUCMCB_MemRealloc;
+        strdup: TUCMCB_StrDup;
+
         thread_create: TUCMCB_ThreadCreate;
         thread_detach: TUCMCB_ThreadOperation;
         thread_exit: TUCMCB_ThreadExit;
@@ -223,9 +253,9 @@ type
 
         cond_create: TUCMCB_CondCreate;
         cond_free: TUCMCB_CondFree;
-        cond_wait: TUCMCB_CondWait;
-        cond_signal: TUCMCB_CondSignal;
-        cond_broadcast: TUCMCB_CondBroadcast;
+        cond_wait: TUCMCB_CondOperation;
+        cond_signal: TUCMCB_CondOperation;
+        cond_broadcast: TUCMCB_CondOperation;
 
         rwlock_create: TUCMCB_MutexCreate;
         rwlock_free: TUCMCB_MutexFree;
@@ -233,15 +263,21 @@ type
         rwlock_wlock: TUCMCB_MutexLock;
         rwlock_unlock: TUCMCB_MutexUnlock;
 
+        // TODO Unicode functions
+
         // low-level settings provider functions */
         get_int: TUCMCB_StoreGetInt;
         get_int64: TUCMCB_StoreGetLongInt;
         get_float: TUCMCB_StoreGetSingle;
         get_str: TUCMCB_StoreGetPChar;
+        get_wstr: TUCMCB_StoreGetPWideChar;
+        get_blob: TUCMCB_StoreGetBlob;
         set_int: TUCMCB_StoreSetInt;
         set_int64: TUCMCB_StoreSetLongInt;
         set_float: TUCMCB_StoreSetSingle;
         set_str: TUCMCB_StoreSetPChar;
+        set_wstr: TUCMCB_StoreSetPWideChar;
+        set_blob: TUCMCB_StoreSetBlob;
         item_del: TUCMCB_StoreItemDel;
 
         // general queue access */
@@ -267,15 +303,19 @@ type
         // get plugins by category */
         get_plugins_all: TUCMCB_PluginsList;
         get_plugins_db: TUCMCB_PluginsList;
-        get_plugins_net: TUCMCB_PluginsList;
+        get_plugins_proto: TUCMCB_PluginsList;
         get_plugins_crypt: TUCMCB_PluginsList;
         get_plugins_hist: TUCMCB_PluginsList;
+        get_plugins_gui: TUCMCB_PluginsList;
         get_plugins_stuff: TUCMCB_PluginsList;
 
         // get global paths */
         get_startup_path: TUCMCB_PathGet;
         get_store_path: TUCMCB_PathGet;
         get_plugins_path: TUCMCB_PathGet;
+
+        // system entropy functions
+        get_entropy: TUCMCB_RandEntropy;
 
         // user API */
         get_plugin_info: TUCMCB_PluginInfo;
@@ -284,30 +324,52 @@ type
     end;
     PUCMFunctions = ^TUCMFunctions;
 
+    //TUCMCoreFlags=(UCM_FLAG_CORE_DBNEW=1,UCM_FLAG_CORE_DBRO=2);
+
+    TUCMCoreArgs = packed record
+        path_abs: PChar;
+        path_plug_abs: PChar;
+        path_store_abs: PChar;
+
+        options: QWord;
+    end;
+    PUCMCoreArgs = ^TUCMCoreArgs;
+
 {$IFDEF STATIC_LINK}
   {$IFDEF FPC}
-function UCMCoreStart(const PathAbs: PChar;
-    const UCMPathStoreAbs: PChar): PUCMFunctions;
-    cdecl; external UCMConst_LibName Name 'ucm_core_start';
-function UCMCoreStop(): TUCMRetStatus; cdecl;
-    external UCMConst_LibName Name 'ucm_core_stop';
-function UCMCoreInfo(): PUCMPluginInfo; cdecl;
-    external UCMConst_LibName Name 'ucm_core_info';
+    {$IFDEF WINDOWS}
+        function UCMCoreStart(args: PUCMCoreArgs): PUCMFunctions;
+            stdcall; external UCMConst_LibName Name 'ucm_core_start';
+        function UCMCoreStop(): TUCMRetStatus; stdcall;
+            external UCMConst_LibName Name 'ucm_core_stop';
+        function UCMCoreInfo(): PUCMPluginInfo; stdcall;
+            external UCMConst_LibName Name 'ucm_core_info';
+    {$ELSE}
+        function UCMCoreStart(args: PUCMCoreArgs): PUCMFunctions;
+            cdecl; external UCMConst_LibName Name 'ucm_core_start';
+        function UCMCoreStop(): TUCMRetStatus; cdecl;
+            external UCMConst_LibName Name 'ucm_core_stop';
+        function UCMCoreInfo(): PUCMPluginInfo; cdecl;
+            external UCMConst_LibName Name 'ucm_core_info';
+    {$ENDIF}
   {$ELSE}
        {TODO}
   {$ENDIF}
 {$ELSE}
    {$IFDEF FPC}
-TUCMCB_CoreStart = function (const PathAbs: PChar;
-    const UCMPathPlugAbs: PChar;    
-    const UCMPathStoreAbs: PChar): PUCMFunctions; cdecl;
-TUCMCB_CoreStop = function (): TUCMRetStatus; cdecl;
-TUCMCB_CoreInfo = function (): PUCMPluginInfo; cdecl;
+     {$IFDEF WINDOWS}
+       TUCMCB_CoreStart = function (args: PUCMCoreArgs): PUCMFunctions; stdcall;
+       TUCMCB_CoreStop = function (): TUCMRetStatus; stdcall;
+       TUCMCB_CoreInfo = function (): PUCMPluginInfo; stdcall;
+     {$ELSE}
+       TUCMCB_CoreStart = function (args: PUCMCoreArgs): PUCMFunctions; cdecl;
+       TUCMCB_CoreStop = function (): TUCMRetStatus; cdecl;
+       TUCMCB_CoreInfo = function (): PUCMPluginInfo; cdecl;
+     {$ENDIF}
    {$ELSE}
           {TODO}
    {$ENDIF}
 {$ENDIF}
-
 
 implementation
 

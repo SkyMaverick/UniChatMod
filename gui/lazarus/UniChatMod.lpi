@@ -31,7 +31,7 @@
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
             <Libraries Value="../../build/lib_core"/>
-            <OtherUnitFiles Value="../../lib_core;UCM_AL"/>
+            <OtherUnitFiles Value="../../lib_core;UCM_AL;../../lib_core/bindings/fpc"/>
             <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>
@@ -80,7 +80,7 @@
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
             <Libraries Value="../../build/lib_core"/>
-            <OtherUnitFiles Value="../../lib_core;UCM_AL"/>
+            <OtherUnitFiles Value="../../lib_core;UCM_AL;../../lib_core/bindings/fpc"/>
             <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>
@@ -130,7 +130,7 @@
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
             <Libraries Value="../../build/lib_core"/>
-            <OtherUnitFiles Value="../../lib_core;UCM_AL"/>
+            <OtherUnitFiles Value="../../lib_core;UCM_AL;../../lib_core/bindings/fpc"/>
             <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>
@@ -200,7 +200,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="5">
+    <Units Count="6">
       <Unit0>
         <Filename Value="UniChatMod.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -234,6 +234,10 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="uCoreClass"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="../../lib_core/bindings/fpc/ucm.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit5>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -244,7 +248,7 @@
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <Libraries Value="../../build/lib_core"/>
-      <OtherUnitFiles Value="../../lib_core;UCM_AL"/>
+      <OtherUnitFiles Value="../../lib_core;UCM_AL;../../lib_core/bindings/fpc"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

@@ -29,8 +29,19 @@
 #endif
 
 /* ======================================================================
-        CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS 
+        CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS
    ====================================================================== */
+
+enum {
+    OSAL_RETURN_SUCCESS,
+    OSAL_RETURN_ERROR,
+    OSAL_RETURN_ABORT,
+    OSAL_RETURN_ETIMEOUT,
+    OSAL_RETURN_EABANDONED,
+    OSAL_RETURN_EIO,
+    OSAL_RETURN_EACCESS,
+    OSAL_RETURN_ENOMEM
+};
 
 #if defined(_WIN32) || defined(_WIN64)
 
@@ -42,8 +53,8 @@
     #include <WinNT.h>
     #include <Winternl.h>
     #ifdef osal_WITHOUT_RUNTIME
-        #ifndef osal_malloc 
-            static inline void* 
+        #ifndef osal_malloc
+            static inline void*
             osal_malloc (size_t bytes)
             {
                 return LocalAlloc (LMEM_FIXED, bytes);
@@ -123,6 +134,28 @@ osal_zmemory (void*  ptr,
         }
     }
 }
+
+static inline int
+osal_realloc2 (void** mem, size_t size)
+{
+    void* old_mem = *mem;
+    *mem = osal_realloc (*mem, size);
+    if (*mem != old_mem) {
+        if (*mem != NULL) {
+            osal_free (old_mem);
+        } else {
+            *mem = old_mem;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+#define osal_free_null(X)   \
+    do {                    \
+        osal_free(X);       \
+        X = NULL;           \
+    }while(0)               \
 
 /* ======================================================================
         CUSTOM DYNAMIC LOAD LIBRARIES FUNCTIONS
