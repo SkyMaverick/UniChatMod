@@ -60,8 +60,7 @@ osal_mutex_create_nonrecursive (void)
         pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_TIMED_NP);
 #endif
         if ( pthread_mutex_init(mtx,&attr) ) {
-            osal_free (mtx);
-            mtx = NULL;
+            osal_free_null (mtx);
         }
         pthread_mutexattr_destroy (&attr);
     }
@@ -79,8 +78,7 @@ osal_mutex_create (void)
         pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
 #endif
         if ( pthread_mutex_init(mtx,&attr) ) {
-            osal_free (mtx);
-            mtx = NULL;
+            osal_free_null (mtx);
         }
         pthread_mutexattr_destroy (&attr);
     }
@@ -115,8 +113,7 @@ osal_cond_create (void)
     osal_cmutex_t *cmtx = osal_malloc(sizeof(osal_cmutex_t));
     if (cmtx) {
         if ( pthread_cond_init(&(cmtx->cond), NULL) ) {
-            osal_free (cmtx);
-            cmtx = NULL;
+            osal_free_null (cmtx);
             goto exit;
         };
 
@@ -126,8 +123,7 @@ osal_cond_create (void)
         pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
 #endif
         if ( pthread_mutex_init (&(cmtx->mtx),&attr) ) {
-            osal_free (cmtx);
-            cmtx = NULL;
+            osal_free_null (cmtx);
         }
         pthread_mutexattr_destroy (&attr);
     }
@@ -190,8 +186,7 @@ osal_rwlock_create (void)
         pthread_rwlockattr_setkind_np(&attr,PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
         if ( pthread_rwlock_init(rwl,&attr) ) {
-            osal_free (rwl);
-            rwl = NULL;
+            osal_free_null (rwl);
         }
         pthread_rwlockattr_destroy(&attr);
     }

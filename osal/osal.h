@@ -32,6 +32,17 @@
         CUSTOM MEMORY ALLOCATION INLINE FUNCTIONS
    ====================================================================== */
 
+enum {
+    OSAL_RETURN_SUCCESS,
+    OSAL_RETURN_ERROR,
+    OSAL_RETURN_ABORT,
+    OSAL_RETURN_ETIMEOUT,
+    OSAL_RETURN_EABANDONED,
+    OSAL_RETURN_EIO,
+    OSAL_RETURN_EACCESS,
+    OSAL_RETURN_ENOMEM
+};
+
 #if defined(_WIN32) || defined(_WIN64)
 
 /*
@@ -139,6 +150,12 @@ osal_realloc2 (void** mem, size_t size)
     }
     return 0;
 }
+
+#define osal_free_null(X)   \
+    do {                    \
+        osal_free(X);       \
+        X = NULL;           \
+    }while(0)               \
 
 /* ======================================================================
         CUSTOM DYNAMIC LOAD LIBRARIES FUNCTIONS
