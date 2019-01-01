@@ -42,6 +42,7 @@ type
 
     //TODO remove hardcode
     TUCMPath = array [0..4096] of char;
+    TSize = QWord;
 
     // ######################################################################
     //  ENUMERATIONS DECLARE
@@ -168,6 +169,29 @@ type
     TUCMCB_CondCreate = function(): UIntPtr; cdecl;
     TUCMCB_CondFree = procedure(_cond: UIntPtr) cdecl;
     TUCMCB_CondOperation = function(_cond: UIntPtr): integer; cdecl;
+    
+    Char8   = byte;  Char32 = Word;
+    P8Char  = ^byte; PP8Char  = ^P8Char;
+    P32Char = ^Word; PP32Char = ^P32Char;
+
+    TUCMCB_Utf8toUcs4 = function (str: P8Char; const str_len: QWord; ret:PP32Char): QWord; cdecl;
+    TUCMCB_Ucs4toUtf8 = function (str: P32Char; const str_len: QWord; ret:PP8Char): QWord; cdecl;
+    TUCMCB_Strlen = function (str: P32Char): TSize; cdecl;
+    TUCMCB_Strdup32 = function (str: P32Char): P32Char; cdecl;
+    TUCMCB_Strcmp = function (lstr: P32Char; rstr: P32Char): integer; cdecl;
+    TUCMCB_Strncmp = function (lstr: P32Char; rstr: P32Char; num: TSize): integer; cdecl;
+    TUCMCB_Strcase = procedure (str: P32Char); cdecl;
+    TUCMCB_Strcpy = procedure (dest: P32Char; src: P32Char); cdecl;
+    TUCMCB_Strcat = procedure (dest: P32Char; src: P32Char); cdecl;
+    TUCMCB_Mstrcat = procedure (dest: P32Char; num: LongWord); cdecl; varargs;
+    TUCMCB_Strchr = function (str: P32Char; chr: Char32): P32Char; cdecl;
+    TUCMCB_Strrchr = function (str: P32Char; chr: Char32): P32Char; cdecl;
+    TUCMCB_Strjoin = function (str1: P32Char; str2: P32Char): P32Char; cdecl;
+    TUCMCB_Mstrjoin = function (num: TSize): P32Char; cdecl; varargs;
+    TUCMCB_Strbrkjoin = function (str1: P32Char; str2: P32Char; brk:Char32): P32Char; cdecl;
+    TUCMCB_Mstrbrkjoin = function (brk:Char32; num: TSize): P32Char; cdecl; varargs;
+    TUCMCB_Strstr = function (str: P32Char; sstr: P32Char): QWord; cdecl;
+
 
     PSize = ^cardinal;
     TUCMCB_StoreGetInt = function(obj: PUCMPlugin; key: PChar;
@@ -263,8 +287,30 @@ type
         rwlock_wlock: TUCMCB_MutexLock;
         rwlock_unlock: TUCMCB_MutexUnlock;
 
-        // TODO Unicode functions
-
+        U8toU32: TUCMCB_Utf8toUcs4;      
+        U32toU8: TUCMCB_Ucs4toUtf8;      
+        ustrlen: TUCMCB_Strlen ;      
+        ustrdup: TUCMCB_Strdup32;      
+        ustrcmp: TUCMCB_Strcmp;      
+        ustrcasecmp: TUCMCB_Strcmp;  
+        ustrncmp: TUCMCB_Strncmp;     
+        ustrncasecmp: TUCMCB_Strncmp; 
+        ustrupcase: TUCMCB_Strcase;   
+        ustrlowcase: TUCMCB_Strcase;  
+        ustrcpy: TUCMCB_Strcpy;      
+        ustrncpy: TUCMCB_Strcpy;     
+        ustrcat: TUCMCB_Strcat;      
+        ustrncat: TUCMCB_Strcat;     
+        umstrcat: TUCMCB_Mstrcat;     
+        ustrchr: TUCMCB_Strchr;      
+        ustrrchr: TUCMCB_Strrchr;     
+        ustrjoin: TUCMCB_Strjoin;     
+        umstrjoin: TUCMCB_Mstrjoin;    
+        ustrbrkjoin: TUCMCB_Strbrkjoin;
+        umstrbrkjoin: TUCMCB_Mstrbrkjoin; 
+        ustrstr: TUCMCB_Strstr;      
+        ustrcasestr: TUCMCB_Strstr;  
+        
         // low-level settings provider functions */
         get_int: TUCMCB_StoreGetInt;
         get_int64: TUCMCB_StoreGetLongInt;
