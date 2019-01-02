@@ -256,30 +256,25 @@ osal_diropen (const char*       path,
 {
     if (list == NULL)
         return 0;
-    DIR* ret = opendir (path);
-    if (ret == NULL) {
-       osal_zmemory (list, sizeof(osal_fsobject_t));
-       goto quit;
-    }
-    
-    struct dirent* tmp = readdir (ret);
-    if (tmp) {
-        posix_dir_t* pdir = osal_zmalloc ((strlen(path) + 1) * sizeof(char)
-                                         + sizeof (posix_dir_t) );
-        if (pdir) {
-            pdir->handle = ret;
-            memcpy (pdir->path, path, strlen (path));
-        
-            list->name   = tmp->d_name;
-            list->handle = (uintptr_t) tmp;
-            list->type   = get_fso_type (pdir, list->name);
+    DIR* folder = opendir (path);
+    if (folder != NULL) {
+        struct dirent* tmp = readdir (folder);
+        if (tmp) {
+            posix_dir_t* pdir = osal_zmalloc ((strlen(path) + 1) * sizeof(char)
+                                             + sizeof (posix_dir_t) );
+            if (pdir) {
+                pdir->handle = folder;
+                memcpy (pdir->path, path, strlen (path));
+            
+                list->name   = tmp->d_name;
+                list->handle = (uintptr_t) tmp;
+                list->type   = get_fso_type (pdir, list->name);
+            }
+            return (osal_dir_t) pdir;
         }
-        return (osal_dir_t) pdir;
     }
     osal_zmemory (list, sizeof(osal_fsobject_t));
-    closedir (ret);
-
-    quit: return (osal_dir_t) ret;
+    return 0;
 }
 
 int
