@@ -70,7 +70,6 @@ _stop_core (void)
     plugins_stop_all();
     ucm_mloop_free();
 
-    log_release();
     hooks_event_release();
 
     return UCM_RET_SUCCESS;

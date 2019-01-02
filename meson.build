@@ -24,6 +24,9 @@ if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
     if get_option('build_with_hidden_api')
         add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
     endif
+    if get_option('valgrind_support')
+        add_global_arguments ('-DENABLE_VALGRIND', language: 'c')
+    endif
     
     add_global_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
     # --- compiler arguments ----------

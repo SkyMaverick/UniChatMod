@@ -232,8 +232,12 @@ get_fso_type (posix_dir_t*  dir,
     uint32_t buffer_lenght = strlen (dir->path)  + strlen (fso) + 2;
     char* path_fabs = osal_zmalloc (buffer_lenght);
     if (path_fabs) {
+        
         snprintf (path_fabs, buffer_lenght, "%s/%s", dir->path, fso);
-        if ( lstat(path_fabs, &sb) != -1) {
+        int st_ret = lstat(path_fabs, &sb);
+        osal_free (path_fabs);
+
+        if ( st_ret != -1) {
             switch (sb.st_mode & S_IFMT) {
                 // TODO Make new type is need
                 case S_IFREG: return FO_TYPE_FILE;

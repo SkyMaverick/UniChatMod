@@ -233,7 +233,9 @@ main (int argc, char* argv[])
                 ret_status = UCM_RET_UNREALIZED;
             }
         }
+#ifndef ENABLE_VALGRIND
         dlclose(core_handle);
+#endif    
     }
     else {
         fprintf (stderr, "%s: %s\n", "Don't load core library", LIBCORE_NAME);
