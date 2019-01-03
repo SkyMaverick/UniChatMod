@@ -107,6 +107,10 @@ endif
 
 if target_machine.system() == 'windows'
     system_library_threads = cc.find_library ('pthread', required: false)
+    if not system_library_threads.found()
+        ptwin_lib = subproject('pthreads4w', default_options: [ '='.join ( ['path_install', install_path_libs] )] )
+        system_library_threads = ptwin_lib.get_variable('ptwin_dep')
+    endif
     system_library_dynload = cc.find_library ('dl', required: false)
 else
     system_library_threads = cc.find_library ('pthread', required: true)

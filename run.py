@@ -90,11 +90,17 @@ def action_build ():
     return ninja_cmd()
 
 def action_debug ():
-    meson_cmd()
+    if os.path.exists (path_build):
+        meson_cmd('--reconfigure')
+    else:
+        meson_cmd()
     return action_build()
 
 def action_release ():
-    meson_cmd('--buildtype=release')
+    if os.path.exists (path_build):
+        meson_cmd('--reconfigure --buildtype=release')
+    else:
+        meson_cmd('--buildtype=release')
     return action_build()
 
 def action_test():
