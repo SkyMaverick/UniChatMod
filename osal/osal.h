@@ -214,20 +214,12 @@ osal_realloc2 (void** mem, size_t size)
         CUSTOM THREADING FUNCTIONS
    ====================================================================== */
 
-#if defined(_WIN32) || defined(_WIN64)
-    #define THREAD_CALL    __stdcall
-    #define THREAD_RESULT  unsigned long
-#else
-    #define THREAD_CALL
-    #define THREAD_RESULT  void *
-#endif
-
-uintptr_t osal_thread_create (
-        THREAD_RESULT ( THREAD_CALL *func)(void* ctx),
-        void* ctx);
+uintptr_t osal_thread_create (void* (*func)(void* ctx),
+                             void* ctx);
 int osal_thread_detach       (uintptr_t tid);
-void osal_thread_exit        (THREAD_RESULT ret);
+void osal_thread_exit        (void* ret);
 int osal_thread_join         (uintptr_t tid);
+void osal_thread_cleanup     (uintptr_t* tid);
 
 uintptr_t osal_mutex_create_nonrecursive(void);
 uintptr_t osal_mutex_create  (void);

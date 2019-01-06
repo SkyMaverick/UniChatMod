@@ -19,8 +19,8 @@ typedef struct {
 
 static uintptr_t tid_loop_core = 0;
 
-static THREAD_RESULT
-THREAD_CALL loop_core (void* ctx)
+static void*
+loop_core (void* ctx)
 {
     uint32_t  id;
     uintptr_t lctx;
@@ -55,7 +55,7 @@ THREAD_CALL loop_core (void* ctx)
         if (term) break;
         ucm_mloop_wait();
     }
-    return (THREAD_RESULT) 0;
+    return NULL;
 }
 
 static UCM_RET
@@ -65,6 +65,7 @@ _stop_core (void)
     if (tid_loop_core > 0) {
         UniAPI->mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->thread_join(tid_loop_core);
+        osal_thread_cleanup (&tid_loop_core);
     }
     db_close();
     plugins_stop_all();

@@ -85,15 +85,6 @@
     #endif
 #endif /* __ucm_import */
 
-#if defined(_WIN32) || defined(_WIN64)
-    #define THREAD_CALL __stdcall
-    #define THREAD_RESULT unsigned long
-#else
-    #define THREAD_CALL
-    #define THREAD_RESULT  void *
-#endif
-#define FUNCTION_CALL THREAD_CALL
-
 #if defined(LIBUCM_EXPORTS)
     #define LIBUCM_API __ucm_export
 #elif defined(LIBMDBX_IMPORTS)
@@ -474,9 +465,9 @@ typedef struct _ucm_functions_s {
     char*       (*strdup)           (const char* str);
 
     /*! pthread API functions*/
-    uintptr_t   (*thread_create)    (THREAD_RESULT (THREAD_CALL *func)(void* ctx), void* ctx);
+    uintptr_t   (*thread_create)    (void* (*func)(void* ctx), void* ctx);
     int         (*thread_detach)    (uintptr_t tid);
-    void        (*thread_exit)      (THREAD_RESULT ret);
+    void        (*thread_exit)      (void* ret);
     int         (*thread_join)      (uintptr_t tid);
 
     uintptr_t   (*mutex_create)     (void);
@@ -583,11 +574,7 @@ typedef struct _ucm_functions_s {
 
 } ucm_functions_t;
 
-#if defined(_WIN32) || defined(_WIN64)
-    typedef ucm_plugin_t*(*cb_init_plugin)(ucm_functions_t*);
-#else
-    typedef ucm_plugin_t*(FUNCTION_CALL *cb_init_plugin)(ucm_functions_t*);
-#endif
+typedef ucm_plugin_t*(*cb_init_plugin)(ucm_functions_t*);
 // *********************************************************
 //      START/STOP/INFO MODULE
 // *********************************************************
@@ -607,27 +594,27 @@ typedef struct {
 } ucm_cargs_t;
 
 // ******* LOAD FUNCTIONS ************
-LIBUCM_API const ucm_functions_t* FUNCTION_CALL
+LIBUCM_API const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args);
 
-LIBUCM_API UCM_RET FUNCTION_CALL
+LIBUCM_API UCM_RET
 ucm_core_stop (void);
 
-LIBUCM_API const ucm_plugin_info_t* FUNCTION_CALL
+LIBUCM_API const ucm_plugin_info_t*
 ucm_core_info (void);
 
 // ******* DYNAMIC LOAD FUNCTIONS ***********
 
 typedef const ucm_functions_t*
-(FUNCTION_CALL *ucm_cstart_func) (ucm_cargs_t* args);
+(*ucm_cstart_func) (ucm_cargs_t* args);
 #define UCM_START_FUNC  "ucm_core_start"
 
 typedef UCM_RET
-(FUNCTION_CALL *ucm_cstop_func) (void);
+(*ucm_cstop_func) (void);
 #define UCM_STOP_FUNC  "ucm_core_stop"
 
 typedef const ucm_plugin_info_t*
-(FUNCTION_CALL *ucm_cinfo_func) (void);
+(*ucm_cinfo_func) (void);
 #define UCM_INFO_FUNC  "ucm_core_info"
 
 #undef UCM_DEPRECATED

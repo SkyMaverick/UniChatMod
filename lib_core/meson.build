@@ -16,11 +16,6 @@ libcore_osal_src = '''
         osal.c
 '''.split()
 
-if target_machine.system() == 'windows'
-    libcore_osal_src += 'osal-windows.c'
-else
-   libcore_osal_src += 'osal-linux.c'
-endif
 foreach item : libcore_osal_src
     libcore_src += files ('..' / 'osal' / item)
 endforeach
