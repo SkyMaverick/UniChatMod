@@ -201,7 +201,7 @@ plugins_load_registry (const char* plug_path)
     size_t plugs_count = 0;
     char buffer [UCM_PATH_MAX];
 
-    osal_fsobject_t ls;
+    osal_dirent_t ls;
     osal_dir_t dir = osal_diropen (plug_path, &ls);
     if (dir) {
         do {

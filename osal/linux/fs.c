@@ -1,10 +1,14 @@
 /* ======================================================================
         DIRECTORY WALK FUNCTIONS
    ====================================================================== */
+typedef struct {
+    DIR* handle;
+    char path [1];
+} posix_dir_t;
 
 static int
-get_fso_type (posix_dir_t*  dir,
-              const char*   fso)
+get_fso_type (posix_dir_t* dir,
+              const char*  fso)
 {
     struct stat sb;
     uint32_t buffer_lenght = strlen (dir->path)  + strlen (fso) + 2;
@@ -29,8 +33,8 @@ get_fso_type (posix_dir_t*  dir,
 }
 
 osal_dir_t
-osal_diropen (const char*       path,
-             osal_fsobject_t*   list)
+osal_diropen (const char*   path,
+             osal_dirent_t* list)
 {
     if (list == NULL)
         return 0;
@@ -44,30 +48,30 @@ osal_diropen (const char*       path,
                 pdir->handle = folder;
                 memcpy (pdir->path, path, strlen (path));
             
-                list->name   = tmp->d_name;
-                list->handle = (uintptr_t) tmp;
-                list->type   = get_fso_type (pdir, list->name);
+                list->name      = tmp->d_name;
+                list->type      = get_fso_type (pdir, list->name);
+                list->__sysdata = tmp;
             }
             return (osal_dir_t) pdir;
         }
     }
-    osal_zmemory (list, sizeof(osal_fsobject_t));
+    osal_zmemory (list, sizeof(osal_dirent_t));
     return 0;
 }
 
 int
-osal_dirnext (osal_dir_t         dir,
-             osal_fsobject_t*   list)
+osal_dirnext (osal_dir_t    dir,
+             osal_dirent_t* list)
 {
-    osal_zmemory(list, sizeof(osal_fsobject_t));
+    osal_zmemory(list, sizeof(osal_dirent_t));
 
     struct dirent* tmp = readdir (((posix_dir_t*)dir)->handle);
     if (tmp == NULL)
         return 0;
     
-    list->name = tmp->d_name;
-    list->handle = (uintptr_t) tmp;
-    list->type   = get_fso_type ((posix_dir_t*)dir, list->name);
+    list->name      = tmp->d_name;
+    list->type      = get_fso_type ((posix_dir_t*)dir, list->name);
+    list->__sysdata = tmp;
 
     return 1;
 }

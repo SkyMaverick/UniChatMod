@@ -262,11 +262,6 @@ osal_errno (void)
 #if defined(_WIN32) || defined(_WIN64)
     typedef HANDLE osal_dir_t;
 #else
-    typedef struct {
-        DIR* handle;
-        char path [1];
-    } posix_dir_t;
-
     typedef uintptr_t osal_dir_t;
 #endif
 
@@ -280,16 +275,20 @@ typedef struct {
     char*     name;
     uint8_t   type;
 
-    uintptr_t handle;
-} osal_fsobject_t;
+#if defined(_WIN32) || defined(_WIN64)
+    WIN32_FIND_DATA __sysdata;
+#else    
+    struct dirent* __sysdata;
+#endif
+} osal_dirent_t;
 
 osal_dir_t
 osal_diropen (const char*       path,
-             osal_fsobject_t*   fso);
+              osal_dirent_t*   fso);
 
 int
 osal_dirnext (osal_dir_t        dir,
-             osal_fsobject_t*  fso);
+              osal_dirent_t*  fso);
 
 void
 osal_dirclose (osal_dir_t fso);
