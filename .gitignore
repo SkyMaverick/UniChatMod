@@ -27,7 +27,6 @@ ABOUT
 test_app
 notes
 Makefile
-config.h
 *.log
 *.status
 *.deps/

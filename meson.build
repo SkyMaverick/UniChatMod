@@ -7,6 +7,8 @@ project ('ucm', 'c',
          subproject_dir: 'deps',
          meson_version: '>=0.49')
 
+message ('Build configuration - @0@'.format(get_option('buildtype')))
+
 cc = meson.get_compiler('c')
 
 if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')

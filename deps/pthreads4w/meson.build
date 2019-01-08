@@ -12,6 +12,7 @@ endif
 
 ptwin_src = files ('''
     pthread.c
+    config.h
 '''.split())
 
 ptwin_header = files ('pthread.h')
