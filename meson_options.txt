@@ -11,7 +11,7 @@ option ('string_buffer_capacity', type: 'integer', value: 4096,
 option ('limit_plugins_count', type: 'integer', value: 100,
         description: 'limit loaded plugins count')
 
-option ('build_bundle', type: 'boolean', value: 'true',
+option ('build_bundle', type: 'boolean', value: 'false',
         description: 'build single path application or classic *nix')
 option ('base_inbundle', type: 'boolean', value: 'true',
         description: 'build basepath into bandle (full portable app)')
@@ -32,7 +32,7 @@ option ('build_with_tests', type: 'boolean', value: 'false',
 # === ATTENTION !!! ===
 # It is not guaranteed that the assembly will be correct with the versions of the libraries that differ from those offered.
 
-option ('custom_libs', type: 'boolean', value: 'false',
+option ('custom_libs', type: 'boolean', value: 'true',
         description: 'build with target system libraries if available')
 option ('build_with_hidden_api', type: 'boolean', value: 'true',
         description: 'build with hidden internal API')

@@ -21,7 +21,6 @@ if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
     endif
     if get_option('build_bundle')
         add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
-        add_global_arguments ('-DENABLE_BASE_BUNDLE', language: 'c')
     endif
     if get_option('build_with_hidden_api')
         add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
@@ -97,13 +96,12 @@ libs_rpath = ':'.join ([
 lib_core_inc = include_directories (lib_inc)
 
 # --- install paths resolve ----------
-if get_option ('build_bundle')
-    install_path_root = meson.source_root() / 'bundle' / meson.project_name ()
-    install_path_mods = install_path_root / get_option ('path_modules_lookup')
-    install_path_libs = install_path_root / get_option ('path_libs_lookup')
-    install_path_docs = install_path_root / get_option ('path_docs_lookup')
-    install_path_devs = install_path_root / get_option ('path_devels_lookup')
-endif
+install_path_root = get_option('prefix') / meson.project_name ()
+
+install_path_mods = install_path_root / get_option ('path_modules_lookup')
+install_path_libs = install_path_root / get_option ('path_libs_lookup')
+install_path_docs = install_path_root / get_option ('path_docs_lookup')
+install_path_devs = install_path_root / get_option ('path_devels_lookup')
 
 # --- resolve some popularity dependencies ----------
 

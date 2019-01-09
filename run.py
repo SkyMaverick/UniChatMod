@@ -135,6 +135,10 @@ def action_dockerhub ():
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
     return result
 
+def helper_build_bundle ():
+    info ("Create bundle ")
+
+
 def action_dummy ():
     info ("Run dummy function for test")
     return
@@ -155,6 +159,7 @@ actions = {
         'install'           : action_install,
         'uninstall'         : action_uninstall,
         'docker_hub'        : action_dockerhub,
+        'pack_xz'           : action_dummy
 }
 
 # ==================================================
