@@ -63,13 +63,13 @@ case $1 in
         ENV_FILE=".cov-env"
         if [ -f ${ENV_FILE} ]
         then
-            docker run -dit -v ${BUILD_DIR}:/root/build/posix \
+            docker run -dit -v ${BUILD_DIR}:/root/build \
                        -w /root --privileged=true \
                        --net=host \
                        --env-file=${ENV_FILE} \
                        --name ${CI_NAME} ${CI_IMAGE} /sbin/init
         else
-            docker run -dit -v ${BUILD_DIR}:/root/build/posix \
+            docker run -dit -v ${BUILD_DIR}:/root/build \
                        -w /root --privileged=true \
                        --net=host \
                        --name ${CI_NAME} ${CI_IMAGE} /sbin/init
@@ -83,7 +83,7 @@ case $1 in
             mkdir -p ${BUILD_DIR}
         fi
         CI_CREATE_FAST $CI_IMAGE $CI_IMAGE_REMOTE $CI_NAME
-        docker run -dit -v ${BUILD_DIR}:/root/build/posix \
+        docker run -dit -v ${BUILD_DIR}:/root/build/ \
                    -w /root --privileged=true \
                    --net=host \
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init
@@ -106,6 +106,9 @@ case $1 in
         docker exec -ti ${CI_NAME} ${CI_COVERITY} build
         docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
         set +e
+    ;;
+    PACK)
+        docker exec -ti ${CI_NAME} ./run.py pack_arc
     ;;
     CLEANUP)
         set -e

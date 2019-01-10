@@ -152,7 +152,6 @@ def action_bundle ():
     ninja_cmd('install')
 
 def action_arcxz ():
-    action_clean ()
     tmp_path = os.path.join (path_packages, 'temp')
     build_cmd ('release', tmp_path)
     ninja_cmd ('install')

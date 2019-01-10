@@ -45,17 +45,21 @@ script:
           if [[ "$TRAVIS_BRANCH" == "master" ]]; then
             ${CI_MANAGER} CREATE_FAST;
             ${CI_MANAGER} RUN_DEBUG;
-            ${CI_MANAGER} CLEANUP;
           fi;
           if [[ "$TRAVIS_BRANCH" == "release" ]]; then
             ${CI_MANAGER} CREATE;
             ${CI_MANAGER} RUN_RELEASE;
-            ${CI_MANAGER} CLEANUP;
           fi;
           if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-            echo $COVERITY_SCAN_PROJECT_NAME;
             ${CI_MANAGER} CREATE;
             ${CI_MANAGER} RUN_COVERITY;
-            ${CI_MANAGER} CLEANUP;
           fi;
+      fi;
+after_success:
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+            ${CI_MANAGER} PACK;
+      fi;
+after_script:
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+            ${CI_MANAGER} CLEANUP;
       fi;
