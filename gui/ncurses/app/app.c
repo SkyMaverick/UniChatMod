@@ -140,16 +140,14 @@ _crash_handler (int sig)
 int
 main (int argc, char* argv[])
 {
+    portable = 1;
     int ret_status = UCM_RET_SUCCESS;
 // *********************************************************
 //      DEFINE STARTUP FILES AND CHECK ENV PATHS
 // *********************************************************
 
 #ifdef ENABLE_BUNDLE
-    portable = 1;
-    #ifdef ENABLE_BASE_BUNDLE
         portable_base = 1;
-    #endif
 #endif
 
     if ( !realpath (argv[0], args.path_abs) ) {

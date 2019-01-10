@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
-import os, sys, subprocess, shutil, fnmatch
+import os, subprocess, shutil, fnmatch, platform
+
+from sys import argv
 from colorize import *
 
+project_name = 'ucm'
 path_script = os.path.abspath (os.path.curdir)
 path_build  = os.path.join (path_script, 'build', os.name)
-path_libs  = os.path.join (path_build, 'libs')
+path_libs   = os.path.join (path_build, 'libs')
 
-file_shell_travis = os.path.join(path_script, 'tools', 'travis', 'manager.sh')
+path_bundle = os.path.join (path_script, 'bundle')
+path_packages = os.path.join (path_script, 'pkgs')
 
 _clean_files = '''
     *.so
@@ -66,6 +70,26 @@ def remove_dir (path):
     if os.path.exists (path):
         shutil.rmtree (path, ignore_errors=False, onerror=None)
 
+def build_cmd (type, prefix):
+    if os.path.exists(path_build):
+        meson_cmd ('--reconfigure')
+    else:
+        meson_cmd ('--buildtype='+type, '-Dprefix='+prefix)
+
+def shell_cmd_out (app, *args):
+    cmd = [app]
+    for i in args:
+       cmd += [i]
+    
+    shell=subprocess.Popen (cmd, stdout=subprocess.PIPE)
+    data=shell.communicate()
+    return (data)[0].decode()
+
+package_name = project_name +'-' \
+                + (shell_cmd_out('git', 'describe', '--abbrev=0', '--tags').rstrip()) + '-' \
+                + platform.system().lower() + '_'\
+                + platform.architecture()[0].lower()
+
 # ==================================================
 #   ACTIONS
 # ==================================================
@@ -90,17 +114,11 @@ def action_build ():
     return ninja_cmd()
 
 def action_debug ():
-    if os.path.exists (path_build):
-        meson_cmd('--reconfigure')
-    else:
-        meson_cmd()
+    build_cmd ('debug', path_bundle)
     return action_build()
 
 def action_release ():
-    if os.path.exists (path_build):
-        meson_cmd('--reconfigure --buildtype=release')
-    else:
-        meson_cmd('--buildtype=release')
+    build_cmd ('release', path_bundle)
     return action_build()
 
 def action_test():
@@ -117,14 +135,6 @@ def action_log():
     else:
         error ('Meson configure files don\'t create')
 
-def action_install():
-    info ('Install application into: {path}'.format(path=path_build))
-    return ninja_cmd('install')
-    
-def action_uninstall():
-    info ('Uninstall application into: {path}'.format(path=path_build))
-    return ninja_cmd('uninstall')
-
 def action_dockerhub ():
     info ('Update docker image on DockerHub (signin if need)')
     action_clean ()
@@ -135,9 +145,26 @@ def action_dockerhub ():
         error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
     return result
 
-def helper_build_bundle ():
-    info ("Create bundle ")
+def action_bundle ():
+    info ('Create application bundle in: {path}'.format(path=path_bundle))
+    action_clean()
+    action_debug()
+    ninja_cmd('install')
 
+def action_arcxz ():
+    action_clean ()
+    tmp_path = os.path.join (path_packages, 'temp')
+    build_cmd ('release', tmp_path)
+    ninja_cmd ('install')
+    if platform.system().lower() == 'windows':
+        shell_cmd ('7z', 'a', '-tzip', '-mx9',
+                    os.path.join (path_packages, package_name+'.zip'),
+                    os.path.join (tmp_path, project_name), '.')
+    else:
+        shell_cmd ('tar', 'cvfJ',
+                    os.path.join (path_packages, package_name+'.tar.xz'),
+                    '-C', os.path.join (tmp_path, project_name), '.')
+    remove_dir (tmp_path)
 
 def action_dummy ():
     info ("Run dummy function for test")
@@ -156,10 +183,9 @@ actions = {
         'log'               : action_log,
         'pkg_src'           : action_dummy,
         'laz_gui'           : action_dummy,
-        'install'           : action_install,
-        'uninstall'         : action_uninstall,
         'docker_hub'        : action_dockerhub,
-        'pack_xz'           : action_dummy
+        'bundle'            : action_bundle,
+        'pack_arc'          : action_arcxz
 }
 
 # ==================================================
@@ -168,9 +194,9 @@ actions = {
 
 
 try:
-    action = actions [sys.argv[1]]
+    action = actions [argv[1]]
 except KeyError as e:
-    print ("I don't know this command: {}".format(sys.argv[1]))
+    print ("I don't know this command: {}".format(argv[1]))
     exit (1)
 else:
     exit (action())
