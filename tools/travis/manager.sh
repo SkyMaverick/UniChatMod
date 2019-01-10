@@ -4,7 +4,7 @@ ROOT=`pwd`
 BUILD_DIR=${ROOT}/build/posix
 
 CI_IMAGE=ucmbuild:single
-CI_IMAGE_REMOTE=skymaverick/meson-ucm:xenial
+CI_IMAGE_REMOTE=skymaverick/meson-ucm:trusty
 
 CI_NAME="ucmdocker-worker"
 CI_CONFIG="Dockerfile"

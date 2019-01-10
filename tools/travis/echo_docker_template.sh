@@ -2,7 +2,8 @@
 
 DEPENDS_CI_IMAGE="\
 python3.5 python3-pip \
-gcc wget unzip curl git"
+gcc wget unzip curl git \
+tar xz-utils"
 
 DEPENDS_UCM_APP="\
 libcunit1 libcunit1-dev \
@@ -19,11 +20,14 @@ echo   " RUN apt-get -y update && \ "
 echo   "     apt-get -y upgrade && \ "
 echo   "     apt-get install -y --no-install-recommends \ "
 echo   "     ${DEPENDS_CI_IMAGE} ${DEPENDS_UCM_APP} && \ "
-echo   "     rm -rf /var/lib/apt/lists/* "
-echo   " RUN mkdir ninja && \ "
+echo   "     rm -rf /var/lib/apt/lists/*  && \ "
+echo   "     rm -rf /var/cache/apt/archives/*  && \ "
+
+echo   "     mkdir ninja && \ "
 echo   "     wget $NETFILE_NINJA && \ "
 echo   "     unzip -q ninja-linux.zip -d /ninja && \ "
-echo   "     rm -f ninja-linux.zip "
-echo   " RUN sudo python3.5 -m pip install --upgrade pip && \ "
+echo   "     rm -f ninja-linux.zip && \ "
+
+echo   "     sudo python3.5 -m pip install --upgrade pip && \ "
 echo   "     sudo python3.5 -m pip install meson && \ "
 echo   "     rm -rf /root/.cache/pip "

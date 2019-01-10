@@ -15,6 +15,8 @@ path_libs   = os.path.join (path_build, 'libs')
 path_bundle = os.path.join (path_build, 'bundle')
 path_packages = os.path.join (path_build_root, 'pkgs')
 
+file_shell_travis = os.path.join (path_script, 'tools', 'travis', 'manager.sh')
+
 _clean_files = '''
     *.so
     *.a
