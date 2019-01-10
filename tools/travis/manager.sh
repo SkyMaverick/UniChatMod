@@ -53,6 +53,7 @@ CI_CLEANUP() {
 
 case $1 in
     CREATE)
+        set -e
         if ! [ -d ${BUILD_DIR} ]
         then
             mkdir -p ${BUILD_DIR}
@@ -73,8 +74,10 @@ case $1 in
                        --net=host \
                        --name ${CI_NAME} ${CI_IMAGE} /sbin/init
         fi
+        set +e
     ;;
     CREATE_FAST)
+        set -e
         if ! [ -d ${BUILD_DIR} ]
         then
             mkdir -p ${BUILD_DIR}
@@ -84,27 +87,38 @@ case $1 in
                    -w /root --privileged=true \
                    --net=host \
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init
+        set +e
     ;;
     RUN_DEBUG)
+        set -e
         docker exec -ti ${CI_NAME} ./run.py debug
+        set +e
     ;;
     RUN_RELEASE)
+        set -e
         docker exec -ti ${CI_NAME} ./run.py release
+        set +e
     ;;
     RUN_COVERITY)
+        set -e
         docker exec -ti ${CI_NAME} sh -c "mkdir cov-build && meson cov-build"
         docker exec -ti ${CI_NAME} ${CI_COVERITY_LOADER}
         docker exec -ti ${CI_NAME} ${CI_COVERITY} build
         docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
+        set +e
     ;;
     CLEANUP)
+        set -e
         CI_CLEANUP $CI_NAME
+        set +e
     ;;
     UPDATE_DH)
+        set -e
         CREATE_DOCKER_FILE  >> ${CI_CONFIG}
         
         docker build -t $CI_IMAGE_REMOTE .
         docker push $CI_IMAGE_REMOTE
+        set +e
     ;;
     *)
         info "This is not manager command"

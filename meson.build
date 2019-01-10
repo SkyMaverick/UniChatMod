@@ -88,6 +88,8 @@ lib_inc = [
 
 libs_rpath = ':'.join ([
     '$ORIGIN'/'.',
+    '$ORIGIN'/'libs', '.',
+    '$ORIGIN'/'mods', '.',
     '$ORIGIN'/'..'/'libs', '.',
     '$ORIGIN'/'..'/'mods', '.'
 ])

@@ -11,7 +11,7 @@ option ('string_buffer_capacity', type: 'integer', value: 4096,
 option ('limit_plugins_count', type: 'integer', value: 100,
         description: 'limit loaded plugins count')
 
-option ('build_bundle', type: 'boolean', value: 'false',
+option ('build_bundle', type: 'boolean', value: 'true',
         description: 'build single path application or classic *nix')
 option ('base_inbundle', type: 'boolean', value: 'true',
         description: 'build basepath into bandle (full portable app)')
