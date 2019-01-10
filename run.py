@@ -11,7 +11,7 @@ path_build  = os.path.join (path_script, 'build', os.name)
 path_libs   = os.path.join (path_build, 'libs')
 
 path_bundle = os.path.join (path_script, 'bundle')
-path_packages = os.path.join (path_script, 'pkgs')
+path_packages = os.path.join (path_build, 'pkgs')
 
 _clean_files = '''
     *.so
@@ -22,16 +22,6 @@ _clean_files = '''
     *.lo
     *.dbg
 '''.split()
-
-_clean_paths = '''
-    build
-    pkgs
-    bundle
-'''.split()
-
-_ignore_paths = [
-    'deps'
-]
 
 # =================================================
 # SERVICE FUNCTIONS 
@@ -98,11 +88,6 @@ def action_clean():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
     remove_dir (path_build)
     for path_base, dirs, files in os.walk (path_script):
-        for item in dirs:
-            if item in _ignore_paths:
-                dirs.remove (item)
-            if item in _clean_paths:
-                remove_dir (item)
         for fname in files:
             for i in _clean_files:
                 strName = os.path.join(path_base, fname)
@@ -152,6 +137,7 @@ def action_bundle ():
     ninja_cmd('install')
 
 def action_arcxz ():
+    action_clean()
     tmp_path = os.path.join (path_packages, 'temp')
     build_cmd ('release', tmp_path)
     ninja_cmd ('install')
