@@ -7,11 +7,13 @@ from colorize import *
 
 project_name = 'ucm'
 path_script = os.path.abspath (os.path.curdir)
-path_build  = os.path.join (path_script, 'build', os.name)
+
+path_build_root = os.path.join (path_script, 'build')
+path_build  = os.path.join (path_build_root, os.name)
 path_libs   = os.path.join (path_build, 'libs')
 
-path_bundle = os.path.join (path_script, 'bundle')
-path_packages = os.path.join (path_build, 'pkgs')
+path_bundle = os.path.join (path_build, 'bundle')
+path_packages = os.path.join (path_build_root, 'pkgs')
 
 _clean_files = '''
     *.so
@@ -76,7 +78,6 @@ def shell_cmd_out (app, *args):
     return (data)[0].decode()
 
 package_name = project_name +'-' \
-                + (shell_cmd_out('git', 'describe', '--abbrev=0', '--tags').rstrip()) + '-' \
                 + platform.system().lower() + '_'\
                 + platform.architecture()[0].lower()
 
@@ -94,6 +95,10 @@ def action_clean():
                 if fnmatch.fnmatch(os.path.basename(strName), i): 
                     if os.access(strName, os.W_OK):
                         os.remove(strName)
+
+def action_clean_all():
+    info ('Cleanup in source dir: {path}'.format(path=path_script))
+    remove_dir (path_build)
           
 def action_build ():
     return ninja_cmd()
@@ -122,7 +127,7 @@ def action_log():
 
 def action_dockerhub ():
     info ('Update docker image on DockerHub (signin if need)')
-    action_clean ()
+    action_clean_all ()
     result = 1
     if os.path.exists (file_shell_travis):
         result = shell_cmd(file_shell_travis, 'UPDATE_DH')
@@ -132,24 +137,21 @@ def action_dockerhub ():
 
 def action_bundle ():
     info ('Create application bundle in: {path}'.format(path=path_bundle))
-    action_clean()
-    action_debug()
     ninja_cmd('install')
 
 def action_arcxz ():
-    action_clean()
-    tmp_path = os.path.join (path_packages, 'temp')
-    build_cmd ('release', tmp_path)
-    ninja_cmd ('install')
-    if platform.system().lower() == 'windows':
-        shell_cmd ('7z', 'a', '-tzip', '-mx9',
-                    os.path.join (path_packages, package_name+'.zip'),
-                    os.path.join (tmp_path, project_name), '.')
-    else:
-        shell_cmd ('tar', 'cvfJ',
-                    os.path.join (path_packages, package_name+'.tar.xz'),
-                    '-C', os.path.join (tmp_path, project_name), '.')
-    remove_dir (tmp_path)
+    action_bundle ()
+    if os.path.exists(path_bundle):
+        if not os.path.exists(path_packages):
+            os.makedirs(path_packages)
+        if platform.system().lower() == 'windows':
+            shell_cmd ('7z', 'a', '-tzip', '-mx9',
+                        os.path.join (path_packages, package_name+'.zip'),
+                        os.path.join (path_bundle, project_name), '.')
+        else:
+            shell_cmd ('tar', 'cvfJ',
+                        os.path.join (path_packages, package_name+'.tar.xz'),
+                        '-C', os.path.join (path_bundle, project_name), '.')
 
 def action_dummy ():
     info ("Run dummy function for test")
@@ -164,6 +166,7 @@ actions = {
         'debug'             : action_debug,
         'release'           : action_release,
         'clean'             : action_clean,
+        'clean_all'         : action_clean_all,
         'test'              : action_test,
         'log'               : action_log,
         'pkg_src'           : action_dummy,
