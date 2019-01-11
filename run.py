@@ -6,6 +6,8 @@ from sys import argv
 from colorize import *
 
 project_name = 'ucm'
+project_version = '0.1.1'
+
 path_script = os.path.abspath (os.path.curdir)
 
 path_build_root = os.path.join (path_script, 'build')
@@ -13,7 +15,10 @@ path_build  = os.path.join (path_build_root, os.name)
 path_libs   = os.path.join (path_build, 'libs')
 
 path_bundle = os.path.join (path_build, 'bundle')
+path_bundle_app = os.path.join (path_bundle, project_name)
+
 path_packages = os.path.join (path_build_root, 'pkgs')
+path_temp = os.path.join (path_build, 'temp')
 
 file_shell_travis = os.path.join (path_script, 'tools', 'travis', 'manager.sh')
 
@@ -155,6 +160,31 @@ def action_arcxz ():
                         os.path.join (path_packages, package_name+'.tar.xz'),
                         '-C', os.path.join (path_bundle, project_name), '.')
 
+def action_deb ():
+    action_bundle ()
+    path_debconf = os.path.join (path_script, 'tools', 'packages', 'debian')
+    if os.path.exists (path_bundle):
+        if platform.system().lower() == 'linux':
+            if not os.path.exists (path_packages):
+                os.makedirs (path_packages)
+            path_tmpdeb = os.path.join (path_temp, 'deb')
+            remove_dir (path_tmpdeb)
+            shutil.copytree (path_debconf, path_tmpdeb)
+            shutil.copytree (path_bundle, os.path.join(path_tmpdeb, 'opt'))
+            
+            os.chdir (path_tmpdeb)
+            shell_cmd (os.path.join(path_tmpdeb,'build.sh'), \
+                       project_name, \
+                       project_version);
+
+            for paths, dirs, files in os.walk (path_tmpdeb):
+                for item in files:
+                    if item.endswith('.deb'):
+                        shutil.move (item, path_packages)
+
+            os.chdir (path_script)
+
+
 def action_dummy ():
     info ("Run dummy function for test")
     return
@@ -175,7 +205,8 @@ actions = {
         'laz_gui'           : action_dummy,
         'docker_hub'        : action_dockerhub,
         'bundle'            : action_bundle,
-        'pack_arc'          : action_arcxz
+        'pack_arc'          : action_arcxz,
+        'pack_deb'          : action_deb
 }
 
 # ==================================================

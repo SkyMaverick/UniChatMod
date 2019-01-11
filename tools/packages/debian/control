@@ -1,0 +1,13 @@
+Package: ucm
+Maintainer: Alexander Smirnov <skymaverickas@gmail.com>
+Depends:
+Recommends:
+Section: web
+Priority: optional
+Homepage: http://deadbeef.sourceforge.net/
+Description: Lightweight, modular, multiplatform chat
+ TODO
+ .
+ Features:
+ .
+  * TODO
