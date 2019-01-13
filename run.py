@@ -84,6 +84,11 @@ def shell_cmd_out (app, *args):
     data=shell.communicate()
     return (data)[0].decode()
 
+def open_all (path):
+    for root, dirs, files in os.walk (path):
+        for d in dirs:
+            os.chmod (os.path.join(root,d), 0o777)
+
 package_name = project_name +'-' \
                 + platform.system().lower() + '_'\
                 + platform.architecture()[0].lower()
@@ -148,6 +153,7 @@ def action_bundle ():
 
 def action_arcxz ():
     action_bundle ()
+    open_all (path_build_root)
     if os.path.exists(path_bundle):
         if not os.path.exists(path_packages):
             os.makedirs(path_packages)
@@ -162,6 +168,7 @@ def action_arcxz ():
 
 def action_deb ():
     action_bundle ()
+    open_all (path_build_root)
     path_debconf = os.path.join (path_script, 'tools', 'packages', 'debian')
     if os.path.exists (path_bundle):
         if platform.system().lower() == 'linux':

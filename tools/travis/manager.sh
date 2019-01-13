@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ROOT=`pwd`
-BUILD_DIR=${ROOT}/build/posix
+BUILD_DIR=${ROOT}/build
 
 CI_IMAGE=ucmbuild:single
 CI_IMAGE_REMOTE=skymaverick/meson-ucm:trusty
@@ -29,7 +29,8 @@ CI_CREATE_NEW() {
     info "Create docker image ${1} as ${2} in ${ROOT} "
     CREATE_DOCKER_FILE && echo  "ADD . /root"    >> $CI_CONFIG
 
-    docker build -t ${1} ${ROOT}
+    docker build\
+    -t ${1} ${ROOT}
 }
 
 CI_CREATE_FAST() {
@@ -43,7 +44,8 @@ CI_CREATE_FAST() {
     echo "FROM ${2}"    >> $CI_CONFIG
     echo "ADD . /root " >> $CI_CONFIG
     
-    docker build -t ${1} ${ROOT}
+    docker build\
+    -t ${1} ${ROOT}
 }
 
 CI_CLEANUP() {
@@ -84,7 +86,7 @@ case $1 in
             mkdir -p ${BUILD_DIR}
         fi
         CI_CREATE_FAST $CI_IMAGE $CI_IMAGE_REMOTE $CI_NAME
-        docker run -dit -v ${BUILD_DIR}:/root/build/ \
+        docker run -dit -v ${BUILD_DIR}:/root/build \
                    -w /root --privileged=true \
                    --net=host \
                    --name ${CI_NAME} ${CI_IMAGE} /sbin/init

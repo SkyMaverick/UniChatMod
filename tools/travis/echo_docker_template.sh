@@ -3,7 +3,7 @@
 DEPENDS_CI_IMAGE="\
 python3.5 python3-pip \
 gcc wget unzip curl git \
-tar xz-utils"
+tar xz-utils fakeroot"
 
 DEPENDS_UCM_APP="\
 libcunit1 libcunit1-dev \

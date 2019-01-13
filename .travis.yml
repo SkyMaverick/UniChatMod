@@ -27,11 +27,12 @@ addons:
     packages:
     - python3
 before_install:
-- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN
-  CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-- if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-    env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
-  fi
+- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+- case "${TRAVIS_BRANCH}" in
+    coverity)
+        env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
+    ;;
+  esac
 script:
 - case "${TRAVIS_OS_NAME}" in
     linux)
@@ -47,8 +48,7 @@ script:
             coverity)
                 ${CI_MANAGER} CREATE;
                 ${CI_MANAGER} RUN_COVERITY;
-            ;;
-        esac
+            ;; esac
     ;;
   esac
 after_success:
