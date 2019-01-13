@@ -1,65 +1,65 @@
 sudo: false
-
 os:
-  - linux
-
+- linux
 language:
-    - c
-
+- c
 services:
-  - docker
-
+- docker
 env:
-    global:
-        - CI_TOOLS="$TRAVIS_BUILD_DIR/tools/travis"
-        - CI_MANAGER="$CI_TOOLS/manager.sh"
-        # Coverity env variables
-        - PLATFORM="$(uname)"
-        - TOOL_ARCHIVE="/var/tmp/cov-analysis-$PLATFORM.tgz
-        - SCAN_URL="https://scan.coverity.com"
-        - UPLOAD_URL="https://scan.coverity.com/builds"
-        - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
-        - COVERITY_SCAN_NOTIFICATION_EMAIL="skymaverickas@gmail.com"
-        - COVERITY_SCAN_BRANCH_PATTERN="$TRAVIS_BRANCH"
-        
-        - secure: QRORzlDpl1W4JVYKCuZvLmoY49ZNu+dLm/fFp+jG/69cZ7rD1W68TFLD4Hje7Wu4VN/Tc0/AYpgqQgbD1OtBlshjczwSr+fxOuHHbV4vZ5F2Xxkf35jS0saefFhymlRGZKZG7M8cLhc9wRu60IdpzqqyIX/A4zXVIDxzg3Sr1hsDQ7bgLdXGiLWDtsoMFh2l8BaILeD/yN1MQrJMNVAunvg8LVq0CKSn7t7vPbScbo0g+F3W/CPopH0486LSnTWNncFhdFHHkw+0/JKpfj2yyUBoSXzb5C/g9CXSLUaPr2KnGlCZEpXz1A3C8eZHHqLx9lNYM7K9gHx4guDHcaboy9M3RHFQ+J+yOf1ci0yUzUl+jn4PhM8RhHOpUidOBw6PkyyHoC2jXO1LsW8fp+OX2cvWQiNwJ6LEEcH3tikNbG4dh3pjmTPzDVLGEVtROSfBOk3Fnsr8x7y9bYjAw8cp9Wjf6jJgyu9u6HXEFiaoGM4GnEp0XFGx60ul6h5McHoZo5nmvmYvju4Lwlt2OzAxE3Ano8XfSlRIH5pyk7KRtjtQWCQgufQ1xrCz4GZr98ATMornLGtxOc72kEXhXH+2Cug2Aqmbf0UspBr3U/FV8+X2aq364+gEduZOohm9u1uTcbU+ZWuL9KECU/hQ/TaVH5Ix4MY/nQpGsv+oMFnMGvM=
-
+  global:
+  - CI_TOOLS="$TRAVIS_BUILD_DIR/tools/travis"
+  - CI_MANAGER="$CI_TOOLS/manager.sh"
+  - PLATFORM="$(uname)"
+  - TOOL_ARCHIVE="/var/tmp/cov-analysis-$PLATFORM.tgz
+  - SCAN_URL="https://scan.coverity.com"
+  - UPLOAD_URL="https://scan.coverity.com/builds"
+  - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
+  - COVERITY_SCAN_NOTIFICATION_EMAIL="skymaverickas@gmail.com"
+  - COVERITY_SCAN_BRANCH_PATTERN="$TRAVIS_BRANCH"
+  - secure: QRORzlDpl1W4JVYKCuZvLmoY49ZNu+dLm/fFp+jG/69cZ7rD1W68TFLD4Hje7Wu4VN/Tc0/AYpgqQgbD1OtBlshjczwSr+fxOuHHbV4vZ5F2Xxkf35jS0saefFhymlRGZKZG7M8cLhc9wRu60IdpzqqyIX/A4zXVIDxzg3Sr1hsDQ7bgLdXGiLWDtsoMFh2l8BaILeD/yN1MQrJMNVAunvg8LVq0CKSn7t7vPbScbo0g+F3W/CPopH0486LSnTWNncFhdFHHkw+0/JKpfj2yyUBoSXzb5C/g9CXSLUaPr2KnGlCZEpXz1A3C8eZHHqLx9lNYM7K9gHx4guDHcaboy9M3RHFQ+J+yOf1ci0yUzUl+jn4PhM8RhHOpUidOBw6PkyyHoC2jXO1LsW8fp+OX2cvWQiNwJ6LEEcH3tikNbG4dh3pjmTPzDVLGEVtROSfBOk3Fnsr8x7y9bYjAw8cp9Wjf6jJgyu9u6HXEFiaoGM4GnEp0XFGx60ul6h5McHoZo5nmvmYvju4Lwlt2OzAxE3Ano8XfSlRIH5pyk7KRtjtQWCQgufQ1xrCz4GZr98ATMornLGtxOc72kEXhXH+2Cug2Aqmbf0UspBr3U/FV8+X2aq364+gEduZOohm9u1uTcbU+ZWuL9KECU/hQ/TaVH5Ix4MY/nQpGsv+oMFnMGvM=
 branches:
-    only:
-        - master
-        - release
-        - coverity
-
+  only:
+  - master
+  - release
+  - coverity
 addons:
-    apt:
-        packages:
-            - python3
-
+  apt:
+    packages:
+    - python3
 before_install:
-    - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- 
-    - if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-        env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
-      fi
+- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN
+  CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+- if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
+    env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
+  fi
 script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-          if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-            ${CI_MANAGER} CREATE_FAST;
-            ${CI_MANAGER} RUN_DEBUG;
-          fi;
-          if [[ "$TRAVIS_BRANCH" == "release" ]]; then
-            ${CI_MANAGER} CREATE;
-            ${CI_MANAGER} RUN_RELEASE;
-          fi;
-          if [[ "$TRAVIS_BRANCH" == "coverity" ]]; then
-            ${CI_MANAGER} CREATE;
-            ${CI_MANAGER} RUN_COVERITY;
-          fi;
-      fi;
+- case "${TRAVIS_OS_NAME}" in
+    linux)
+        case "${TRAVIS_BRANCH}" in
+            master)
+                ${CI_MANAGER} CREATE_FAST;
+                ${CI_MANAGER} RUN_DEBUG;
+            ;;
+            release)
+                ${CI_MANAGER} CREATE;
+                ${CI_MANAGER} RUN_RELEASE;
+            ;;
+            coverity)
+                ${CI_MANAGER} CREATE;
+                ${CI_MANAGER} RUN_COVERITY;
+            ;;
+        esac
+    ;;
+  esac
 after_success:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-            ${CI_MANAGER} PACK;
-      fi;
+- case "${TRAVIS_OS_NAME}" in
+    linux)
+        ${CI_MANAGER} DEPLOY;
+    ;;
+  esac
 after_script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-            ${CI_MANAGER} CLEANUP;
-      fi;
+- case "${TRAVIS_OS_NAME}" in
+    linux)
+        ${CI_MANAGER} CLEANUP;
+    ;;
+  esac

@@ -11,6 +11,7 @@ CI_CONFIG="Dockerfile"
 CI_GENERATOR="./tools/travis/echo_docker_template.sh"
 CI_COVERITY="./tools/travis/coverity.sh"
 CI_COVERITY_LOADER="./tools/travis/get_coverity.sh"
+CI_SF_UPLOADER="./tools/travis/sfupload.sh"
 
 info() {
     echo "\033[33;1m$1\033[0m"
@@ -107,8 +108,10 @@ case $1 in
         docker exec -ti ${CI_NAME} ${CI_COVERITY} upload
         set +e
     ;;
-    PACK)
+    DEPLOY)
         docker exec -ti ${CI_NAME} ./run.py pack_arc
+        docker exec -ti ${CI_NAME} ./run.py pack_deb
+        ${CI_SF_UPLOADER}
     ;;
     CLEANUP)
         set -e
