@@ -6,6 +6,8 @@ UniChatMod is a messanger (and a platform for creating new messengers) based on 
 * Now building status (Appveyor-CI - Windows) [![Build status](https://ci.appveyor.com/api/projects/status/mk204nbjx0mm5iec?svg=true)](https://ci.appveyor.com/project/SkyMaverick/unichatmod)
 * Now syntax check status (Coverity) [![Coverity Scan Build Status](https://scan.coverity.com/projects/17127/badge.svg)](https://scan.coverity.com/projects/skymaverick-unichatmod)
 
+## Last builds
+Latest builds can be downloaded from [Sourсeforge service](https://sourceforge.net/projects/unicm/)
 ## Compiling and building
 
 The following instruction assume that commands are executed in UniChatMod repository folder
