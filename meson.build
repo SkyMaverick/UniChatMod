@@ -81,9 +81,9 @@ endforeach
 
 lib_inc = [
     '.',
-    '.'/'lib_core',
+    '.'/'libucm',
     '.'/'osal',
-    '.'/'lib_core'/'include',
+    '.'/'libucm'/'include',
 ]
 
 libs_rpath = ':'.join ([
@@ -120,7 +120,7 @@ else
 endif
 
 # --- walk in subdirs ----------
-subdir('lib_core')
+subdir('libucm')
 
 if get_option('build_with_plugins')
     subdir('plugins')
