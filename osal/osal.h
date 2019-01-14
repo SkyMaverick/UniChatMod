@@ -121,11 +121,11 @@ osal_zmemory (void*  ptr,
 {
     if (bytes) {
         if ( bytes > 4096 ) {
-#if defined(_WIN32) || defined(_WIN64)
+    #if defined(_WIN32) || defined(_WIN64)
             ZeroMemory (ptr, bytes);
-#else
+    #else
             memset (ptr, 0, bytes);
-#endif
+    #endif
         } else {
             do {
                 bytes--;
@@ -241,9 +241,65 @@ int osal_rwlock_rlock        (uintptr_t _rwl);
 int osal_rwlock_wlock        (uintptr_t _rwl);
 int osal_rwlock_unlock       (uintptr_t _rwl);
 
+#if defined(_WIN32) || defined(_WIN64)
+    typedef HANDLE osal_dir_t;
+#else
+    typedef uintptr_t osal_dir_t;
+#endif
+
+enum {
+    OSAL_DTYPE_FILE,
+    OSAL_DTYPE_DIRECTORY,
+    OSAL_DTYPE_UNKNOW
+};
+
+/* ======================================================================
+        CUSTOM FILESYSTEM FUNCTIONS
+   ====================================================================== */
+
+typedef struct {
+    char*     name;
+    uint8_t   type;
+
+#if defined(_WIN32) || defined(_WIN64)
+    WIN32_FIND_DATA __sysdata;
+#else    
+    struct dirent* __sysdata;
+#endif
+} osal_dirent_t;
+
+osal_dir_t
+osal_diropen (const char*    path,
+              osal_dirent_t* fso);
+int
+osal_dirnext (osal_dir_t     dir,
+              osal_dirent_t* fso);
+void
+osal_dirclose (osal_dir_t fso);
+
+enum {
+    OSAL_FACCESS_NORMAL     = 0,
+    OSAL_FACCESS_READ       = 1 << 0,
+    OSAL_FACCESS_WRITE      = 1 << 1
+};
+
+/* ======================================================================
+         FILE ACCESS FUNCTIONS
+   ====================================================================== */
+
+static inline int
+osal_file_exists (const char* path) /* 0 - success, !0 - fail*/
+{
+    #if defined(_WIN32) || defined(_WIN64)
+        return PathFileExistsA (path) ? 0 : 1;
+    #else
+        return access (path, 0);
+    #endif
+}
 /* ======================================================================
         CUSTOM FUNCTIONS
    ====================================================================== */
+
 static inline int
 osal_errno (void)
 {
@@ -258,40 +314,6 @@ osal_errno (void)
     char*
     osal_strdup (const char* str);
 #endif
-
-#if defined(_WIN32) || defined(_WIN64)
-    typedef HANDLE osal_dir_t;
-#else
-    typedef uintptr_t osal_dir_t;
-#endif
-
-enum {
-    FO_TYPE_FILE,
-    FO_TYPE_DIRECTORY,
-    FO_TYPE_UNKNOW
-};
-
-typedef struct {
-    char*     name;
-    uint8_t   type;
-
-#if defined(_WIN32) || defined(_WIN64)
-    WIN32_FIND_DATA __sysdata;
-#else    
-    struct dirent* __sysdata;
-#endif
-} osal_dirent_t;
-
-osal_dir_t
-osal_diropen (const char*       path,
-              osal_dirent_t*   fso);
-
-int
-osal_dirnext (osal_dir_t        dir,
-              osal_dirent_t*  fso);
-
-void
-osal_dirclose (osal_dir_t fso);
 
 #ifdef __cplusplus
     }

@@ -1,15 +1,17 @@
 #include "osal.h"
+
 /* ======================================================================
-        CUSTOM FUNCTIONS
+         FILE SYSTEM WALK FUNCTIONS
    ====================================================================== */
+
 static inline int
 get_fso_type (WIN32_FIND_DATA* data)
 {
     if (data->dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
-        return FO_TYPE_DIRECTORY;
+        return OSAL_DTYPE_DIRECTORY;
     if (data->dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-        return FO_TYPE_FILE;
-    return FO_TYPE_UNKNOW;
+        return OSAL_DTYPE_FILE;
+    return OSAL_DTYPE_UNKNOW;
 }
 
 osal_dir_t
@@ -44,3 +46,7 @@ osal_dirclose (osal_dir_t dir)
 {
     FindClose ( (HANDLE)dir );
 }
+
+/* ======================================================================
+         FILE ACCESS FUNCTIONS
+   ====================================================================== */

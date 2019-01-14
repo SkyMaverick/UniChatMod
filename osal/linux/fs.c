@@ -1,6 +1,8 @@
+#include "osal.h"
 /* ======================================================================
         DIRECTORY WALK FUNCTIONS
    ====================================================================== */
+
 typedef struct {
     DIR* handle;
     char path [1];
@@ -22,14 +24,14 @@ get_fso_type (posix_dir_t* dir,
         if ( st_ret != -1) {
             switch (sb.st_mode & S_IFMT) {
                 // TODO Make new type is need
-                case S_IFREG: return FO_TYPE_FILE;
-                case S_IFDIR: return FO_TYPE_DIRECTORY;
+                case S_IFREG: return OSAL_DTYPE_FILE;
+                case S_IFDIR: return OSAL_DTYPE_DIRECTORY;
 
-                default: return FO_TYPE_UNKNOW;
+                default: return OSAL_DTYPE_UNKNOW;
             }
         }
     }
-    return FO_TYPE_UNKNOW;
+    return OSAL_DTYPE_UNKNOW;
 }
 
 osal_dir_t
@@ -82,3 +84,7 @@ osal_dirclose (osal_dir_t dir)
     closedir ( ((posix_dir_t*)dir)->handle );
     osal_free ( (posix_dir_t*) dir);
 }
+
+/* ======================================================================
+        FILE ACCESS CHECKING FUNCTIONS
+   ====================================================================== */
