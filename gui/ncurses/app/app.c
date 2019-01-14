@@ -220,7 +220,7 @@ main (int argc, char* argv[])
                     && (info->api.vminor >= LIBCORE_API_MINVER))
                 {
                     // start curses
-                    core->mainloop_msg_send (UCM_EVENT_START_GUI, (uintptr_t)L"uincurses",0,0);
+                    core->app.mainloop_msg_send (UCM_EVENT_START_GUI, (uintptr_t)L"uincurses",0,0);
                 } else {
                     fprintf (stderr, "%s\n", "Core information load FAIL");
                     ret_status = UCM_RET_EMPTY;

@@ -58,8 +58,8 @@ _curses_loop (void* ctx)
 UCM_RET
 start_curses_app (void* ctx)
 {
-    hwnd = app->thread_create (_curses_loop, ctx);
-    app->thread_join (hwnd);
+    hwnd = app->sys.thread_create (_curses_loop, ctx);
+    app->sys.thread_join (hwnd);
 
     return UCM_RET_SUCCESS;
 }

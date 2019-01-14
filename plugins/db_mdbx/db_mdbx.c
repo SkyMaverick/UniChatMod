@@ -38,17 +38,17 @@ _assert_func (const MDBX_env *env,
 static UCM_RET
 _run_dbmdbx (void)
 {
-    UCM_DB = app->zmalloc (sizeof(db_object_t) + (UCM_PATH_MAX * sizeof(char)));
+    UCM_DB = app->sys.zmalloc (sizeof(db_object_t) + (UCM_PATH_MAX * sizeof(char)));
     if ( UCM_DB == NULL )
         return UCM_RET_NONALLOC;
-    UCM_DB->mtx = app->rwlock_create ();
+    UCM_DB->mtx = app->sys.rwlock_create ();
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
 _stop_dbmdbx (void)
 {
-    app->rwlock_free ( UCM_DB->mtx );
+    app->sys.rwlock_free ( UCM_DB->mtx );
     ucm_free_null (UCM_DB);
     return UCM_RET_SUCCESS;
 }
@@ -76,13 +76,13 @@ mdbx_db_open  (char*    file,
 {
     int ret = UCM_RET_SUCCESS;
 
-    app->rwlock_wlock (UCM_DB->mtx);
+    app->sys.rwlock_wlock (UCM_DB->mtx);
 
     snprintf (UCM_DB->faPath, UCM_PATH_MAX, "%s", file);
     UCM_DB->flags   =   flags;
     ret = db_open(UCM_DB);
 
-    app->rwlock_unlock (UCM_DB->mtx);
+    app->sys.rwlock_unlock (UCM_DB->mtx);
 
     return ret;
 }

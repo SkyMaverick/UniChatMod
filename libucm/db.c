@@ -16,7 +16,7 @@ db_open ( char*      aPath,
     if (aPath == NULL)
         return UCM_RET_WRONGPARAM;
 
-    ucm_plugdb_t** plugins = (ucm_plugdb_t**) (UniAPI->get_plugins_db());
+    ucm_plugdb_t** plugins = (ucm_plugdb_t**) (UniAPI->app.get_plugins_db());
     unsigned ret = 0;
 
     while (*plugins) {

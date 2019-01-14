@@ -20,13 +20,13 @@ extern const ucm_plugdb_t* pldb;
 #define DBSYS_VERSION   DBSYS_VERSION_MAJOR##'.'##DBSYS_VERSION_MINOR
 #define DBSYS_HEADER_SIGNATURE 0x4DBAC0DE
 
-#define trace_dbg(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
-#define trace_err(fmt, ...) {app->log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
+#define trace_dbg(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
+#define trace_inf(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
+#define trace_err(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
 
 #define ucm_free_null(X)    \
     do {                    \
-        app->free(X);       \
+        app->sys.free(X);       \
         X = NULL;           \
     } while (0)
 

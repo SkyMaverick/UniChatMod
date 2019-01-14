@@ -457,124 +457,126 @@ typedef struct {
 /*! API structure. Provide for all plugins */
 typedef struct _ucm_functions_s {
     /*! CORE infrastructure API */
+    struct {
+        /*! memory functions */
+        void*       (*malloc)           (size_t size);
+        void*       (*zmalloc)          (size_t size);
+        void*       (*calloc)           (size_t nmem, size_t size);
+        void        (*free)             (void* obj);
+        void        (*zmemory)          (void* mem, size_t size);
+        int         (*realloc)          (void** mem, size_t size);
+        char*       (*strdup)           (const char* str);
 
-    /*! memory functions */
-    void*       (*malloc)           (size_t size);
-    void*       (*zmalloc)          (size_t size);
-    void*       (*calloc)           (size_t nmem, size_t size);
-    void        (*free)             (void* obj);
-    void        (*zmemory)          (void* mem, size_t size);
-    int         (*realloc)          (void** mem, size_t size);
-    char*       (*strdup)           (const char* str);
+        /*! pthread API functions*/
+        uintptr_t   (*thread_create)    (void* (*func)(void* ctx), void* ctx);
+        int         (*thread_detach)    (uintptr_t tid);
+        void        (*thread_exit)      (void* ret);
+        int         (*thread_join)      (uintptr_t tid);
 
-    /*! pthread API functions*/
-    uintptr_t   (*thread_create)    (void* (*func)(void* ctx), void* ctx);
-    int         (*thread_detach)    (uintptr_t tid);
-    void        (*thread_exit)      (void* ret);
-    int         (*thread_join)      (uintptr_t tid);
+        uintptr_t   (*mutex_create)     (void);
+        void        (*mutex_free)       (uintptr_t _mtx);
+        int         (*mutex_lock)       (uintptr_t _mtx);
+        int         (*mutex_unlock)     (uintptr_t _mtx);
 
-    uintptr_t   (*mutex_create)     (void);
-    void        (*mutex_free)       (uintptr_t _mtx);
-    int         (*mutex_lock)       (uintptr_t _mtx);
-    int         (*mutex_unlock)     (uintptr_t _mtx);
+        uintptr_t   (*cond_create)      (void);
+        int         (*cond_lock)        (uintptr_t _cond);
+        int         (*cond_unlock)      (uintptr_t _cond);
+        void        (*cond_free)        (uintptr_t _cond);
+        int         (*cond_wait)        (uintptr_t _cond);
+        int         (*cond_signal)      (uintptr_t _cond);
+        int         (*cond_broadcast)   (uintptr_t _cond);
 
-    uintptr_t   (*cond_create)      (void);
-    int         (*cond_lock)        (uintptr_t _cond);
-    int         (*cond_unlock)      (uintptr_t _cond);
-    void        (*cond_free)        (uintptr_t _cond);
-    int         (*cond_wait)        (uintptr_t _cond);
-    int         (*cond_signal)      (uintptr_t _cond);
-    int         (*cond_broadcast)   (uintptr_t _cond);
+        uintptr_t   (*rwlock_create)    (void);
+        void        (*rwlock_free)      (uintptr_t _rwl);
+        int         (*rwlock_rlock)     (uintptr_t _rwl);
+        int         (*rwlock_wlock)     (uintptr_t _rwl);
+        int         (*rwlock_unlock)    (uintptr_t _rwl);
 
-    uintptr_t   (*rwlock_create)    (void);
-    void        (*rwlock_free)      (uintptr_t _rwl);
-    int         (*rwlock_rlock)     (uintptr_t _rwl);
-    int         (*rwlock_wlock)     (uintptr_t _rwl);
-    int         (*rwlock_unlock)    (uintptr_t _rwl);
+        /* Unicode operations. USC4 and convertors */
+        int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);
+        int64_t     (*U32toU8)      (u32char_t* str,  const int64_t str_len, u8char_t** ret);
+        size_t      (*ustrlen)      (u32char_t* str);
+        u32char_t*  (*ustrdup)      (u32char_t* str);
+        int         (*ustrcmp)      (u32char_t* lstr, u32char_t* rstr);
+        int         (*ustrcasecmp)  (u32char_t* lstr, u32char_t* rstr);
+        int         (*ustrncmp)     (u32char_t* lstr, u32char_t* rst, size_t num);
+        int         (*ustrncasecmp) (u32char_t* lstr, u32char_t* rstr, size_t num);
+        void        (*ustrupcase)   (u32char_t* str);
+        void        (*ustrlowcase)  (u32char_t* str);
+        void        (*ustrcpy)      (u32char_t* dest, u32char_t* src);
+        void        (*ustrncpy)     (u32char_t* dest, u32char_t* src, size_t num);
+        void        (*ustrcat)      (u32char_t* dest, u32char_t* src);
+        void        (*ustrncat)     (u32char_t* dest, u32char_t* src, size_t num);
+        void        (*umstrcat)     (u32char_t* dest, unsigned num,  ...);
+        u32char_t*  (*ustrchr)      (u32char_t* str,  u32char_t chr);
+        u32char_t*  (*ustrrchr)     (u32char_t* str,  u32char_t chr);
+        u32char_t*  (*ustrjoin)     (u32char_t* str1, u32char_t* str2);
+        u32char_t*  (*umstrjoin)    (size_t     num,  ...);
+        u32char_t*  (*ustrbrkjoin)  (u32char_t* str1, u32char_t* str2, u32char_t brk);
+        u32char_t*  (*umstrbrkjoin) (u32char_t brk,   size_t num, ...);
+        int64_t     (*ustrstr)      (u32char_t* str,  u32char_t* sstr);
+        int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
+    } sys;
 
-    /* Unicode operations. USC4 and convertors */
-    int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);
-    int64_t     (*U32toU8)      (u32char_t* str,  const int64_t str_len, u8char_t** ret);
-    size_t      (*ustrlen)      (u32char_t* str);
-    u32char_t*  (*ustrdup)      (u32char_t* str);
-    int         (*ustrcmp)      (u32char_t* lstr, u32char_t* rstr);
-    int         (*ustrcasecmp)  (u32char_t* lstr, u32char_t* rstr);
-    int         (*ustrncmp)     (u32char_t* lstr, u32char_t* rst, size_t num);
-    int         (*ustrncasecmp) (u32char_t* lstr, u32char_t* rstr, size_t num);
-    void        (*ustrupcase)   (u32char_t* str);
-    void        (*ustrlowcase)  (u32char_t* str);
-    void        (*ustrcpy)      (u32char_t* dest, u32char_t* src);
-    void        (*ustrncpy)     (u32char_t* dest, u32char_t* src, size_t num);
-    void        (*ustrcat)      (u32char_t* dest, u32char_t* src);
-    void        (*ustrncat)     (u32char_t* dest, u32char_t* src, size_t num);
-    void        (*umstrcat)     (u32char_t* dest, unsigned num,  ...);
-    u32char_t*  (*ustrchr)      (u32char_t* str,  u32char_t chr);
-    u32char_t*  (*ustrrchr)     (u32char_t* str,  u32char_t chr);
-    u32char_t*  (*ustrjoin)     (u32char_t* str1, u32char_t* str2);
-    u32char_t*  (*umstrjoin)    (size_t     num,  ...);
-    u32char_t*  (*ustrbrkjoin)  (u32char_t* str1, u32char_t* str2, u32char_t brk);
-    u32char_t*  (*umstrbrkjoin) (u32char_t brk,   size_t num, ...);
-    int64_t     (*ustrstr)      (u32char_t* str,  u32char_t* sstr);
-    int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
+    struct {
+        /*! low-level settings provider functions */
+        int         (*get_int)      (ucm_object_t* obj, char* key, int def);
+        int64_t     (*get_int64)    (ucm_object_t* obj, char* key, int64_t def);
+        float       (*get_float)    (ucm_object_t* obj, char* key, float def);
+        char*       (*get_str)      (ucm_object_t* obj, char* key, char* def);
+        wchar_t*    (*get_wstr)     (ucm_object_t* obj, char* key, wchar_t* def);
+        uintptr_t   (*get_blob)     (ucm_object_t* obj, char* key, size_t* size);
+        void        (*set_int)      (ucm_object_t* obj, char* key, int value);
+        void        (*set_int64)    (ucm_object_t* obj, char* key, int64_t value);
+        void        (*set_float)    (ucm_object_t* obj, char* key, float value);
+        void        (*set_str)      (ucm_object_t* obj, char* key, char* value);
+        wchar_t*    (*set_wstr)     (ucm_object_t* obj, char* key, wchar_t* value);
+        void        (*set_blob)     (ucm_object_t* obj, char* key, uintptr_t blob, size_t size);
 
-    /*! low-level settings provider functions */
-    int         (*get_int)      (ucm_object_t* obj, char* key, int def);
-    int64_t     (*get_int64)    (ucm_object_t* obj, char* key, int64_t def);
-    float       (*get_float)    (ucm_object_t* obj, char* key, float def);
-    char*       (*get_str)      (ucm_object_t* obj, char* key, char* def);
-    wchar_t*    (*get_wstr)     (ucm_object_t* obj, char* key, wchar_t* def);
-    uintptr_t   (*get_blob)     (ucm_object_t* obj, char* key, size_t* size);
-    void        (*set_int)      (ucm_object_t* obj, char* key, int value);
-    void        (*set_int64)    (ucm_object_t* obj, char* key, int64_t value);
-    void        (*set_float)    (ucm_object_t* obj, char* key, float value);
-    void        (*set_str)      (ucm_object_t* obj, char* key, char* value);
-    wchar_t*    (*set_wstr)     (ucm_object_t* obj, char* key, wchar_t* value);
-    void        (*set_blob)     (ucm_object_t* obj, char* key, uintptr_t blob, size_t size);
+        void        (*item_del)     (ucm_object_t* obj, char* key);
 
-    void        (*item_del)     (ucm_object_t* obj, char* key);
+        /*! general queue access */
+        int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
+        ucm_ev_t*   (*mainloop_ev_alloc)    (int id);
+        int         (*mainloop_ev_push)     (ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
+        void        (*mainloop_ev_free)     (ucm_ev_t** event);
+        void        (*mainloop_flush)       (void);
 
-    /*! general queue access */
-    int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
-    ucm_ev_t*   (*mainloop_ev_alloc)    (int id);
-    int         (*mainloop_ev_push)     (ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
-    void        (*mainloop_ev_free)     (ucm_ev_t** event);
-    void        (*mainloop_flush)       (void);
+        void        (*mainloop_hook_attach) (void(*callback)(uint32_t id, uintptr_t ev_ctx, uint32_t x1, uint32_t x2, void* ctx), void* ctx, uint32_t mask);
+        void        (*mainloop_hook_detach) (void(*callback)(uint32_t id, uintptr_t ev_ctx, uint32_t x1, uint32_t x2, void* ctx));
 
-    void        (*mainloop_hook_attach) (void(*callback)(uint32_t id, uintptr_t ev_ctx, uint32_t x1, uint32_t x2, void* ctx), void* ctx, uint32_t mask);
-    void        (*mainloop_hook_detach) (void(*callback)(uint32_t id, uintptr_t ev_ctx, uint32_t x1, uint32_t x2, void* ctx));
+        /*! get MD5 hash function */
+        void        (*md5)          (uint8_t buf[16], const char* in, int size);
+        void        (*md5_to_str)   (char* out, const uint8_t buf[16]);
 
-    /*! get MD5 hash function */
-    void        (*md5)          (uint8_t buf[16], const char* in, int size);
-    void        (*md5_to_str)   (char* out, const uint8_t buf[16]);
+        /*! log and trace messages handlers*/
+        void        (*log)              (ucm_plugin_t* plugin, uint32_t type, const char* fmt, ...);
+        void        (*ucm_log)          (const char* fmt, ...);
+        void        (*logger_connect)   (void (*callback)(ucm_plugin_t*,uint32_t,const char*));
+        void        (*logger_disconnect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*));
 
-    /*! log and trace messages handlers*/
-    void        (*log)              (ucm_plugin_t* plugin, uint32_t type, const char* fmt, ...);
-    void        (*ucm_log)          (const char* fmt, ...);
-    void        (*logger_connect)   (void (*callback)(ucm_plugin_t*,uint32_t,const char*));
-    void        (*logger_disconnect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*));
+        /*! get plugins by category */
+        const ucm_plugin_t** (*get_plugins_all)   (void);
+        const ucm_plugin_t** (*get_plugins_db)    (void);
+        const ucm_plugin_t** (*get_plugins_proto) (void);
+        const ucm_plugin_t** (*get_plugins_crypt) (void);
+        const ucm_plugin_t** (*get_plugins_hist)  (void);
+        const ucm_plugin_t** (*get_plugins_gui)   (void);
+        const ucm_plugin_t** (*get_plugins_stuff) (void);
 
-    /*! get plugins by category */
-    const ucm_plugin_t** (*get_plugins_all)   (void);
-    const ucm_plugin_t** (*get_plugins_db)    (void);
-    const ucm_plugin_t** (*get_plugins_proto) (void);
-    const ucm_plugin_t** (*get_plugins_crypt) (void);
-    const ucm_plugin_t** (*get_plugins_hist)  (void);
-    const ucm_plugin_t** (*get_plugins_gui)   (void);
-    const ucm_plugin_t** (*get_plugins_stuff) (void);
+        /*! get global paths */
+        const wchar_t* (*get_startup_path) (void);
+        const wchar_t* (*get_store_path)   (void);
+        const wchar_t* (*get_plugins_path) (void);
 
-    /*! get global paths */
-    const wchar_t* (*get_startup_path) (void);
-    const wchar_t* (*get_store_path)   (void);
-    const wchar_t* (*get_plugins_path) (void);
+        /*! system entropy functions */
+        int (*get_entropy) (void);
 
-    /*! system entropy functions */
-    int (*get_entropy) (void);
-
-    /*! user API */
-    const ucm_plugin_info_t*    (*get_plugin_info)  (char* pid);
-    UCM_RET                     (*ucm_send_message) (void);   //TODO
-    UCM_RET                     (*ucm_recv_message) (void);   //TODO
-
+        /*! user API */
+        const ucm_plugin_info_t*    (*get_plugin_info)  (char* pid);
+        UCM_RET                     (*ucm_send_message) (void);   //TODO
+        UCM_RET                     (*ucm_recv_message) (void);   //TODO
+    } app;
 } ucm_functions_t;
 
 typedef ucm_plugin_t*(*cb_init_plugin)(ucm_functions_t*);
