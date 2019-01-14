@@ -67,13 +67,13 @@ def shell_cmd (shell, *args):
 
 def remove_dir (path):
     if os.path.exists (path):
-        shutil.rmtree (path, ignore_errors=False, onerror=None)
+        return shutil.rmtree (path, ignore_errors=False, onerror=None)
 
 def build_cmd (type, prefix):
     if os.path.exists(path_build):
-        meson_cmd ('--reconfigure')
+        return meson_cmd ('--reconfigure')
     else:
-        meson_cmd ('--buildtype='+type, '-Dprefix='+prefix)
+        return meson_cmd ('--buildtype='+type, '-Dprefix='+prefix)
 
 def shell_cmd_out (app, *args):
     cmd = [app]
@@ -88,6 +88,14 @@ def open_all (path):
     for root, dirs, files in os.walk (path):
         for d in dirs:
             os.chmod (os.path.join(root,d), 0o777)
+
+def move_with_replace (file, path):
+    try:
+        os.remove (os.path.join(path, file))
+    except OSError:
+        pass
+    else:
+        shutil.move (file, path)
 
 package_name = project_name +'-' \
                 + platform.system().lower() + '_'\
@@ -110,7 +118,7 @@ def action_clean():
 
 def action_clean_all():
     info ('Cleanup in source dir: {path}'.format(path=path_script))
-    remove_dir (path_build)
+    remove_dir (path_build_root)
           
 def action_build ():
     return ninja_cmd()
@@ -149,7 +157,7 @@ def action_dockerhub ():
 
 def action_bundle ():
     info ('Create application bundle in: {path}'.format(path=path_bundle))
-    ninja_cmd('install')
+    return ninja_cmd('install')
 
 def action_arcxz ():
     action_bundle ()
@@ -158,16 +166,17 @@ def action_arcxz ():
         if not os.path.exists(path_packages):
             os.makedirs(path_packages)
         if platform.system().lower() == 'windows':
-            shell_cmd ('7z', 'a', '-tzip', '-mx9',
+            return shell_cmd ('7z', 'a', '-tzip', '-mx9',
                         os.path.join (path_packages, package_name+'.zip'),
                         os.path.join (path_bundle, project_name), '.')
         else:
-            shell_cmd ('tar', 'cvfJ',
+            return shell_cmd ('tar', 'cvfJ',
                         os.path.join (path_packages, package_name+'.tar.xz'),
                         '-C', os.path.join (path_bundle, project_name), '.')
 
 def action_deb ():
-    action_bundle ()
+    if (action_bundle () != 0):
+        return 1
     open_all (path_build_root)
     path_debconf = os.path.join (path_script, 'tools', 'packages', 'debian')
     if os.path.exists (path_bundle):
@@ -180,16 +189,19 @@ def action_deb ():
             shutil.copytree (path_bundle, os.path.join(path_tmpdeb, 'opt'))
             
             os.chdir (path_tmpdeb)
-            shell_cmd (os.path.join(path_tmpdeb,'build.sh'), \
+            if (shell_cmd (os.path.join(path_tmpdeb,'build.sh'), \
                        project_name, \
-                       project_version);
+                       project_version) == 0):
 
-            for paths, dirs, files in os.walk (path_tmpdeb):
-                for item in files:
-                    if item.endswith('.deb'):
-                        shutil.move (item, path_packages)
-
-            os.chdir (path_script)
+                for paths, dirs, files in os.walk (path_tmpdeb):
+                    for item in files:
+                        if item.endswith('.deb'):
+                            move_with_replace (item, path_packages)
+                os.chdir (path_script)
+                return 0
+            else:
+                os.chdir (path_script)
+                return 1
 
 
 def action_dummy ():
