@@ -516,6 +516,10 @@ typedef struct _ucm_functions_s {
         u32char_t*  (*umstrbrkjoin) (u32char_t brk,   size_t num, ...);
         int64_t     (*ustrstr)      (u32char_t* str,  u32char_t* sstr);
         int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
+
+        int         (*errnum)       (void);
+        int         (*file_exists)  (const char* path);
+
     } sys;
 
     struct {

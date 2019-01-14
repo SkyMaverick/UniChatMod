@@ -135,6 +135,13 @@ db_open (db_object_t* db)
         return UCM_RET_INVALID;
 
     // TODO Windows compatibility
+    if (app->sys.file_exists (db->faPath)) {
+        // Don't exists file
+    } else {
+        // Exists file
+        trace_err ("%s - %s: %d\n", "Don't access file", db->faPath, app->sys.errnum());
+        return UCM_RET_NOACCESS;
+    }
 
 //    if ( access(db->faPath, F_OK) < 0) {
 //        if (!(db->flags & UCM_FLAG_DB_READONLY)) {
