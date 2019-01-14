@@ -123,6 +123,8 @@
 //      CORE STRUCTURES
 // *********************************************************
 
+typedef uint8_t ucm_object_t;
+
 // TODO check uchar.h enabled
 #if 1
     #include <uchar.h>
@@ -164,6 +166,7 @@ enum {
 };
 
 enum {
+    UCM_TYPE_OBJECT_NULL    = 0,
     UCM_TYPE_OBJECT_PLUGIN  = 1 << 0,
     UCM_TYPE_OBJECT_EVENT   = 1 << 1,
     UCM_TYPE_OBJECT_CONTACT = 1 << 2,
@@ -186,7 +189,7 @@ enum {
 };
 
 typedef struct {
-    uint8_t oid;
+    ucm_object_t oid;
 
     uint8_t ev;
     size_t  size;
@@ -214,7 +217,7 @@ enum {
 };
 
 typedef struct ucm_msg_s {
-    const uint8_t oid;
+    ucm_object_t oid;
 
     uint8_t     type;
     // TODO sender info
@@ -229,9 +232,9 @@ typedef struct ucm_msg_s {
 typedef uint64_t HCONTACT;
 
 typedef struct ucm_cont_s {
-    uint8_t     oid;            // ucm system object ID
+    ucm_object_t oid;            // ucm system object ID
 
-    HCONTACT    cid;            // global contact ID
+    HCONTACT     cid;            // global contact ID
     struct {
         char* name;
     }  info;
@@ -306,7 +309,7 @@ typedef struct {
 
 /*! Structure what defines base plugin interface*/
 typedef struct _ucm_plugin_s {
-    uint8_t           oid;                                      /// ucm system object identificator
+    ucm_object_t      oid;                                      /// ucm system object identificator
 
     ucm_plugin_info_t info;
     UCM_RET           (*run)(void);                             /// activate plugin (with context for hot-plug) (required)
@@ -515,20 +518,20 @@ typedef struct _ucm_functions_s {
     int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
 
     /*! low-level settings provider functions */
-    int         (*get_int)      (ucm_plugin_t* obj, char* key, int def);
-    int64_t     (*get_int64)    (ucm_plugin_t* obj, char* key, int64_t def);
-    float       (*get_float)    (ucm_plugin_t* obj, char* key, float def);
-    char*       (*get_str)      (ucm_plugin_t* obj, char* key, char* def);
-    wchar_t*    (*get_wstr)     (ucm_plugin_t* obj, char* key, wchar_t* def);
-    uintptr_t   (*get_blob)     (ucm_plugin_t* obj, char* key, size_t* size);
-    void        (*set_int)      (ucm_plugin_t* obj, char* key, int value);
-    void        (*set_int64)    (ucm_plugin_t* obj, char* key, int64_t value);
-    void        (*set_float)    (ucm_plugin_t* obj, char* key, float value);
-    void        (*set_str)      (ucm_plugin_t* obj, char* key, char* value);
-    wchar_t*    (*set_wstr)     (ucm_plugin_t* obj, char* key, wchar_t* value);
-    void        (*set_blob)     (ucm_plugin_t* obj, char* key, uintptr_t blob, size_t size);
+    int         (*get_int)      (ucm_object_t* obj, char* key, int def);
+    int64_t     (*get_int64)    (ucm_object_t* obj, char* key, int64_t def);
+    float       (*get_float)    (ucm_object_t* obj, char* key, float def);
+    char*       (*get_str)      (ucm_object_t* obj, char* key, char* def);
+    wchar_t*    (*get_wstr)     (ucm_object_t* obj, char* key, wchar_t* def);
+    uintptr_t   (*get_blob)     (ucm_object_t* obj, char* key, size_t* size);
+    void        (*set_int)      (ucm_object_t* obj, char* key, int value);
+    void        (*set_int64)    (ucm_object_t* obj, char* key, int64_t value);
+    void        (*set_float)    (ucm_object_t* obj, char* key, float value);
+    void        (*set_str)      (ucm_object_t* obj, char* key, char* value);
+    wchar_t*    (*set_wstr)     (ucm_object_t* obj, char* key, wchar_t* value);
+    void        (*set_blob)     (ucm_object_t* obj, char* key, uintptr_t blob, size_t size);
 
-    void        (*item_del)     (ucm_plugin_t* obj, char* key);
+    void        (*item_del)     (ucm_object_t* obj, char* key);
 
     /*! general queue access */
     int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
