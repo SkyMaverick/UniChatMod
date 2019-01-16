@@ -103,7 +103,10 @@ configure_file (input: 'config.h.in',
 core_header_c = files('.' / 'include' / 'ucm.h')
 core_header_pas = files('.' / 'bindings' / 'fpc' / 'ucm.pas')
 
-install_headers (core_header_c, core_header_pas, meson.current_build_dir() / 'config.h',
+install_headers (core_header_c,
+                 core_header_pas,
+                 osal_public_header,
+                 meson.current_build_dir() / 'config.h',
                  install_dir: install_path_devs)
 
 libcore = shared_library (meson.project_name(),

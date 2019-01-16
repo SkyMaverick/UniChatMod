@@ -12,7 +12,7 @@ Latest builds can be downloaded from [Sourсeforge service](https://sourceforge.
 
 The following instruction assume that commands are executed in UniChatMod repository folder
 
-* Install Python (>3.5), meson, gcc, libcunit1 libcunit1-dev (if enabled tests). As options libucl1, libucl1-dev, libncurses5, libncurses5-dev
+* Install Python (>=3.5), meson, gcc, libcunit1 libcunit1-dev (if enabled tests). As options libucl1, libucl1-dev, libncurses5, libncurses5-dev
 * Run shell script **run.py <option>**. Now supported options:
     * **build** - rebuild last configuration (debug or release)
     * **debug** - build debug application
@@ -20,4 +20,5 @@ The following instruction assume that commands are executed in UniChatMod reposi
     * **clean** - remove build directory and cleanup
     * **test** - run test-bot application if checked option in meson config
     * **log** - view build-system log file (need if build failed)
-    * **install / uninstall** - install / uninstall application. Create / remove bundle if option *enable_bundle* checked.
+    * **bundle** - build application bundle
+    * **pack_arc(deb)** - create packages

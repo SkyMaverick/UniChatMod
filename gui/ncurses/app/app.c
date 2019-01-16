@@ -11,7 +11,7 @@
 #include <execinfo.h>
 
 #include "ucm.h"
-#include "osal.h"
+#include "osal-intrnl.h"
 #include "app.h"
 #include "config.h"
 #include "gettext.h"

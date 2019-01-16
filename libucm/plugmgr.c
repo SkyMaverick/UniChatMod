@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <wchar.h>
 
-#include "osal.h"
+#include "osal-intrnl.h"
 #include "ucm.h"
 #include "core.h"
 #include "defs.h"

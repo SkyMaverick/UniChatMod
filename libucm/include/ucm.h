@@ -9,6 +9,8 @@
 #include <limits.h>
 #include <wchar.h>
 
+#include "osal.h"
+
 #ifdef __cplusplus
     extern "C" {
 #endif

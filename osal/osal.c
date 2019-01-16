@@ -1,4 +1,5 @@
 #include "osal.h"
+#include "osal-intrnl.h"
 
 #if defined(_WIN32) || defined(_WIN64)
     #include "windows/fs.c"

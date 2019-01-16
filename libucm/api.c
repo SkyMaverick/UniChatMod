@@ -1,15 +1,15 @@
 #include <wchar.h>
 
 #include "ucm.h"
-#include "osal.h"
 #include "api.h"
-
 #include "logger.h"
 #include "mainloop.h"
 #include "plugmgr.h"
 #include "evhook.h"
 #include "unicode.h"
 #include "cpentupd.h"
+
+#include "osal-intrnl.h"
 
 wchar_t ucm_path        [UCM_PATH_MAX];
 wchar_t ucm_path_store  [UCM_PATH_MAX];
