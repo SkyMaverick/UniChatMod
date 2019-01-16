@@ -48,10 +48,13 @@ enum {
 /*
     Windows specified includes
  */
-
+    #pragma comment (lib, "Shlwapi.lib")
+    
     #include <Windows.h>
     #include <WinNT.h>
     #include <Winternl.h>
+    #include "Shlwapi.h"
+
     #ifdef osal_WITHOUT_RUNTIME
         #ifndef osal_malloc
             static inline void*
