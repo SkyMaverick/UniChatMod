@@ -48,6 +48,7 @@ static ucm_functions_t core_api = {
     .sys.thread_detach          = osal_thread_detach     ,
     .sys.thread_exit            = osal_thread_exit       ,
     .sys.thread_join            = osal_thread_join       ,
+    .sys.thread_cleanup         = osal_thread_cleanup    ,
 
     .sys.mutex_create           = osal_mutex_create      ,
     .sys.mutex_free             = osal_mutex_free        ,
@@ -94,6 +95,9 @@ static ucm_functions_t core_api = {
 
     .sys.errnum                 = osal_errno            ,
     .sys.file_exists            = osal_file_exists      ,
+    .sys.opendir                = osal_diropen          ,
+    .sys.nextdir                = osal_dirnext          ,
+    .sys.closedir               = osal_dirclose         ,
 
     .app.get_int                = NULL                  ,
     .app.get_int64              = NULL                  ,

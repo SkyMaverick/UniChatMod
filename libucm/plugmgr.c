@@ -197,12 +197,12 @@ plugins_load_registry (const char* plug_path)
 {
     modules.plugin = ucm_core;
     ucm_module_t* tmp_module = &modules;
-    
+
     size_t plugs_count = 0;
     char buffer [UCM_PATH_MAX];
 
     osal_dirent_t ls;
-    osal_dir_t dir = osal_diropen (plug_path, &ls);
+    osal_dir_t dir = UniAPI->sys.opendir (plug_path, &ls);
     if (dir) {
         do {
             if (!(strncmp (ls.name, ".", 1))  ||
@@ -217,11 +217,11 @@ plugins_load_registry (const char* plug_path)
                 tmp_module = tmp_module->next;
                 plugs_count++;
             }
-        } while (osal_dirnext(dir, &ls));
+        } while (UniAPI->sys.nextdir(dir, &ls));
     };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
     osal_dirclose (dir);
-    
+
     return UCM_RET_SUCCESS;
 }
 

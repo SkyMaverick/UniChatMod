@@ -13,6 +13,8 @@
 #include "logger.h"
 #include "db.h"
 
+#include "osal-intrnl.h"
+
 typedef struct {
     ucm_plugin_t        base;           // base plugin functionality (start/stop/mq)
 } ucm_core_t;
@@ -65,7 +67,7 @@ _stop_core (void)
     if (tid_loop_core > 0) {
         UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->sys.thread_join(tid_loop_core);
-        osal_thread_cleanup (&tid_loop_core);
+        UniAPI->sys.thread_cleanup (&tid_loop_core);
     }
     db_close();
     plugins_stop_all();

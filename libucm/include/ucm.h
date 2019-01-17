@@ -474,6 +474,7 @@ typedef struct _ucm_functions_s {
         int         (*thread_detach)    (uintptr_t tid);
         void        (*thread_exit)      (void* ret);
         int         (*thread_join)      (uintptr_t tid);
+        void        (*thread_cleanup)   (uintptr_t* tid);
 
         uintptr_t   (*mutex_create)     (void);
         void        (*mutex_free)       (uintptr_t _mtx);
@@ -521,7 +522,9 @@ typedef struct _ucm_functions_s {
 
         int         (*errnum)       (void);
         int         (*file_exists)  (const char* path);
-
+        osal_dir_t  (*opendir)      (const char* path, osal_dirent_t* fso);
+        int         (*nextdir)      (osal_dir_t dir, osal_dirent_t* fso);
+        void        (*closedir)     (osal_dir_t fso);
     } sys;
 
     struct {

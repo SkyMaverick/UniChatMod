@@ -9,10 +9,10 @@
 
 extern ucm_functions_t* UniAPI;
 
-#define ucm_free_null(X)    \
-    do {                    \
-        osal_free(X);       \
-        X = NULL;           \
+#define ucm_free_null(X)        \
+    do {                        \
+        UniAPI->sys.free(X);    \
+        X = NULL;               \
     } while (0)
 
 #ifdef __cplusplus

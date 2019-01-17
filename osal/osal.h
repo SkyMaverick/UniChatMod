@@ -44,7 +44,30 @@ enum {
     OSAL_RETURN_EACCESS,
     OSAL_RETURN_ENOMEM
 };
+/* **************************************************
+    Dynamic library loader functions
+ ************************************************** */
 
+#if defined(_WIN32) || defined(_WIN64)
+    typedef HMODULE  DLHANDLE;
+    typedef FARPROC  DLSYMFUNC;
+
+    #define LIBRARY_SUFFIX  ".dll"
+    #define DEFAULT_DLFLAGS 0
+
+    typedef HANDLE osal_dir_t;
+#else
+    typedef void*   DLHANDLE;
+    typedef void*   DLSYMFUNC;
+    
+    #define LIBRARY_SUFFIX  ".so"
+    #define DEFAULT_DLFLAGS   RTLD_LAZY
+
+    typedef uintptr_t osal_dir_t;
+#endif
+/* **************************************************
+    Filesystem functions
+ ************************************************** */
 enum {
     OSAL_DTYPE_FILE,
     OSAL_DTYPE_DIRECTORY,
@@ -58,38 +81,8 @@ enum {
 };
 
 #if defined(_WIN32) || defined(_WIN64)
-    /*  
-        Windows spcific data structures
-     */
-/* **************************************************
-    Dynamic library support
- ************************************************** */
-    typedef HMODULE  DLHANDLE;
-    typedef FARPROC  DLSYMFUNC;
-
-    #define LIBRARY_SUFFIX  ".dll"
-    #define DEFAULT_DLFLAGS 0
-
-/* **************************************************
-    Filesystem operation support
- ************************************************** */
     typedef HANDLE osal_dir_t;
 #else
-    /*
-       Linux specific data structures
-     */
-/* **************************************************
-    Dynamic library support
- ************************************************** */
-    typedef void*   DLHANDLE;
-    typedef void*   DLSYMFUNC;
-    
-    #define LIBRARY_SUFFIX  ".so"
-    #define DEFAULT_DLFLAGS   RTLD_LAZY
-
-/* **************************************************
-    Filesystem operation support
- ************************************************** */
     typedef uintptr_t osal_dir_t;
 #endif
 
