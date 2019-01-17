@@ -91,7 +91,8 @@ def open_all (path):
 
 def move_with_replace (file, path):
     try:
-        os.remove (os.path.join(path, file))
+        if os.path.exists (os.path.join (path, file)):
+            os.remove (os.path.join(path, file))
     except OSError:
         pass
     else:
