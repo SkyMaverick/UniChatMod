@@ -2,7 +2,6 @@ project ('ucm', 'c',
          version: '0.1.1',
          license: 'Zlib',
          default_options:[
-            'c_std=gnu11',
          ],
          subproject_dir: 'deps',
          meson_version: '>=0.49')
@@ -14,24 +13,25 @@ cc = meson.get_compiler('c')
 if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
     # --- compiler preferences ----------
     if get_option('buildtype').startswith('debug')
-        add_global_arguments ('-DDEBUG', language: 'c')
+        add_project_arguments ('-DDEBUG', language: 'c')
     endif
     if get_option('enable_traces')
-        add_global_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
+        add_project_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
     endif
     if get_option('build_bundle')
-        add_global_arguments ('-DENABLE_BUNDLE', language: 'c')
+        add_project_arguments ('-DENABLE_BUNDLE', language: 'c')
     endif
     if get_option('build_with_hidden_api')
-        add_global_arguments ('-DLIBUCM_EXPORTS', language: 'c')
+        add_project_arguments ('-DLIBUCM_EXPORTS', language: 'c')
     endif
     if get_option('valgrind_support')
-        add_global_arguments ('-DENABLE_VALGRIND', language: 'c')
+        add_project_arguments ('-DENABLE_VALGRIND', language: 'c')
     endif
     
-    add_global_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
+    add_project_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
     # --- compiler arguments ----------
     cc_args = '''
+        -std=gnu11
         -Wall
     '''.split()
     

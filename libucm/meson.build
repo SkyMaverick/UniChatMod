@@ -37,6 +37,18 @@ else
 endif
 libcore_deps += u8dep
 
+if not get_option('custom_libs')
+    uvdep = cc.find_library('uv', required: false)
+    if not u8dep.found()
+        uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
+        u8dep = uv_lib.get_variable('uv_dep')
+    endif
+else
+    uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
+    uvdep = uv_lib.get_variable('uv_dep')
+endif
+libcore_deps += uvdep
+
 # split project version for move to config.h
 lib_core_version = meson.project_version().split('.')
 lib_core_commit = ''

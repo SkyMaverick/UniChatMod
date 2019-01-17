@@ -220,7 +220,7 @@ plugins_load_registry (const char* plug_path)
         } while (UniAPI->sys.nextdir(dir, &ls));
     };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-    osal_dirclose (dir);
+    UniAPI->sys.closedir(dir);
 
     return UCM_RET_SUCCESS;
 }

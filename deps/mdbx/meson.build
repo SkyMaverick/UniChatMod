@@ -2,7 +2,6 @@ project ('mdbx', 'c',
          version: '0.2.0',
          license: 'ReOpenLDAP',
          default_options:[
-            'c_std=gnu11'
          ],
          meson_version: '>=0.46')
 
@@ -47,6 +46,7 @@ cc_name = cc.get_id()
 if (cc_name == 'gcc') or (cc_name == 'clang')
     # Build on linux (or difffernt *nix) system
     cc_args = '''
+        -std=gnu11
         -O2
         -g3
         -Wall

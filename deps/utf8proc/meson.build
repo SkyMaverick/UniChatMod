@@ -2,7 +2,6 @@ project ('utf8proc', 'c',
          version: '2.2.0',
          license: 'MIT',
          default_options:[
-            'c_std=c99'
          ],
          meson_version: '>=0.46')
 
@@ -27,6 +26,7 @@ cc_name = cc.get_id()
 if (cc_name == 'gcc') or (cc_name == 'clang')
     # Build on linux (or difffernt *nix) system
     cc_args = '''
+        -std=c99
         -O2
         -Wall
         -pedantic
