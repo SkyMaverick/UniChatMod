@@ -68,7 +68,7 @@ int rc6Init(Rc6Context *context, const uint8_t *key, size_t keyLen)
       return ERROR_INVALID_KEY_LENGTH;
 
    //Convert the secret key from bytes to words
-   app->zmemory (context->l, RC6_MAX_KEY_SIZE);
+   app->sys.zmemory (context->l, RC6_MAX_KEY_SIZE);
    memcpy (context->l, key, keyLen);
 
    //Calculate the length of the key in words

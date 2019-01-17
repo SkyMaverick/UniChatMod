@@ -167,7 +167,7 @@ ssize_t
 send_data (void*  buffer,
            size_t lenght)
 {
-    uint32_t salt       = app->get_entropy();
+    uint32_t salt       = app->app.get_entropy();
     uint8_t  long_flag  = 0;
     Rc6Context  rc6ctx;
 

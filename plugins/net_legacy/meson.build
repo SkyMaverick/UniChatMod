@@ -13,8 +13,19 @@ nl_src = files('''
 
 nl_dep = [
     system_library_threads,
-    cc.find_library('ucl', required: false)
 ]
+
+if not get_option('custom_libs')
+    ucl_dep = cc.find_library ('ucl', required: false)
+    if not ucl_dep.found()
+        ucl_lib = subproject('ucl', default_options: [ '='.join ( ['path_install', install_path_libs] )] )
+        ucl_dep = ucl_lib.get_variable('ucl_dep')
+    endif
+else
+    ucl_lib = subproject('ucl', default_options: [ '='.join ( ['path_install', install_path_libs] )] )
+    ucl_dep = ucl_lib.get_variable('ucl_dep')
+endif
+nl_dep += ucl_dep
 
 nl_mdbx = shared_library(plug_name,
                              nl_src,

@@ -91,14 +91,14 @@ _create_socket (ucl_connection_t* Con,
 ucm_conptr_t
 ucl_connect ()
 {
-    ucl_connection_t* con_s = app->zmalloc (sizeof(ucl_connection_t));
+    ucl_connection_t* con_s = app->sys.zmalloc (sizeof(ucl_connection_t));
     if (con_s) {
         // TODO get connection propeties in DB
         uint32_t ip = 0;
         uint16_t port = 0;
 
         if (_create_socket (con_s, ip, port) == UCM_RET_SUCCESS) {
-            con_s->tid_select = app->thread_create (__select_func, (void*) con_s);
+            con_s->tid_select = app->sys.thread_create (__select_func, (void*) con_s);
             if (con_s->tid_select <= 0) {
                 trace_err ("%s : %s\n", "Don't create select thread", strerror(errno));
                 ucm_free_null (con_s);
@@ -120,9 +120,9 @@ ucl_disconnect (ucm_conptr_t* Con)
         ucl_connection_t* uCon = (ucl_connection_t*)(*Con);
 
         uCon->proto.net_status = UCM_FLAG_NETSTAT_OFF;
-        app->thread_join (uCon->tid_select);
+        app->sys.thread_join (uCon->tid_select);
 
-        app->free (uCon);
+        app->sys.free (uCon);
         *Con = 0;
     }
     return UCM_RET_SUCCESS;
