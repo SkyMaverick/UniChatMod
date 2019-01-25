@@ -9,7 +9,7 @@
 #include "unicode.h"
 #include "cpentupd.h"
 
-#include "osal-intrnl.h"
+#include "osal.c"
 
 wchar_t ucm_path        [UCM_PATH_MAX];
 wchar_t ucm_path_store  [UCM_PATH_MAX];

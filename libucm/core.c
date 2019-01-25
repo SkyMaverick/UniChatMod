@@ -13,8 +13,6 @@
 #include "logger.h"
 #include "db.h"
 
-#include "osal-intrnl.h"
-
 typedef struct {
     ucm_plugin_t        base;           // base plugin functionality (start/stop/mq)
 } ucm_core_t;

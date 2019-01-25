@@ -2,7 +2,6 @@
 #include "ucm.h"
 #include "api.h"
 #include "config.h"
-#include "osal-intrnl.h"
 
 typedef struct _event_hook_s {
     unsigned  mask;                      // events selector mask

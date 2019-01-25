@@ -1,7 +1,6 @@
 #include "unicode.h"
 #include "ucm.h"
 #include "api.h"
-#include "osal-intrnl.h"
 
 #include <stdarg.h>
 #include <string.h>

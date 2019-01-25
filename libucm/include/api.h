@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ucm.h"
-#include "osal.h"
 
 #ifdef __cplusplus
     extern "C" {

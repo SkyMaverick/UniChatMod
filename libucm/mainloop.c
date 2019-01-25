@@ -10,8 +10,6 @@
 #include "mainloop.h"
 #include "gettext.h"
 
-#include "osal-intrnl.h"
-
 static struct mq_block_s* messages;
 
 int
