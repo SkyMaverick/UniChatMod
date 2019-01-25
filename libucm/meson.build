@@ -5,6 +5,7 @@ libcore_src = files('''
     db.c
     evhook.c
     mainloop.c
+    osal.c
     logger.c
     mqueue.c
     plugmgr.c
@@ -12,19 +13,33 @@ libcore_src = files('''
     unicode.c
 '''.split())
 
-libcore_osal_src = '''
-        osal.c
-'''.split()
-
-foreach item : libcore_osal_src
-    libcore_src += files ('..' / 'osal' / item)
-endforeach
-
+#libcore_osal_src = '''
+#        osal.c
+#'''.split()
+#
+#foreach item : libcore_osal_src
+#    libcore_src += files ('..' / 'osal' / item)
+#endforeach
+#
 libcore_deps = [
     system_library_threads,
     system_library_dynload
 ]
 
+# add plibsys dependency
+if not get_option('custom_libs')
+    plsdep = cc.find_library('plibsys', required: false)
+    if not plsdep.found()
+        pls_lib = subproject('plibsys', default_options: ['='.join (['path_install', install_path_libs])])
+        plsdep = pls_lib.get_variable('plibsys_dep')
+    endif
+else
+    pls_lib = subproject('plibsys', default_options: ['='.join (['path_install', install_path_libs])])
+    plsdep = pls_lib.get_variable('plibsys_dep')
+endif
+libcore_deps += plsdep
+
+# add utf8proc dependency
 if not get_option('custom_libs')
     u8dep = cc.find_library('utf8proc', required: false)
     if not u8dep.found()
@@ -37,6 +52,7 @@ else
 endif
 libcore_deps += u8dep
 
+# add libuv dependency
 if not get_option('custom_libs')
     uvdep = cc.find_library('uv', required: false)
     if not u8dep.found()
@@ -117,7 +133,6 @@ core_header_pas = files('.' / 'bindings' / 'fpc' / 'ucm.pas')
 
 install_headers (core_header_c,
                  core_header_pas,
-                 osal_public_header,
                  meson.current_build_dir() / 'config.h',
                  install_dir: install_path_devs)
 

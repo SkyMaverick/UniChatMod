@@ -21,10 +21,9 @@ endif
 subdir ('platform'/PLIBSYS_TARGET_PLATFORM)
 
 # include directories
-include_directories = [
-    '.',
-    '.'/'src'
-]
+plibsys_include = include_directories([
+    '.'
+])
 
 # ##################################################
 #   DEFINE BUILD FILES GROUPS
@@ -679,18 +678,34 @@ msg_info = '''
            )
 
 message (msg_info)
-
-libplsys = shared_library (meson.project_name(),
-                           PLIBSYS_SRCS +
-                           PLIBSYS_PLATFORM_SRCS +
-                           PLIBSYS_PUBLIC_HDRS +
-                           PLIBSYS_PRIVATE_HDRS,
-                           dependencies: PLIBSYS_PLATFORM_DEPS)
-if PLIBSYS_BUILD_STATIC
-    libplsys = static_library (meson.project_name(),
+if meson.is_subproject()
+    libplsys = shared_library (meson.project_name(),
                                PLIBSYS_SRCS +
                                PLIBSYS_PLATFORM_SRCS +
                                PLIBSYS_PUBLIC_HDRS +
                                PLIBSYS_PRIVATE_HDRS,
-                               dependencies: PLIBSYS_PLATFORM_DEPS)
+                               dependencies: PLIBSYS_PLATFORM_DEPS,
+                               install: 'true')
+    plibsys_dep = declare_dependency (
+                include_directories: plibsys_include,
+                link_with: libplsys
+            )    
+else
+    libplsys = shared_library (meson.project_name(),
+                               PLIBSYS_SRCS +
+                               PLIBSYS_PLATFORM_SRCS +
+                               PLIBSYS_PUBLIC_HDRS +
+                               PLIBSYS_PRIVATE_HDRS,
+                               dependencies: PLIBSYS_PLATFORM_DEPS,
+                               install: 'true',
+                               install_dir: get_option('path_install'))
 endif
+if PLIBSYS_BUILD_STATIC
+        libplsys = static_library (meson.project_name(),
+                                   PLIBSYS_SRCS +
+                                   PLIBSYS_PLATFORM_SRCS +
+                                   PLIBSYS_PUBLIC_HDRS +
+                                   PLIBSYS_PRIVATE_HDRS,
+                                   dependencies: PLIBSYS_PLATFORM_DEPS)
+    endif
+

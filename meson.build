@@ -82,7 +82,6 @@ endforeach
 lib_inc = [
     '.',
     '.'/'libucm',
-    '.'/'osal',
     '.'/'libucm'/'include',
 ]
 
@@ -119,7 +118,6 @@ else
     system_library_dynload = cc.find_library ('dl', required: true)
 endif
 
-osal_public_header = files('.'/'osal'/'osal.h')
 # --- walk in subdirs ----------
 subdir('libucm')
 
