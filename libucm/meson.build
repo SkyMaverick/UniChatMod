@@ -5,7 +5,6 @@ libcore_src = files('''
     db.c
     evhook.c
     mainloop.c
-    osal.c
     logger.c
     mqueue.c
     plugmgr.c

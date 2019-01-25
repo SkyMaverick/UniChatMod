@@ -83,6 +83,7 @@ lib_inc = [
     '.',
     '.'/'libucm',
     '.'/'libucm'/'include',
+    '.'/'libucm'/'osal',
 ]
 
 libs_rpath = ':'.join ([
