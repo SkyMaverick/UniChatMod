@@ -493,6 +493,11 @@ typedef struct _ucm_functions_s {
         int         (*rwlock_wlock)     (uintptr_t _rwl);
         int         (*rwlock_unlock)    (uintptr_t _rwl);
 
+        uintptr_t   (*dlopen)           (const char* path);
+        void        (*dlclose)          (uintptr_t lib);
+        uintptr_t   (*dlsym)            (uintptr_t lib, const char* sym);
+        char*       (*dlerror)          (uintptr_t lib);
+
         /* Unicode operations. USC4 and convertors */
         int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);
         int64_t     (*U32toU8)      (u32char_t* str,  const int64_t str_len, u8char_t** ret);

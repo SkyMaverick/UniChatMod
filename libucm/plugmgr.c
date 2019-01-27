@@ -12,7 +12,7 @@
 
 typedef struct ucm_module_s {
     ucm_plugin_t* plugin;
-    DLHANDLE handle;
+    uintptr_t handle;
     struct ucm_module_s* next;
 } ucm_module_t;
 
@@ -21,7 +21,7 @@ typedef struct ucm_module_s {
 
 ucm_module_t modules = {
     .plugin = NULL,
-    .handle = NULL,
+    .handle = 0,
     .next   = NULL
 };
 
@@ -76,15 +76,15 @@ _plugin_load (char* filename)
 {
     ucm_module_t* module = NULL;
 
-    DLHANDLE handle = osal_dlopen (filename, DEFAULT_DLFLAGS);
+    uintptr_t handle = UniAPI->sys.dlopen (filename);
     if (!handle) {
         ucm_etrace ("%s: %s\n", filename, _("plugin don't load"));
         return module;
     }
 
     char* err = NULL;
-    cb_init_plugin _pfunc = (cb_init_plugin) osal_dlsym(handle,"_init_plugin");
-    if ( (err = osal_dlerror()) == NULL ) {
+    cb_init_plugin _pfunc = (cb_init_plugin) UniAPI->sys.dlsym(handle,"_init_plugin");
+    if ( (err = UniAPI->sys.dlerror(handle)) == NULL ) {
         ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
@@ -101,7 +101,7 @@ _plugin_load (char* filename)
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
         }
     }
-    osal_dlclose (handle);
+    UniAPI->sys.dlclose (handle);
     return module;
 }
 
@@ -234,7 +234,7 @@ plugins_release_registry (void)
         m_del = m_tmp;
         m_tmp = m_tmp->next;
 
-        osal_dlclose(m_del->handle);
+        UniAPI->sys.dlclose(m_del->handle);
         UniAPI->sys.free (m_del);
     }
 }

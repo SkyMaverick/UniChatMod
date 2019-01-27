@@ -69,6 +69,11 @@ static ucm_functions_t core_api = {
     .sys.rwlock_wlock           = osal_rwlock_wlock      ,
     .sys.rwlock_unlock          = osal_rwlock_unlock     ,
 
+    .sys.dlopen                 = osal_dlopen            ,
+    .sys.dlclose                = osal_dlclose           ,
+    .sys.dlsym                  = osal_dlsym             ,
+    .sys.dlerror                = osal_dlerror           ,
+    
     .sys.U8toU32                = u8_decode_ucs4        ,
     .sys.U32toU8                = ucs4_encode_u8        ,
     .sys.ustrlen                = ucm_strlen            ,
