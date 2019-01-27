@@ -1,11 +1,13 @@
 #include <plibsys.h>
 
-
-uintptr_t
+inline uintptr_t
 osal_thread_create (void* (*func)(void* ctx),
                     void* ctx)
 {
-    return 0;
+    PUThread* ret  = p_uthread_create (func, ctx, TRUE);
+    if (ret)
+        p_uthread_ref (ret);
+    return (uintptr_t) ret;
 }
 int
 osal_thread_detach (uintptr_t tid)
@@ -19,7 +21,10 @@ osal_thread_exit (void* ret)
 int
 osal_thread_join (uintptr_t tid)
 {
-    return 0;
+    int ret = p_uthread_join ( (PUThread*)tid );
+    if (ret == 0)
+        p_uthread_unref( (PUThread*)tid );
+    return ret;
 }
 void
 osal_thread_cleanup (uintptr_t* tid)
@@ -29,11 +34,12 @@ osal_thread_cleanup (uintptr_t* tid)
 uintptr_t
 osal_mutex_create (void)
 {
-    return 0;
+    return (uintptr_t)p_mutex_new();
 }
 void
 osal_mutex_free (uintptr_t _mtx)
 {
+    p_mutex_free( (PMutex*)_mtx );
 }
 int
 osal_mutex_lock (uintptr_t _mtx)

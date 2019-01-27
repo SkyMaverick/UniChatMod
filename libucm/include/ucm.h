@@ -518,11 +518,11 @@ typedef struct _ucm_functions_s {
         int64_t     (*ustrstr)      (u32char_t* str,  u32char_t* sstr);
         int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
 
-        int         (*errnum)       (void);
-        int         (*file_exists)  (const char* path);
-        osal_dir_t  (*opendir)      (const char* path, osal_dirent_t* fso);
-        int         (*nextdir)      (osal_dir_t dir, osal_dirent_t* fso);
-        void        (*closedir)     (osal_dir_t fso);
+//        int         (*errnum)       (void);
+//        int         (*file_exists)  (const char* path);
+//        uintptr_t   (*opendir)      (const char* path, osal_dirent_t* fso);
+//        int         (*nextdir)      (osal_dir_t dir, osal_dirent_t* fso);
+//        void        (*closedir)     (osal_dir_t fso);
     } sys;
 
     struct {

@@ -25,7 +25,7 @@ ucm_core_start (ucm_cargs_t* args)
                 && (mbstowcs (ucm_path_store, args->path_store_abs, UCM_PATH_MAX)) > 0
                 && (mbstowcs (ucm_path_plugs, args->path_plug_abs , UCM_PATH_MAX)) > 0 ) )
             return NULL;
-        p_libsys_init();
+        osal_init();
         log_init();
         init_ucm_entropy();
 
@@ -55,6 +55,6 @@ ucm_core_stop (void)
     free_ucm_entropy();
     log_release();
 
-    p_libsys_shutdown ();
+    osal_release ();
     return UCM_RET_SUCCESS;
 }

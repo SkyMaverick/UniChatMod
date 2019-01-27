@@ -17,7 +17,7 @@ typedef struct ucm_module_s {
 } ucm_module_t;
 
 #define PLUGIN(X) X->plugin
-#define NULL_REG(X) osal_zmemory ((X),   sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
+#define NULL_REG(X) UniAPI->sys.zmemory ((X), sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
 
 ucm_module_t modules = {
     .plugin = NULL,
@@ -88,7 +88,7 @@ _plugin_load (char* filename)
         ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
-                module = osal_zmalloc (sizeof(ucm_module_t));
+                module = UniAPI->sys.zmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
                     module->handle = handle;
@@ -235,7 +235,7 @@ plugins_release_registry (void)
         m_tmp = m_tmp->next;
 
         osal_dlclose(m_del->handle);
-        osal_free(m_del);
+        UniAPI->sys.free (m_del);
     }
 }
 

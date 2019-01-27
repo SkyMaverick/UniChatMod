@@ -41,7 +41,7 @@ static ucm_functions_t core_api = {
     .sys.calloc                 = osal_calloc            ,
     .sys.free                   = osal_free              ,
     .sys.zmemory                = osal_zmemory           ,
-    .sys.realloc                = osal_realloc2          ,
+    .sys.realloc                = osal_realloc           ,
     .sys.strdup                 = osal_strdup            ,
 
     .sys.thread_create          = osal_thread_create     ,
@@ -93,12 +93,12 @@ static ucm_functions_t core_api = {
     .sys.ustrstr                = ucm_strstr            ,
     .sys.ustrcasestr            = ucm_strcasestr        ,
 
-    .sys.errnum                 = osal_errno            ,
-    .sys.file_exists            = osal_file_exists      ,
-    .sys.opendir                = osal_diropen          ,
-    .sys.nextdir                = osal_dirnext          ,
-    .sys.closedir               = osal_dirclose         ,
-
+//    .sys.errnum                 = /* osal_errno        */ NULL   ,
+//    .sys.file_exists            = /* osal_file_exists  */ NULL   ,
+//    .sys.opendir                = /* osal_diropen      */ NULL   ,
+//    .sys.nextdir                = /* osal_dirnext      */ NULL   ,
+//    .sys.closedir               = /* osal_dirclose     */ NULL   ,
+//
     .app.get_int                = NULL                  ,
     .app.get_int64              = NULL                  ,
     .app.get_float              = NULL                  ,
