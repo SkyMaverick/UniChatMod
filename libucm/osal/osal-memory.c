@@ -1,5 +1,5 @@
-#include <plibsys.h>
 #include <string.h>
+#include "osal.h"
 
 inline void*
 osal_malloc (size_t size)

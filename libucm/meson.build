@@ -12,6 +12,10 @@ libcore_src = files('''
     unicode.c
 '''.split())
 
+subdir ('osal')
+
+libcore_src += osal_src
+
 #libcore_osal_src = '''
 #        osal.c
 #'''.split()

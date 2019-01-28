@@ -1,4 +1,4 @@
-#include <plibsys.h>
+#include "osal.h"
 
 inline uintptr_t
 osal_dlopen (const char* path)

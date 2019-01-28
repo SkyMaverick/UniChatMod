@@ -201,7 +201,21 @@ plugins_load_registry (const char* plug_path)
     char buffer [UCM_PATH_MAX];
 
     uintptr_t dir = UniAPI->sys.dir_open (plug_path);
-
+    
+    char* name_buf = NULL;
+    int type = 0;
+    while ( ( type = UniAPI->sys.dir_next(&name_buf, dir) ) > 0) {
+        if ((type == UCM_TYPE_DIROBJ_FILE) &&
+            (strstr (name_buf, ".so"))) //FIXME Only linux
+        {
+            snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, name_buf);
+            tmp_module->next = _plugin_load(buffer);
+            if ( tmp_module->next ) {
+                tmp_module = tmp_module->next;
+                plugs_count++;
+            }
+        }
+    }
 //    if (dir) {
 //        do {
 //            if (!(strncmp (ls.name, ".", 1))  ||

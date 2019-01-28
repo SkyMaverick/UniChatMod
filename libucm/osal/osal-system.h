@@ -1,0 +1,2 @@
+int
+osal_errno ();

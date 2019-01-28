@@ -36,10 +36,10 @@ _log_core (ucm_plugin_t* plug,
                         break;
     }
 
-    osal_rwlock_rlock(lock_mtx);
+    UniAPI->sys.rwlock_rlock(lock_mtx);
     for (ucm_logger_t* i=logs; i; i=i->next)
         i->cb_log(plug,type,txt);
-    osal_rwlock_unlock(lock_mtx);
+    UniAPI->sys.rwlock_unlock(lock_mtx);
 }
 
 static int
@@ -68,14 +68,14 @@ void
 log_init (void)
 {
     logs = NULL;
-    lock_mtx = osal_rwlock_create();
+    lock_mtx = UniAPI->sys.rwlock_create();
 }
 
 void
 log_release (void)
 {
     _log_flush(&logs);
-    osal_rwlock_free(lock_mtx);
+    UniAPI->sys.rwlock_free(lock_mtx);
 }
 
 void
@@ -129,13 +129,13 @@ ucm_log (const char* fmt,
 void
 logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
-    ucm_logger_t* tmp = osal_zmalloc (sizeof(ucm_logger_t));
+    ucm_logger_t* tmp = UniAPI->sys.zmalloc (sizeof(ucm_logger_t));
     if (tmp) {
-        osal_rwlock_wlock(lock_mtx);
+        UniAPI->sys.rwlock_wlock(lock_mtx);
         tmp->cb_log = callback;
         tmp->next = logs;
         logs = tmp;
-        osal_rwlock_unlock(lock_mtx);
+        UniAPI->sys.rwlock_unlock(lock_mtx);
     }
 }
 
@@ -144,7 +144,7 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 {
     ucm_logger_t* prev = NULL;
 
-    osal_rwlock_wlock(lock_mtx);
+    UniAPI->sys.rwlock_wlock(lock_mtx);
     for(ucm_logger_t* i = logs; i;prev=i,i=i->next) {
         if(i->cb_log == callback){
             if(prev){
@@ -152,9 +152,9 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
             }else{
                 logs = i->next;
             }
-            osal_free(i);
+            UniAPI->sys.free(i);
             break;
         }
     }
-    osal_rwlock_unlock(lock_mtx);
+    UniAPI->sys.rwlock_unlock(lock_mtx);
 }

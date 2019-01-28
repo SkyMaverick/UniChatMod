@@ -6,6 +6,11 @@
     extern "C" {
 #endif
 
+void
+compat_layer_init (void);
+void 
+compat_layer_release (void);
+
 extern ucm_functions_t* UniAPI;
 
 #define ucm_free_null(X)        \

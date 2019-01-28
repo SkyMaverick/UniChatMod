@@ -25,16 +25,16 @@ static void
 _mq_flush (mq_block_t* h)
 {
     h->head = 0; h->tail = 0; h->count = 0;
-    osal_zmemory (h->queue, h->q_size * sizeof(mq_msg_t));
+    UniAPI->sys.zmemory (h->queue, h->q_size * sizeof(mq_msg_t));
 };
 
 struct mq_block_s*
 mq_create (uint32_t q_count)
 {
     int mem_sz = sizeof(mq_block_t) + (q_count - 1) * sizeof(mq_msg_t);
-    mq_block_t* h = osal_zmalloc (mem_sz);
+    mq_block_t* h = UniAPI->sys.zmalloc (mem_sz);
     h->q_size = q_count;
-    h->cond = osal_cond_create ();
+    h->cond = UniAPI->sys.cond_create ();
     _mq_flush(h);
     return h;
 };
@@ -47,7 +47,7 @@ mq_push (mq_block_t* h,
          uint32_t   x2)
 {
 if(h){
-    osal_cond_lock (h->cond);
+    UniAPI->sys.cond_lock (h->cond);
     if (h->count < h->q_size){
 
         h->queue[h->tail].id  = id;
@@ -58,11 +58,11 @@ if(h){
         h->tail++; h->count++;
         if (h->tail == h->q_size) h->tail = 0;
     } else {
-        osal_cond_unlock (h->cond);
+        UniAPI->sys.cond_unlock (h->cond);
         return UCM_RET_OVERFLOW;
     }
-    osal_cond_signal (h->cond);
-    osal_cond_unlock (h->cond);
+    UniAPI->sys.cond_signal (h->cond);
+    UniAPI->sys.cond_unlock (h->cond);
     return UCM_RET_SUCCESS;
 }else
     return UCM_RET_NOOBJECT;
@@ -76,7 +76,7 @@ mq_pop (mq_block_t* h,
         uint32_t*  x2)
 {
     if (h){
-        osal_cond_lock (h->cond);
+        UniAPI->sys.cond_lock (h->cond);
             if (h->count > 0){
 
                 *id =  h->queue[h->head].id;
@@ -87,10 +87,10 @@ mq_pop (mq_block_t* h,
                 h->count--; h->head++;
                 if (h->head == h->q_size) h->head = 0;
             } else {
-                osal_cond_unlock (h->cond);
+                UniAPI->sys.cond_unlock (h->cond);
                 return UCM_RET_EMPTY;
             }
-        osal_cond_unlock (h->cond);
+        UniAPI->sys.cond_unlock (h->cond);
         return UCM_RET_SUCCESS;
     }else
         return UCM_RET_NOOBJECT;
@@ -107,8 +107,8 @@ mq_clear (mq_block_t *h)
 void
 mq_wait (mq_block_t *h)
 {
-    osal_cond_wait(h->cond);
-    osal_cond_unlock(h->cond);
+    UniAPI->sys.cond_wait(h->cond);
+    UniAPI->sys.cond_unlock(h->cond);
 };
 
 int
@@ -120,9 +120,9 @@ mq_noempty (mq_block_t *h)
 void
 mq_free (mq_block_t *h)
 {
-    osal_cond_lock (h->cond);
+    UniAPI->sys.cond_lock (h->cond);
     _mq_flush (h);
-    osal_cond_unlock (h->cond);
-    osal_cond_free (h->cond);
-    osal_free (h);
+    UniAPI->sys.cond_unlock (h->cond);
+    UniAPI->sys.cond_free (h->cond);
+    UniAPI->sys.free (h);
 };

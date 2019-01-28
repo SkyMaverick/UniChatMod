@@ -685,7 +685,8 @@ if meson.is_subproject()
                                PLIBSYS_PUBLIC_HDRS +
                                PLIBSYS_PRIVATE_HDRS,
                                dependencies: PLIBSYS_PLATFORM_DEPS,
-                               install: 'true')
+                               install: 'true',
+                               install_dir: get_option('path_install'))
     plibsys_dep = declare_dependency (
                 include_directories: plibsys_include,
                 link_with: libplsys
@@ -697,8 +698,7 @@ else
                                PLIBSYS_PUBLIC_HDRS +
                                PLIBSYS_PRIVATE_HDRS,
                                dependencies: PLIBSYS_PLATFORM_DEPS,
-                               install: 'true',
-                               install_dir: get_option('path_install'))
+                               install: 'true')
 endif
 if PLIBSYS_BUILD_STATIC
         libplsys = static_library (meson.project_name(),

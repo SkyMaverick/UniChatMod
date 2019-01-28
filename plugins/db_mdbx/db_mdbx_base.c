@@ -139,7 +139,7 @@ db_open (db_object_t* db)
         // Don't exists file
     } else {
         // Exists file
-        trace_err ("%s - %s: %d\n", "Don't access file", db->faPath, app->sys.errnum());
+        trace_err ("%s - %s: %d\n", "Don't access file", db->faPath, app->sys.os_errno());
         return UCM_RET_NOACCESS;
     }
 

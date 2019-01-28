@@ -13,7 +13,6 @@
 #include <netinet/in.h>
 
 #include "ucm.h"
-#include "osal.h"
 #include "network.h"
 #include "net_legacy.h"
 

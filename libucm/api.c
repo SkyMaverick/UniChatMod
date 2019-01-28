@@ -16,6 +16,15 @@ wchar_t ucm_path_store  [UCM_PATH_MAX];
 wchar_t ucm_path_plugs  [UCM_PATH_MAX];
 wchar_t ucm_path_doc    [UCM_PATH_MAX];
 
+void
+compat_layer_init (void) {
+    osal_init();
+}
+void 
+compat_layer_release (void) {
+    osal_release ();
+}
+
 // application global parameters (paths, vars, etc.)
 static const wchar_t*
 g_startup_path (void)
@@ -78,7 +87,12 @@ static ucm_functions_t core_api = {
     .sys.dir_next               = osal_idir_next         ,
     .sys.dir_rollback           = osal_idir_rollback     ,
     .sys.dir_close              = osal_idir_release      ,
+    .sys.dir_exists             = osal_dir_exists        ,
     
+    .sys.file_exists            = osal_file_exists       ,
+    
+    .sys.os_errno               = osal_errno             ,
+
     .sys.U8toU32                = u8_decode_ucs4        ,
     .sys.U32toU8                = ucs4_encode_u8        ,
     .sys.ustrlen                = ucm_strlen            ,

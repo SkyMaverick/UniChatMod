@@ -1,4 +1,4 @@
-#include <plibsys.h>
+#include "osal.h"
 
 typedef struct {
     PDir*   dir;
@@ -11,7 +11,7 @@ osal_idir_create (const char* path)
         dir_handler_t* iterator = osal_zmalloc (sizeof(dir_handler_t));
         if (iterator) {
             iterator->dir = p_dir_new (path, NULL);
-            return iterator;
+            return (uintptr_t)iterator;
         }
     }
     return 0;
@@ -21,9 +21,8 @@ int
 osal_idir_next (char**    name,
                 uintptr_t iterator)
 {
-    /* WARNING! plibsys internal check NULL-value
-       if remake other lib - check this code */
     osal_free (*name);
+
     dir_handler_t* iter = (dir_handler_t*)iterator;
     
     PDirEntry* entry = p_dir_get_next_entry (iter->dir, NULL);
@@ -49,4 +48,16 @@ osal_idir_release (uintptr_t iterator)
     dir_handler_t* iter = (dir_handler_t*) iterator;
     p_dir_free (iter->dir); 
     osal_free (iter);
+}
+
+bool
+osal_dir_exists (const char* path)
+{
+   return p_dir_is_exists(path);
+}
+
+bool
+osal_file_exists (const char* path)
+{
+    return p_file_is_exists (path);
 }

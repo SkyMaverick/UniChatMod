@@ -1,9 +1,14 @@
 #pragma once
 
-#include "osal-threading.c"
-#include "osal-memory.c"
-#include "osal-filesys.c"
-#include "osal-dynlib.c"
+#include <plibsys.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "osal-dynlib.h"
+#include "osal-filesys.h"
+#include "osal-memory.h"
+#include "osal-threading.h"
+#include "osal-system.h"
 
 void
 osal_init (void);

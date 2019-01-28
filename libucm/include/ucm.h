@@ -175,6 +175,12 @@ enum {
     UCM_TYPE_OBJECT_CONNECT = 1 << 4
 };
 
+enum {
+    UCM_TYPE_DIROBJ_DIR     = 1,
+    UCM_TYPE_DIROBJ_FILE    = 2,
+    UCM_TYPE_DIROBJ_OTHER   = 3
+};
+
 // *********************************************************
 //      BASE STRUCTURES
 // *********************************************************
@@ -503,7 +509,11 @@ typedef struct _ucm_functions_s {
         int         (*dir_next)         (char** name, uintptr_t iterator);
         bool        (*dir_rollback)     (uintptr_t iterator);
         void        (*dir_close)        (uintptr_t iterator);
+        bool        (*dir_exists)       (const char* path);
 
+        bool        (*file_exists)      (const char* path);
+        
+        int         (*os_errno)         (void);
         /* Unicode operations. USC4 and convertors */
         int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);
         int64_t     (*U32toU8)      (u32char_t* str,  const int64_t str_len, u8char_t** ret);

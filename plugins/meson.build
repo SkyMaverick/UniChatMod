@@ -4,7 +4,6 @@ plugins = '''
 '''.split()
 
 plugins_only_nix = '''
-    net_legacy
 '''.split()
 
 plugins_only_win = '''
