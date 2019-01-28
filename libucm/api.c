@@ -74,6 +74,11 @@ static ucm_functions_t core_api = {
     .sys.dlsym                  = osal_dlsym             ,
     .sys.dlerror                = osal_dlerror           ,
     
+    .sys.dir_open               = osal_idir_create       ,
+    .sys.dir_next               = osal_idir_next         ,
+    .sys.dir_rollback           = osal_idir_rollback     ,
+    .sys.dir_close              = osal_idir_release      ,
+    
     .sys.U8toU32                = u8_decode_ucs4        ,
     .sys.U32toU8                = ucs4_encode_u8        ,
     .sys.ustrlen                = ucm_strlen            ,

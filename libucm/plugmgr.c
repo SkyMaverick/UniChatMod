@@ -200,26 +200,26 @@ plugins_load_registry (const char* plug_path)
     size_t plugs_count = 0;
     char buffer [UCM_PATH_MAX];
 
-    osal_dirent_t ls;
-    osal_dir_t dir = UniAPI->sys.opendir (plug_path, &ls);
-    if (dir) {
-        do {
-            if (!(strncmp (ls.name, ".", 1))  ||
-                !(strncmp (ls.name, "..", 2)) ||
-                !(strstr  (ls.name, LIBRARY_SUFFIX)))
-            {
-                    continue;
-            }
-            snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls.name);
-            tmp_module->next = _plugin_load(buffer);
-            if ( tmp_module->next ) {
-                tmp_module = tmp_module->next;
-                plugs_count++;
-            }
-        } while (UniAPI->sys.nextdir(dir, &ls));
-    };
+    uintptr_t dir = UniAPI->sys.dir_open (plug_path);
+
+//    if (dir) {
+//        do {
+//            if (!(strncmp (ls.name, ".", 1))  ||
+//                !(strncmp (ls.name, "..", 2)) ||
+//                !(strstr  (ls.name, LIBRARY_SUFFIX)))
+//            {
+//                    continue;
+//            }
+//            snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls.name);
+//            tmp_module->next = _plugin_load(buffer);
+//            if ( tmp_module->next ) {
+//                tmp_module = tmp_module->next;
+//                plugs_count++;
+//            }
+//        } while (UniAPI->sys.nextdir(dir, &ls));
+//    };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-    UniAPI->sys.closedir(dir);
+    UniAPI->sys.dir_close(dir);
 
     return UCM_RET_SUCCESS;
 }
