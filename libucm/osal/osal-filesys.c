@@ -36,7 +36,7 @@ osal_idir_next (char**    name,
     return 0;
 }
 
-inline bool
+bool
 osal_idir_rollback (uintptr_t iterator)
 {
     return p_dir_rewind ( ((dir_handler_t*)iterator)->dir, NULL );
@@ -50,13 +50,13 @@ osal_idir_release (uintptr_t iterator)
     osal_free (iter);
 }
 
-inline bool
+bool
 osal_dir_exists (const char* path)
 {
    return p_dir_is_exists(path);
 }
 
-inline bool
+bool
 osal_file_exists (const char* path)
 {
     return p_file_is_exists (path);

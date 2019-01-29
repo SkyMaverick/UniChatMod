@@ -1,23 +1,23 @@
 #include <string.h>
 #include "osal.h"
 
-inline void*
+void*
 osal_malloc (size_t size)
 {
     return (void*) p_malloc(size);
 }
-inline void*
+void*
 osal_zmalloc (size_t size)
 {
     return (void*) p_malloc0(size);
 }
-inline void*
+void*
 osal_calloc (size_t nmem,
              size_t size)
 {
     return (void*) osal_zmalloc( nmem * size );
 }
-inline void
+void
 osal_free (void* mem)
 {
     p_free (mem);
@@ -53,7 +53,7 @@ osal_realloc (void** mem, size_t size)
     return 0;
 }
 
-inline char*
+char*
 osal_strdup (const char* str)
 {
     return p_strdup (str);
