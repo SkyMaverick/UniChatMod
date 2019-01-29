@@ -5,7 +5,7 @@ tuiapp_src = files('''
 '''.split()) + core_header_c
 
 tuiapp_dep = [
-    cc.find_library ('dl', required: true),
+    system_library_dynload
 ]
 
 tuiapp = executable (tuiapp_name,

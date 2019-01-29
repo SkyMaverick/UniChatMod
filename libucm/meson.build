@@ -16,16 +16,7 @@ subdir ('osal')
 
 libcore_src += osal_src
 
-#libcore_osal_src = '''
-#        osal.c
-#'''.split()
-#
-#foreach item : libcore_osal_src
-#    libcore_src += files ('..' / 'osal' / item)
-#endforeach
-#
 libcore_deps = [
-    system_library_threads,
     system_library_dynload
 ]
 

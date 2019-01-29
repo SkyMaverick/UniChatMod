@@ -12,7 +12,6 @@ nl_src = files('''
 '''.split()) + core_header_c
 
 nl_dep = [
-    system_library_threads,
 ]
 
 if not get_option('custom_libs')

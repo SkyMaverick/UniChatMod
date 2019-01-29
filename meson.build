@@ -108,14 +108,8 @@ install_path_devs = install_path_root / get_option ('path_devels_lookup')
 # --- resolve some popularity dependencies ----------
 
 if target_machine.system() == 'windows'
-    system_library_threads = cc.find_library ('pthread', required: false)
-    if not system_library_threads.found()
-        ptwin_lib = subproject('pthreads4w', default_options: [ '='.join ( ['path_install', install_path_libs] )] )
-        system_library_threads = ptwin_lib.get_variable('ptwin_dep')
-    endif
     system_library_dynload = cc.find_library ('dl', required: false)
 else
-    system_library_threads = cc.find_library ('pthread', required: true)
     system_library_dynload = cc.find_library ('dl', required: true)
 endif
 
