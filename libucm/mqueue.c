@@ -17,7 +17,10 @@ typedef struct mq_block_s {
     uint32_t count;
     uint32_t head;
     uint32_t tail;
+
     uintptr_t cond;
+    uintptr_t mtx;
+
     mq_msg_t queue[1];
 } mq_block_t;
 
@@ -34,7 +37,10 @@ mq_create (uint32_t q_count)
     int mem_sz = sizeof(mq_block_t) + (q_count - 1) * sizeof(mq_msg_t);
     mq_block_t* h = UniAPI->sys.zmalloc (mem_sz);
     h->q_size = q_count;
-    h->cond = UniAPI->sys.cond_create ();
+
+    h->mtx  = UniAPI->sys.mutex_create ();
+    h->cond = UniAPI->sys.cond_create  ();
+    
     _mq_flush(h);
     return h;
 };
@@ -47,7 +53,7 @@ mq_push (mq_block_t* h,
          uint32_t   x2)
 {
 if(h){
-    UniAPI->sys.cond_lock (h->cond);
+    UniAPI->sys.mutex_lock (h->mtx);
     if (h->count < h->q_size){
 
         h->queue[h->tail].id  = id;
@@ -58,11 +64,11 @@ if(h){
         h->tail++; h->count++;
         if (h->tail == h->q_size) h->tail = 0;
     } else {
-        UniAPI->sys.cond_unlock (h->cond);
+        UniAPI->sys.mutex_unlock (h->mtx);
         return UCM_RET_OVERFLOW;
     }
     UniAPI->sys.cond_signal (h->cond);
-    UniAPI->sys.cond_unlock (h->cond);
+    UniAPI->sys.mutex_unlock (h->mtx);
     return UCM_RET_SUCCESS;
 }else
     return UCM_RET_NOOBJECT;
@@ -76,7 +82,7 @@ mq_pop (mq_block_t* h,
         uint32_t*  x2)
 {
     if (h){
-        UniAPI->sys.cond_lock (h->cond);
+        UniAPI->sys.mutex_lock (h->mtx);
             if (h->count > 0){
 
                 *id =  h->queue[h->head].id;
@@ -87,10 +93,10 @@ mq_pop (mq_block_t* h,
                 h->count--; h->head++;
                 if (h->head == h->q_size) h->head = 0;
             } else {
-                UniAPI->sys.cond_unlock (h->cond);
+                UniAPI->sys.mutex_unlock (h->mtx);
                 return UCM_RET_EMPTY;
             }
-        UniAPI->sys.cond_unlock (h->cond);
+        UniAPI->sys.mutex_unlock (h->mtx);
         return UCM_RET_SUCCESS;
     }else
         return UCM_RET_NOOBJECT;
@@ -107,8 +113,8 @@ mq_clear (mq_block_t *h)
 void
 mq_wait (mq_block_t *h)
 {
-    UniAPI->sys.cond_wait(h->cond);
-    UniAPI->sys.cond_unlock(h->cond);
+    UniAPI->sys.cond_wait(h->cond, h->mtx);
+    UniAPI->sys.mutex_unlock(h->mtx);
 };
 
 int
@@ -120,9 +126,10 @@ mq_noempty (mq_block_t *h)
 void
 mq_free (mq_block_t *h)
 {
-    UniAPI->sys.cond_lock (h->cond);
+    UniAPI->sys.mutex_lock (h->mtx);
     _mq_flush (h);
-    UniAPI->sys.cond_unlock (h->cond);
+    UniAPI->sys.mutex_unlock (h->mtx);
     UniAPI->sys.cond_free (h->cond);
+    UniAPI->sys.mutex_free (h->mtx);
     UniAPI->sys.free (h);
 };

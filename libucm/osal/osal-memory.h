@@ -20,3 +20,9 @@ osal_realloc (void** mem, size_t size);
 
 char*
 osal_strdup (const char* str);
+
+#define osal_free_null(X)   \
+    do {                    \
+        osal_free(X);       \
+        X = NULL;           \
+    } while(0)                

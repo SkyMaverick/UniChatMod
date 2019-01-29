@@ -477,28 +477,26 @@ typedef struct _ucm_functions_s {
         /*! pthread API functions*/
         uintptr_t   (*thread_create)    (void* (*func)(void* ctx), void* ctx);
         int         (*thread_detach)    (uintptr_t tid);
-        void        (*thread_exit)      (void* ret);
+        int         (*thread_exit)      (void);
         int         (*thread_join)      (uintptr_t tid);
         void        (*thread_cleanup)   (uintptr_t* tid);
 
         uintptr_t   (*mutex_create)     (void);
         void        (*mutex_free)       (uintptr_t _mtx);
-        int         (*mutex_lock)       (uintptr_t _mtx);
-        int         (*mutex_unlock)     (uintptr_t _mtx);
+        bool        (*mutex_lock)       (uintptr_t _mtx);
+        bool        (*mutex_unlock)     (uintptr_t _mtx);
 
         uintptr_t   (*cond_create)      (void);
-        int         (*cond_lock)        (uintptr_t _cond);
-        int         (*cond_unlock)      (uintptr_t _cond);
         void        (*cond_free)        (uintptr_t _cond);
-        int         (*cond_wait)        (uintptr_t _cond);
-        int         (*cond_signal)      (uintptr_t _cond);
-        int         (*cond_broadcast)   (uintptr_t _cond);
+        bool        (*cond_wait)        (uintptr_t _cond, uintptr_t _mtx);
+        bool        (*cond_signal)      (uintptr_t _cond);
+        bool        (*cond_broadcast)   (uintptr_t _cond);
 
         uintptr_t   (*rwlock_create)    (void);
         void        (*rwlock_free)      (uintptr_t _rwl);
-        int         (*rwlock_rlock)     (uintptr_t _rwl);
-        int         (*rwlock_wlock)     (uintptr_t _rwl);
-        int         (*rwlock_unlock)    (uintptr_t _rwl);
+        bool        (*rwlock_rlock)     (uintptr_t _rwl);
+        bool        (*rwlock_wlock)     (uintptr_t _rwl);
+        bool        (*rwlock_unlock)    (uintptr_t _rwl);
 
         uintptr_t   (*dlopen)           (const char* path);
         void        (*dlclose)          (uintptr_t lib);
