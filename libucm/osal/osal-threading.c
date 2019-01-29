@@ -60,7 +60,7 @@ osal_mutex_lock (uintptr_t _mtx)
 bool
 osal_mutex_unlock (uintptr_t _mtx)
 {
-    return p_mutex_lock( (PMutex*)_mtx );
+    return p_mutex_unlock( (PMutex*)_mtx );
 }
 
 uintptr_t
