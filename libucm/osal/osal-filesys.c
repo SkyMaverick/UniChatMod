@@ -7,9 +7,9 @@ typedef struct {
 uintptr_t 
 osal_idir_create (const char* path)
 {   
-    if (p_dir_is_exists (path)) {
+    if ( P_LIKELY (p_dir_is_exists (path)) ) {
         dir_handler_t* iterator = osal_zmalloc (sizeof(dir_handler_t));
-        if (iterator) {
+        if ( P_LIKELY(iterator) ) {
             iterator->dir = p_dir_new (path, NULL);
             return (uintptr_t)iterator;
         }
@@ -26,7 +26,7 @@ osal_idir_next (char**    name,
     dir_handler_t* iter = (dir_handler_t*)iterator;
     
     PDirEntry* entry = p_dir_get_next_entry (iter->dir, NULL);
-    if (entry) {
+    if ( P_LIKELY(entry) ) {
         *name = osal_strdup (entry->name);
         int ret = entry->type;
 
@@ -36,7 +36,7 @@ osal_idir_next (char**    name,
     return 0;
 }
 
-bool
+inline bool
 osal_idir_rollback (uintptr_t iterator)
 {
     return p_dir_rewind ( ((dir_handler_t*)iterator)->dir, NULL );
@@ -50,13 +50,13 @@ osal_idir_release (uintptr_t iterator)
     osal_free (iter);
 }
 
-bool
+inline bool
 osal_dir_exists (const char* path)
 {
    return p_dir_is_exists(path);
 }
 
-bool
+inline bool
 osal_file_exists (const char* path)
 {
     return p_file_is_exists (path);

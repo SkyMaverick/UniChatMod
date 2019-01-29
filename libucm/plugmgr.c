@@ -216,22 +216,6 @@ plugins_load_registry (const char* plug_path)
             }
         }
     }
-//    if (dir) {
-//        do {
-//            if (!(strncmp (ls.name, ".", 1))  ||
-//                !(strncmp (ls.name, "..", 2)) ||
-//                !(strstr  (ls.name, LIBRARY_SUFFIX)))
-//            {
-//                    continue;
-//            }
-//            snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, ls.name);
-//            tmp_module->next = _plugin_load(buffer);
-//            if ( tmp_module->next ) {
-//                tmp_module = tmp_module->next;
-//                plugs_count++;
-//            }
-//        } while (UniAPI->sys.nextdir(dir, &ls));
-//    };
     ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
     UniAPI->sys.dir_close(dir);
 

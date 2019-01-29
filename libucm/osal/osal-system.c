@@ -1,6 +1,6 @@
 #include "osal.h"
 
-int
+inline int
 osal_errno ()
 {
     return p_error_get_last_system();

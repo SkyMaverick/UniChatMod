@@ -27,7 +27,7 @@ osal_zmemory (void* mem,
               size_t size)
 {
     if (size) {
-        if ( size > 4096 ) {
+        if ( P_UNLIKELY(size > 4096) ) {
             memset (mem, 0, size);
         } else {
             do {
@@ -42,8 +42,8 @@ osal_realloc (void** mem, size_t size)
 {
     void* old_mem = *mem;
     *mem = p_realloc (*mem, size);
-    if (*mem != old_mem) {
-        if (*mem != NULL) {
+    if ( P_LIKELY(*mem != old_mem) ) {
+        if ( P_UNLIKELY(*mem != NULL) ) {
             osal_free (old_mem);
         } else {
             *mem = old_mem;
