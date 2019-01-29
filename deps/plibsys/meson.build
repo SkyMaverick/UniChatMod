@@ -92,7 +92,28 @@ if cc.has_header ('stdarg.h')
         __va_copy
     '''.split()
     foreach item : va_func_names
-        if cc.has_function (item, prefix: '#include <stdarg.h>')
+        test_code = '''
+                     #include <stdio.h>
+                     #include <stdarg.h>
+
+                     void f (int i, ...) {
+                        va_list args1, args2;
+
+                        va_start (args1, i);
+                        @0@(args2, args1);
+                        if (va_arg (args2, int) != 42 || va_arg (args1, int) != 42) {
+                            exit (1);
+                        }
+                        va_end (args1);
+                        va_end (args2);
+                     }
+
+                     int main() {
+                        f (0, 42);
+                        exit(0);
+                     }
+        '''.format(item)
+        if cc.run(test_code).compiled()
             PLIBSYS_VA_COPY = item
             break
         endif

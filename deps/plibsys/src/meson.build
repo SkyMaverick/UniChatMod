@@ -3,7 +3,7 @@ if PLIBSYS_ARCH_BITS == 'unknown'
 endif
 
 PLIBSYS_NATIVE_WINDOWS = false
-if (PLIBSYS_TARGET_PLATFORM == 'windows')
+if (PLIBSYS_TARGET_OS == 'windows')
     PLIBSYS_NATIVE_WINDOWS = true
 endif
 
@@ -573,14 +573,35 @@ test_code = '''
 '''.format(PLIBSYS_SOCKET_INCLUDES)
 
 if cc.run(test_code).compiled()
-        message ('Checking whether struct sockaddr_in6 has sin6_flowinfo - yes')
-        add_project_arguments ('-DPLIBSYS_SOCKADDR_IN6_HAS_FLOWINFO', language: 'c')
+    message ('Checking whether struct sockaddr_in6 has sin6_flowinfo - yes')
+    add_project_arguments ('-DPLIBSYS_SOCKADDR_IN6_HAS_FLOWINFO', language: 'c')
 else
-        message ('Checking whether struct sockaddr_in6 has sin6_flowinfo - no')
+    message ('Checking whether struct sockaddr_in6 has sin6_flowinfo - no')
 endif
 
 PLIBSYS_SIZEOF_SAFAMILY_T = cc.sizeof ('((struct sockaddr *) 0)->sa_family',
                                         prefix: PLIBSYS_SOCKET_INCLUDES)
+
+# Check for lldiv() call
+message ('Checking whether lldiv() presents')
+test_code = '''
+          #define __USE_ISOC99
+          #include <stdlib.h>
+          int main () {
+                lldiv_t res = lldiv (100LL, 13LL);
+                res.quot = 0;
+                res.rem = 0;
+
+                return 0;
+          }
+'''
+if cc.run(test_code).compiled()
+    message ('Checking whether lldiv() presents - yes')
+    add_project_arguments ('-DPLIBSYS_HAS_LLDIV', language: 'c')
+else
+    message ('Checking whether lldiv() presents - no')
+endif
+
 
 if PLIBSYS_VISIBILITY
     message ('Checking whether compiler supports visibility')
@@ -690,7 +711,7 @@ if meson.is_subproject()
     plibsys_dep = declare_dependency (
                 include_directories: plibsys_include,
                 link_with: libplsys
-            )    
+            )
 else
     libplsys = shared_library (meson.project_name(),
                                PLIBSYS_SRCS +
