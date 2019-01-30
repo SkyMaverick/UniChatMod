@@ -1,195 +1,237 @@
 project ('uv', 'c',
-         version: '1.24.1',
+         version: '1.25.0',
          license: 'BSD license',
          default_options:[
             'c_std=gnu89'
          ],
          meson_version: '>=0.49')
 
-cc = meson.get_compiler('c')
+cc = meson.get_compiler ('c')
 
-uv_header = files ('include'/'uv.h')
-uv_src = []
-uv_deps = []
+ccid = cc.get_id()
+sysid = target_machine.system()
 
-uv_core_src = '''
-    fs-poll.c
-    idna.c
-    inet.c
-    strscpy.c
-    threadpool.c
-    timer.c
-    uv-common.c
-    uv-data-getter-setters.c
-    version.c
-'''.split()
+uv_cflags       = []
+uv_defines      = []
+uv_libraries    = []
 
-foreach file : uv_core_src
-    uv_src += files ( 'src'/ file )
-endforeach
-
-if target_machine.system() == 'windows'
-    add_project_arguments ('-DWIN32_LEAN_AND_MEAN', language: 'c')
-    add_project_arguments ('-D_WIN32_WINNT=0x0600', language: 'c')
-
-    uv_deps = [
-       cc.find_library('advapi32',  required: 'true'),
-       cc.find_library('iphlpapi',  required: 'true'),
-       cc.find_library('psapi',     required: 'true'),
-       cc.find_library('shell32',   required: 'true'),
-       cc.find_library('user32',    required: 'true'),
-       cc.find_library('userenv',   required: 'true'),
-       cc.find_library('ws2_32',    required: 'true')
-    ]
-    
-    uv_sysdep_src = '''       
-       async.c
-       core.c
-       detect-wakeup.c
-       dl.c
-       error.c
-       fs.c
-       fs-event.c
-       getaddrinfo.c
-       getnameinfo.c
-       handle.c
-       loop-watcher.c
-       pipe.c
-       thread.c
-       poll.c
-       process.c
-       process-stdio.c
-       signal.c
-       snprintf.c
-       stream.c
-       tcp.c
-       tty.c
-       udp.c
-       util.c
-       winapi.c
-       winsock.c
+if ccid == 'msvc'
+    uv_cflags += '''
+        /W4
     '''.split()
-    foreach file : uv_sysdep_src
-        uv_src += files ( 'src'/'win'/file )
-    endforeach
-
-else
-    add_project_arguments ('-D_FILE_OFFSET_BITS=64', language: 'c')
-    add_project_arguments ('-D_LARGEFILE_SOURCE', language: 'c')
-    
-    uv_sysdep_src = '''
-       async.c
-       core.c
-       dl.c
-       fs.c
-       getaddrinfo.c
-       getnameinfo.c
-       loop-watcher.c
-       loop.c
-       pipe.c
-       poll.c
-       process.c
-       signal.c
-       stream.c
-       tcp.c
-       thread.c
-       tty.c
-       udp.c
-    '''.split()
-    if target_machine.system() == 'linux'
-        uv_deps += [
-            cc.find_library('dl', required: 'true'),
-            cc.find_library('rt', required: 'true'),
-            cc.find_library('pthread', required: 'true')
-        ]
-        uv_sysdep_src += '''
-           linux-core.c
-           linux-inotify.c
-           linux-syscalls.c
-           procfs-exepath.c
-           sysinfo-loadavg.c
-           sysinfo-memory.c
-        '''.split()
-    endif
-    
-    foreach file : uv_sysdep_src
-        uv_src += files ( 'src'/'unix'/file )
-    endforeach
-endif
-
-# ==================================================
-#   BUILD ARGUMENTS
-# ==================================================
-cc_name = cc.get_id()
-if (cc_name == 'gcc') or (cc_name == 'clang')
-    # Build on linux (or difffernt *nix) system
-    cc_args = '''
-        -std=gnu89
+elif (ccid == 'clang') or (ccid == 'gcc')
+    uv_cflags += '''
+        -fvisibility=hidden
+        --std=gnu89
         -Wall
         -Wextra
         -Wstrict-prototypes
         -Wno-unused-parameter
-        -fvisibility=hidden
     '''.split()
-
-    cc_link_args = '''
-    '''.split()
-elif cc_name == 'msvc'
-    # Build on Windows with native Visual Studio
-    cc_args = '''
-        /W4
-    '''.split()
-
-    cc_link_args = '''
-    '''.split()
-else
-    # Build with default params for unknown compilator
-    cc_args = []
-    cc_link_args = []
 endif
 
-foreach arg : cc_args
+uv_source = files ('''
+    src/fs-poll.c
+    src/idna.c
+    src/inet.c
+    src/strscpy.c
+    src/threadpool.c
+    src/timer.c
+    src/uv-common.c
+    src/uv-data-getter-setters.c
+    src/version.c
+'''.split())
+
+if sysid == 'windows'
+    uv_defines += '''
+        -DWIN32_LEAN_AND_MEAN
+        -D_WIN32_WINNT=0x0600
+    '''.split()
+    uv_libraries+= '''
+       advapi32
+       iphlpapi
+       psapi
+       shell32
+       user32
+       userenv
+       ws2_32
+    '''.split()
+    uv_source += files ('''
+       src/win/async.c
+       src/win/core.c
+       src/win/detect-wakeup.c
+       src/win/dl.c
+       src/win/error.c
+       src/win/fs.c
+       src/win/fs-event.c
+       src/win/getaddrinfo.c
+       src/win/getnameinfo.c
+       src/win/handle.c
+       src/win/loop-watcher.c
+       src/win/pipe.c
+       src/win/thread.c
+       src/win/poll.c
+       src/win/process.c
+       src/win/process-stdio.c
+       src/win/signal.c
+       src/win/snprintf.c
+       src/win/stream.c
+       src/win/tcp.c
+       src/win/tty.c
+       src/win/udp.c
+       src/win/util.c
+       src/win/winapi.c
+       src/win/winsock.c   
+    '''.split())
+else
+    uv_defines += '''
+        -D_FILE_OFFSET_BITS=64
+        -D_LARGEFILE_SOURCE
+    '''.split()
+    if not (sysid == 'android')
+        uv_libraries += '''
+            pthread
+        '''.split()
+    endif
+    uv_source += files ('''
+       src/unix/async.c
+       src/unix/core.c
+       src/unix/dl.c
+       src/unix/fs.c
+       src/unix/getaddrinfo.c
+       src/unix/getnameinfo.c
+       src/unix/loop-watcher.c
+       src/unix/loop.c
+       src/unix/pipe.c
+       src/unix/poll.c
+       src/unix/process.c
+       src/unix/signal.c
+       src/unix/stream.c
+       src/unix/tcp.c
+       src/unix/thread.c
+       src/unix/tty.c
+       src/unix/udp.c
+    '''.split())
+endif
+
+if sysid == 'android'
+    uv_libraries = '''
+        dl
+    '''.split()
+    uv_source += files ('''
+       src/unix/android-ifaddrs.c
+       src/unix/linux-core.c
+       src/unix/linux-inotify.c
+       src/unix/linux-syscalls.c
+       src/unix/procfs-exepath.c
+       src/unix/pthread-fixes.c
+       src/unix/sysinfo-loadavg.c
+       src/unix/sysinfo-memory.c
+    '''.split())
+endif
+
+foreach id : ['android','linux','darwin']
+    if id == sysid
+        uv_source += files ('src/unix/proctitle.c')
+    endif
+endforeach
+
+foreach id : ['dragonfly','freebsd']
+    if id == sysid
+        uv_source += files ('src/unix/freebsd.c')
+    endif
+endforeach
+
+foreach id : ['dragonfly','freebsd','netbsd','openbsd']
+    if id == sysid
+        uv_sources += files ('''
+            src/unix/posix-hrtime.c
+            src/unix/bsd-proctitle.c
+        '''.split())
+        uv_libraries += 'kvm'
+    endif
+endforeach
+
+foreach id : ['darwin', 'dragonfly','freebsd','netbsd','openbsd']
+    if id == sysid
+        uv_sources += files ('''
+            src/unix/bsd-ifaddrs.c
+            src/unix/kqueue.c
+        '''.split())
+    endif
+endforeach
+
+foreach id : ['darwin']
+    if id == sysid
+        uv_defines += '''
+            -D_DARWIN_UNLIMITED_SELECT=1
+            -D_DARWIN_USE_64_BIT_INODE=1     
+        '''.split()
+        uv_sources += files ('''
+            src/unix/darwin-proctitle.c
+            src/unix/darwin.c
+            src/unix/fsevents.c
+        '''.split())
+    endif
+endforeach
+
+foreach id : ['linux']
+    if id == sysid
+        uv_defines += '''
+            -D_GNU_SOURCE
+            -D_POSIX_C_SOURCE=200112
+        '''.split()
+        uv_libraries += '''
+            dl
+            rt
+        '''.split()
+        uv_source += files ('''
+            src/unix/linux-core.c
+            src/unix/linux-inotify.c
+            src/unix/linux-syscalls.c
+            src/unix/procfs-exepath.c
+            src/unix/sysinfo-loadavg.c
+            src/unix/sysinfo-memory.c
+        '''.split())
+    endif
+endforeach
+
+foreach id : ['netbsd']
+    if id == sysid
+        uv_source += files ('src/unix/netbsd.c')
+    endif
+endforeach
+
+foreach id : ['openbsd']
+    if id == sysid
+        uv_source += files ('src/unix/openbsd.c')
+    endif
+endforeach
+
+# Apply all arg-lists
+foreach def : uv_defines
+    add_project_arguments (def, language: 'c')
+endforeach
+foreach arg : uv_cflags
     if cc.has_argument(arg)
-        add_project_arguments(arg, language: 'c')
+        add_project_arguments (def, language: 'c')
     endif
 endforeach
-
-foreach arg : cc_link_args
-    if cc.has_link_argument (arg)
-        add_project_link_arguments(arg, language: 'c')
-    endif
+uv_dep = []
+foreach dep : uv_libraries
+    uv_dep += cc.find_library(dep, required: 'true')
 endforeach
 
+uv_includes = include_directories ([
+    '.'/'include',
+    '.'/'src'
+])
 
-# ==================================================
-#   INCLUDES AND TARGETS
-# ==================================================
-
-uv_inc = include_directories('.'/'include', '.'/'src')
-
-
-add_project_arguments ('-DBUILDING_UV_SHARED=1', language: 'c')
-if meson.is_subproject()
-    message ('install dir: @0@'.format (get_option('path_install')))
-
-    uv_lib = shared_library ( meson.project_name(),
-                                uv_src,
-                                dependencies: uv_deps,
-                                include_directories: uv_inc,
+# Build binaries
+uv_lib_shared = shared_library (meson.project_name(),
+                                uv_source,
+                                dependencies: uv_dep,
+                                include_directories: uv_includes,
+                                c_args: '-DBUILDING_UV_SHARED=1',
                                 install: true,
-                                install_dir: get_option('path_install')
-                              )
-
-    uv_dep = declare_dependency (
-                include_directories: uv_inc,
-                link_with: uv_lib
-            )    
-else
-    uv_lib = shared_library ( meson.project_name(),
-                                uv_src,
-                                dependencies: uv_deps,
-                                include_directories: uv_inc,
-                                install: true
-                              )
-
-endif
+                                install_dir: get_option('path_install'))
