@@ -473,6 +473,7 @@ typedef struct _ucm_functions_s {
         void        (*zmemory)          (void* mem, size_t size);
         int         (*realloc)          (void** mem, size_t size);
         char*       (*strdup)           (const char* str);
+        char*       (*strndup)          (const char* str, size_t num);
 
         /*! pthread API functions*/
         uintptr_t   (*thread_create)    (void* (*func)(void* ctx), void* ctx);

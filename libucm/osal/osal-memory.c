@@ -1,33 +1,43 @@
+#include <stdlib.h>
 #include <string.h>
 #include "osal.h"
 
 void*
 osal_malloc (size_t size)
 {
-    return (void*) p_malloc(size);
+    return malloc(size);
 }
-void*
-osal_zmalloc (size_t size)
-{
-    return (void*) p_malloc0(size);
-}
+
 void*
 osal_calloc (size_t nmem,
              size_t size)
 {
-    return (void*) osal_zmalloc( nmem * size );
+    return (void*) calloc( nmem, size );
 }
+
+void*
+osal_zmalloc (size_t size)
+{
+    return osal_calloc (1, size);
+}
+
+void*
+osal_realloc (void* mem, size_t size)
+{
+    return realloc (mem, size);
+}
+
 void
 osal_free (void* mem)
 {
-    p_free (mem);
+    free (mem);
 }
 void
 osal_zmemory (void* mem,
               size_t size)
 {
     if (size) {
-        if ( P_UNLIKELY(size > 4096) ) {
+        if ( CC_UNLIKELY(size > 4096) ) {
             memset (mem, 0, size);
         } else {
             do {
@@ -37,13 +47,14 @@ osal_zmemory (void* mem,
         }
     }
 }
+
 int
-osal_realloc (void** mem, size_t size)
+osal_realloc2 (void** mem, size_t size)
 {
     void* old_mem = *mem;
-    *mem = p_realloc (*mem, size);
-    if ( P_LIKELY(*mem != old_mem) ) {
-        if ( P_UNLIKELY(*mem != NULL) ) {
+    *mem = osal_realloc (*mem, size);
+    if ( CC_LIKELY(*mem != old_mem) ) {
+        if ( CC_UNLIKELY(*mem != NULL) ) {
             osal_free (old_mem);
         } else {
             *mem = old_mem;
@@ -56,5 +67,24 @@ osal_realloc (void** mem, size_t size)
 char*
 osal_strdup (const char* str)
 {
-    return p_strdup (str);
+    size_t len = strlen(str);
+    char* buffer = osal_zmalloc (len + 1);
+    if ( CC_LIKELY(buffer) ) {
+        memcpy (buffer, str, len);
+    }
+    return buffer;
+}
+
+char*
+osal_strndup (const char* str, 
+              size_t      num)
+{
+    size_t len = strlen(str);
+    if (len < num)
+        len = num;
+    char* buffer = osal_zmalloc (len + 1);
+    if ( CC_LIKELY(buffer) ) {
+        memcpy (buffer, str, len);
+    }
+    return buffer;
 }
