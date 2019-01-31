@@ -10,5 +10,5 @@ uintptr_t
 osal_dlsym (uintptr_t   lib,
             const char* sym);
 
-char*
+const char*
 osal_dlerror (uintptr_t lib);

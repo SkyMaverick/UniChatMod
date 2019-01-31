@@ -82,9 +82,8 @@ _plugin_load (char* filename)
         return module;
     }
 
-    char* err = NULL;
     cb_init_plugin _pfunc = (cb_init_plugin) UniAPI->sys.dlsym(handle,"_init_plugin");
-    if ( (err = UniAPI->sys.dlerror(handle)) == NULL ) {
+    if ( _pfunc ) {
         ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
             if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
@@ -99,6 +98,7 @@ _plugin_load (char* filename)
            }
         } else {
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
+            ucm_dtrace ("%s: %s\n", "Library load error", UniAPI->sys.dlerror(handle));
         }
     }
     UniAPI->sys.dlclose (handle);

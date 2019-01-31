@@ -501,7 +501,7 @@ typedef struct _ucm_functions_s {
         uintptr_t   (*dlopen)           (const char* path);
         void        (*dlclose)          (uintptr_t lib);
         uintptr_t   (*dlsym)            (uintptr_t lib, const char* sym);
-        char*       (*dlerror)          (uintptr_t lib);
+        const char* (*dlerror)          (uintptr_t lib);
 
         uintptr_t   (*dir_open)         (const char* path);
         int         (*dir_next)         (char** name, uintptr_t iterator);

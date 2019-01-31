@@ -3,6 +3,8 @@
 #include <plibsys.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <uv.h>
+#include <assert.h>
 
 #include "osal-dynlib.h"
 #include "osal-filesys.h"

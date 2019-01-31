@@ -228,10 +228,23 @@ uv_includes = include_directories ([
 ])
 
 # Build binaries
-uv_lib_shared = shared_library (meson.project_name(),
-                                uv_source,
-                                dependencies: uv_dep,
-                                include_directories: uv_includes,
-                                c_args: '-DBUILDING_UV_SHARED=1',
-                                install: true,
-                                install_dir: get_option('path_install'))
+if meson.is_subproject()
+    uv_lib_shared = shared_library (meson.project_name(),
+                                    uv_source,
+                                    dependencies: uv_dep,
+                                    include_directories: uv_includes,
+                                    c_args: '-DBUILDING_UV_SHARED=1',
+                                    install: true,
+                                    install_dir: get_option('path_install'))
+    uv_dep = declare_dependency (
+                include_directories: uv_includes,
+                link_with: uv_lib_shared
+            )
+else
+    uv_lib_shared = shared_library (meson.project_name(),
+                                    uv_source,
+                                    dependencies: uv_dep,
+                                    include_directories: uv_includes,
+                                    c_args: '-DBUILDING_UV_SHARED=1',
+                                    install: true)
+endif
