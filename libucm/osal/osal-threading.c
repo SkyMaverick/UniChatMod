@@ -6,7 +6,7 @@ enum {
 };
 
 typedef struct {
-    PRWLock* lock;
+    uv_rwlock_t lock;
     int mode;
 } osal_rwlock_t;
 
@@ -14,133 +14,173 @@ uintptr_t
 osal_thread_create (void* (*func)(void* ctx),
                     void* ctx)
 {
-    PUThread* ret  = p_uthread_create (func, ctx, TRUE);
-    if (ret)
-        p_uthread_ref (ret);
-    return (uintptr_t) ret;
+    uv_thread_t* tid = osal_malloc (sizeof(uv_thread_t));
+    if ( AL_LIKELY(tid) ){
+        if ( uv_thread_create (tid, (uv_thread_cb)func, ctx) == 0) {
+            return (uintptr_t)tid;
+        }
+    }
+    return 0;
 }
+
 int
 osal_thread_detach (uintptr_t tid)
 {
+    // TODO
     return 0;
 }
-int
+
+void*
 osal_thread_exit (void)
 {
-    int ret = 0;
-    p_uthread_exit (ret);
+    void* ret = NULL;
+#if defined (AL_OS_WINDOWS)
+    _endthreadex(0);
+#elif defined (AL_OS_POSIX)
+    pthread_exit(ret);
+#else
+    #warning "Don't define for this platform. Create dummy function"
+#endif
     return ret;
 }
 int
 osal_thread_join (uintptr_t tid)
 {
-    return p_uthread_join ( (PUThread*)tid );
+    return uv_thread_join ( (uv_thread_t*)tid );
 }
 void
 osal_thread_cleanup (uintptr_t* tid)
 {
-    p_uthread_unref( (PUThread*)tid );
+    uv_thread_t* tmp = (uv_thread_t*)(*tid);
+    osal_free_null (tmp);
 }
 
 uintptr_t
 osal_mutex_create (void)
 {
-    return (uintptr_t)p_mutex_new();
+    uv_mutex_t* mtx = osal_malloc (sizeof(uv_mutex_t));
+    if ( AL_LIKELY(mtx) ) {
+        if (uv_mutex_init (mtx) == 0) {
+            return (uintptr_t) mtx;
+        }
+    } 
+    return 0;
 }
 void
 osal_mutex_free (uintptr_t _mtx)
 {
-    p_mutex_free( (PMutex*)_mtx );
+    uv_mutex_destroy ( (uv_mutex_t*)_mtx );
+    osal_free ((uv_mutex_t*)_mtx);
 }
-bool
+void
 osal_mutex_lock (uintptr_t _mtx)
 {
-    return p_mutex_lock( (PMutex*)_mtx );
+    uv_mutex_lock( (uv_mutex_t*)_mtx );
 }
-bool
+int
+osal_mutex_trylock (uintptr_t _mtx) {
+    return uv_mutex_trylock( (uv_mutex_t*)_mtx );
+}
+void
 osal_mutex_unlock (uintptr_t _mtx)
 {
-    return p_mutex_unlock( (PMutex*)_mtx );
+    uv_mutex_unlock ( (uv_mutex_t*)_mtx );
 }
 
 uintptr_t
 osal_cond_create (void)
 {
-    return (uintptr_t)p_cond_variable_new();
+    uv_cond_t* cond = osal_malloc (sizeof(uv_cond_t));
+    if ( AL_LIKELY(cond) ) {
+        if ( uv_cond_init(cond) == 0 ){
+            return (uintptr_t)cond;
+        }
+    }
+    return 0;
 }
 void
 osal_cond_free (uintptr_t _cond)
 {
-    return p_cond_variable_free ((PCondVariable*)_cond);
+    uv_cond_destroy ((uv_cond_t*)_cond);
+    osal_free ((uv_cond_t*)_cond);
 }
-bool
+void
 osal_cond_wait (uintptr_t _cond,
                 uintptr_t _mtx)
 {
-    return p_cond_variable_wait((PCondVariable*)_cond,
-                                (PMutex*)_mtx);
+    uv_cond_wait( (uv_cond_t*)_cond,
+                  (uv_mutex_t*)_mtx );
 }
-bool
+void
 osal_cond_signal (uintptr_t _cond)
 {
-    return p_cond_variable_signal((PCondVariable*)_cond);
+    uv_cond_signal ((uv_cond_t*)_cond);
 }
-bool
+void
 osal_cond_broadcast (uintptr_t _cond)
 {
-    return p_cond_variable_broadcast((PCondVariable*)_cond);
+    uv_cond_broadcast((uv_cond_t*)_cond);
 }
 
 uintptr_t
 osal_rwlock_create (void)
 {
-    osal_rwlock_t* ret = osal_zmalloc(sizeof(osal_rwlock_t));
-    if ( P_LIKELY(ret) ) {
-        ret->lock = p_rwlock_new();
-        if ( P_UNLIKELY(ret->lock == NULL) )
-            osal_free_null (ret);
+    osal_rwlock_t* rwl = osal_zmalloc(sizeof(osal_rwlock_t));
+    if ( P_LIKELY(rwl) ) {
+        if ( uv_rwlock_init(&(rwl->lock)) == 0 ) {
+            return (uintptr_t)rwl;
+        }
     }
-    return (uintptr_t)ret;
+    return 0;
 }
 void
 osal_rwlock_free (uintptr_t _rwl)
 {
-    p_rwlock_free ( ((osal_rwlock_t*)_rwl)->lock );
+    uv_rwlock_destroy ( (uv_rwlock_t*)_rwl);
     osal_free ((osal_rwlock_t*)_rwl);
 }
-bool
+void
 osal_rwlock_rlock (uintptr_t _rwl)
 {
 
-    bool ret = p_rwlock_reader_lock( ((osal_rwlock_t*)_rwl)->lock );
-    if (ret)
-        ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_READ;
-    return ret;    
+    uv_rwlock_rdlock ( (uv_rwlock_t*)_rwl );
+    ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_READ;
 }
-bool
+void
 osal_rwlock_wlock (uintptr_t _rwl)
 {
-    bool ret = p_rwlock_writer_lock( ((osal_rwlock_t*)_rwl)->lock );
-    if (ret)
-        ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_WRITE;
-    return ret;    
+    uv_rwlock_wrlock ( (uv_rwlock_t*)_rwl );
+    ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_WRITE;
 }
-bool
+int
+osal_rwlock_tryrlock (uintptr_t _rwl)
+{
+
+    int ret = uv_rwlock_tryrdlock ( (uv_rwlock_t*)_rwl );
+    if (ret == 0)
+        ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_READ;
+    return ret;
+}
+int
+osal_rwlock_trywlock (uintptr_t _rwl)
+{
+    int ret = uv_rwlock_trywrlock ( (uv_rwlock_t*)_rwl );
+    if (ret == 0 )
+        ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_WRITE;
+    return ret;
+}
+void
 osal_rwlock_unlock (uintptr_t _rwl)
 {
-    bool ret = false;
     switch (((osal_rwlock_t*)_rwl)->mode){
         case OSAL_RWLMODE_READ:
             {
-                ret = p_rwlock_reader_unlock(((osal_rwlock_t*)_rwl)->lock);
-                break;
+                uv_rwlock_rdunlock ( (uv_rwlock_t*)_rwl ); break;
             };
         case OSAL_RWLMODE_WRITE:
             {
-                ret = p_rwlock_writer_unlock(((osal_rwlock_t*)_rwl)->lock);
-                break;
+                uv_rwlock_wrunlock ( (uv_rwlock_t*)_rwl ); break;
             };
     }
-    return ret;
+    ((osal_rwlock_t*)_rwl)->mode = 0;
 }
-

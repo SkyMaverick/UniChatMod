@@ -63,6 +63,7 @@ static ucm_functions_t core_api = {
     .sys.mutex_create           = osal_mutex_create      ,
     .sys.mutex_free             = osal_mutex_free        ,
     .sys.mutex_lock             = osal_mutex_lock        ,
+    .sys.mutex_trylock          = osal_mutex_trylock     ,
     .sys.mutex_unlock           = osal_mutex_unlock      ,
 
     .sys.cond_create            = osal_cond_create       ,
