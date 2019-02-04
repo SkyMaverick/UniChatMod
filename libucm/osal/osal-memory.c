@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "osal.h"
+#include "osal-intrnl.h"
 
 void*
 osal_malloc (size_t size)

@@ -498,6 +498,8 @@ typedef struct _ucm_functions_s {
         void        (*rwlock_free)      (uintptr_t _rwl);
         void        (*rwlock_rlock)     (uintptr_t _rwl);
         void        (*rwlock_wlock)     (uintptr_t _rwl);
+        int         (*rwlock_tryrlock)  (uintptr_t _rwl);
+        int         (*rwlock_trywlock)  (uintptr_t _rwl);
         void        (*rwlock_unlock)    (uintptr_t _rwl);
 
         uintptr_t   (*dlopen)           (const char* path);

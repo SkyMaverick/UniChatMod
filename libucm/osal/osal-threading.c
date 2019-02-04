@@ -1,4 +1,4 @@
-#include "osal.h"
+#include "osal-intrnl.h"
 
 enum {
     OSAL_RWLMODE_READ  = 0,

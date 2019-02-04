@@ -11,4 +11,5 @@ osal_src = files ('''
     osal-threading.h
     osal.c
     osal.h
+    osal-intrnl.h
 '''.split() )

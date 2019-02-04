@@ -37,6 +37,10 @@ uintptr_t
 osal_rwlock_create (void);
 void
 osal_rwlock_free (uintptr_t _rwl);
+int
+osal_rwlock_tryrlock (uintptr_t _rwl);
+int
+osal_rwlock_trywlock (uintptr_t _rwl);
 void
 osal_rwlock_rlock (uintptr_t _rwl);
 void

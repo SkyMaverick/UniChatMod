@@ -1,4 +1,4 @@
-#include "osal.h"
+#include "osal-intrnl.h"
 
 int
 osal_errno ()

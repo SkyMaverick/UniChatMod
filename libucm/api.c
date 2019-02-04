@@ -76,6 +76,8 @@ static ucm_functions_t core_api = {
     .sys.rwlock_free            = osal_rwlock_free       ,
     .sys.rwlock_rlock           = osal_rwlock_rlock      ,
     .sys.rwlock_wlock           = osal_rwlock_wlock      ,
+    .sys.rwlock_tryrlock        = osal_rwlock_tryrlock   ,
+    .sys.rwlock_trywlock        = osal_rwlock_trywlock   ,
     .sys.rwlock_unlock          = osal_rwlock_unlock     ,
 
     .sys.dlopen                 = osal_dlopen            ,

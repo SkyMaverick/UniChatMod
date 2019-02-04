@@ -71,7 +71,7 @@
     #define AL_OS_POSIX
 #endif
 
-void
+int
 osal_init (void);
-void
+int
 osal_release (void);

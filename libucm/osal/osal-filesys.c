@@ -1,4 +1,4 @@
-#include "osal.h"
+#include "osal-intrnl.h"
 
 typedef struct {
     PDir*   dir;
