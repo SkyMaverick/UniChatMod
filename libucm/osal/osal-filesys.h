@@ -1,6 +1,6 @@
 #pragma once
 
-enum {
+typedef enum {
     OSAL_DIRENT_UNKNOWN,
     OSAL_DIRENT_FILE,
     OSAL_DIRENT_DIR,

@@ -14,8 +14,6 @@ osal_init (void)
     osal_uv_loop = osal_malloc (sizeof(uv_loop_t));
     if (osal_uv_loop) {
         uv_loop_init(osal_uv_loop);
-    // TODO remove this
-        p_libsys_init();
         return 0;
     }
     return 1;
@@ -26,7 +24,5 @@ osal_release (void)
 {
     uv_loop_close (osal_uv_loop);
     osal_free (osal_uv_loop);
-    // TODO remove this
-    p_libsys_shutdown();
     return 0;
 }

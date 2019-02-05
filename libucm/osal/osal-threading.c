@@ -126,7 +126,7 @@ uintptr_t
 osal_rwlock_create (void)
 {
     osal_rwlock_t* rwl = osal_zmalloc(sizeof(osal_rwlock_t));
-    if ( P_LIKELY(rwl) ) {
+    if ( AL_LIKELY(rwl) ) {
         if ( uv_rwlock_init(&(rwl->lock)) == 0 ) {
             return (uintptr_t)rwl;
         }

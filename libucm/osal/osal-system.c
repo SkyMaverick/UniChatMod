@@ -3,5 +3,9 @@
 int
 osal_errno ()
 {
-    return p_error_get_last_system();
+#if defined (AL_OS_WINDOWS)
+    return GetLastError();
+#else
+    return errno;
+#endif
 }

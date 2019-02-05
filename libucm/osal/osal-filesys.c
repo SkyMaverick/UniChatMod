@@ -1,9 +1,5 @@
 #include "osal-intrnl.h"
 
-typedef struct {
-    PDir*   dir;
-} dir_handler_t;
-
 uintptr_t
 osal_diropen_sync (const char* path)
 {
