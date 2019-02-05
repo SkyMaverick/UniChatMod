@@ -509,12 +509,9 @@ typedef struct _ucm_functions_s {
 
         uintptr_t   (*dir_open)         (const char* path);
         int         (*dir_next)         (char** name, uintptr_t iterator);
-        bool        (*dir_rollback)     (uintptr_t iterator);
         void        (*dir_close)        (uintptr_t iterator);
-        bool        (*dir_exists)       (const char* path);
-
-        bool        (*file_exists)      (const char* path);
         
+        int         (*os_access)        (const char* path, int mode);
         int         (*os_errno)         (void);
         /* Unicode operations. USC4 and convertors */
         int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);

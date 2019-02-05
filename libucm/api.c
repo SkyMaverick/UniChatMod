@@ -85,14 +85,11 @@ static ucm_functions_t core_api = {
     .sys.dlsym                  = osal_dlsym             ,
     .sys.dlerror                = osal_dlerror           ,
     
-    .sys.dir_open               = osal_idir_create       ,
-    .sys.dir_next               = osal_idir_next         ,
-    .sys.dir_rollback           = osal_idir_rollback     ,
-    .sys.dir_close              = osal_idir_release      ,
-    .sys.dir_exists             = osal_dir_exists        ,
+    .sys.dir_open               = osal_diropen_sync      ,
+    .sys.dir_next               = osal_dirnext_sync      ,
+    .sys.dir_close              = osal_dirclose_sync     ,
     
-    .sys.file_exists            = osal_file_exists       ,
-    
+    .sys.os_access              = osal_access_sync       ,
     .sys.os_errno               = osal_errno             ,
 
     .sys.U8toU32                = u8_decode_ucs4        ,
@@ -119,12 +116,6 @@ static ucm_functions_t core_api = {
     .sys.ustrstr                = ucm_strstr            ,
     .sys.ustrcasestr            = ucm_strcasestr        ,
 
-//    .sys.errnum                 = /* osal_errno        */ NULL   ,
-//    .sys.file_exists            = /* osal_file_exists  */ NULL   ,
-//    .sys.opendir                = /* osal_diropen      */ NULL   ,
-//    .sys.nextdir                = /* osal_dirnext      */ NULL   ,
-//    .sys.closedir               = /* osal_dirclose     */ NULL   ,
-//
     .app.get_int                = NULL                  ,
     .app.get_int64              = NULL                  ,
     .app.get_float              = NULL                  ,

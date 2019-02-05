@@ -4,60 +4,45 @@ typedef struct {
     PDir*   dir;
 } dir_handler_t;
 
-uintptr_t 
-osal_idir_create (const char* path)
-{   
-    if ( P_LIKELY (p_dir_is_exists (path)) ) {
-        dir_handler_t* iterator = osal_zmalloc (sizeof(dir_handler_t));
-        if ( P_LIKELY(iterator) ) {
-            iterator->dir = p_dir_new (path, NULL);
-            return (uintptr_t)iterator;
+uintptr_t
+osal_diropen_sync (const char* path)
+{
+    uv_fs_t* dir = osal_zmalloc (sizeof(uv_fs_t));
+    if ( AL_LIKELY(dir) ) {
+        if ( AL_UNLIKELY(uv_fs_scandir(osal_uv_loop, dir, path, O_RDONLY, NULL)) < 0)
+        {
+            osal_free_null (dir);
         }
     }
-    return 0;
+    return (uintptr_t)dir;
 }
 
-int 
-osal_idir_next (char**    name,
-                uintptr_t iterator)
+int
+osal_dirnext_sync ( char**    name,
+                    uintptr_t iterator)
 {
-    osal_free (*name);
+    osal_free_null (*name);
 
-    dir_handler_t* iter = (dir_handler_t*)iterator;
-    
-    PDirEntry* entry = p_dir_get_next_entry (iter->dir, NULL);
-    if ( P_LIKELY(entry) ) {
-        *name = osal_strdup (entry->name);
-        int ret = entry->type;
-
-        p_dir_entry_free (entry);
-        return ret;
+    uv_dirent_t dent;
+    if ( AL_UNLIKELY(UV_EOF == uv_fs_scandir_next ((uv_fs_t*)iterator, &dent)) ) {
+        return 0;
     }
-    return 0;
-}
-
-bool
-osal_idir_rollback (uintptr_t iterator)
-{
-    return p_dir_rewind ( ((dir_handler_t*)iterator)->dir, NULL );
+    *name = osal_strdup (dent.name);
+    return dent.type;
 }
 
 void
-osal_idir_release (uintptr_t iterator)
+osal_dirclose_sync (uintptr_t iterator)
 {
-    dir_handler_t* iter = (dir_handler_t*) iterator;
-    p_dir_free (iter->dir); 
+    uv_fs_t* iter = (uv_fs_t*)iterator;
+    uv_fs_req_cleanup (iter);
     osal_free (iter);
 }
 
-bool
-osal_dir_exists (const char* path)
+int
+osal_access_sync (const char* path,
+                  int mode)
 {
-   return p_dir_is_exists(path);
-}
-
-bool
-osal_file_exists (const char* path)
-{
-    return p_file_is_exists (path);
+    uv_fs_t req;
+    return uv_fs_access (osal_uv_loop, &req, path, mode, NULL);
 }

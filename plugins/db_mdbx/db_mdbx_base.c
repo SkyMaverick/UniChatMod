@@ -135,7 +135,7 @@ db_open (db_object_t* db)
         return UCM_RET_INVALID;
 
     // TODO Windows compatibility
-    if (app->sys.file_exists (db->faPath)) {
+    if (app->sys.os_access (db->faPath, 0)) {
         // Don't exists file
     } else {
         // Exists file

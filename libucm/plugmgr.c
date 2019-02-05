@@ -10,6 +10,8 @@
 #include "defs.h"
 #include "api.h"
 
+#include <osal.h>
+
 typedef struct ucm_module_s {
     ucm_plugin_t* plugin;
     uintptr_t handle;
@@ -205,7 +207,7 @@ plugins_load_registry (const char* plug_path)
     char* name_buf = NULL;
     int type = 0;
     while ( ( type = UniAPI->sys.dir_next(&name_buf, dir) ) > 0) {
-        if ((type == UCM_TYPE_DIROBJ_FILE) &&
+        if ((type == OSAL_DIRENT_FILE) &&
             (strstr (name_buf, ".so"))) //FIXME Only linux
         {
             snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, name_buf);
