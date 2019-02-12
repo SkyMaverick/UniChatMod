@@ -19,5 +19,5 @@ if target_machine.system() == 'linux'
 endif
 
 foreach plugin : plugins
-    subdir (plugin)
+#    subdir (plugin)
 endforeach

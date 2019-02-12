@@ -121,9 +121,9 @@ if get_option('build_with_plugins')
 endif
 
 if get_option('build_with_gui')
-    subdir('gui')
+#    subdir('gui')
 endif
 
 if get_option('build_with_tests')
-    subdir('tests')
+#    subdir('tests')
 endif
