@@ -83,7 +83,7 @@ lib_inc = [
     '.',
     '.'/'libucm',
     '.'/'libucm'/'include',
-    '.'/'libucm'/'osal',
+    '.'/'libucm'/'osal'
 ]
 
 libs_rpath = ':'.join ([
@@ -113,6 +113,9 @@ else
     system_library_dynload = cc.find_library ('dl', required: true)
 endif
 
+# Declare runtime dependencies
+ucm_rt = []
+
 # --- walk in subdirs ----------
 subdir('libucm')
 
@@ -121,9 +124,9 @@ if get_option('build_with_plugins')
 endif
 
 if get_option('build_with_gui')
-#    subdir('gui')
+    subdir('gui')
 endif
 
 if get_option('build_with_tests')
-#    subdir('tests')
+    subdir('tests')
 endif

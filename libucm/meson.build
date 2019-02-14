@@ -125,10 +125,3 @@ libcore = shared_library (meson.project_name(),
                           install_rpath: libs_rpath,
                           install: true,
                           install_dir: install_path_root)
-
-#libcore_a = static_library (meson.project_name(),
-#                            libcore_src,
-#                            dependencies: libcore_deps,
-#                            include_directories: lib_core_inc,
-#                            install: false,
-#                            install_dir: install_path_root)
