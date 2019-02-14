@@ -240,6 +240,7 @@ if meson.is_subproject()
                 include_directories: uv_includes,
                 link_with: uv_lib_shared
             )
+    uv_header = files('.'/'include'/'uv.h') 
 else
     uv_lib_shared = shared_library (meson.project_name(),
                                     uv_source,

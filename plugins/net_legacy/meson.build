@@ -9,7 +9,7 @@ nl_src = files('''
     net_legacy.c
     rc6/rc6.c
     rc6/rc6.h
-'''.split()) + core_header_c
+'''.split()) + shared_headers
 
 nl_dep = [
 ]

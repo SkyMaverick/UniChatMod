@@ -1,8 +1,9 @@
 #include "osal-intrnl.h"
 
 enum {
-    OSAL_RWLMODE_READ  = 0,
-    OSAL_RWLMODE_WRITE = 1
+    OSAL_RWLMODE_IDLE  = 0,
+    OSAL_RWLMODE_READ  = 1,
+    OSAL_RWLMODE_WRITE = 2
 };
 
 typedef struct {
@@ -173,14 +174,17 @@ void
 osal_rwlock_unlock (uintptr_t _rwl)
 {
     switch (((osal_rwlock_t*)_rwl)->mode){
+        case OSAL_RWLMODE_IDLE: return;
         case OSAL_RWLMODE_READ:
             {
-                uv_rwlock_rdunlock ( (uv_rwlock_t*)_rwl ); break;
+                ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_IDLE;
+                uv_rwlock_rdunlock ( (uv_rwlock_t*)_rwl );
+                break;
             };
         case OSAL_RWLMODE_WRITE:
             {
+                ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_IDLE;
                 uv_rwlock_wrunlock ( (uv_rwlock_t*)_rwl ); break;
             };
     }
-    ((osal_rwlock_t*)_rwl)->mode = 0;
 }

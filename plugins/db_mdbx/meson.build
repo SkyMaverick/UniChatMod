@@ -7,10 +7,9 @@ db_mdbx_src = files('''
     db_mdbx_api.h
     db_mdbx_base.h
     db_mdbx_base.c
-'''.split()) + core_header_c
+'''.split()) + shared_headers
 
-db_mdbx_dep = [
-]
+db_mdbx_dep = []
 
 if not get_option('custom_libs')
     mdbx_dep = cc.find_library ('mdbx', required: false)

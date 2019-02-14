@@ -10,7 +10,11 @@
 #include <limits.h>
 #include <wchar.h>
 
-#include "uv.h"
+#if defined (ENABLE_CUSTOM_LIBS)
+    #include "uv.h"
+#else
+    #include <uv.h>
+#endif
 
 #ifdef __cplusplus
     extern "C" {

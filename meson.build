@@ -94,9 +94,6 @@ libs_rpath = ':'.join ([
     '$ORIGIN'/'..'/'mods', '.'
 ])
 
-# --- include headers paths ----------
-lib_core_inc = include_directories (lib_inc)
-
 # --- install paths resolve ----------
 install_path_root = get_option('prefix') / meson.project_name ()
 
@@ -113,8 +110,37 @@ else
     system_library_dynload = cc.find_library ('dl', required: true)
 endif
 
-# Declare runtime dependencies
-ucm_rt = []
+system_dependencies = []
+shared_headers = []
+
+# add libuv dependency
+if not get_option('custom_libs')
+    system_library_uv = cc.find_library('uv', required: false)
+    if not system_library_uv.found()
+        uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
+        system_library_uv = uv_lib.get_variable('uv_dep')
+        
+        shared_headers += uv_lib.get_variable('uv_header')
+        system_dependencies += system_library_uv.partial_dependency(
+                    includes: true
+                )
+
+        add_project_arguments('-DENABLE_CUSTOM_LIBS', language: 'c')
+    endif
+else
+    uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
+    system_library_uv = uv_lib.get_variable('uv_dep')
+    
+    shared_headers += uv_lib.get_variable('uv_header')
+    system_dependencies += system_library_uv.partial_dependency(
+                    includes: true
+                )
+    
+    add_project_arguments('-DENABLE_CUSTOM_LIBS', language: 'c')
+endif
+
+# --- include headers paths ----------
+libucm_inc = include_directories (lib_inc)
 
 # --- walk in subdirs ----------
 subdir('libucm')
@@ -130,3 +156,8 @@ endif
 if get_option('build_with_tests')
     subdir('tests')
 endif
+
+# -- post-targets install ------
+install_headers (shared_headers,
+                 install_dir: install_path_devs)
+
