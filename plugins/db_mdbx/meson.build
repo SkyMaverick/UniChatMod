@@ -9,7 +9,9 @@ db_mdbx_src = files('''
     db_mdbx_base.c
 '''.split()) + shared_headers
 
-db_mdbx_dep = []
+db_mdbx_dep = [
+    system_dependencies
+]
 
 if not get_option('custom_libs')
     mdbx_dep = cc.find_library ('mdbx', required: false)
@@ -26,7 +28,7 @@ db_mdbx_dep += mdbx_dep
 lib_db_mdbx = shared_library(plug_name,
                              db_mdbx_src,
                              dependencies: db_mdbx_dep,
-                             include_directories: lib_core_inc,
+                             include_directories: libucm_inc,
                              build_rpath: libs_rpath,
                              install_rpath: libs_rpath,
                              install: true,

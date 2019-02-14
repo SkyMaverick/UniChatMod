@@ -1,6 +1,7 @@
 plugins = '''
     db_mdbx
     net_std
+    net_legacy
 '''.split()
 
 plugins_only_nix = '''
@@ -19,5 +20,5 @@ if target_machine.system() == 'linux'
 endif
 
 foreach plugin : plugins
-#    subdir (plugin)
+    subdir (plugin)
 endforeach

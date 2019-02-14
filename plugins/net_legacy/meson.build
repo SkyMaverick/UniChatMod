@@ -12,6 +12,7 @@ nl_src = files('''
 '''.split()) + shared_headers
 
 nl_dep = [
+    system_dependencies
 ]
 
 if not get_option('custom_libs')
@@ -29,6 +30,6 @@ nl_dep += ucl_dep
 nl_mdbx = shared_library(plug_name,
                              nl_src,
                              dependencies: nl_dep,
-                             include_directories: lib_core_inc,
+                             include_directories: libucm_inc,
                              install: true,
                              install_dir: install_path_mods)
