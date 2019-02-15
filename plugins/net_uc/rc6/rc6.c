@@ -34,7 +34,7 @@
 //Dependencies
 #include <stddef.h>
 #include <string.h>
-#include "../net_legacy.h"
+#include "../netuc.h"
 
 #include "rc6.h"
 #include "ucm.h"

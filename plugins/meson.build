@@ -1,7 +1,6 @@
 plugins = '''
     db_mdbx
-    net_std
-    net_legacy
+    net_uc2
 '''.split()
 
 plugins_only_nix = '''

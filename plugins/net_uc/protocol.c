@@ -6,7 +6,7 @@
 #include "ucm.h"
 
 #include "network.h"
-#include "net_legacy.h"
+#include "netuc.h"
 #include "protocol.h"
 #include "rc6/rc6.h"
 

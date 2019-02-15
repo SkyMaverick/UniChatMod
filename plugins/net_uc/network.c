@@ -14,7 +14,7 @@
 
 #include "ucm.h"
 #include "network.h"
-#include "net_legacy.h"
+#include "netuc.h"
 
 static void*
 __select_func (void* ctx)
