@@ -15,11 +15,11 @@
 #if (defined(__GNUC__) && (__GNUC__ > 2 && __GNUC_MINOR__ > 0)) || \
     (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800) 
     
-    #define AL_LIKELY(x) __builtin_expect(!!(x), 1)
-    #define AL_UNLIKELY(x) __builtin_expect(!!(x), 0)
+    #define __likely(x) __builtin_expect(!!(x), 1)
+    #define __ulikely(x) __builtin_expect(!!(x), 0)
 #else
-    #define AL_LIKELY(x) (x)
-    #define AL_UNLIKELY(x) (x)
+    #define __likely(x) (x)
+    #define __ulikely(x) (x)
 #endif
 
 #if defined(__WIN32__) || defined(_WIN32) || defined(WIN32)

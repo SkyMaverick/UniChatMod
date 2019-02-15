@@ -37,7 +37,7 @@ osal_zmemory (void* mem,
               size_t size)
 {
     if (size) {
-        if ( AL_UNLIKELY(size > 4096) ) {
+        if ( __ulikely(size > 4096) ) {
             memset (mem, 0, size);
         } else {
             do {
@@ -53,8 +53,8 @@ osal_realloc2 (void** mem, size_t size)
 {
     void* old_mem = *mem;
     *mem = osal_realloc (*mem, size);
-    if ( AL_LIKELY(*mem != old_mem) ) {
-        if ( AL_UNLIKELY(*mem != NULL) ) {
+    if ( __likely(*mem != old_mem) ) {
+        if ( __ulikely(*mem != NULL) ) {
             osal_free (old_mem);
         } else {
             *mem = old_mem;
@@ -69,7 +69,7 @@ osal_strdup (const char* str)
 {
     size_t len = strlen(str);
     char* buffer = osal_zmalloc (len + 1);
-    if ( AL_LIKELY(buffer) ) {
+    if ( __likely(buffer) ) {
         memcpy (buffer, str, len);
     }
     return buffer;
@@ -83,7 +83,7 @@ osal_strndup (const char* str,
     if (len < num)
         len = num;
     char* buffer = osal_zmalloc (len + 1);
-    if ( AL_LIKELY(buffer) ) {
+    if ( __likely(buffer) ) {
         memcpy (buffer, str, len);
     }
     return buffer;

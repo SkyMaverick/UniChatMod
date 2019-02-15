@@ -4,8 +4,8 @@ uintptr_t
 osal_diropen_sync (const char* path)
 {
     uv_fs_t* dir = osal_zmalloc (sizeof(uv_fs_t));
-    if ( AL_LIKELY(dir) ) {
-        if ( AL_UNLIKELY(uv_fs_scandir(osal_uv_loop, dir, path, O_RDONLY, NULL)) < 0)
+    if ( (dir) ) {
+        if ( (uv_fs_scandir(osal_loop_system, dir, path, O_RDONLY, NULL)) < 0)
         {
             osal_free_null (dir);
         }
@@ -20,7 +20,7 @@ osal_dirnext_sync ( char**    name,
     osal_free_null (*name);
 
     uv_dirent_t dent;
-    if ( AL_UNLIKELY(UV_EOF == uv_fs_scandir_next ((uv_fs_t*)iterator, &dent)) ) {
+    if ( (UV_EOF == uv_fs_scandir_next ((uv_fs_t*)iterator, &dent)) ) {
         return 0;
     }
     *name = osal_strdup (dent.name);
@@ -40,5 +40,5 @@ osal_access_sync (const char* path,
                   int mode)
 {
     uv_fs_t req;
-    return uv_fs_access (osal_uv_loop, &req, path, mode, NULL);
+    return uv_fs_access (osal_loop_system, &req, path, mode, NULL);
 }
