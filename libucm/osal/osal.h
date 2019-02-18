@@ -7,7 +7,6 @@
 #include <assert.h>
 
 #include "osal-dynlib.h"
-#include "osal-filesys.h"
 #include "osal-memory.h"
 #include "osal-threading.h"
 #include "osal-system.h"
@@ -69,8 +68,3 @@
     
     #define AL_OS_POSIX
 #endif
-
-int
-osal_init (void);
-int
-osal_release (void);

@@ -304,10 +304,6 @@ static ucm_functions_t core_api = {
     .sys.dlsym                      = osal_dlsym             ,
     .sys.dlerror                    = osal_dlerror           ,
                                     
-    .sys.dir_open                   = osal_diropen_sync      ,
-    .sys.dir_next                   = osal_dirnext_sync      ,
-    .sys.dir_close                  = osal_dirclose_sync     ,
-                                    
     .sys.os_access                  = osal_access_sync       ,
     .sys.os_errno                   = osal_errno             ,
                                     

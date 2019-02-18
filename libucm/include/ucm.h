@@ -734,10 +734,6 @@ typedef struct _ucm_functions_s {
         uintptr_t   (*dlsym)            (uintptr_t lib, const char* sym);
         const char* (*dlerror)          (uintptr_t lib);
 
-        uintptr_t   (*dir_open)         (const char* path);
-        int         (*dir_next)         (char** name, uintptr_t iterator);
-        void        (*dir_close)        (uintptr_t iterator);
-
         int         (*os_access)        (const char* path, int mode);
         int         (*os_errno)         (void);
         /* Unicode operations. USC4 and convertors */
