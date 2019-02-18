@@ -8,7 +8,6 @@
 #include "core.h"
 #include "logger.h"
 #include "defs.h"
-#include "cpentupd.h"
 
 LIBUCM_API const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args)
@@ -23,11 +22,11 @@ ucm_core_start (ucm_cargs_t* args)
                 && (mbstowcs (ucm_path_store, args->path_store_abs, UCM_PATH_MAX)) > 0
                 && (mbstowcs (ucm_path_plugs, args->path_plug_abs , UCM_PATH_MAX)) > 0 ) )
             return NULL;
-        log_init();
-        init_ucm_entropy();
+// TODO Move to core plugin functionality
 
-        plugins_load_registry (args->path_plug_abs);
-        ucm_dtrace ("%s : %s\n", "Path in LIB", args->path_plug_abs);
+//
+//        plugins_load_registry (args->path_plug_abs);
+//        ucm_dtrace ("%s : %s\n", "Path in LIB", args->path_plug_abs);
     } else {
         return NULL;
     }
@@ -45,12 +44,12 @@ LIBUCM_API UCM_RET
 ucm_core_stop (void)
 {
     //TODO stop core plugin, cleanup and release plugin stack
+    //TODO Move to core plugin functionality
+    
     ucm_core->stop();
-
-    plugins_release_registry();
-
-    free_ucm_entropy();
-    log_release();
-
+//
+//    plugins_release_registry();
+//
+//
     return UCM_RET_SUCCESS;
 }

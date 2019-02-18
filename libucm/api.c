@@ -2,6 +2,7 @@
 
 #include "ucm.h"
 #include "api.h"
+#include "core.h"
 #include "logger.h"
 #include "mainloop.h"
 #include "plugmgr.h"
@@ -15,15 +16,6 @@ wchar_t ucm_path        [UCM_PATH_MAX];
 wchar_t ucm_path_store  [UCM_PATH_MAX];
 wchar_t ucm_path_plugs  [UCM_PATH_MAX];
 wchar_t ucm_path_doc    [UCM_PATH_MAX];
-
-void
-compat_layer_init (void) {
-    osal_init();
-}
-void 
-compat_layer_release (void) {
-    osal_release ();
-}
 
 // application global parameters (paths, vars, etc.)
 static const wchar_t*
@@ -45,7 +37,7 @@ g_plugins_path (void)
 }
 
 static ucm_functions_t core_api = {
-    .uv.loop_init                   = uv_loop_init                   , 
+    .uv.loop_init                   = uv_loop_init                   ,
     .uv.loop_close                  = uv_loop_close                  ,
     .uv.loop_delete                 = uv_loop_delete                 ,
     .uv.loop_size                   = uv_loop_size                   ,
@@ -225,7 +217,7 @@ static ucm_functions_t core_api = {
     .uv.fs_utime                    = uv_fs_utime                    ,
     .uv.fs_futime                   = uv_fs_futime                   ,
     .uv.fs_lstat                    = uv_fs_lstat                    ,
-    .uv.fs_link                     = uv_fs_link                     ,    
+    .uv.fs_link                     = uv_fs_link                     ,
     .uv.fs_symlink                  = uv_fs_symlink                  ,
     .uv.fs_readlink                 = uv_fs_readlink                 ,
     .uv.fs_realpath                 = uv_fs_realpath                 ,
@@ -254,16 +246,16 @@ static ucm_functions_t core_api = {
     .uv.inet_pton                   = uv_inet_pton                   ,
     .uv.if_indextoname              = uv_if_indextoname              ,
     .uv.if_indextoiid               = uv_if_indextoiid               ,
-    .uv.exepath                     = uv_exepath                     ,    
+    .uv.exepath                     = uv_exepath                     ,
     .uv.cwd                         = uv_cwd                         ,
-    .uv.chdir                       = uv_chdir                       ,    
+    .uv.chdir                       = uv_chdir                       ,
     .uv.get_free_memory             = uv_get_free_memory             ,
     .uv.get_total_memory            = uv_get_total_memory            ,
-    .uv.hrtime                      = uv_hrtime                      ,    
+    .uv.hrtime                      = uv_hrtime                      ,
     .uv.disable_stdio_inheritance   = uv_disable_stdio_inheritance   ,
     .uv.loop_get_data               = uv_loop_get_data               ,
     .uv.loop_set_data               = uv_loop_set_data               ,
-    
+
     .sys.malloc                     = osal_malloc            ,
     .sys.zmalloc                    = osal_zmalloc           ,
     .sys.calloc                     = osal_calloc            ,
@@ -272,25 +264,25 @@ static ucm_functions_t core_api = {
     .sys.realloc                    = osal_realloc2          ,
     .sys.strdup                     = osal_strdup            ,
     .sys.strndup                    = osal_strndup           ,
-                                    
+
     .sys.thread_create              = osal_thread_create     ,
     .sys.thread_detach              = osal_thread_detach     ,
     .sys.thread_exit                = osal_thread_exit       ,
     .sys.thread_join                = osal_thread_join       ,
     .sys.thread_cleanup             = osal_thread_cleanup    ,
-                                    
+
     .sys.mutex_create               = osal_mutex_create      ,
     .sys.mutex_free                 = osal_mutex_free        ,
     .sys.mutex_lock                 = osal_mutex_lock        ,
     .sys.mutex_trylock              = osal_mutex_trylock     ,
     .sys.mutex_unlock               = osal_mutex_unlock      ,
-                                    
+
     .sys.cond_create                = osal_cond_create       ,
     .sys.cond_free                  = osal_cond_free         ,
     .sys.cond_wait                  = osal_cond_wait         ,
     .sys.cond_signal                = osal_cond_signal       ,
     .sys.cond_broadcast             = osal_cond_broadcast    ,
-                                    
+
     .sys.rwlock_create              = osal_rwlock_create     ,
     .sys.rwlock_free                = osal_rwlock_free       ,
     .sys.rwlock_rlock               = osal_rwlock_rlock      ,
@@ -298,15 +290,15 @@ static ucm_functions_t core_api = {
     .sys.rwlock_tryrlock            = osal_rwlock_tryrlock   ,
     .sys.rwlock_trywlock            = osal_rwlock_trywlock   ,
     .sys.rwlock_unlock              = osal_rwlock_unlock     ,
-                                    
+
     .sys.dlopen                     = osal_dlopen            ,
     .sys.dlclose                    = osal_dlclose           ,
     .sys.dlsym                      = osal_dlsym             ,
     .sys.dlerror                    = osal_dlerror           ,
-                                    
-    .sys.os_access                  = osal_access_sync       ,
+
+    .sys.os_access                  = NULL                   ,
     .sys.os_errno                   = osal_errno             ,
-                                    
+
     .sys.U8toU32                    = u8_decode_ucs4         ,
     .sys.U32toU8                    = ucs4_encode_u8         ,
     .sys.ustrlen                    = ucm_strlen             ,
@@ -330,7 +322,10 @@ static ucm_functions_t core_api = {
     .sys.umstrbrkjoin               = ucm_mstrbrkjoin        ,
     .sys.ustrstr                    = ucm_strstr             ,
     .sys.ustrcasestr                = ucm_strcasestr         ,
-                                    
+
+    .app.sysloop                    = get_handle_mainloop    ,
+    .app.netloop                    = get_handle_netloop     ,
+
     .app.get_int                    = NULL                   ,
     .app.get_int64                  = NULL                   ,
     .app.get_float                  = NULL                   ,
@@ -343,26 +338,26 @@ static ucm_functions_t core_api = {
     .app.set_str                    = NULL                   ,
     .app.set_wstr                   = NULL                   ,
     .app.set_blob                   = NULL                   ,
-                                    
+
     .app.item_del                   = NULL                   ,
-                                    
+
     .app.mainloop_msg_send          = ucm_mloop_push         ,
     .app.mainloop_ev_alloc          = ucm_mloop_event_alloc  ,
     .app.mainloop_ev_push           = ucm_mloop_event_push   ,
     .app.mainloop_ev_free           = ucm_mloop_event_free   ,
     .app.mainloop_flush             = NULL,
-                                    
+
     .app.mainloop_hook_attach       = hooks_event_attach     ,
     .app.mainloop_hook_detach       = hooks_event_detach     ,
-                                    
+
     .app.md5                        = NULL                   ,
     .app.md5_to_str                 = NULL                   ,
-                                    
+
     .app.log                        = logger_log             ,
     .app.ucm_log                    = ucm_log                ,
     .app.logger_connect             = logger_connect         ,
     .app.logger_disconnect          = logger_disconnect      ,
-                                    
+
     .app.get_plugins_all            = plugins_get_all        ,
     .app.get_plugins_db             = plugins_get_db         ,
     .app.get_plugins_proto          = plugins_get_proto      ,
@@ -370,9 +365,9 @@ static ucm_functions_t core_api = {
     .app.get_plugins_hist           = plugins_get_hist       ,
     .app.get_plugins_gui            = plugins_get_gui        ,
     .app.get_plugins_stuff          = plugins_get_stuff      ,
-                                    
+
     .app.get_entropy                = get_ucm_entropy        ,
-                                    
+
     .app.get_startup_path           = g_startup_path         ,
     .app.get_store_path             = g_store_path           ,
     .app.get_plugins_path           = g_plugins_path         ,
