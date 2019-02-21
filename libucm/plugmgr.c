@@ -18,6 +18,11 @@ typedef struct ucm_module_s {
     struct ucm_module_s* next;
 } ucm_module_t;
 
+typedef struct {
+    uv_fs_t fs;
+    size_t  count;
+} uvi_scanfs_t;
+
 #define PLUGIN(X) X->plugin
 #define NULL_REG(X) UniAPI->sys.zmemory ((X), sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
 
@@ -26,6 +31,8 @@ ucm_module_t modules = {
     .handle = 0,
     .next   = NULL
 };
+static uintptr_t _lock = 0;
+static uv_loop_t* sysloop = NULL;
 
 static size_t plugins_limit        = UCM_DEF_PLUG_COUNT;
 static size_t plugins_count        = 0;
@@ -193,34 +200,47 @@ plugins_stop_all (void)
     NULL_REG (plugins_stuff);
 }
 
+static void
+__loaddir_cb (uv_fs_t* req)
+{
+    uv_dirent_t dent;
+    uv_fs_t     close_req;
+    char buffer [UCM_PATH_MAX];
+
+    while ( uv_fs_scandir_next(req, &dent) != UV__EOF) {
+        ucm_dtrace("%s/%s\n", req->path, dent.name);
+        
+        snprintf (buffer, UCM_PATH_MAX, "%s/%s", req->path, dent.name);
+        ucm_module_t* tmp = _plugin_load(buffer);
+        if (tmp) {
+            // update modules list
+            UniAPI->sys.rwlock_wlock(_lock);
+
+            tmp->next = modules.next;
+            modules.next = tmp;
+            ((uvi_scanfs_t*)req)->count++;
+
+            UniAPI->sys.rwlock_unlock(_lock);
+        }
+    }
+    uv_fs_close (sysloop, &close_req, req->file, NULL);
+    uv_fs_req_cleanup(req);
+}
+
 UCM_RET
 plugins_load_registry (const char* plug_path)
 {
-    modules.plugin = ucm_core;
-    ucm_module_t* tmp_module = &modules;
+    uvi_scanfs_t ireq;
+    UniAPI->sys.zmemory(&ireq, sizeof(uvi_scanfs_t));
 
-    size_t plugs_count = 0;
-    char buffer [UCM_PATH_MAX];
+    sysloop = UniAPI->app.sysloop();
 
-    uintptr_t dir = UniAPI->sys.dir_open (plug_path);
+    _lock = UniAPI->sys.rwlock_create();
+    int r = UniAPI->uv.fs_scandir (sysloop, (uv_fs_t*)(&ireq),
+                                   plug_path, O_RDONLY, __loaddir_cb);
+    UniAPI->uv.run(sysloop, UV_RUN_ONCE);
 
-    char* name_buf = NULL;
-    int type = 0;
-    while ( ( type = UniAPI->sys.dir_next(&name_buf, dir) ) > 0) {
-        if ((type == OSAL_DIRENT_FILE) &&
-            (strstr (name_buf, ".so"))) //FIXME Only linux
-        {
-            snprintf(buffer, UCM_PATH_MAX, "%s/%s", plug_path, name_buf);
-            tmp_module->next = _plugin_load(buffer);
-            if ( tmp_module->next ) {
-                tmp_module = tmp_module->next;
-                plugs_count++;
-            }
-        }
-    }
-    ucm_trace ("%s: %zu\n",_("Plugins found"), plugs_count);
-    UniAPI->sys.dir_close(dir);
-
+    ucm_dtrace ("%s: %zu\n", "Found plugins count", ireq.count);
     return UCM_RET_SUCCESS;
 }
 
@@ -237,6 +257,7 @@ plugins_release_registry (void)
         UniAPI->sys.dlclose(m_del->handle);
         UniAPI->sys.free (m_del);
     }
+    UniAPI->sys.rwlock_free(_lock);
 }
 
 void
@@ -245,7 +266,8 @@ plugins_message_dispatch (const uint32_t* id,
                           const uint32_t* x1,
                           const uint32_t* x2)
 {
-    modules.plugin->message(*id, *ctx, *x1, *x2);   // core receive message first
+    if (modules.plugin)
+        modules.plugin->message(*id, *ctx, *x1, *x2);   // core receive message first
 
     for ( size_t i = 0; i < plugins_count; i++ ) {
         if (plugins_all[i] && plugins_all[i]->message) {

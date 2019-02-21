@@ -12,8 +12,8 @@
 #include "osal-system.h"
 
 #if (defined(__GNUC__) && (__GNUC__ > 2 && __GNUC_MINOR__ > 0)) || \
-    (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800) 
-    
+    (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)
+
     #define __likely(x) __builtin_expect(!!(x), 1)
     #define __ulikely(x) __builtin_expect(!!(x), 0)
 #else
@@ -65,6 +65,14 @@
     defined (AL_OS_ANDROID) ||  \
     defined (AL_OS_CYGWIN)  ||  \
     defined (AL_OS_MSYS)        \
-    
+
     #define AL_OS_POSIX
+#endif
+
+#if defined (AL_OS_WINDOWS)
+    #define DYNLIB_SUFFIX ".dll"
+#elif defined (AL_OS_DARWIN)
+    #define DYNLIB_SUFFIX ".dynlib"
+#else
+    #define DYNLIB_SUFFIX ".so"
 #endif

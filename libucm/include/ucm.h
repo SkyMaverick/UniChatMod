@@ -763,8 +763,8 @@ typedef struct _ucm_functions_s {
     } sys;
 
     struct {
-        const uv_loop_t*  (*sysloop)    (void);
-        const uv_loop_t*  (*netloop)    (void);
+        uv_loop_t*  (*sysloop)    (void);
+        uv_loop_t*  (*netloop)    (void);
         /*! low-level settings provider functions */
         int         (*get_int)      (ucm_object_t* obj, char* key, int def);
         int64_t     (*get_int64)    (ucm_object_t* obj, char* key, int64_t def);
@@ -811,10 +811,9 @@ typedef struct _ucm_functions_s {
         const ucm_plugin_t** (*get_plugins_stuff) (void);
 
         /*! get global paths */
-        const wchar_t* (*get_startup_path) (void);
-        const wchar_t* (*get_store_path)   (void);
-        const wchar_t* (*get_plugins_path) (void);
-
+        const char* (*get_startup_path) (void);
+        const char* (*get_store_path)   (void);
+        const char* (*get_plugins_path) (void);
         /*! system entropy functions */
         int (*get_entropy) (void);
 

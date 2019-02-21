@@ -13,20 +13,14 @@ LIBUCM_API const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args)
 {
 //  TODO build plugin stack, init and start core plugin
-    extern wchar_t ucm_path [UCM_PATH_MAX];
-    extern wchar_t ucm_path_store[UCM_PATH_MAX];
-    extern wchar_t ucm_path_plugs[UCM_PATH_MAX];
+    extern char ucm_path [UCM_PATH_MAX];
+    extern char ucm_path_store[UCM_PATH_MAX];
+    extern char ucm_path_plugs[UCM_PATH_MAX];
 
     if (args->path_abs && args->path_plug_abs && args->path_store_abs) {
-        if (!(     (mbstowcs (ucm_path      , args->path_abs      , UCM_PATH_MAX)) > 0
-                && (mbstowcs (ucm_path_store, args->path_store_abs, UCM_PATH_MAX)) > 0
-                && (mbstowcs (ucm_path_plugs, args->path_plug_abs , UCM_PATH_MAX)) > 0 ) )
-            return NULL;
-// TODO Move to core plugin functionality
-
-//
-//        plugins_load_registry (args->path_plug_abs);
-//        ucm_dtrace ("%s : %s\n", "Path in LIB", args->path_plug_abs);
+        snprintf(ucm_path, UCM_PATH_MAX, "%s", args->path_abs);
+        snprintf(ucm_path_store, UCM_PATH_MAX, "%s", args->path_store_abs);
+        snprintf(ucm_path_plugs, UCM_PATH_MAX, "%s", args->path_plug_abs);
     } else {
         return NULL;
     }

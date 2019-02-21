@@ -9,7 +9,7 @@
 #include "api.h"
 #include "core.h"
 
-#if defined (ENABLE_DEBUG)
+#if defined (DEBUG)
     #define ucm_dtrace(format,...) {UniAPI->app.log(ucm_core,UCM_TYPE_LOG_INFO,format,__VA_ARGS__); }
 #else
     #define ucm_dtrace(format, ...)

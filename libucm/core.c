@@ -77,6 +77,9 @@ _stop_core (void)
         UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
     }
 
+    plugins_stop_all();
+
+    plugins_release_registry();
     free_ucm_entropy();
     log_release();
 
@@ -115,13 +118,19 @@ _run_core (void)
     uv_loop_init (kernel.loop_system);
     uv_loop_init (kernel.loop_network);
 
-    // TODO start uv_loop-s
-
-    kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
-
-    /* Init subsystems */
     log_init();
     init_ucm_entropy();
+    
+    plugins_load_registry(UniAPI->app.get_plugins_path());
+    // TODO start uv_loop-s
+    if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
+        hooks_event_init ();
+        kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
+    }
+
+    plugins_run_all ();
+
+    /* Init subsystems */
 //    extern wchar_t ucm_path_store [UCM_PATH_MAX];
 //    char aPath [UCM_PATH_MAX];
 //
@@ -168,13 +177,13 @@ _message_core(uint32_t id,
     EXTERANAL FUNCTIONS
  ***************************************************/
 
-const uv_loop_t*
+uv_loop_t*
 get_handle_mainloop (void)
 {
     return kernel.loop_system;
 }
 
-const uv_loop_t*
+uv_loop_t*
 get_handle_netloop (void)
 {
     return kernel.loop_network;

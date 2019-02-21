@@ -12,25 +12,24 @@
 
 #include "osal.h"
 
-wchar_t ucm_path        [UCM_PATH_MAX];
-wchar_t ucm_path_store  [UCM_PATH_MAX];
-wchar_t ucm_path_plugs  [UCM_PATH_MAX];
-wchar_t ucm_path_doc    [UCM_PATH_MAX];
+char ucm_path        [UCM_PATH_MAX];
+char ucm_path_store  [UCM_PATH_MAX];
+char ucm_path_plugs  [UCM_PATH_MAX];
 
 // application global parameters (paths, vars, etc.)
-static const wchar_t*
+static const char*
 g_startup_path (void)
 {
     return ucm_path;
 }
 
-static const wchar_t*
+static const char*
 g_store_path (void)
 {
     return ucm_path_store;
 }
 
-static const wchar_t*
+static const char*
 g_plugins_path (void)
 {
     return ucm_path_plugs;
