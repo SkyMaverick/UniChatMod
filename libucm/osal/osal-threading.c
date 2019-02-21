@@ -17,8 +17,10 @@ osal_thread_create (void* (*func)(void* ctx),
 {
     uv_thread_t* tid = osal_malloc (sizeof(uv_thread_t));
     if ( __likely(tid) ){
-        if ( uv_thread_create (tid, (uv_thread_cb)func, ctx) == 0) {
+        if ( __likely (uv_thread_create (tid, (uv_thread_cb)func, ctx) == 0) ) {
             return (uintptr_t)tid;
+        } else {
+            osal_free (tid);
         }
     }
     return 0;
@@ -61,8 +63,10 @@ osal_mutex_create (void)
 {
     uv_mutex_t* mtx = osal_malloc (sizeof(uv_mutex_t));
     if ( __likely(mtx) ) {
-        if (uv_mutex_init (mtx) == 0) {
+        if ( __likely (uv_mutex_init (mtx) == 0) ) {
             return (uintptr_t) mtx;
+        } else {
+            osal_free(mtx);
         }
     } 
     return 0;
@@ -93,8 +97,10 @@ osal_cond_create (void)
 {
     uv_cond_t* cond = osal_malloc (sizeof(uv_cond_t));
     if ( __likely(cond) ) {
-        if ( uv_cond_init(cond) == 0 ){
+        if ( __likely (uv_cond_init(cond) == 0) ){
             return (uintptr_t)cond;
+        } else {
+            osal_free (cond);
         }
     }
     return 0;
@@ -128,8 +134,10 @@ osal_rwlock_create (void)
 {
     osal_rwlock_t* rwl = osal_zmalloc(sizeof(osal_rwlock_t));
     if ( __likely(rwl) ) {
-        if ( uv_rwlock_init(&(rwl->lock)) == 0 ) {
+        if ( __likely (uv_rwlock_init(&(rwl->lock)) == 0) ) {
             return (uintptr_t)rwl;
+        } else {
+            osal_free (rwl);
         }
     }
     return 0;

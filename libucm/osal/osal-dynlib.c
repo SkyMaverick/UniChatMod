@@ -4,9 +4,11 @@ uintptr_t
 osal_dlopen (const char* path)
 {
     uv_lib_t* lib = osal_malloc(sizeof(uv_lib_t));
-    if (lib) {
-        if (uv_dlopen(path, lib) >= 0) {
+    if ( __likely(lib) ) {
+        if ( __likely (uv_dlopen(path, lib) >= 0) ) {
             return (uintptr_t)lib;
+        } else {
+            osal_free (lib);
         }
     }
     return 0;
