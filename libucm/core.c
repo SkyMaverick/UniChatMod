@@ -18,13 +18,9 @@ typedef struct {
     // base plugin functionality (start/stop/mq)
     ucm_plugin_t        base;
 
-//    /* System-defines polling loop based on LibUV library
-//       and provide this for async fs, network etc. operations */
-//    uv_loop_t*          loop_system;    // idle loop (as default)
-//    uv_loop_t*          loop_network;   // different network loop
-//
     // message/event communication loop (custom implementation)
     uintptr_t           loop_ucore;
+    // osal system handle
     uintptr_t           osal_handle;
 } ucm_core_t;
 // forward structure declaration
@@ -63,7 +59,10 @@ loop_core (void* ctx)
                     }
             }
         }
-        if (term) break;
+        if (term) {
+            break;
+            ucm_mloop_free();
+        }
         ucm_mloop_wait();
     }
     return NULL;
@@ -72,54 +71,30 @@ loop_core (void* ctx)
 static UCM_RET
 _stop_core (void)
 {
+
     if (kernel.loop_ucore) {
         UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->sys.thread_join(kernel.loop_ucore);
         UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
     }
-
+    
     plugins_stop_all();
 
     plugins_release_registry();
     free_ucm_entropy();
+
+    hooks_event_release();
+
     log_release();
 
     compat_layer_release();
-//    UniAPI->uv.loop_close (kernel.loop_system);
-//    ucm_free_null (kernel.loop_system);
-//
-//    UniAPI->uv.loop_close (kernel.loop_network);
-//    ucm_free_null (kernel.loop_network);
-//
-//    if (kernel.loop_ucore > 0) {
-//        UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
-//        UniAPI->sys.thread_join(kernel.loop_ucore);
-//        UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
-//    }
-//    db_close();
-//    plugins_stop_all();
-//    ucm_mloop_free();
-//
-//    hooks_event_release();
-
+    
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
 _run_core (void)
 {
-//    kernel.loop_system = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
-//    if (kernel.loop_system == NULL)
-//        return UCM_RET_NONALLOC;
-//    kernel.loop_network = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
-//    if (kernel.loop_network == NULL) {
-//        ucm_free_null (kernel.loop_system);
-//        return UCM_RET_NONALLOC;
-//    }
-//
-//    uv_loop_init (kernel.loop_system);
-//    uv_loop_init (kernel.loop_network);
-//
     kernel.osal_handle = compat_layer_init();
 
     log_init();
@@ -134,28 +109,9 @@ _run_core (void)
 
     plugins_run_all ();
 
-    /* Init subsystems */
-//    extern wchar_t ucm_path_store [UCM_PATH_MAX];
-//    char aPath [UCM_PATH_MAX];
-//
-//    if ( wcstombs(aPath, ucm_path_store, UCM_PATH_MAX) <= 0) {
-//        ucm_etrace ("%s: %s\n", "Don't parse database file path", aPath);
-//        return UCM_RET_WRONGPARAM;
-//    }
-//    // start main message loop
-//    if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
-//        hooks_event_init();
-//        plugins_run_all();
-//
-//        if ( db_open(aPath, 0) != UCM_RET_SUCCESS) {
-//            ucm_etrace ("%s: %s\n", "Couldn't open this database file", aPath);
-//            _stop_core();
-//            return UCM_RET_WRONGPARAM;
-//        }
-//
-//        loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
-//    }
-//    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
+    // TODO db open
+
+    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
 
@@ -167,31 +123,20 @@ _message_core(uint32_t id,
 
 {
     switch (id) {
-        // TODO
+        case UCM_EVENT_TERM: 
+            {
+                ucm_dtrace("Catch TERM message", "");
+                break;
+            }
     };
     UNUSED(ctx);
     UNUSED(x1);
     UNUSED(x2);
-    switch (id) {
-        // TODO
-    }
 }
 
 /***************************************************
     EXTERANAL FUNCTIONS
  ***************************************************/
-
-uv_loop_t*
-get_handle_mainloop (void)
-{
-//    return kernel.loop_system;
-}
-
-uv_loop_t*
-get_handle_netloop (void)
-{
-//    return kernel.loop_network;
-}
 
 static ucm_core_t kernel = {
     .base.oid              = UCM_TYPE_OBJECT_PLUGIN,

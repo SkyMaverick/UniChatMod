@@ -327,9 +327,6 @@ static ucm_functions_t core_api = {
     .sys.ustrstr                    = ucm_strstr             ,
     .sys.ustrcasestr                = ucm_strcasestr         ,
 
-    .app.sysloop                    = get_handle_mainloop    ,
-    .app.netloop                    = get_handle_netloop     ,
-
     .app.get_int                    = NULL                   ,
     .app.get_int64                  = NULL                   ,
     .app.get_float                  = NULL                   ,

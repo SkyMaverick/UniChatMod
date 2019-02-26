@@ -12,7 +12,6 @@
 LIBUCM_API const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args)
 {
-//  TODO build plugin stack, init and start core plugin
     extern char ucm_path [UCM_PATH_MAX];
     extern char ucm_path_store[UCM_PATH_MAX];
     extern char ucm_path_plugs[UCM_PATH_MAX];
@@ -37,13 +36,6 @@ ucm_core_info (void)
 LIBUCM_API UCM_RET
 ucm_core_stop (void)
 {
-    //TODO stop core plugin, cleanup and release plugin stack
-    //TODO Move to core plugin functionality
-    
     ucm_core->stop();
-//
-//    plugins_release_registry();
-//
-//
     return UCM_RET_SUCCESS;
 }
