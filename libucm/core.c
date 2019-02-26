@@ -18,13 +18,14 @@ typedef struct {
     // base plugin functionality (start/stop/mq)
     ucm_plugin_t        base;
 
-    /* System-defines polling loop based on LibUV library
-       and provide this for async fs, network etc. operations */
-    uv_loop_t*          loop_system;    // idle loop (as default)
-    uv_loop_t*          loop_network;   // different network loop
-
+//    /* System-defines polling loop based on LibUV library
+//       and provide this for async fs, network etc. operations */
+//    uv_loop_t*          loop_system;    // idle loop (as default)
+//    uv_loop_t*          loop_network;   // different network loop
+//
     // message/event communication loop (custom implementation)
     uintptr_t           loop_ucore;
+    uintptr_t           osal_handle;
 } ucm_core_t;
 // forward structure declaration
 static ucm_core_t kernel;
@@ -83,12 +84,13 @@ _stop_core (void)
     free_ucm_entropy();
     log_release();
 
-    UniAPI->uv.loop_close (kernel.loop_system);
-    ucm_free_null (kernel.loop_system);
-
-    UniAPI->uv.loop_close (kernel.loop_network);
-    ucm_free_null (kernel.loop_network);
-
+    compat_layer_release();
+//    UniAPI->uv.loop_close (kernel.loop_system);
+//    ucm_free_null (kernel.loop_system);
+//
+//    UniAPI->uv.loop_close (kernel.loop_network);
+//    ucm_free_null (kernel.loop_network);
+//
 //    if (kernel.loop_ucore > 0) {
 //        UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
 //        UniAPI->sys.thread_join(kernel.loop_ucore);
@@ -106,17 +108,19 @@ _stop_core (void)
 static UCM_RET
 _run_core (void)
 {
-    kernel.loop_system = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
-    if (kernel.loop_system == NULL)
-        return UCM_RET_NONALLOC;
-    kernel.loop_network = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
-    if (kernel.loop_network == NULL) {
-        ucm_free_null (kernel.loop_system);
-        return UCM_RET_NONALLOC;
-    }
-
-    uv_loop_init (kernel.loop_system);
-    uv_loop_init (kernel.loop_network);
+//    kernel.loop_system = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
+//    if (kernel.loop_system == NULL)
+//        return UCM_RET_NONALLOC;
+//    kernel.loop_network = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
+//    if (kernel.loop_network == NULL) {
+//        ucm_free_null (kernel.loop_system);
+//        return UCM_RET_NONALLOC;
+//    }
+//
+//    uv_loop_init (kernel.loop_system);
+//    uv_loop_init (kernel.loop_network);
+//
+    kernel.osal_handle = compat_layer_init();
 
     log_init();
     init_ucm_entropy();
@@ -180,13 +184,13 @@ _message_core(uint32_t id,
 uv_loop_t*
 get_handle_mainloop (void)
 {
-    return kernel.loop_system;
+//    return kernel.loop_system;
 }
 
 uv_loop_t*
 get_handle_netloop (void)
 {
-    return kernel.loop_network;
+//    return kernel.loop_network;
 }
 
 static ucm_core_t kernel = {

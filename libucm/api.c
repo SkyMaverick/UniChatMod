@@ -16,6 +16,18 @@ char ucm_path        [UCM_PATH_MAX];
 char ucm_path_store  [UCM_PATH_MAX];
 char ucm_path_plugs  [UCM_PATH_MAX];
 
+uintptr_t
+compat_layer_init(void)
+{
+    return osal_init();
+}
+
+void
+compat_layer_release(void)
+{
+    osal_release();
+}
+
 // application global parameters (paths, vars, etc.)
 static const char*
 g_startup_path (void)
@@ -36,14 +48,7 @@ g_plugins_path (void)
 }
 
 static ucm_functions_t core_api = {
-    .uv.loop_init                   = uv_loop_init                   ,
-    .uv.loop_close                  = uv_loop_close                  ,
-    .uv.loop_delete                 = uv_loop_delete                 ,
-    .uv.loop_size                   = uv_loop_size                   ,
-    .uv.loop_alive                  = uv_loop_alive                  ,
-    .uv.loop_configure              = uv_loop_configure              ,
-    .uv.loop_fork                   = uv_loop_fork                   ,
-    .uv.run                         = uv_run                         ,
+    .uv.run                         = osal_run                       ,
     .uv.stop                        = uv_stop                        ,
     .uv.ref                         = uv_ref                         ,
     .uv.unref                       = uv_unref                       ,
@@ -193,47 +198,47 @@ static ucm_functions_t core_api = {
     .uv.fs_get_path                 = uv_fs_get_path                 ,
     .uv.fs_get_statbuf              = uv_fs_get_statbuf              ,
     .uv.fs_req_cleanup              = uv_fs_req_cleanup              ,
-    .uv.fs_close                    = uv_fs_close                    ,
-    .uv.fs_open                     = uv_fs_open                     ,
-    .uv.fs_read                     = uv_fs_read                     ,
-    .uv.fs_unlink                   = uv_fs_unlink                   ,
-    .uv.fs_write                    = uv_fs_write                    ,
-    .uv.fs_copyfile                 = uv_fs_copyfile                 ,
-    .uv.fs_mkdir                    = uv_fs_mkdir                    ,
-    .uv.fs_mkdtemp                  = uv_fs_mkdtemp                  ,
-    .uv.fs_rmdir                    = uv_fs_rmdir                    ,
-    .uv.fs_scandir                  = uv_fs_scandir                  ,
+    .uv.fs_close                    = osal_fs_close                  ,
+    .uv.fs_open                     = osal_fs_open                   ,
+    .uv.fs_read                     = osal_fs_read                   ,
+    .uv.fs_unlink                   = osal_fs_unlink                 ,
+    .uv.fs_write                    = osal_fs_write                  ,
+    .uv.fs_copyfile                 = osal_fs_copyfile               ,
+    .uv.fs_mkdir                    = osal_fs_mkdir                  ,
+    .uv.fs_mkdtemp                  = osal_fs_mkdtemp                ,
+    .uv.fs_rmdir                    = osal_fs_rmdir                  ,
+    .uv.fs_scandir                  = osal_fs_scandir                ,
     .uv.fs_scandir_next             = uv_fs_scandir_next             ,
-    .uv.fs_stat                     = uv_fs_stat                     ,
-    .uv.fs_fstat                    = uv_fs_fstat                    ,
-    .uv.fs_rename                   = uv_fs_rename                   ,
-    .uv.fs_fsync                    = uv_fs_fsync                    ,
-    .uv.fs_fdatasync                = uv_fs_fdatasync                ,
-    .uv.fs_ftruncate                = uv_fs_ftruncate                ,
-    .uv.fs_sendfile                 = uv_fs_sendfile                 ,
-    .uv.fs_access                   = uv_fs_access                   ,
-    .uv.fs_chmod                    = uv_fs_chmod                    ,
-    .uv.fs_utime                    = uv_fs_utime                    ,
-    .uv.fs_futime                   = uv_fs_futime                   ,
-    .uv.fs_lstat                    = uv_fs_lstat                    ,
-    .uv.fs_link                     = uv_fs_link                     ,
-    .uv.fs_symlink                  = uv_fs_symlink                  ,
-    .uv.fs_readlink                 = uv_fs_readlink                 ,
-    .uv.fs_realpath                 = uv_fs_realpath                 ,
-    .uv.fs_fchmod                   = uv_fs_fchmod                   ,
-    .uv.fs_chown                    = uv_fs_chown                    ,
-    .uv.fs_fchown                   = uv_fs_fchown                   ,
-    .uv.fs_lchown                   = uv_fs_lchown                   ,
-    .uv.fs_poll_init                = uv_fs_poll_init                ,
-    .uv.fs_poll_start               = uv_fs_poll_start               ,
-    .uv.fs_poll_stop                = uv_fs_poll_stop                ,
-    .uv.fs_poll_getpath             = uv_fs_poll_getpath             ,
+    .uv.fs_stat                     = osal_fs_stat                   ,
+    .uv.fs_fstat                    = osal_fs_fstat                  ,
+    .uv.fs_rename                   = osal_fs_rename                 ,
+    .uv.fs_fsync                    = osal_fs_fsync                  ,
+    .uv.fs_fdatasync                = osal_fs_fdatasync              ,
+    .uv.fs_ftruncate                = osal_fs_ftruncate              ,
+    .uv.fs_sendfile                 = osal_fs_sendfile               ,
+    .uv.fs_access                   = osal_fs_access                 ,
+    .uv.fs_chmod                    = osal_fs_chmod                  ,
+    .uv.fs_utime                    = osal_fs_utime                  ,
+    .uv.fs_futime                   = osal_fs_futime                 ,
+    .uv.fs_lstat                    = osal_fs_lstat                  ,
+    .uv.fs_link                     = osal_fs_link                   ,
+    .uv.fs_symlink                  = osal_fs_symlink                ,
+    .uv.fs_readlink                 = osal_fs_readlink               ,
+    .uv.fs_realpath                 = osal_fs_realpath               ,
+    .uv.fs_fchmod                   = osal_fs_fchmod                 ,
+    .uv.fs_chown                    = osal_fs_chown                  ,
+    .uv.fs_fchown                   = osal_fs_fchown                 ,
+    .uv.fs_lchown                   = osal_fs_lchown                 ,
+    .uv.fs_poll_init                = osal_fs_poll_init              ,
+    .uv.fs_poll_start               = uv_fs_poll_start             ,
+    .uv.fs_poll_stop                = uv_fs_poll_stop              ,
+    .uv.fs_poll_getpath             = uv_fs_poll_getpath           ,
     .uv.signal_init                 = uv_signal_init                 ,
     .uv.signal_start                = uv_signal_start                ,
     .uv.signal_start_oneshot        = uv_signal_start_oneshot        ,
     .uv.signal_stop                 = uv_signal_stop                 ,
     .uv.loadavg                     = uv_loadavg                     ,
-    .uv.fs_event_init               = uv_fs_event_init               ,
+    .uv.fs_event_init               = osal_fs_event_init               ,
     .uv.fs_event_start              = uv_fs_event_start              ,
     .uv.fs_event_stop               = uv_fs_event_stop               ,
     .uv.fs_event_getpath            = uv_fs_event_getpath            ,

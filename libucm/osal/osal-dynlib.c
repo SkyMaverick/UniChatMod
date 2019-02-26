@@ -1,4 +1,4 @@
-#include "osal-intrnl.h"
+#include "osal.h"
 
 uintptr_t
 osal_dlopen (const char* path)

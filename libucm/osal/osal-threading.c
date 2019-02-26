@@ -1,4 +1,4 @@
-#include "osal-intrnl.h"
+#include "osal.h"
 
 enum {
     OSAL_RWLMODE_IDLE  = 0,

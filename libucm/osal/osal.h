@@ -10,6 +10,7 @@
 #include "osal-memory.h"
 #include "osal-threading.h"
 #include "osal-system.h"
+#include "osal-fs.h"
 
 #if (defined(__GNUC__) && (__GNUC__ > 2 && __GNUC_MINOR__ > 0)) || \
     (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)

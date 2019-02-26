@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-#include "osal-intrnl.h"
+
+#include "osal.h"
 
 void*
 osal_malloc (size_t size)
@@ -30,7 +31,8 @@ osal_realloc (void* mem, size_t size)
 void
 osal_free (void* mem)
 {
-    free (mem);
+    if (mem)
+        free (mem);
 }
 void
 osal_zmemory (void* mem,

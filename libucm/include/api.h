@@ -6,7 +6,7 @@
     extern "C" {
 #endif
 
-void
+uintptr_t
 compat_layer_init (void);
 void 
 compat_layer_release (void);
