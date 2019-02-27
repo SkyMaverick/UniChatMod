@@ -222,7 +222,11 @@ __loaddir_cb (uv_fs_t* req)
             UniAPI->sys.rwlock_unlock(_lock);
         }
     }
+#if defined (AL_OS_WINDOWS) 
+    UniAPI->uv.fs_close (&close_req, req->file.fd, NULL);
+#else
     UniAPI->uv.fs_close (&close_req, req->file, NULL);
+#endif
     UniAPI->uv.fs_req_cleanup(req);
 }
 
