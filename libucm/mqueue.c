@@ -68,8 +68,8 @@ if(h){
         UniAPI->sys.mutex_unlock (h->mtx);
         return UCM_RET_OVERFLOW;
     }
-    UniAPI->sys.mutex_unlock (h->mtx);
     UniAPI->sys.cond_signal (h->cond);
+    UniAPI->sys.mutex_unlock (h->mtx);
     return UCM_RET_SUCCESS;
 }else
     return UCM_RET_NOOBJECT;
