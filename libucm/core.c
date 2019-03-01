@@ -60,8 +60,7 @@ loop_core (void* ctx)
             }
         }
         if (term) {
-            break;
-            ucm_mloop_free();
+            return NULL;
         }
         ucm_mloop_wait();
     }
@@ -84,6 +83,7 @@ _stop_core (void)
     free_ucm_entropy();
 
     hooks_event_release();
+    ucm_mloop_free();
 
     log_release();
 

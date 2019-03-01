@@ -1,5 +1,6 @@
 #include "ucm.h"
 #include "api.h"
+#include "defs.h"
 #include "mqueue.h"
 
 #include <stdlib.h>
@@ -67,8 +68,8 @@ if(h){
         UniAPI->sys.mutex_unlock (h->mtx);
         return UCM_RET_OVERFLOW;
     }
-    UniAPI->sys.cond_signal (h->cond);
     UniAPI->sys.mutex_unlock (h->mtx);
+    UniAPI->sys.cond_signal (h->cond);
     return UCM_RET_SUCCESS;
 }else
     return UCM_RET_NOOBJECT;
@@ -113,6 +114,7 @@ mq_clear (mq_block_t *h)
 void
 mq_wait (mq_block_t *h)
 {
+    UniAPI->sys.mutex_lock(h->mtx);
     UniAPI->sys.cond_wait(h->cond, h->mtx);
     UniAPI->sys.mutex_unlock(h->mtx);
 };
