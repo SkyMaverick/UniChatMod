@@ -108,6 +108,8 @@ _plugin_load (char* filename)
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
             ucm_dtrace ("%s: %s\n", "Library load error", UniAPI->sys.dlerror(handle));
         }
+    } else {
+        ucm_etrace ("%s - %s\n", filename, _("this library isn't plugin"));
     }
     UniAPI->sys.dlclose (handle);
     return module;
