@@ -1,5 +1,5 @@
 project ('uv', 'c',
-         version: '1.25.0',
+         version: '1.26.1',
          license: 'BSD license',
          default_options:[
             'c_std=gnu89'
