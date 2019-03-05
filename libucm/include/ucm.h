@@ -10,6 +10,8 @@
 #include <limits.h>
 #include <wchar.h>
 
+#include "osal.h"
+
 #if defined (ENABLE_CUSTOM_LIBS)
     #include "uv.h"
 #else
@@ -163,7 +165,8 @@ typedef enum _ucm_status_return_e {
     UCM_RET_DUPLICATE,
     UCM_RET_BUSY,
     UCM_RET_INVALID,
-    UCM_RET_BADVERSION
+    UCM_RET_BADVERSION,
+    UCM_RET_DBERROR
 } UCM_RET;
 
 enum {
@@ -191,7 +194,6 @@ enum {
     UCM_LOOP_SYSTEM  = 0,
     UCM_LOOP_NETWORK = 1
 };
-
 // *********************************************************
 //      BASE STRUCTURES
 // *********************************************************
@@ -397,7 +399,7 @@ typedef struct {
     ucm_plugin_t core;
 
     // technical db functionality
-    UCM_RET   (*db_open)  (char* file, uint32_t flags);
+    UCM_RET   (*db_open)  (const char* file, uint32_t flags);
     UCM_RET   (*db_check) (void);
     UCM_RET   (*db_flush) (void);
     UCM_RET   (*db_close) (void);

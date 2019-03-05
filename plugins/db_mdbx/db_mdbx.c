@@ -71,8 +71,8 @@ _message(uint32_t id,
 // ######################################################################
 
 static UCM_RET
-mdbx_db_open  (char*    file,
-               uint32_t flags)
+mdbx_db_open  (const char*  file,
+               uint32_t     flags)
 {
     int ret = UCM_RET_SUCCESS;
 

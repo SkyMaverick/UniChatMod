@@ -135,12 +135,12 @@ db_open (db_object_t* db)
         return UCM_RET_INVALID;
 
     // TODO Windows compatibility
-    if (app->sys.os_access (db->faPath, 0)) {
+    if (app->uv.fs_access (NULL,db->faPath, R_OK | W_OK, NULL)) {
         // Don't exists file
+        trace_err ("%s - %s: %d\n", "Don't access file", db->faPath, app->sys.os_errno());
+        return UCM_RET_NOACCESS;    
     } else {
         // Exists file
-        trace_err ("%s - %s: %d\n", "Don't access file", db->faPath, app->sys.os_errno());
-        return UCM_RET_NOACCESS;
     }
 
 //    if ( access(db->faPath, F_OK) < 0) {

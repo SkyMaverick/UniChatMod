@@ -10,8 +10,8 @@ typedef struct {
 static ucm_db_t db;
 
 UCM_RET
-db_open ( char*      aPath,
-          uint32_t   flags )
+db_open ( const char* aPath,
+          uint32_t    flags )
 {
     if (aPath == NULL)
         return UCM_RET_WRONGPARAM;
@@ -54,5 +54,3 @@ db_close (void)
     }
     return UCM_RET_SUCCESS;
 }
-
-

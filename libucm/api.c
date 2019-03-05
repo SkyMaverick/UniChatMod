@@ -10,8 +10,6 @@
 #include "unicode.h"
 #include "cpentupd.h"
 
-#include "osal.h"
-
 char ucm_path        [UCM_PATH_MAX];
 char ucm_path_store  [UCM_PATH_MAX];
 char ucm_path_plugs  [UCM_PATH_MAX];
