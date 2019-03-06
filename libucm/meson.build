@@ -12,7 +12,23 @@ libucm_src = files('''
     unicode.c
 '''.split())
 
-subdir ('osal')
+osal_src = []
+foreach src : '''
+                osal-dynlib.c
+                osal-dynlib.h
+                osal-fs.c
+                osal-fs.h
+                osal-intrnl.c
+                osal-intrnl.h
+                osal-memory.c
+                osal-memory.h
+                osal-system.c
+                osal-system.h
+                osal-threading.c
+                osal-threading.h
+              '''.split()
+    osal_src += 'osal' / src
+endforeach
 
 libucm_src += osal_src
 

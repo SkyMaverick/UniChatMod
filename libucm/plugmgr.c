@@ -10,7 +10,11 @@
 #include "defs.h"
 #include "api.h"
 
-#include <osal.h>
+#if defined (ENABLE_CUSTOM_LIBS)
+    #include "uv.h"
+#else
+    #include <uv.h>
+#endif
 
 typedef struct ucm_module_s {
     ucm_plugin_t* plugin;
@@ -224,7 +228,7 @@ __loaddir_cb (uv_fs_t* req)
             UniAPI->sys.rwlock_unlock(_lock);
         }
     }
-#if defined (AL_OS_WINDOWS) 
+#if defined (OS_WINDOWS) 
     UniAPI->uv.fs_close (&close_req, req->file.fd, NULL);
 #else
     UniAPI->uv.fs_close (&close_req, req->file, NULL);

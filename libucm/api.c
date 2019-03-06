@@ -10,6 +10,8 @@
 #include "unicode.h"
 #include "cpentupd.h"
 
+#include "osal/osal-intrnl.h"
+
 char ucm_path        [UCM_PATH_MAX];
 char ucm_path_store  [UCM_PATH_MAX];
 char ucm_path_plugs  [UCM_PATH_MAX];
@@ -298,7 +300,6 @@ static ucm_functions_t core_api = {
     .sys.dlsym                      = osal_dlsym             ,
     .sys.dlerror                    = osal_dlerror           ,
 
-    .sys.os_access                  = NULL                   ,
     .sys.os_errno                   = osal_errno             ,
 
     .sys.U8toU32                    = u8_decode_ucs4         ,

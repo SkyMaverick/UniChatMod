@@ -10,8 +10,6 @@
 #include <limits.h>
 #include <wchar.h>
 
-#include "osal.h"
-
 #if defined (ENABLE_CUSTOM_LIBS)
     #include "uv.h"
 #else
@@ -22,10 +20,88 @@
     extern "C" {
 #endif
 
+/* ************************************************** 
+    Operation System Abstraction Layer (OSAL)
+ ************************************************** */
+
+#if defined(__WIN32__) || defined(_WIN32) || defined(WIN32)
+    #  define OS_WIN32
+#elif defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64)
+    #  define OS_WIN64
+#elif defined(__linux) || defined(__linux__)
+    #  define OS_LINUX
+#elif defined(__ANDROID__)
+    #  define OS_ANDROID
+#elif defined(__MSYS__)
+    #  define OS_MSYS
+#elif defined(__CYGWIN__)
+    #  define OS_CYGWIN
+#elif defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
+    #  define OS_DARWIN
+#elif defined(__FreeBSD__)
+    #  define OS_FREEBSD
+    #  define OS_BSD4
+#elif defined(__DragonFly__)
+    #  define OS_DRAGONFLY
+    #  define OS_BSD4
+#elif defined(__NetBSD__)
+    #  define OS_NETBSD
+    #  define OS_BSD4
+#elif defined(__OpenBSD__)
+    #  define OS_OPENBSD
+    #  define OS_BSD4
+#else
+    #error "Unsupported build for this platform. \n Please add support this platform in OSAL functionality."
+#endif
+
+#if defined (OS_MSYS) || defined (OS_CYGWIN)
+    #define OS_WINEMULATOR
+#endif
+
+#if defined (OS_WIN32) || defined (OS_WIN64)
+    #define OS_WINDOWS
+#endif
+
+#if defined (OS_BSD4)    ||  \
+    defined (OS_DARWIN)  ||  \
+    defined (OS_LINUX)   ||  \
+    defined (OS_ANDROID) ||  \
+    defined (OS_CYGWIN)  ||  \
+    defined (OS_MSYS)        \
+
+    #define OS_POSIX
+#endif
+
+#if defined (OS_WINDOWS)
+    #define DYNLIB_SUFFIX ".dll"
+#elif defined (OS_DARWIN)
+    #define DYNLIB_SUFFIX ".dynlib"
+#else
+    #define DYNLIB_SUFFIX ".so"
+#endif
+
+#if defined (OS_POSIX)
+    #include <unistd.h>
+#endif
+
+/* ************************************************** 
+    ENDFOR Operation System Abstraction Layer (OSAL)
+ ************************************************** */
+
 #define ENABLE_WARN_DEPRECATED 1
 
 #define UCM_API_MAJOR_VER 1
 #define UCM_API_MINOR_VER 1
+
+#if (defined(__GNUC__) && (__GNUC__ > 2 && __GNUC_MINOR__ > 0)) || \
+    (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)
+
+    #define __likely(x) __builtin_expect(!!(x), 1)
+    #define __ulikely(x) __builtin_expect(!!(x), 0)
+#else
+    #define __likely(x) (x)
+    #define __ulikely(x) (x)
+#endif
 
 #if defined(__clang__)
     #define UCM_FUNC_DEPRECATED(x) __attribute__ ((deprecated(x)))
@@ -734,7 +810,6 @@ typedef struct _ucm_functions_s {
         uintptr_t   (*dlsym)            (uintptr_t lib, const char* sym);
         const char* (*dlerror)          (uintptr_t lib);
 
-        int         (*os_access)        (const char* path, int mode);
         int         (*os_errno)         (void);
         /* Unicode operations. USC4 and convertors */
         int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);

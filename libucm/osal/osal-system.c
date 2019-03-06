@@ -1,4 +1,3 @@
-#include "osal.h"
 #include "osal-intrnl.h"
 
 int

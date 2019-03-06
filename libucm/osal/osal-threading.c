@@ -1,4 +1,4 @@
-#include "osal.h"
+#include "osal-intrnl.h"
 
 enum {
     OSAL_RWLMODE_IDLE  = 0,
@@ -37,9 +37,9 @@ void*
 osal_thread_exit (void)
 {
     void* ret = NULL;
-#if defined (AL_OS_WINDOWS)
+#if defined (OS_WINDOWS)
     _endthreadex(0);
-#elif defined (AL_OS_POSIX)
+#elif defined (OS_POSIX)
     pthread_exit(ret);
 #else
     #warning "Don't define for this platform. Create dummy function"
