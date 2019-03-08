@@ -11,18 +11,15 @@
     extern "C" {
 #endif
 
-extern const ucm_functions_t* app;
-extern const ucm_plugdb_t* pldb;
-
 #define DBSYS_VERSION_MAJOR 0
 #define DBSYS_VERSION_MINOR 1
 
 #define DBSYS_VERSION   DBSYS_VERSION_MAJOR##'.'##DBSYS_VERSION_MINOR
 #define DBSYS_HEADER_SIGNATURE 0x4DBAC0DE
 
-#define trace_dbg(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
-#define trace_err(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&pldb), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
+#define trace_dbg(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&UniDB), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
+#define trace_inf(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&UniDB), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
+#define trace_err(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&UniDB), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
 
 #define ucm_free_null(X)    \
     do {                    \
@@ -60,6 +57,7 @@ typedef struct {
 } db_header_t;
 
 typedef struct {
+    const ucm_plugdb_t  plugin;
     struct {
         MDBX_env*       env;
         MDBX_txn*       txn_ro;
@@ -97,11 +95,11 @@ typedef struct {
 
     db_header_t header;
 
+
+
     uintptr_t   mtx;
     uint32_t    flags;
-    
-    char        faPath [1];
-} db_object_t;
+} mdbx_database_t;
 
 #define DBTABLE_NAME_GLOBAL     "global"
 #define DBTABLE_NAME_SETTINGS   "settings"
@@ -110,10 +108,10 @@ typedef struct {
 #define DBTABLE_NAME_LOGS       "logs"
 
 extern const ucm_functions_t* app;
-extern db_object_t* UCM_DB;
+extern mdbx_database_t* UniDB;
 
 static inline MDBX_txn*
-StartTxn (db_object_t* db)
+StartTxn (mdbx_database_t* db)
 {
     MDBX_txn *res = 0;
     int rc = mdbx_txn_begin (

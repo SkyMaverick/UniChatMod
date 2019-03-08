@@ -3,10 +3,8 @@ plug_name = 'db_mdbx'
 db_mdbx_src = files('''
     db_mdbx.h
     db_mdbx.c
-    db_mdbx_api.c
-    db_mdbx_api.h
-    db_mdbx_base.h
-    db_mdbx_base.c
+    mdbx_core.c
+    mdbx_core.h
 '''.split()) + shared_headers
 
 db_mdbx_dep = [

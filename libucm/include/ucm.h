@@ -475,10 +475,10 @@ typedef struct {
     ucm_plugin_t core;
 
     // technical db functionality
-    UCM_RET   (*db_open)  (const char* file, uint32_t flags);
-    UCM_RET   (*db_check) (void);
-    UCM_RET   (*db_flush) (void);
-    UCM_RET   (*db_close) (void);
+    UCM_RET     (*db_open)  (const char* file, uint32_t flags);
+    UCM_RET     (*db_check) (void);
+    UCM_RET     (*db_flush) (void);
+    UCM_RET     (*db_close) (void);
 
     // hight-level API. Use app structures config with one API function
     ucm_dbval_t* (*get_setting) (HCONTACT       contact,
