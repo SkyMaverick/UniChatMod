@@ -5,7 +5,6 @@ VERSION=$2
 
 PWD=`pwd`
 ARCH=$(uname -m)
-OS=$(uname -o)
 
 if [[ "$ARCH" == "i686" ]]; then
     DEB_ARCH=i386
