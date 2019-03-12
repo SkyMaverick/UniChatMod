@@ -98,6 +98,17 @@ def move_with_replace (file, path):
     else:
         shutil.move (file, path)
 
+def copytree2 (src, dst):
+    if not os.path.exists (dst):
+        os.makedirs (dst)
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, False, None)
+        else:
+            shutil.copy(s, d)
+
 package_name = project_name +'-' \
                 + platform.system().lower() + '_'\
                 + platform.architecture()[0].lower()
@@ -204,6 +215,30 @@ def action_deb ():
                 os.chdir (path_script)
                 return 1
 
+def action_shell ():
+    if (action_bundle () != 0):
+        return 1
+    open_all (path_build_root)
+    path_shconf = os.path.join (path_script, 'tools', 'packages', 'shell')
+    if os.path.exists (path_bundle):
+        if platform.system().lower() == 'linux':
+            if not os.path.exists (path_packages):
+                os.makedirs (path_packages)
+            path_tmpsh = os.path.join (path_temp, 'shell')
+            remove_dir (path_tmpsh)
+            copytree2 (path_shconf, path_tmpsh)
+            copytree2 (path_bundle, path_tmpsh)
+            os.chdir (path_tmpsh)
+            if (shell_cmd (os.path.join(path_tmpsh,'build.sh'), \
+                        path_packages,
+                        project_name, \
+                        project_version) == 0):
+                os.chdir (path_script)
+                return 0
+            else:
+                os.chdir (path_script)
+                return 1
+
 
 def action_dummy ():
     info ("Run dummy function for test")
@@ -226,7 +261,8 @@ actions = {
         'docker_hub'        : action_dockerhub,
         'bundle'            : action_bundle,
         'pack_arc'          : action_arcxz,
-        'pack_deb'          : action_deb
+        'pack_deb'          : action_deb,
+        'pack_sh'           : action_shell
 }
 
 # ==================================================

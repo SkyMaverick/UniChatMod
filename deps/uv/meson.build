@@ -219,7 +219,7 @@ foreach arg : uv_cflags
 endforeach
 uv_dep = []
 foreach dep : uv_libraries
-    uv_dep += cc.find_library(dep, required: 'true')
+    uv_dep += cc.find_library(dep, required: true)
 endforeach
 
 uv_includes = include_directories ([

@@ -113,6 +113,7 @@ case $1 in
     DEPLOY)
         docker exec -ti ${CI_NAME} ./run.py pack_arc
         docker exec -ti ${CI_NAME} ./run.py pack_deb
+        docker exec -ti ${CI_NAME} ./run.py pack_sh
         ${CI_SF_UPLOADER}
     ;;
     CLEANUP)
