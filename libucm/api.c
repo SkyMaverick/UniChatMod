@@ -152,12 +152,6 @@ static ucm_functions_t core_api = {
     .uv.idle_stop                   = uv_idle_stop                   ,
     .uv.async_init                  = uv_async_init                  ,
     .uv.async_send                  = uv_async_send                  ,
-    .uv.timer_init                  = uv_timer_init                  ,
-    .uv.timer_start                 = uv_timer_start                 ,
-    .uv.timer_stop                  = uv_timer_stop                  ,
-    .uv.timer_again                 = uv_timer_again                 ,
-    .uv.timer_set_repeat            = uv_timer_set_repeat            ,
-    .uv.timer_get_repeat            = uv_timer_get_repeat            ,
     .uv.getaddrinfo                 = uv_getaddrinfo                 ,
     .uv.freeaddrinfo                = uv_freeaddrinfo                ,
     .uv.getnameinfo                 = uv_getnameinfo                 ,
@@ -299,6 +293,13 @@ static ucm_functions_t core_api = {
     .sys.dlclose                    = osal_dlclose           ,
     .sys.dlsym                      = osal_dlsym             ,
     .sys.dlerror                    = osal_dlerror           ,
+    
+    .sys.timer_init                 = osal_timer_init        ,
+    .sys.timer_start                = osal_timer_start       ,
+    .sys.timer_stop                 = osal_timer_stop        ,
+    .sys.timer_again                = osal_timer_again       ,
+    .sys.timer_set_repeat           = osal_timer_set_repeat  ,
+    .sys.timer_get_repeat           = osal_timer_get_repeat  ,
 
     .sys.os_errno                   = osal_errno             ,
 

@@ -165,6 +165,5 @@ mdbx_db_close (void)
 UCM_RET
 mdbx_db_flush (void)
 {
-    mdbx_core
     return UCM_RET_SUCCESS;
 }

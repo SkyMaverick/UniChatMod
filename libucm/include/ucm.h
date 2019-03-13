@@ -652,12 +652,6 @@ typedef struct _ucm_functions_s {
         int             (*idle_stop)                     (uv_idle_t* idle);
         int             (*async_init)                    (uv_loop_t*, uv_async_t* async, uv_async_cb async_cb);
         int             (*async_send)                    (uv_async_t* async);
-        int             (*timer_init)                    (uv_loop_t*, uv_timer_t* handle);
-        int             (*timer_start)                   (uv_timer_t* handle, uv_timer_cb cb, uint64_t timeout, uint64_t repeat);
-        int             (*timer_stop)                    (uv_timer_t* handle);
-        int             (*timer_again)                   (uv_timer_t* handle);
-        void            (*timer_set_repeat)              (uv_timer_t* handle, uint64_t repeat);
-        uint64_t        (*timer_get_repeat)              (const uv_timer_t* handle);
         int             (*getaddrinfo)                   (uv_loop_t* loop, uv_getaddrinfo_t* req, uv_getaddrinfo_cb getaddrinfo_cb, const char* node, const char* service, const struct addrinfo* hints);
         void            (*freeaddrinfo)                  (struct addrinfo* ai);
         int             (*getnameinfo)                   (uv_loop_t* loop, uv_getnameinfo_t* req, uv_getnameinfo_cb getnameinfo_cb, const struct sockaddr* addr, int flags);
@@ -804,6 +798,13 @@ typedef struct _ucm_functions_s {
         uintptr_t   (*dlsym)            (uintptr_t lib, const char* sym);
         const char* (*dlerror)          (uintptr_t lib);
 
+        int         (*timer_init)       (uintptr_t handle);
+        int         (*timer_start)      (uintptr_t handle, uv_timer_cb cb, uint64_t timeout, uint64_t repeat);
+        int         (*timer_stop)       (uintptr_t handle);
+        int         (*timer_again)      (uintptr_t handle);
+        void        (*timer_set_repeat) (uintptr_t handle, uint64_t repeat);
+        uint64_t    (*timer_get_repeat) (const uintptr_t handle);
+        
         int         (*os_errno)         (void);
         /* Unicode operations. USC4 and convertors */
         int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);

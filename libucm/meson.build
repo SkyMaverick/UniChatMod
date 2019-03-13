@@ -26,6 +26,8 @@ foreach src : '''
                 osal-system.h
                 osal-threading.c
                 osal-threading.h
+                osal-timers.c
+                osal-timers.h
               '''.split()
     osal_src += 'osal' / src
 endforeach
