@@ -11,6 +11,8 @@
     extern "C" {
 #endif
 
+extern const ucm_functions_t* app;
+
 #define DBSYS_VERSION_MAJOR 0
 #define DBSYS_VERSION_MINOR 1
 
@@ -95,20 +97,19 @@ typedef struct {
 
     db_header_t header;
 
-
-
     uintptr_t   mtx;
     uint32_t    flags;
 } mdbx_database_t;
 
+extern mdbx_database_t* UniDB;
+
 #define DBTABLE_NAME_GLOBAL     "global"
 #define DBTABLE_NAME_SETTINGS   "settings"
+#define DBTABLE_NAME_CRIPTO     "cripto"
 #define DBTABLE_NAME_EVENTS     "events"
 #define DBTABLE_NAME_CONTACTS   "contacts"
 #define DBTABLE_NAME_LOGS       "logs"
 
-extern const ucm_functions_t* app;
-extern mdbx_database_t* UniDB;
 
 static inline MDBX_txn*
 StartTxn (mdbx_database_t* db)

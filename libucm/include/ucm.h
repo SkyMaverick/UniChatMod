@@ -261,12 +261,6 @@ enum {
 };
 
 enum {
-    UCM_TYPE_DIROBJ_DIR     = 1,
-    UCM_TYPE_DIROBJ_FILE    = 2,
-    UCM_TYPE_DIROBJ_OTHER   = 3
-};
-
-enum {
     UCM_LOOP_SYSTEM  = 0,
     UCM_LOOP_NETWORK = 1
 };
