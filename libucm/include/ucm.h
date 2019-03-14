@@ -22,65 +22,166 @@
 
 /* ************************************************** 
     Operation System Abstraction Layer (OSAL)
- ************************************************** */
+   ************************************************** */
+
+// *** OPERATING SYSTEM MACRO ****************************************
 
 #if defined(__WIN32__) || defined(_WIN32) || defined(WIN32)
-    #  define OS_WIN32
+    #  define UCM_OS_WIN32
 #elif defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64)
-    #  define OS_WIN64
+    #  define UCM_OS_WIN64
 #elif defined(__linux) || defined(__linux__)
-    #  define OS_LINUX
+    #  define UCM_OS_LINUX
 #elif defined(__ANDROID__)
-    #  define OS_ANDROID
+    #  define UCM_OS_ANDROID
 #elif defined(__MSYS__)
-    #  define OS_MSYS
+    #  define UCM_OS_MSYS
 #elif defined(__CYGWIN__)
-    #  define OS_CYGWIN
+    #  define UCM_OS_CYGWIN
 #elif defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
-    #  define OS_DARWIN
+    #  define UCM_OS_DARWIN
 #elif defined(__FreeBSD__)
-    #  define OS_FREEBSD
-    #  define OS_BSD4
+    #  define UCM_OS_FREEBSD
+    #  define UCM_OS_BSD4
 #elif defined(__DragonFly__)
-    #  define OS_DRAGONFLY
-    #  define OS_BSD4
+    #  define UCM_OS_DRAGONFLY
+    #  define UCM_OS_BSD4
 #elif defined(__NetBSD__)
-    #  define OS_NETBSD
-    #  define OS_BSD4
+    #  define UCM_OS_NETBSD
+    #  define UCM_OS_BSD4
 #elif defined(__OpenBSD__)
-    #  define OS_OPENBSD
-    #  define OS_BSD4
+    #  define UCM_OS_OPENBSD
+    #  define UCM_OS_BSD4
 #else
     #error "Unsupported build for this platform. \n Please add support this platform in OSAL functionality."
 #endif
 
-#if defined (OS_MSYS) || defined (OS_CYGWIN)
-    #define OS_WINEMULATOR
+#if defined (UCM_OS_MSYS) || defined (UCM_OS_CYGWIN)
+    #define UCM_OS_WINEMULATOR
 #endif
 
-#if defined (OS_WIN32) || defined (OS_WIN64)
-    #define OS_WINDOWS
+#if defined (UCM_OS_WIN32) || defined (UCM_OS_WIN64)
+    #define UCM_OS_WINDOWS
 #endif
 
-#if defined (OS_BSD4)    ||  \
-    defined (OS_DARWIN)  ||  \
-    defined (OS_LINUX)   ||  \
-    defined (OS_ANDROID) ||  \
-    defined (OS_CYGWIN)  ||  \
-    defined (OS_MSYS)        \
+#if defined (UCM_OS_BSD4)    ||  \
+    defined (UCM_OS_DARWIN)  ||  \
+    defined (UCM_OS_LINUX)   ||  \
+    defined (UCM_OS_ANDROID) ||  \
+    defined (UCM_OS_CYGWIN)  ||  \
+    defined (UCM_OS_MSYS)        \
 
-    #define OS_POSIX
+    #define UCM_OS_POSIX
 #endif
 
-#if defined (OS_WINDOWS)
+// *** COMPILATOR MACRO ****************************************
+
+#if defined(_MSC_VER)
+    #define UCM_CC_MSVC
+    #if defined(__INTEL_COMPILER)
+        #define UCM_CC_INTEL
+    #endif
+    #if defined(__clang__)
+        #define UCM_CC_CLANG
+    #endif
+#elif defined(__GNUC__)
+    #define UCM_CC_GNU
+    #if defined(__MINGW32__)
+        #define UCM_CC_MINGW
+    #endif
+    #if defined(__INTEL_COMPILER)
+        #define UCM_CC_INTEL
+    #endif
+    #if defined(__clang__)
+        #define UCM_CC_CLANG
+    #endif
+    #if defined(_CRAYC)
+        #define UCM_CC_CRAY
+    #endif
+#elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+    #define UCM_CC_SUN
+#elif defined(__xlc__) || defined(__xlC__)
+    #define UCM_CC_XLC
+#elif defined(__HP_cc) || defined(__HP_aCC)
+    #define UCM_CC_HP
+#elif defined (__DECC) || defined(__DECCXX)
+    #define UCM_CC_DEC
+#elif (defined(__sgi) || defined(sgi)) && \
+      (defined(_COMPILER_VERSION) || defined(_SGI_COMPILER_VERSION))
+    #define UCM_CC_MIPS
+#elif defined(__USLC__) && defined(__SCO_VERSION__)
+    #define UCM_CC_USLC
+#elif defined(__WATCOMC__)
+    #define UCM_CC_WATCOM
+#elif defined(__BORLANDC__)
+    #define UCM_CC_BORLAND
+#elif defined(__INTEL_COMPILER)
+    #define UCM_CC_INTEL
+#elif defined(__PGI)
+    #define UCM_CC_PGI
+#elif defined(_CRAYC)
+    #define UCM_CC_CRAY
+#endif
+
+/* We need this to generate full Doxygen documentation */
+
+#ifdef DOXYGEN
+#  ifndef P_CC_MSVC
+#    define P_CC_MSVC
+#  endif
+#  ifndef P_CC_GNU
+#    define P_CC_GNU
+#  endif
+#  ifndef P_CC_MINGW
+#    define P_CC_MINGW
+#  endif
+#  ifndef P_CC_INTEL
+#    define P_CC_INTEL
+#  endif
+#  ifndef P_CC_CLANG
+#    define P_CC_CLANG
+#  endif
+#  ifndef P_CC_SUN
+#    define P_CC_SUN
+#  endif
+#  ifndef P_CC_XLC
+#    define P_CC_XLC
+#  endif
+#  ifndef P_CC_HP
+#    define P_CC_HP
+#  endif
+#  ifndef P_CC_DEC
+#    define P_CC_DEC
+#  endif
+#  ifndef P_CC_MIPS
+#    define P_CC_MIPS
+#  endif
+#  ifndef P_CC_USLC
+#    define P_CC_USLC
+#  endif
+#  ifndef P_CC_WATCOM
+#    define P_CC_WATCOM
+#  endif
+#  ifndef P_CC_BORLAND
+#    define P_CC_BORLAND
+#  endif
+#  ifndef P_CC_PGI
+#    define P_CC_PGI
+#  endif
+#  ifndef P_CC_CRAY
+#    define P_CC_CRAY
+#  endif
+#endif
+
+#if defined (UCM_OS_WINDOWS)
     #define DYNLIB_SUFFIX ".dll"
-#elif defined (OS_DARWIN)
+#elif defined (UCM_OS_DARWIN)
     #define DYNLIB_SUFFIX ".dynlib"
 #else
     #define DYNLIB_SUFFIX ".so"
 #endif
 
-#if defined (OS_POSIX)
+#if defined (UCM_OS_POSIX)
     #include <unistd.h>
 #endif
 

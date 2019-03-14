@@ -16,7 +16,7 @@ osal_run (int loop, uv_run_mode mode)
 int
 osal_errno ()
 {
-#if defined (AL_OS_WINDOWS)
+#if defined (UCM_OS_WINDOWS)
     return GetLastError();
 #else
     return errno;

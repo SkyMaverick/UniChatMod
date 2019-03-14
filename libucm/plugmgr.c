@@ -228,7 +228,7 @@ __loaddir_cb (uv_fs_t* req)
             UniAPI->sys.rwlock_unlock(_lock);
         }
     }
-#if defined (OS_WINDOWS) 
+#if defined (UCM_OS_WINDOWS) 
     UniAPI->uv.fs_close (&close_req, req->file.fd, NULL);
 #else
     UniAPI->uv.fs_close (&close_req, req->file, NULL);

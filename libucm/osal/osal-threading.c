@@ -37,9 +37,9 @@ void*
 osal_thread_exit (void)
 {
     void* ret = NULL;
-#if defined (OS_WINDOWS)
+#if defined (UCM_OS_WINDOWS)
     _endthreadex(0);
-#elif defined (OS_POSIX)
+#elif defined (UCM_OS_POSIX)
     pthread_exit(ret);
 #else
     #warning "Don't define for this platform. Create dummy function"
