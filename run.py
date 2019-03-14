@@ -169,7 +169,17 @@ def action_dockerhub ():
 
 def action_bundle ():
     info ('Create application bundle in: {path}'.format(path=path_bundle))
-    return ninja_cmd('install')
+    if platform.system().lower() == 'windows':
+        if ninja_cmd('install') == 0:
+            for root, dirs, files in os.walk (path_bundle):
+               for item in files:
+                   if item.endswith('.lib'):
+                       os.remove ( os.path.join(root, item) )
+            return 0
+        else:
+            return 1
+    else:
+        return ninja_cmd('install')
 
 def action_arcxz ():
     action_bundle ()
@@ -229,9 +239,9 @@ def action_shell ():
             copytree2 (path_shconf, path_tmpsh)
             copytree2 (path_bundle, path_tmpsh)
             os.chdir (path_tmpsh)
-            if (shell_cmd (os.path.join(path_tmpsh,'build.sh'), \
-                        path_packages,
-                        project_name, \
+            if (shell_cmd (os.path.join(path_tmpsh,'build.sh'),     \
+                        path_packages,                              \
+                        project_name,                               \
                         project_version) == 0):
                 os.chdir (path_script)
                 return 0
@@ -239,6 +249,29 @@ def action_shell ():
                 os.chdir (path_script)
                 return 1
 
+def action_7z ():
+    if (action_bundle () != 0):
+        return 1
+    open_all (path_build_root)
+    path_bat = os.path.join (path_script, 'tools', 'packages', '7z')
+    if os.path.exists (path_bundle):
+        if platform.system().lower() == 'windows':
+            if not os.path.exists (path_packages):
+                os.makedirs (path_packages)
+            path_tmpsfx = os.path.join (path_temp, '7z')
+            remove_dir (path_tmpsfx)
+            copytree2 (path_bat, path_tmpsfx)
+            copytree2 (path_bundle, path_tmpsfx)
+            os.chdir (path_tmpsfx)
+            if (shell_cmd (os.path.join(path_tmpsfx,'build.bat'),   \
+                        path_packages,                              \
+                        project_name,                               \
+                        project_version) == 0):
+                os.chdir (path_script)
+                return 0
+            else:
+                os.chdir (path_script)
+                return 1
 
 def action_dummy ():
     info ("Run dummy function for test")
@@ -262,7 +295,8 @@ actions = {
         'bundle'            : action_bundle,
         'pack_arc'          : action_arcxz,
         'pack_deb'          : action_deb,
-        'pack_sh'           : action_shell
+        'pack_sh'           : action_shell,
+        'pack_7z'           : action_7z
 }
 
 # ==================================================
