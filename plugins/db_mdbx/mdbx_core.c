@@ -14,7 +14,7 @@
 #include "db_mdbx.h"
 #include "mdbx_core.h"
 
-static int 
+static int
 __log_cmp_helper (const MDBX_val* a,
                   const MDBX_val* b)
 {
@@ -114,7 +114,7 @@ __mdbx_load (void)
                     UniDB->header.version   = MakeLong (DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
                     data.iov_base = &(UniDB->header), data.iov_len = sizeof(db_header_t);
                     if ( mdbx_put(txn_tmp, UniDB->mdbx.dbi_global, &key, &data, 0) == MDBX_SUCCESS ) {
-                        mdbx_db_flush ();
+                        mdbx_db_flush (true);
                     } else {
                         trace_err ("%s: %s\n", "Create database error", mdbx_strerror(errno));
                         return UCM_RET_EXCEPTION;
@@ -141,29 +141,63 @@ __mdbx_load (void)
 return UCM_RET_SUCCESS;
 }
 
+static inline void
+__dbcore_release (void)
+{
+    if (UniDB->sys.mtx)
+        app->sys.rwlock_free (UniDB->sys.mtx);
+    if (UniDB->sys.clk_flush)
+        app->sys.timer_release (UniDB->sys.clk_flush);
+}
+
+static inline UCM_RET
+__dbcore_init (void)
+{
+    if ( ( (UniDB->sys.mtx = app->sys.rwlock_create()) == 0 ) &&
+         ( (UniDB->sys.clk_flush = app->sys.timer_create()) == 0 )
+       ) {
+            __dbcore_release();
+            return UCM_RET_NONALLOC;
+       }
+    return UCM_RET_SUCCESS;
+}
+
+/* ==================================================
+        Core API implementation
+   ================================================== */
+
 UCM_RET
 mdbx_db_open  (const char*  file,
                uint32_t     flags)
 {
     UNUSED (file);
-    // TODO
-    UniDB->flags |= flags;
-    if (__mdbx_map() != UCM_RET_SUCCESS)
-        return UCM_RET_NOOBJECT;
-    if (__mdbx_load() != UCM_RET_SUCCESS)
+    if (__dbcore_init() == UCM_RET_SUCCESS) {
+        //if app->uv.fs_open()
+        // TODO
+        UniDB->flags |= flags;
+        if (__mdbx_map() != UCM_RET_SUCCESS)
+            return UCM_RET_NOOBJECT;
+        if (__mdbx_load() != UCM_RET_SUCCESS)
+            return UCM_RET_DBERROR;
+
+        return UCM_RET_SUCCESS;
+    } else {
         return UCM_RET_DBERROR;
-    return UCM_RET_SUCCESS;
+    }
 }
 
 UCM_RET
 mdbx_db_close (void)
 {
     // TODO
+    __dbcore_release();
     return UCM_RET_SUCCESS;
 }
 
-UCM_RET
-mdbx_db_flush (void)
+void
+mdbx_db_flush (bool force)
 {
-    return UCM_RET_SUCCESS;
+    if (force) {
+        mdbx_env_sync (UniDB->mdbx.env, true);
+    }
 }

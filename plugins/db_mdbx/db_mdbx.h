@@ -96,8 +96,12 @@ typedef struct {
     } contacts;
 
     db_header_t header;
+    
+    struct {
+        uintptr_t mtx;
+        uintptr_t clk_flush;
+    } sys;
 
-    uintptr_t   mtx;
     uint32_t    flags;
 } mdbx_database_t;
 
