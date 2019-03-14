@@ -49,7 +49,7 @@ UCM_RET
 db_close (void)
 {
     if (db.worker) {
-        db.worker->db_flush();
+        db.worker->db_flush(true);
         db.worker->db_close();
     }
     return UCM_RET_SUCCESS;

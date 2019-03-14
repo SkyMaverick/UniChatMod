@@ -471,7 +471,7 @@ typedef struct {
     // technical db functionality
     UCM_RET     (*db_open)  (const char* file, uint32_t flags);
     UCM_RET     (*db_check) (void);
-    UCM_RET     (*db_flush) (void);
+    void        (*db_flush) (bool force);
     UCM_RET     (*db_close) (void);
 
     // hight-level API. Use app structures config with one API function
@@ -798,12 +798,13 @@ typedef struct _ucm_functions_s {
         uintptr_t   (*dlsym)            (uintptr_t lib, const char* sym);
         const char* (*dlerror)          (uintptr_t lib);
 
-        int         (*timer_init)       (uintptr_t handle);
+        uintptr_t   (*timer_create)     (void);
         int         (*timer_start)      (uintptr_t handle, uv_timer_cb cb, uint64_t timeout, uint64_t repeat);
         int         (*timer_stop)       (uintptr_t handle);
         int         (*timer_again)      (uintptr_t handle);
         void        (*timer_set_repeat) (uintptr_t handle, uint64_t repeat);
         uint64_t    (*timer_get_repeat) (const uintptr_t handle);
+        void        (*timer_release)    (uintptr_t handle);
         
         int         (*os_errno)         (void);
         /* Unicode operations. USC4 and convertors */
