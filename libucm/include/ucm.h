@@ -192,15 +192,15 @@
 #endif
 
 #ifndef __ucm_export
-    #if defined(_WIN32) || defined(__CYGWIN__)
-        #if defined(__GNUC__) || __has_attribute(dllexport)
+    #if defined(UCM_OS_WINDOWS) || defined(UCM_OS_WINEMULATOR)
+        #if defined(UCM_CC_GNU) || __has_attribute(dllexport)
             #define __ucm_export __attribute__((dllexport))
-        #elif defined(_MSC_VER)
+        #elif defined(UCM_CC_MSVC)
             #define __ucm_export __declspec(dllexport)
         #else
             #define __ucm_export
         #endif
-    #elif defined(__GNUC__) || __has_attribute(visibility)
+    #elif defined(UCM_CC_GNU) || __has_attribute(visibility)
         #define __ucm_export __attribute__((visibility("default")))
     #else
         #define __ucm_export
@@ -208,10 +208,10 @@
 #endif /* __ucm_export */
 
 #ifndef __ucm_import
-    #if defined(_WIN32) || defined(__CYGWIN__)
-        #if defined(__GNUC__) || __has_attribute(dllimport)
+    #if defined(UCM_OS_WINDOWS) || defined(UCM_OS_WINEMULATOR)
+        #if defined(UCM_CC_GNU) || __has_attribute(dllimport)
             #define __ucm_import __attribute__((dllimport))
-        #elif defined(_MSC_VER)
+        #elif defined(UCM_CC_MSVC)
             #define __ucm_import __declspec(dllimport)
         #else
             #define __ucm_import

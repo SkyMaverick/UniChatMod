@@ -131,13 +131,3 @@ libucm = shared_library (meson.project_name(),
                           install_rpath: libs_rpath,
                           install: true,
                           install_dir: install_path_root)
-if target_machine.system() == 'windows'
-    libucm_lib = static_library (meson.project_name(),
-                                 libucm_src,
-                                 dependencies: libucm_deps,
-                                 include_directories: libucm_inc,
-                                 build_rpath: libs_rpath,
-                                 install_rpath: libs_rpath,
-                                 install: true,
-                                 install_dir: install_path_root)
-endif
