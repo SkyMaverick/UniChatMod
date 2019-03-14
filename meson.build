@@ -9,24 +9,24 @@ project ('ucm', 'c',
 message ('Build configuration - @0@'.format(get_option('buildtype')))
 
 cc = meson.get_compiler('c')
+# --- compiler preferences ----------
+if get_option('buildtype').startswith('debug')
+    add_project_arguments ('-DDEBUG', language: 'c')
+endif
+if get_option('enable_traces')
+    add_project_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
+endif
+if get_option('build_bundle')
+    add_project_arguments ('-DENABLE_BUNDLE', language: 'c')
+endif
+if get_option('build_with_hidden_api')
+    add_project_arguments ('-DLIBUCM_EXPORTS', language: 'c')
+endif
+if get_option('valgrind_support')
+    add_project_arguments ('-DENABLE_VALGRIND', language: 'c')
+endif
 
 if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
-    # --- compiler preferences ----------
-    if get_option('buildtype').startswith('debug')
-        add_project_arguments ('-DDEBUG', language: 'c')
-    endif
-    if get_option('enable_traces')
-        add_project_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
-    endif
-    if get_option('build_bundle')
-        add_project_arguments ('-DENABLE_BUNDLE', language: 'c')
-    endif
-    if get_option('build_with_hidden_api')
-        add_project_arguments ('-DLIBUCM_EXPORTS', language: 'c')
-    endif
-    if get_option('valgrind_support')
-        add_project_arguments ('-DENABLE_VALGRIND', language: 'c')
-    endif
     
     add_project_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
     # --- compiler arguments ----------

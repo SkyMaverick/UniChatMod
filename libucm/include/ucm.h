@@ -123,56 +123,6 @@
     #define UCM_CC_CRAY
 #endif
 
-/* We need this to generate full Doxygen documentation */
-
-#ifdef DOXYGEN
-#  ifndef P_CC_MSVC
-#    define P_CC_MSVC
-#  endif
-#  ifndef P_CC_GNU
-#    define P_CC_GNU
-#  endif
-#  ifndef P_CC_MINGW
-#    define P_CC_MINGW
-#  endif
-#  ifndef P_CC_INTEL
-#    define P_CC_INTEL
-#  endif
-#  ifndef P_CC_CLANG
-#    define P_CC_CLANG
-#  endif
-#  ifndef P_CC_SUN
-#    define P_CC_SUN
-#  endif
-#  ifndef P_CC_XLC
-#    define P_CC_XLC
-#  endif
-#  ifndef P_CC_HP
-#    define P_CC_HP
-#  endif
-#  ifndef P_CC_DEC
-#    define P_CC_DEC
-#  endif
-#  ifndef P_CC_MIPS
-#    define P_CC_MIPS
-#  endif
-#  ifndef P_CC_USLC
-#    define P_CC_USLC
-#  endif
-#  ifndef P_CC_WATCOM
-#    define P_CC_WATCOM
-#  endif
-#  ifndef P_CC_BORLAND
-#    define P_CC_BORLAND
-#  endif
-#  ifndef P_CC_PGI
-#    define P_CC_PGI
-#  endif
-#  ifndef P_CC_CRAY
-#    define P_CC_CRAY
-#  endif
-#endif
-
 #if defined (UCM_OS_WINDOWS)
     #define DYNLIB_SUFFIX ".dll"
 #elif defined (UCM_OS_DARWIN)
@@ -242,15 +192,15 @@
 #endif
 
 #ifndef __ucm_export
-    #if defined(_WIN32) || defined(__CYGWIN__)
-        #if defined(__GNUC__) || __has_attribute(dllexport)
+    #if defined(UCM_OS_WINDOWS) || defined(UCM_OS_WINEMULATOR)
+        #if defined(UCM_CC_GNU) || __has_attribute(dllexport)
             #define __ucm_export __attribute__((dllexport))
-        #elif defined(_MSC_VER)
+        #elif defined(UCM_CC_MSVC)
             #define __ucm_export __declspec(dllexport)
         #else
             #define __ucm_export
         #endif
-    #elif defined(__GNUC__) || __has_attribute(visibility)
+    #elif defined(UCM_CC_GNU) || __has_attribute(visibility)
         #define __ucm_export __attribute__((visibility("default")))
     #else
         #define __ucm_export
@@ -258,10 +208,10 @@
 #endif /* __ucm_export */
 
 #ifndef __ucm_import
-    #if defined(_WIN32) || defined(__CYGWIN__)
-        #if defined(__GNUC__) || __has_attribute(dllimport)
+    #if defined(UCM_OS_WINDOWS) || defined(UCM_OS_WINEMULATOR)
+        #if defined(UCM_CC_GNU) || __has_attribute(dllimport)
             #define __ucm_import __attribute__((dllimport))
-        #elif defined(_MSC_VER)
+        #elif defined(UCM_CC_MSVC)
             #define __ucm_import __declspec(dllimport)
         #else
             #define __ucm_import
