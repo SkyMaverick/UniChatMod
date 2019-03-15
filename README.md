@@ -7,7 +7,7 @@ UniChatMod is a messanger (and a platform for creating new messengers) based on 
 * Now syntax check status (Coverity) [![Coverity Scan Build Status](https://scan.coverity.com/projects/17127/badge.svg)](https://scan.coverity.com/projects/skymaverick-unichatmod)
 
 ## Last builds
-Latest builds can be downloaded from [Sourсeforge service](https://sourceforge.net/projects/unicm/)
+Latest builds can be downloaded from [![Sourceforge](https://sourceforge.net/sflogo.php?type=13&group_id=3040954)](https://sourceforge.net/p/unicm/)
 ## Compiling and building
 
 The following instruction assume that commands are executed in UniChatMod repository folder
@@ -21,4 +21,4 @@ The following instruction assume that commands are executed in UniChatMod reposi
     * **test** - run test-bot application if checked option in meson config
     * **log** - view build-system log file (need if build failed)
     * **bundle** - build application bundle
-    * **pack_arc(deb)** - create packages
+    * **pack_arc(deb/sh/7z)** - create packages
