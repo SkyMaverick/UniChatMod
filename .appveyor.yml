@@ -1,13 +1,17 @@
 environment:
+  PACMAN_OPTIONS: "--needed --noconfirm --noprogressbar --overwrite"
+  PACMAN_INSTALL: "openssh rsync"
   matrix:
     - arch: x86
       compiler: msvc2015
+      ARCHID: x86
     - arch: x64
       compiler: msvc2015
+      ARCHID: x64
 
 branches:
   only:
-    - windows
+    - master
     - release
 
 platform:
@@ -22,6 +26,12 @@ install:
   - cmd: set PATH=%cd%;C:\ninja-build;%PYTHON_ROOT%;%PYTHON_ROOT%\Scripts;%PATH%
   - cmd: pip install meson
   - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
+  - cmd: echo %APPVEYOR_BUILD_FOLDER%
+#   Add SSH key in user path
+  - ps: $fileContent = "-----BEGIN RSA PRIVATE KEY-----`n"
+  - ps: $fileContent += $env:SSH_KEY.Replace(' ', "`n")
+  - ps: $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
+  - ps: Set-Content $env:APPVEYOR_BUILD_FOLDER\tools\appveyor\id_rsa $fileContent
 
 for:
 -
@@ -30,9 +40,14 @@ for:
       - release
 
   build_script:
-    - cmd: echo Building on %arch% with %compiler%
-    - cmd: run.py release
-    
+    - run.py release
+    - run.py pack_7z
+    - C:\msys64\usr\bin\pacman -Sy %PACMAN_OPTIONS% %PACMAN_INSTALL%  
+    - C:\msys64\usr\bin\bash --login -c "$(cygpath ${APPVEYOR_BUILD_FOLDER})/tools/appveyor/sfupload.sh $(cygpath ${APPVEYOR_BUILD_FOLDER})"
+
+
 build_script:
-  - cmd: echo Building on %arch% with %compiler%
-  - cmd: run.py debug
+  - run.py debug
+  - run.py pack_7z
+  - C:\msys64\usr\bin\pacman -Sy %PACMAN_OPTIONS% %PACMAN_INSTALL%  
+  - C:\msys64\usr\bin\bash --login -c "$(cygpath ${APPVEYOR_BUILD_FOLDER})/tools/appveyor/sfupload.sh $(cygpath ${APPVEYOR_BUILD_FOLDER})"

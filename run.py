@@ -173,7 +173,8 @@ def action_bundle ():
         if ninja_cmd('install') == 0:
             for root, dirs, files in os.walk (path_bundle):
                for item in files:
-                   if item.endswith('.lib'):
+                   if item.endswith('.lib') or \
+                      item.endswith('.pdb'):
                        os.remove ( os.path.join(root, item) )
             return 0
         else:
