@@ -25,6 +25,12 @@ __log_cmp_helper (const MDBX_val* a,
     return 0;
 }
 
+static inline int
+__create_file (char* fname)
+{
+    
+}
+
 static UCM_RET
 __mdbx_map (void)
 {

@@ -660,6 +660,8 @@ typedef struct _ucm_functions_s {
         int             (*udp_init_ex)                   (uv_loop_t*, uv_udp_t* handle, unsigned int flags);
         int             (*udp_open)                      (uv_udp_t* handle, uv_os_sock_t sock);
         int             (*udp_bind)                      (uv_udp_t* handle, const struct sockaddr* addr, unsigned int flags);
+        int             (*udp_connect)                   (uv_udp_t* handle, const struct sockaddr* addr);
+        int             (*udp_getpeername)               (const uv_udp_t* handle, struct sockaddr* name, int* namelen);
         int             (*udp_getsockname)               (const uv_udp_t* handle, struct sockaddr* name, int* namelen);
         int             (*udp_set_membership)            (uv_udp_t* handle, const char* multicast_addr, const char* interface_addr, uv_membership membership);
         int             (*udp_set_multicast_loop)        (uv_udp_t* handle, int on);
