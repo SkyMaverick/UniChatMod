@@ -20,8 +20,7 @@ echo   " RUN apt-get -y update && \ "
 echo   "     apt-get -y upgrade && \ "
 echo   "     apt-get install -y --no-install-recommends \ "
 echo   "     ${DEPENDS_CI_IMAGE} ${DEPENDS_UCM_APP} && \ "
-echo   "     rm -rf /var/lib/apt/lists/*  && \ "
-echo   "     rm -rf /var/cache/apt/archives/*  && \ "
+echo   "     apt-get clean && \ "
 
 echo   "     mkdir ninja && \ "
 echo   "     wget $NETFILE_NINJA && \ "
@@ -30,4 +29,10 @@ echo   "     rm -f ninja-linux.zip && \ "
 
 echo   "     sudo python3.5 -m pip install --upgrade pip && \ "
 echo   "     sudo python3.5 -m pip install meson && \ "
-echo   "     rm -rf /root/.cache/pip "
+
+echo   "     rm -rf /root/.cache/pip && \ "
+
+echo   "     rm -rf /var/lib/apt/lists/*  && \ "
+echo   "     rm -rf /var/cache/apt/archives/*  && \ "
+echo   "     rm -rf /tmp/*  && \ "
+echo   "     rm -rf /var/tmp/* "

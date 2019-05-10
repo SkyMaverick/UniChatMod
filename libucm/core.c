@@ -70,18 +70,18 @@ loop_core (void* ctx)
 static UCM_RET
 _stop_core (void)
 {
-
+    
     if (kernel.loop_ucore) {
         UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->sys.thread_join(kernel.loop_ucore);
         UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
     }
     
+    db_close ();
+
     plugins_stop_all();
 
     plugins_release_registry();
-
-    db_close ();
 
     free_ucm_entropy();
 
@@ -103,13 +103,16 @@ _run_core (void)
     log_init();
     init_ucm_entropy();
     
-    plugins_load_registry(UniAPI->app.get_plugins_path());
-    // TODO start uv_loop-s
     if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
         hooks_event_init ();
         kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
+    } else {
+        kernel.base.stop();
+        ucm_etrace("%s\n", _("Critical system error"));
+        return UCM_RET_NONALLOC;
     }
 
+    plugins_load_registry(UniAPI->app.get_plugins_path());
     plugins_run_all ();
 
     /*TODO UniAPI add state status */

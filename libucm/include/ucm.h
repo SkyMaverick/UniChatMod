@@ -325,8 +325,9 @@ enum {
     UCM_EVENT_RUN               = 1 << 0,
     UCM_EVENT_INFO              = 1 << 1,
     UCM_EVENT_LOAD_SUCCESS      = 1 << 2,
-    UCM_EVENT_START_GUI         = 1 << 3,
-    UCM_EVENT_START_GUI2        = 1 << 4
+    UCM_EVENT_DBLOAD_SUCCESS    = 1 << 3,
+    UCM_EVENT_START_GUI         = 1 << 4,
+    UCM_EVENT_START_GUI2        = 1 << 5
 };
 
 typedef struct {
@@ -524,6 +525,8 @@ typedef struct {
     UCM_RET     (*db_check) (void);
     void        (*db_flush) (bool force);
     UCM_RET     (*db_close) (void);
+
+    
 
     // hight-level API. Use app structures config with one API function
     ucm_dbval_t* (*get_setting) (HCONTACT       contact,

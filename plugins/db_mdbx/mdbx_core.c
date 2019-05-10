@@ -25,12 +25,6 @@ __log_cmp_helper (const MDBX_val* a,
     return 0;
 }
 
-static inline int
-__create_file (char* fname)
-{
-    
-}
-
 static UCM_RET
 __mdbx_map (void)
 {
@@ -168,6 +162,12 @@ __dbcore_init (void)
     return UCM_RET_SUCCESS;
 }
 
+//static void
+//__dbcore_load (uv_fs_t* req) {
+//    trace_dbg ("%s\n", "Open database callback");
+//    UniDB->flags ^= DB_FLAG_DONTCLOSE;
+//}
+//
 /* ==================================================
         Core API implementation
    ================================================== */
@@ -177,15 +177,18 @@ mdbx_db_open  (const char*  file,
                uint32_t     flags)
 {
     UNUSED (file);
-    if (__dbcore_init() == UCM_RET_SUCCESS) {
-        //if app->uv.fs_open()
-        // TODO
-        UniDB->flags |= flags;
-        if (__mdbx_map() != UCM_RET_SUCCESS)
-            return UCM_RET_NOOBJECT;
-        if (__mdbx_load() != UCM_RET_SUCCESS)
-            return UCM_RET_DBERROR;
+    uv_fs_t ufs_access;
 
+    if (__dbcore_init() == UCM_RET_SUCCESS) {
+        int r = app->uv.fs_access (&ufs_access, file, R_OK | W_OK, NULL);
+        if (r < 0) {
+            trace_dbg ("%s: %s\n", file, "fail open");
+            return UCM_RET_NOACCESS;
+        } else {
+            trace_dbg ("%s: %s\n", file, "success open");
+            return UCM_RET_SUCCESS;
+        }
+        app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
         return UCM_RET_SUCCESS;
     } else {
         return UCM_RET_DBERROR;

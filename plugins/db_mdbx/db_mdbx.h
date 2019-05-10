@@ -38,6 +38,10 @@ enum {
     DB_VALUE_BLOB
 };
 
+enum {
+    DB_FLAG_DONTCLOSE = 1
+};
+
 typedef struct {
     uint8_t         type;
     union {
@@ -96,7 +100,7 @@ typedef struct {
     } contacts;
 
     db_header_t header;
-    
+
     struct {
         uintptr_t mtx;
         uintptr_t clk_flush;
