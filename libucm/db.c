@@ -17,16 +17,51 @@ db_open ( const char* aPath,
     if (aPath == NULL)
         return UCM_RET_WRONGPARAM;
 
+    // zero database structure
     UniAPI->sys.zmemory(&db, sizeof(ucm_db_t));
 
     ucm_plugdb_t** plugins = (ucm_plugdb_t**) (UniAPI->app.get_plugins_db());
     unsigned ret = 0;
+    uv_fs_t ufs_req;
 
+    // init mutex
     db.mtx  = UniAPI->sys.mutex_create();
     if (db.mtx <= 0) {
         return UCM_RET_EXCEPTION;
     }
-    
+
+    // Try file access
+    int flag_exit = 0;
+    do {
+        if (flags & UCM_FLAG_DB_CREATENEW) {
+            // TODO Create NEW
+            flag_exit ++;
+        }
+        int r = UniAPI->uv.fs_access (&ufs_req, aPath,
+                                      (flags & UCM_FLAG_DB_READONLY) ?
+                                               R_OK : R_OK | W_OK,
+                                      NULL);
+
+        if (r < 0) {
+            ucm_dtrace ("%s: %s\n", aPath, "fail open");
+            UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
+            UniAPI->uv.fs_req_cleanup(&ufs_req);
+
+            if (flags & UCM_FLAG_DB_READONLY)
+                return UCM_RET_NOACCESS;
+            if (flags & UCM_FLAG_DB_CREATENEW)
+                return UCM_RET_BUSY;
+
+            flags |= UCM_FLAG_DB_CREATENEW;
+            continue;
+
+        } else break;
+    } while (!flag_exit);
+
+    UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
+    UniAPI->uv.fs_req_cleanup(&ufs_req);
+
+    // Open database
     UniAPI->sys.mutex_lock(db.mtx);
     while (*plugins) {
         if ( (*plugins)->db_open != NULL ) {

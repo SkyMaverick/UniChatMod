@@ -180,19 +180,12 @@ mdbx_db_open  (const char*  file,
     uv_fs_t ufs_access;
 
     if (__dbcore_init() == UCM_RET_SUCCESS) {
-        int r = app->uv.fs_access (&ufs_access, file, R_OK | W_OK, NULL);
-        if (r < 0) {
-            trace_dbg ("%s: %s\n", file, "fail open");
-            return UCM_RET_NOACCESS;
-        } else {
-            trace_dbg ("%s: %s\n", file, "success open");
+        if ((__mdbx_map()  == UCM_RET_SUCCESS) &&
+                    (__mdbx_load() == UCM_RET_SUCCESS) )
             return UCM_RET_SUCCESS;
-        }
-        app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
-        return UCM_RET_SUCCESS;
-    } else {
-        return UCM_RET_DBERROR;
-    }
+    } 
+
+    return UCM_RET_DBERROR;
 }
 
 UCM_RET
