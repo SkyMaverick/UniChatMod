@@ -34,7 +34,7 @@ db_open ( const char* aPath,
     int flag_exit = 0;
     do {
         if (flags & UCM_FLAG_DB_CREATENEW) {
-            // TODO Create NEW
+            UniAPI->sys.fs_fcreate(aPath);
             flag_exit ++;
         }
         int r = UniAPI->uv.fs_access (&ufs_req, aPath,

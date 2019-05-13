@@ -20,7 +20,7 @@
     extern "C" {
 #endif
 
-/* ************************************************** 
+/* **************************************************
     Operation System Abstraction Layer (OSAL)
    ************************************************** */
 
@@ -131,11 +131,16 @@
     #define DYNLIB_SUFFIX ".so"
 #endif
 
+#if defined (UCM_OS_WINDOWS)
+    #include "Windows.h"
+#endif 
 #if defined (UCM_OS_POSIX)
+    #include <sys/types.h>
+    #include <sys/stat.h>
     #include <unistd.h>
 #endif
 
-/* ************************************************** 
+/* **************************************************
     ENDFOR Operation System Abstraction Layer (OSAL)
  ************************************************** */
 
@@ -526,7 +531,7 @@ typedef struct {
     void        (*db_flush) (bool force);
     UCM_RET     (*db_close) (void);
 
-    
+
 
     // hight-level API. Use app structures config with one API function
     ucm_dbval_t* (*get_setting) (HCONTACT       contact,
@@ -861,8 +866,9 @@ typedef struct _ucm_functions_s {
         void        (*timer_set_repeat) (uintptr_t handle, uint64_t repeat);
         uint64_t    (*timer_get_repeat) (const uintptr_t handle);
         void        (*timer_release)    (uintptr_t handle);
-        
+
         int         (*os_errno)         (void);
+        int         (*fs_fcreate)       (const char* path);
         /* Unicode operations. USC4 and convertors */
         int64_t     (*U8toU32)      (u8char_t* str,   const int64_t str_len, u32char_t** ret);
         int64_t     (*U32toU8)      (u32char_t* str,  const int64_t str_len, u8char_t** ret);

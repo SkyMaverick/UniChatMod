@@ -92,7 +92,29 @@ int osal_fs_lchown (uv_fs_t* req, const char* path, uv_uid_t uid, uv_gid_t gid, 
 }
 int osal_fs_event_init (uv_fs_event_t* handle) {
     return uv_fs_event_init (o_krnl->loop_system, handle);
-}    
+}
 int osal_fs_poll_init (uv_fs_poll_t* handle) {
     return uv_fs_poll_init (o_krnl->loop_system, handle);
 }
+// Custom implementation
+int osal_fs_fcreate (const char* path) {
+#if defined (UCM_OS_WINDOWS)
+	HANDLE hFile = CreateFileW(path, GENERIC_WRITE,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE,
+                               nullptr,
+                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                               nullptr);
+    if (!hFile)
+        return 1;
+    CloseHandle(hFile);
+#else
+    int hFile = open (path,
+                      O_CREAT | O_WRONLY | O_TRUNC,
+                      S_IRUSR | S_IWUSR | S_IRGRP);
+    if (!hFile)
+        return 1;
+    close (hFile);
+#endif
+    return 0;
+}
+

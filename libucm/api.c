@@ -305,6 +305,7 @@ static ucm_functions_t core_api = {
     .sys.timer_release              = osal_timer_release     ,
 
     .sys.os_errno                   = osal_errno             ,
+    .sys.fs_fcreate                 = osal_fs_fcreate        ,
 
     .sys.U8toU32                    = u8_decode_ucs4         ,
     .sys.U32toU8                    = ucs4_encode_u8         ,
