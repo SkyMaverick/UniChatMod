@@ -33,12 +33,12 @@ db_open ( const char* aPath,
     // Try file access
     int flag_exit = 0;
     do {
-        if (flags & UCM_FLAG_DB_CREATENEW) {
+        if (flags & UCM_FLAG_NEWPROF) {
             UniAPI->sys.fs_fcreate(aPath);
             flag_exit ++;
         }
         int r = UniAPI->uv.fs_access (&ufs_req, aPath,
-                                      (flags & UCM_FLAG_DB_READONLY) ?
+                                      (flags & UCM_FLAG_ROPROF) ?
                                                R_OK : R_OK | W_OK,
                                       NULL);
 
@@ -47,12 +47,12 @@ db_open ( const char* aPath,
             UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
             UniAPI->uv.fs_req_cleanup(&ufs_req);
 
-            if (flags & UCM_FLAG_DB_READONLY)
+            if (flags & UCM_FLAG_ROPROF)
                 return UCM_RET_NOACCESS;
-            if (flags & UCM_FLAG_DB_CREATENEW)
+            if (flags & UCM_FLAG_NEWPROF)
                 return UCM_RET_BUSY;
 
-            flags |= UCM_FLAG_DB_CREATENEW;
+            flags |= UCM_FLAG_NEWPROF;
             continue;
 
         } else break;
@@ -65,7 +65,7 @@ db_open ( const char* aPath,
     UniAPI->sys.mutex_lock(db.mtx);
     while (*plugins) {
         if ( (*plugins)->db_open != NULL ) {
-            if ( ( ret = (*plugins)->db_open(aPath, flags) ) == UCM_RET_SUCCESS ) {
+            if ( ( ret = (*plugins)->db_open(flags) ) == UCM_RET_SUCCESS ) {
                 db.worker = *plugins;
             } else {
                 switch (ret) {

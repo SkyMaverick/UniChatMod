@@ -19,9 +19,9 @@ extern const ucm_functions_t* app;
 #define DBSYS_VERSION   DBSYS_VERSION_MAJOR##'.'##DBSYS_VERSION_MINOR
 #define DBSYS_HEADER_SIGNATURE 0x4DBAC0DE
 
-#define trace_dbg(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&UniDB), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&UniDB), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
-#define trace_err(fmt, ...) {app->app.log ( (ucm_plugin_t*)(&UniDB), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
+#define trace_dbg(fmt, ...) {app->app.log ( (ucm_plugin_t*)(UniDB), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
+#define trace_inf(fmt, ...) {app->app.log ( (ucm_plugin_t*)(UniDB), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
+#define trace_err(fmt, ...) {app->app.log ( (ucm_plugin_t*)(UniDB), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
 
 #define ucm_free_null(X)    \
     do {                    \
@@ -126,7 +126,7 @@ StartTxn (mdbx_database_t* db)
     int rc = mdbx_txn_begin (
                 db->mdbx.env,
                 NULL,
-                (db->flags & UCM_FLAG_DB_READONLY) ? MDBX_RDONLY : 0,
+                (db->flags & UCM_FLAG_ROPROF) ? MDBX_RDONLY : 0,
                 &res );
     // TODO exception
     UNUSED (rc);

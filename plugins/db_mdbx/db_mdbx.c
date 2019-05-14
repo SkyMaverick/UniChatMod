@@ -74,7 +74,7 @@ static mdbx_database_t dba = {
     .plugin.core.info.vmajor        = UCM_VERSION_MAJOR,
     .plugin.core.info.vminor        = UCM_VERSION_MINOR,
     .plugin.core.info.vpatch        = UCM_VERSION_PATCH,
-    .plugin.core.info.flags         = 0,
+    .plugin.core.info.flags         = UCM_FLAG_PLUG_LOGGED,
     .plugin.core.info.build         =
     {
         .commit                     = UCM_BUILD_COMMIT,

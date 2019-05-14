@@ -45,16 +45,30 @@ add_project_arguments ('-D_GNU_SOURCE=1', language: 'c')
 cc_name = cc.get_id()
 if (cc_name == 'gcc') or (cc_name == 'clang')
     # Build on linux (or difffernt *nix) system
-    cc_args = '''
-        -std=gnu11
-        -O2
-        -g3
-        -Wall
-        -Werror
-        -Wextra
-        -ffunction-sections
-        -fvisibility=hidden
-    '''.split()
+    if get_option('buildtype').startswith('debug')
+        cc_args = '''
+            -std=gnu11
+            -O0
+            -g
+            -Wall
+            -Werror
+            -Wextra
+            -ffunction-sections
+            -fvisibility=hidden
+        '''.split()
+    else
+        cc_args = '''
+            -std=gnu11
+            -O2
+            -g3
+            -Wall
+            -Werror
+            -Wextra
+            -ffunction-sections
+            -fvisibility=hidden
+        '''.split()
+
+    endif
 
     cc_link_args = '''
         -Wl,--gc-sections

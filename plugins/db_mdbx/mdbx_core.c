@@ -51,21 +51,31 @@ __mdbx_map (void)
                         | MDBX_COALESCE
                         | MDBX_EXCLUSIVE
                         ;
-    if (UniDB->flags | UCM_FLAG_DB_READONLY) {
+    if (UniDB->flags | UCM_FLAG_ROPROF) {
         mode |= MDBX_RDONLY;
     }
 
-    return ( mdbx_env_open (UniDB->mdbx.env,
-                            app->app.get_store_path(),
-                            mode,
-                            0664) != MDBX_SUCCESS ) ? UCM_RET_NOACCESS :
-                                                      UCM_RET_SUCCESS;
+    int ret = mdbx_env_open (UniDB->mdbx.env,
+                   app->app.get_store_path(),
+                   mode,
+                   0664);
+    if (ret == MDBX_SUCCESS) {
+        return UCM_RET_SUCCESS;
+    } else {
+        trace_err ("%s\n", mdbx_strerror(ret));
+        return UCM_RET_NOACCESS;
+    }
+//    return ( mdbx_env_open (UniDB->mdbx.env,
+//                            app->app.get_store_path(),
+//                            mode,
+//                            0664) != MDBX_SUCCESS ) ? UCM_RET_NOACCESS :
+//                                                      UCM_RET_SUCCESS;
 }
 
 static inline UCM_RET
 __mdbx_load (void)
 {
-    unsigned  flags     = (UniDB->flags & UCM_FLAG_DB_READONLY) ? 0 : MDBX_CREATE;
+    unsigned  flags     = (UniDB->flags & UCM_FLAG_ROPROF) ? 0 : MDBX_CREATE;
     MDBX_txn* txn_tmp   = StartTxn(UniDB);
     if (txn_tmp) {
 
@@ -107,8 +117,8 @@ __mdbx_load (void)
                 }
             /* Create new header with new tables */
             } else {
-                if ((UniDB->flags & UCM_FLAG_DB_CREATENEW) &&
-                    (!(UniDB->flags & UCM_FLAG_DB_READONLY)) )
+                if ((UniDB->flags & UCM_FLAG_NEWPROF) &&
+                    (!(UniDB->flags & UCM_FLAG_ROPROF)) )
                 {
                     UniDB->header.signature = DBSYS_HEADER_SIGNATURE;
                     UniDB->header.version   = MakeLong (DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
@@ -162,22 +172,14 @@ __dbcore_init (void)
     return UCM_RET_SUCCESS;
 }
 
-//static void
-//__dbcore_load (uv_fs_t* req) {
-//    trace_dbg ("%s\n", "Open database callback");
-//    UniDB->flags ^= DB_FLAG_DONTCLOSE;
-//}
-//
 /* ==================================================
         Core API implementation
    ================================================== */
 
 UCM_RET
-mdbx_db_open  (const char*  file,
-               uint32_t     flags)
+mdbx_db_open  (uint32_t flags)
 {
-    UNUSED (file);
-    uv_fs_t ufs_access;
+    UniDB->flags = flags;
 
     if (__dbcore_init() == UCM_RET_SUCCESS) {
         if ((__mdbx_map()  == UCM_RET_SUCCESS) &&

@@ -324,6 +324,13 @@ enum {
 //      BASE STRUCTURES
 // *********************************************************
 
+// Global flags ---------------
+enum {
+    UCM_FLAG_ROPROF     = 1 << 0,
+    UCM_FLAG_NEWPROF    = 1 << 1,
+    UCM_FLAG_CHECKPROF  = 1 << 2
+};
+
 // Events ---------------------
 enum {
     UCM_EVENT_TERM              = 0,
@@ -472,13 +479,6 @@ typedef struct _ucm_plugin_s {
 // *********************************************************
 
 enum {
-    UCM_FLAG_DB_READONLY    = 1 << 0,
-    UCM_FLAG_DB_CREATENEW   = 1 << 1,
-    UCM_FLAG_DB_NEEDCHECK   = 1 << 2,
-    UCM_FLAG_DB_NEEDBACKUP  = 1 << 3,
-};
-
-enum {
     UCM_DBVAL_FAIL    = 0,
     UCM_DBVAL_U8      = 1,
     UCM_DBVAL_U16     = 2,
@@ -526,7 +526,7 @@ typedef struct {
     ucm_plugin_t core;
 
     // technical db functionality
-    UCM_RET     (*db_open)  (const char* file, uint32_t flags);
+    UCM_RET     (*db_open)  (uint32_t flags);
     UCM_RET     (*db_check) (void);
     void        (*db_flush) (bool force);
     UCM_RET     (*db_close) (void);
