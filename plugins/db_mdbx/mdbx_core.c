@@ -51,25 +51,16 @@ __mdbx_map (void)
                         | MDBX_COALESCE
                         | MDBX_EXCLUSIVE
                         ;
-    if (UniDB->flags | UCM_FLAG_ROPROF) {
+    if (UniDB->flags & UCM_FLAG_ROPROF) {
+        trace_dbg ("%s\n", "Set read-only database flag");
         mode |= MDBX_RDONLY;
     }
 
-    int ret = mdbx_env_open (UniDB->mdbx.env,
-                   app->app.get_store_path(),
-                   mode,
-                   0664);
-    if (ret == MDBX_SUCCESS) {
-        return UCM_RET_SUCCESS;
-    } else {
-        trace_err ("%s\n", mdbx_strerror(ret));
-        return UCM_RET_NOACCESS;
-    }
-//    return ( mdbx_env_open (UniDB->mdbx.env,
-//                            app->app.get_store_path(),
-//                            mode,
-//                            0664) != MDBX_SUCCESS ) ? UCM_RET_NOACCESS :
-//                                                      UCM_RET_SUCCESS;
+    return ( mdbx_env_open (UniDB->mdbx.env,
+                            app->app.get_store_path(),
+                            mode,
+                            0664) != MDBX_SUCCESS ) ? UCM_RET_NOACCESS :
+                                                      UCM_RET_SUCCESS;
 }
 
 static inline UCM_RET
@@ -110,6 +101,10 @@ __mdbx_load (void)
                         return UCM_RET_BADVERSION;
                     }
                     UniDB->header = * hdr;
+                    trace_inf("%s (%S): %zu.%zu\n", "Database version",
+                                                    UniDB->plugin.core.info.name,
+                                                    ((UniDB->header.version >> 32) & 0x00FF),                   
+                                                    (UniDB->header.version & 0x00FF));
 
                 } else {
                     trace_dbg ("%s\n", "Return NULL header");
@@ -117,7 +112,7 @@ __mdbx_load (void)
                 }
             /* Create new header with new tables */
             } else {
-                if ((UniDB->flags & UCM_FLAG_NEWPROF) &&
+                if ((UniDB->flags   & UCM_FLAG_NEWPROF) &&
                     (!(UniDB->flags & UCM_FLAG_ROPROF)) )
                 {
                     UniDB->header.signature = DBSYS_HEADER_SIGNATURE;
@@ -151,9 +146,22 @@ __mdbx_load (void)
 return UCM_RET_SUCCESS;
 }
 
+static void 
+__mdbx_unload (void) {
+    trace_dbg ("%s\n", "Unload MDBX");
+
+    mdbx_cursor_close (UniDB->mdbx.cur_events);
+    mdbx_cursor_close (UniDB->mdbx.cur_contacts);
+    mdbx_cursor_close (UniDB->mdbx.cur_settings);
+    mdbx_cursor_close (UniDB->mdbx.cur_logs);
+
+    mdbx_env_close(UniDB->mdbx.env);
+}
+
 static inline void
 __dbcore_release (void)
 {
+    __mdbx_unload();
     if (UniDB->sys.mtx)
         app->sys.rwlock_free (UniDB->sys.mtx);
     if (UniDB->sys.clk_flush)

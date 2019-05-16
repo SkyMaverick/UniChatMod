@@ -110,7 +110,7 @@ int osal_fs_fcreate (const char* path) {
 #else
     int hFile = open (path,
                       O_CREAT | O_WRONLY | O_TRUNC,
-                      S_IRUSR | S_IWUSR | S_IRGRP);
+                      /*S_IRUSR | S_IWUSR | S_IRGRP*/ 0664);
     if (!hFile)
         return 1;
     close (hFile);
