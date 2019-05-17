@@ -99,18 +99,16 @@ int osal_fs_poll_init (uv_fs_poll_t* handle) {
 // Custom implementation
 int osal_fs_fcreate (const char* path) {
 #if defined (UCM_OS_WINDOWS)
-	HANDLE hFile = CreateFileW(path, GENERIC_WRITE,
+	HANDLE hFile = CreateFileA((LPCSTR) path, GENERIC_WRITE,
                                FILE_SHARE_READ | FILE_SHARE_WRITE,
                                nullptr,
                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                nullptr);
-    if (!hFile)
+    if (hFile == INVALID_HANDLE_VALUE)
         return 1;
     CloseHandle(hFile);
 #else
-    int hFile = open (path,
-                      O_CREAT | O_WRONLY | O_TRUNC,
-                      /*S_IRUSR | S_IWUSR | S_IRGRP*/ 0664);
+    int hFile = open (path, O_CREAT | O_WRONLY | O_TRUNC, 0664);
     if (!hFile)
         return 1;
     close (hFile);
