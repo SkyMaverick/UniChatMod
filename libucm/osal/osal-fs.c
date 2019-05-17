@@ -101,9 +101,9 @@ int osal_fs_fcreate (const char* path) {
 #if defined (UCM_OS_WINDOWS)
 	HANDLE hFile = CreateFileA((LPCSTR) path, GENERIC_WRITE,
                                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                               nullptr,
+                               NULL,
                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                               nullptr);
+                               NULL);
     if (hFile == INVALID_HANDLE_VALUE)
         return 1;
     CloseHandle(hFile);
