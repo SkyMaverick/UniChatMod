@@ -30,6 +30,15 @@ int osal_fs_rmdir (uv_fs_t* req, const char* path, uv_fs_cb cb) {
 int osal_fs_scandir (uv_fs_t* req, const char* path, int flags, uv_fs_cb cb) {
     return uv_fs_scandir (o_krnl->loop_system, req, path, flags, cb);
 }
+int osal_fs_opendir (uv_fs_t* req, const char* path, uv_fs_cb cb) {
+    return  uv_fs_opendir (o_krnl->loop_system, req, path, cb);
+}
+int osal_fs_readdir (uv_fs_t* req, uv_dir_t* dir, uv_fs_cb cb) {
+    return uv_fs_readdir(o_krnl->loop_system, req, dir, cb);
+}
+int osal_fs_closedir(uv_fs_t* req, uv_dir_t* dir, uv_fs_cb cb) {
+    return uv_fs_closedir (o_krnl->loop_system, req, dir, cb);
+}
 int osal_fs_stat (uv_fs_t* req, const char* path, uv_fs_cb cb) {
     return uv_fs_stat (o_krnl->loop_system, req, path, cb);
 }
@@ -115,4 +124,3 @@ int osal_fs_fcreate (const char* path) {
 #endif
     return 0;
 }
-

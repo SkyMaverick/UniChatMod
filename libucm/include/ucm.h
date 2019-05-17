@@ -764,6 +764,9 @@ typedef struct _ucm_functions_s {
         int             (*fs_rmdir)                      (uv_fs_t* req, const char* path, uv_fs_cb cb);
         int             (*fs_scandir)                    (uv_fs_t* req, const char* path, int flags, uv_fs_cb cb);
         int             (*fs_scandir_next)               (uv_fs_t* req, uv_dirent_t* ent);
+        int 			(*fs_opendir)				     (uv_fs_t* req, const char* path, uv_fs_cb cb);
+        int             (*fs_readdir)                    (uv_fs_t* req, uv_dir_t* dir, uv_fs_cb cb);
+        int             (*fs_closedir)                   (uv_fs_t* req, uv_dir_t* dir, uv_fs_cb cb);
         int             (*fs_stat)                       (uv_fs_t* req, const char* path, uv_fs_cb cb);
         int             (*fs_fstat)                      (uv_fs_t* req, uv_file file, uv_fs_cb cb);
         int             (*fs_rename)                     (uv_fs_t* req, const char* path, const char* new_path, uv_fs_cb cb);
