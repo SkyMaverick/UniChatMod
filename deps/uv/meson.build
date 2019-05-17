@@ -1,5 +1,5 @@
 project ('uv', 'c',
-         version: '1.26.1',
+         version: '1.29.1',
          license: 'BSD license',
          default_options:[
             'c_std=gnu89'
@@ -81,7 +81,7 @@ if sysid == 'windows'
        src/win/udp.c
        src/win/util.c
        src/win/winapi.c
-       src/win/winsock.c   
+       src/win/winsock.c  
     '''.split())
 else
     uv_defines += '''
@@ -130,7 +130,7 @@ if sysid == 'android'
     '''.split())
 endif
 
-foreach id : ['android','linux','darwin']
+foreach id : ['android','linux']
     if id == sysid
         uv_source += files ('src/unix/proctitle.c')
     endif
@@ -186,12 +186,11 @@ foreach id : ['linux']
             rt
         '''.split()
         uv_source += files ('''
-            src/unix/linux-core.c
-            src/unix/linux-inotify.c
-            src/unix/linux-syscalls.c
-            src/unix/procfs-exepath.c
-            src/unix/sysinfo-loadavg.c
-            src/unix/sysinfo-memory.c
+               src/unix/linux-core.c
+               src/unix/linux-inotify.c
+               src/unix/linux-syscalls.c
+               src/unix/procfs-exepath.c
+               src/unix/sysinfo-loadavg.c
         '''.split())
     endif
 endforeach
