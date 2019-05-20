@@ -25,8 +25,14 @@ __log_cmp_helper (const MDBX_val* a,
     return 0;
 }
 
+static void
+cb_mdbx_timer (uv_timer_t* timer) {
+    trace_dbg ("%s\n", "Timer tick");
+    mdbx_db_flush(true);
+}
+
 static UCM_RET
-__mdbx_map (void)
+mdbx_core_map (void)
 {
     mdbx_env_create         (&(UniDB->mdbx.env));
     mdbx_env_set_maxdbs       (UniDB->mdbx.env, 10);
@@ -64,7 +70,7 @@ __mdbx_map (void)
 }
 
 static inline UCM_RET
-__mdbx_load (void)
+mdbx_core_load (void)
 {
     unsigned  flags     = (UniDB->flags & UCM_FLAG_ROPROF) ? 0 : MDBX_CREATE;
     MDBX_txn* txn_tmp   = StartTxn(UniDB);
@@ -147,7 +153,7 @@ return UCM_RET_SUCCESS;
 }
 
 static void 
-__mdbx_unload (void) {
+mdbx_core_unload (void) {
     trace_dbg ("%s\n", "Unload MDBX");
 
     mdbx_cursor_close (UniDB->mdbx.cur_events);
@@ -159,9 +165,9 @@ __mdbx_unload (void) {
 }
 
 static inline void
-__dbcore_release (void)
+dbi_core_release (void)
 {
-    __mdbx_unload();
+    mdbx_core_unload();
     if (UniDB->sys.mtx)
         app->sys.rwlock_free (UniDB->sys.mtx);
     if (UniDB->sys.clk_flush)
@@ -169,13 +175,16 @@ __dbcore_release (void)
 }
 
 static inline UCM_RET
-__dbcore_init (void)
+dbi_core_init (void)
 {
-    if ( ( (UniDB->sys.mtx = app->sys.rwlock_create()) == 0 ) &&
+    if ( ( (UniDB->sys.mtx = app->sys.rwlock_create()) == 0 ) ||
          ( (UniDB->sys.clk_flush = app->sys.timer_create()) == 0 )
        ) {
-            __dbcore_release();
+            trace_dbg ("%s\n", "Don't create DB_CORE object");
+            dbi_core_release();
             return UCM_RET_NONALLOC;
+       } else {
+            trace_dbg ("%s\n: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.clk_flush);
        }
     return UCM_RET_SUCCESS;
 }
@@ -189,10 +198,12 @@ mdbx_db_open  (uint32_t flags)
 {
     UniDB->flags = flags;
 
-    if (__dbcore_init() == UCM_RET_SUCCESS) {
-        if ((__mdbx_map()  == UCM_RET_SUCCESS) &&
-                    (__mdbx_load() == UCM_RET_SUCCESS) )
-            return UCM_RET_SUCCESS;
+    if (dbi_core_init() == UCM_RET_SUCCESS) {
+        if ((mdbx_core_map()  == UCM_RET_SUCCESS) &&
+            (mdbx_core_load() == UCM_RET_SUCCESS) ) {
+                app->sys.timer_start (UniDB->sys.clk_flush, cb_mdbx_timer, 1, 50);
+                return UCM_RET_SUCCESS;
+        }
     } 
 
     return UCM_RET_DBERROR;
@@ -202,7 +213,8 @@ UCM_RET
 mdbx_db_close (void)
 {
     // TODO
-    __dbcore_release();
+    app->sys.timer_stop(UniDB->sys.clk_flush);
+    dbi_core_release();
     return UCM_RET_SUCCESS;
 }
 
