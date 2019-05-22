@@ -133,7 +133,7 @@
 
 #if defined (UCM_OS_WINDOWS)
     #include "Windows.h"
-#endif 
+#endif
 #if defined (UCM_OS_POSIX)
     #include <sys/types.h>
     #include <sys/stat.h>
@@ -339,7 +339,8 @@ enum {
     UCM_EVENT_LOAD_SUCCESS      = 1 << 2,
     UCM_EVENT_DBLOAD_SUCCESS    = 1 << 3,
     UCM_EVENT_START_GUI         = 1 << 4,
-    UCM_EVENT_START_GUI2        = 1 << 5
+    UCM_EVENT_START_GUI2        = 1 << 5,
+    UCM_EVENT_ASYNC             = 1 << 6
 };
 
 typedef struct {
@@ -348,6 +349,7 @@ typedef struct {
     uint8_t ev;
     size_t  size;
     void*   sender;
+    void*   ctx;
 } ucm_ev_t;
 
 typedef struct {

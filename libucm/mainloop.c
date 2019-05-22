@@ -72,36 +72,49 @@ ucm_mloop_free (void)
         mq_free (messages);
 }
 
-ucm_ev_t*
-ucm_mloop_event_alloc (int id)
-{
-    size_t size = 0;
-    ucm_ev_t* event = NULL;
+static inline size_t
+event_size_get (int id) {
+
     switch (id) {
         case UCM_EVENT_START_GUI:
         case UCM_EVENT_START_GUI2:
-            {
-                size = sizeof (ucm_evgui_t);
-                break;
-            };
+            return sizeof (ucm_evgui_t);
         default:
-            {
-                ucm_etrace("%s: %d. %s\n", _("Don't create event:"),id,_("Use message push interface"));
-                return NULL;
-            };
+            return 0;
     }
+}
 
+ucm_ev_t*
+ucm_mloop_event_alloc2 (int     id,
+                        void*   ctx,
+                        size_t  mem)
+{
+    ucm_ev_t* event = NULL;
+
+    size_t size = event_size_get(id);
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
-        event = UniAPI->sys.zmalloc(size);
+        event = UniAPI->sys.zmalloc (size + mem);
+        if (event) {
+            // Define EVENT arguments
+            event->oid      = UCM_TYPE_OBJECT_EVENT;
+            event->ev       = id;
+            event->size     = size + mem;
+            event->sender   = NULL;
+            event->ctx      = event + size;
 
-        event->oid = UCM_TYPE_OBJECT_EVENT;
-        event->ev = id;
-        event->size = size;
-        event->sender = NULL;
-    };
+            // copy context
+            if (ctx)
+                memcpy (event->ctx, ctx, mem);
+        }
+    }
+    return NULL;
+}
 
-    return event;
+ucm_ev_t*
+ucm_mloop_event_alloc (int id)
+{
+    return ucm_mloop_event_alloc2 (id, NULL,  0);
 }
 
 void
