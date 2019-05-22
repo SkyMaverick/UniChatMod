@@ -100,6 +100,8 @@ static mdbx_database_t dba = {
     .plugin.db_check                = NULL,
     .plugin.db_flush                = mdbx_db_flush,
     .plugin.db_close                = mdbx_db_close,
+    
+    .plugin.db_backup               = mdbx_db_backup
 };
 
 mdbx_database_t* UniDB = &dba;

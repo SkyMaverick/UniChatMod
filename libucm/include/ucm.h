@@ -531,6 +531,8 @@ typedef struct {
     void        (*db_flush) (bool force);
     UCM_RET     (*db_close) (void);
 
+    UCM_RET     (*db_backup) (char* path);
+
 
 
     // hight-level API. Use app structures config with one API function

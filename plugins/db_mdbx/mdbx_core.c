@@ -31,6 +31,34 @@ cb_mdbx_timer (uv_timer_t* timer) {
     mdbx_db_flush(true);
 }
 
+static void
+cb_create_backup (uv_fs_t* open_req) {
+    // TODO
+    if (open_req->result >= 0) {
+        trace_inf ("%s: %s\n", "Create backup on file", open_req->file)
+        uv_fs_t close_req;
+#if defined (UCM_OS_WINDOWS)
+        int res = mdbx_env_copy2fd (UniDB->mdbx.env, open_req->file.fd, MDBX_CP_COMPACT);
+#else
+        int res = mdbx_env_copy2fd (UniDB->mdbx.env, open_req->file, MDBX_CP_COMPACT);
+#endif
+        if (res == MDBX_SUCCESS) {
+            // TODO Send message OK async operation
+        } else {
+            // TODO Send message FAIL async operation
+        }
+
+        app->uv.fs_close(&close_req, open_req->file, NULL);
+        app->uv.fs_req_cleanup(&close_req);
+    } else {
+        // TODO Send message FAIL async operation
+    }
+}
+
+/* ==================================================
+        Core API implementation
+   ================================================== */
+
 static UCM_RET
 mdbx_core_map (void)
 {
@@ -109,7 +137,7 @@ mdbx_core_load (void)
                     UniDB->header = * hdr;
                     trace_inf("%s (%S): %zu.%zu\n", "Database version",
                                                     UniDB->plugin.core.info.name,
-                                                    ((UniDB->header.version >> 32) & 0x00FF),                   
+                                                    ((UniDB->header.version >> 32) & 0x00FF),
                                                     (UniDB->header.version & 0x00FF));
 
                 } else {
@@ -152,7 +180,7 @@ mdbx_core_load (void)
 return UCM_RET_SUCCESS;
 }
 
-static void 
+static void
 mdbx_core_unload (void) {
     trace_dbg ("%s\n", "Unload MDBX");
 
@@ -204,7 +232,7 @@ mdbx_db_open  (uint32_t flags)
                 app->sys.timer_start (UniDB->sys.clk_flush, cb_mdbx_timer, 1, 50);
                 return UCM_RET_SUCCESS;
         }
-    } 
+    }
 
     return UCM_RET_DBERROR;
 }
@@ -221,7 +249,22 @@ mdbx_db_close (void)
 void
 mdbx_db_flush (bool force)
 {
+    mdbx_env_sync (UniDB->mdbx.env, true);
     if (force) {
-        mdbx_env_sync (UniDB->mdbx.env, true);
+        app->sys.timer_again (UniDB->sys.clk_flush);
     }
+}
+
+UCM_RET
+mdbx_db_backup (char* path)
+{
+    uv_fs_t open_req;
+    if (app->uv.fs_open(&open_req, path, O_WRONLY | O_CREAT, 0664, cb_create_backup) > 0) {
+        trace_err ("%s: %s\n", "Backup fail. Don't create file", path);
+        app->uv.fs_req_cleanup(&open_req);
+        return UCM_RET_NOACCESS;
+    }
+    app->uv.run (UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
+    app->uv.fs_req_cleanup(&open_req);
+    return UCM_RET_SUCCESS;
 }
