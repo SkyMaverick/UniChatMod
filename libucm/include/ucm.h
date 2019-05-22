@@ -252,7 +252,7 @@
     #define UCM_NAME_MAX 256
 #endif
 
-#define UCM_PID_MAX 100 * sizeof(wchar_t)
+#define UCM_PID_MAX 50
 #define UNUSED(x) (void)(x);
 
 #define UCM_CONTACT_ID_MAX   256
@@ -354,7 +354,7 @@ typedef struct {
 } ucm_ev_t;
 
 typedef struct {
-    ucm_ev_t base;
+    ucm_ev_t    base;
     // TODO
 } ucm_evgui_t;
 
@@ -454,7 +454,7 @@ typedef struct {
         const wchar_t*   options;            /// build options
         const wchar_t*   flags;              /// build with flags
     } build;
-    const wchar_t* const pid;                /// plugin id for internal ident (required)
+    const char* const    pid;                /// plugin id for internal ident (required)
     // developer info
     const wchar_t* const name;               /// plugin name for user
     const wchar_t* const developer;          /// developer name

@@ -174,7 +174,7 @@ static ucm_core_t kernel = {
     },
     .base.info.flags       = UCM_FLAG_PLUG_LOGGED,
 
-    .base.info.pid         = L"ucm_core",
+    .base.info.pid         = "ucm_core",
     .base.info.name        = L"UniChatMod core plugin",
     .base.info.developer   = L"SkyMaverick",
     .base.info.description = L"UniChatMod core library plugin",

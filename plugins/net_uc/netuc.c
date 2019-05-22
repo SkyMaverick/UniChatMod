@@ -62,7 +62,7 @@ static const ucm_plugproto_t plugin = {
         .options             = UCM_BUILD_OPTS,
         .flags               = UCM_BUILD_FLAGS,
     },
-    .core.info.pid           = L"unichat_legacy",
+    .core.info.pid           = "unichat_legacy",
     .core.info.name          = L"Legacy UniChat 1.46 protocol plugin",
     .core.info.developer     = L"SkyMaverick",
     .core.info.description   = L"Protocol plugin for compatibilty old UniChat 1.46 client programm",
