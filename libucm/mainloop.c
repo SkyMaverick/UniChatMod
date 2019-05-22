@@ -73,7 +73,7 @@ ucm_mloop_free (void)
 }
 
 static inline size_t
-event_size_get (int id) {
+event_size_get (uint32_t id) {
 
     switch (id) {
         case UCM_EVENT_START_GUI:
@@ -85,9 +85,9 @@ event_size_get (int id) {
 }
 
 ucm_ev_t*
-ucm_event_alloc2 (int     id,
-                  void*   ctx,
-                  size_t  mem)
+ucm_event_alloc2 (uint32_t  id,
+                  void*     ctx,
+                  size_t    mem)
 {
     ucm_ev_t* event = NULL;
 
@@ -113,7 +113,7 @@ ucm_event_alloc2 (int     id,
 }
 
 ucm_ev_t*
-ucm_event_alloc (int id)
+ucm_event_alloc (uint32_t id)
 {
     return ucm_event_alloc2 (id, NULL,  0);
 }

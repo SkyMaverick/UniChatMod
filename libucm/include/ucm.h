@@ -333,24 +333,24 @@ enum {
 
 // Messages and events ID  ---------------------
 enum {
-    UCM_EVENT_TERM             =  0x0000,
-    UCM_EVENT_RUN              =  0x0001,
-    UCM_EVENT_INFO             =  0x0002,
-    UCM_EVENT_LOAD_SUCCESS     =  0x0003,
-    UCM_EVENT_DBLOAD_SUCCESS   =  0x0004,
+    UCM_EVENT_TERM             =  0x00000000,
+    UCM_EVENT_RUN              =  0x00000001,
+    UCM_EVENT_INFO             =  0x00000002,
+    UCM_EVENT_LOAD_SUCCESS     =  0x00000003,
+    UCM_EVENT_DBLOAD_SUCCESS   =  0x00000004,
 // events with allocated memory
-    UCM_EVENT_START_GUI        =  0xA000,
-    UCM_EVENT_START_GUI2       =  0xA001,
+    UCM_EVENT_START_GUI        =  0x80000000,
+    UCM_EVENT_START_GUI2       =  0x80000001,
 };
 #define EVENT_ALLOCATED(X) ((X) >> 31) & 1
 
 typedef struct {
     ucm_object_t oid;
 
-    uint8_t ev;
-    size_t  size;
-    void*   sender;
-    void*   ctx;
+    uint32_t    ev;
+    size_t      size;
+    void*       sender;
+    void*       ctx;
 } ucm_ev_t;
 
 typedef struct {
@@ -923,8 +923,8 @@ typedef struct _ucm_functions_s {
 
         /*! general queue access */
         int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
-        ucm_ev_t*   (*mainloop_ev_alloc)    (int id);
-        ucm_ev_t*   (*mainloop_ev_alloc2)   (int id, void* ctx, size_t mem);
+        ucm_ev_t*   (*mainloop_ev_alloc)    (uint32_t id);
+        ucm_ev_t*   (*mainloop_ev_alloc2)   (uint32_t id, void* ctx, size_t mem);
         int         (*mainloop_ev_push)     (ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
         void        (*mainloop_ev_free)     (ucm_ev_t** event);
         void        (*mainloop_flush)       (void);

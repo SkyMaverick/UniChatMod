@@ -220,8 +220,10 @@ main (int argc, char* argv[])
                 {
                     // start curses
                     ucm_ev_t* ev = core->app.mainloop_ev_alloc (UCM_EVENT_START_GUI);
-                    snprintf ( ((ucm_evgui_t*)ev)->pid, UCM_PID_MAX, "%s", "uincurses");
-                    core->app.mainloop_ev_push(ev, 0, 0, NULL);
+                    if (ev) {
+                        snprintf ( ((ucm_evgui_t*)ev)->pid, UCM_PID_MAX, "%s", "uincurses");
+                        core->app.mainloop_ev_push(ev, 0, 0, NULL);
+                    }
 //                    core->app.mainloop_msg_send (UCM_EVENT_START_GUI, (uintptr_t)L"uincurses",0,0);
                 } else {
                     fprintf (stderr, "%s\n", "Core information load FAIL");

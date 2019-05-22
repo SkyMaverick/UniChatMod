@@ -53,7 +53,7 @@ loop_core (void* ctx)
                     }
                 case UCM_EVENT_START_GUI:
                     {
-                        ucm_dtrace ("%s: %S\n", "Catch start GUI signal", (wchar_t*)lctx);
+                        ucm_dtrace ("%s: %s\n", "Catch start GUI signal", ((ucm_evgui_t*)lctx)->pid);
                         // TODO start select GUI plugin or default
                         break;
                     }
