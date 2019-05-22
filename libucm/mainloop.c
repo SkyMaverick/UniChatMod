@@ -85,7 +85,7 @@ event_size_get (int id) {
 }
 
 ucm_ev_t*
-ucm_mloop_event_alloc2 (int     id,
+ucm_event_alloc2 (int     id,
                         void*   ctx,
                         size_t  mem)
 {
@@ -112,13 +112,13 @@ ucm_mloop_event_alloc2 (int     id,
 }
 
 ucm_ev_t*
-ucm_mloop_event_alloc (int id)
+ucm_event_alloc (int id)
 {
-    return ucm_mloop_event_alloc2 (id, NULL,  0);
+    return ucm_event_alloc2 (id, NULL,  0);
 }
 
 void
-ucm_mloop_event_free (ucm_ev_t** event)
+ucm_event_free (ucm_ev_t** event)
 {
     if (*event) {
         ucm_dtrace("Free event: %d\n",(*event)->ev);
@@ -130,7 +130,7 @@ ucm_mloop_event_free (ucm_ev_t** event)
 }
 
 int
-ucm_mloop_event_push (ucm_ev_t* event,
+ucm_event_push (ucm_ev_t* event,
                       uint32_t x1,
                       uint32_t x2,
                       void*    sender)

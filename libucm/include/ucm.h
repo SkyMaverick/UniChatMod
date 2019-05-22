@@ -922,6 +922,7 @@ typedef struct _ucm_functions_s {
         /*! general queue access */
         int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
         ucm_ev_t*   (*mainloop_ev_alloc)    (int id);
+        ucm_ev_t*   (*mainloop_ev_alloc2)   (int id, void* ctx, size_t mem);
         int         (*mainloop_ev_push)     (ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
         void        (*mainloop_ev_free)     (ucm_ev_t** event);
         void        (*mainloop_flush)       (void);

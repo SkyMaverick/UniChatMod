@@ -350,9 +350,10 @@ static ucm_functions_t core_api = {
     .app.item_del                   = NULL                   ,
 
     .app.mainloop_msg_send          = ucm_mloop_push         ,
-    .app.mainloop_ev_alloc          = ucm_mloop_event_alloc  ,
-    .app.mainloop_ev_push           = ucm_mloop_event_push   ,
-    .app.mainloop_ev_free           = ucm_mloop_event_free   ,
+    .app.mainloop_ev_alloc          = ucm_event_alloc        ,
+    .app.mainloop_ev_alloc2         = ucm_event_alloc2       ,
+    .app.mainloop_ev_push           = ucm_event_push         ,
+    .app.mainloop_ev_free           = ucm_event_free         ,
     .app.mainloop_flush             = NULL,
 
     .app.mainloop_hook_attach       = hooks_event_attach     ,
