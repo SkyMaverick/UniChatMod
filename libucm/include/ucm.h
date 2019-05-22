@@ -331,17 +331,18 @@ enum {
     UCM_FLAG_CHECKPROF  = 1 << 2
 };
 
-// Events ---------------------
+// Messages and events ID  ---------------------
 enum {
-    UCM_EVENT_TERM              = 0,
-    UCM_EVENT_RUN               = 1 << 0,
-    UCM_EVENT_INFO              = 1 << 1,
-    UCM_EVENT_LOAD_SUCCESS      = 1 << 2,
-    UCM_EVENT_DBLOAD_SUCCESS    = 1 << 3,
-    UCM_EVENT_START_GUI         = 1 << 4,
-    UCM_EVENT_START_GUI2        = 1 << 5,
-    UCM_EVENT_ASYNC             = 1 << 6
+    UCM_EVENT_TERM             =  0x0000,
+    UCM_EVENT_RUN              =  0x0001,
+    UCM_EVENT_INFO             =  0x0002,
+    UCM_EVENT_LOAD_SUCCESS     =  0x0003,
+    UCM_EVENT_DBLOAD_SUCCESS   =  0x0004,
+// events with allocated memory
+    UCM_EVENT_START_GUI        =  0xA000,
+    UCM_EVENT_START_GUI2       =  0xA001,
 };
+#define EVENT_ALLOCATED(X) ((X) >> 31) & 1
 
 typedef struct {
     ucm_object_t oid;
