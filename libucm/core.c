@@ -61,7 +61,7 @@ loop_core (void* ctx)
             // free events context memory
             if (EVENT_ALLOCATED (id)) {
                 ucm_dtrace("%s: %d\n","Event destroy",id);
-                UniAPI->sys.free((void*)lctx);
+                UniAPI->app.mainloop_ev_free((ucm_ev_t**)(&lctx));
             }
         }
         if (term) {

@@ -86,8 +86,8 @@ event_size_get (int id) {
 
 ucm_ev_t*
 ucm_event_alloc2 (int     id,
-                        void*   ctx,
-                        size_t  mem)
+                  void*   ctx,
+                  size_t  mem)
 {
     ucm_ev_t* event = NULL;
 
@@ -101,14 +101,15 @@ ucm_event_alloc2 (int     id,
             event->ev       = id;
             event->size     = size + mem;
             event->sender   = NULL;
-            event->ctx      = event + size;
 
             // copy context
-            if (ctx)
+            if (ctx) {
+                event->ctx = event + size;
                 memcpy (event->ctx, ctx, mem);
+            }
         }
     }
-    return NULL;
+    return event;
 }
 
 ucm_ev_t*

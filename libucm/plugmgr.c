@@ -74,6 +74,9 @@ _plugin_verify (ucm_plugin_t* plugin)
     if (plugin->info.pid) {
         if ( strcmp (plugin->info.pid, "") == 0 ) {
             return UCM_RET_NOOBJECT;
+        } 
+        if ( strlen(plugin->info.pid) > UCM_PID_MAX ) {
+            return UCM_RET_WRONGPARAM;
         }
     }
     if (( plugin->run  == NULL ) ||
