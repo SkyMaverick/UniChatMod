@@ -352,12 +352,14 @@ typedef struct {
     void*       sender;
     void*       ctx;
 } ucm_ev_t;
+#define U_EVENT(X) ((ucm_ev_t*)(X))
 
 typedef struct {
     ucm_ev_t    base;
     char        pid [UCM_PID_MAX + 1];
     // TODO
 } ucm_evgui_t;
+#define U_EVENT_GUI(X) ((ucm_evgui_t*)(X))
 
 // Messages -------------------
 enum {
