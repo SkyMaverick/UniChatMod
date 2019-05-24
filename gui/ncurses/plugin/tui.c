@@ -122,7 +122,7 @@ static ucm_plugui_t plugin = {
         .options             = UCM_BUILD_OPTS,
         .flags               = UCM_BUILD_FLAGS,
     },
-    .core.info.pid           = L"uicurses",
+    .core.info.pid           = "uicurses",
     .core.info.name          = L"Ncurses TUI plugin",
     .core.info.developer     = L"SkyMaverick",
     .core.info.description   = L"Console interface TUI plugin based on ncurses library",

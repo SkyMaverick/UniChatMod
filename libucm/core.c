@@ -53,10 +53,15 @@ loop_core (void* ctx)
                     }
                 case UCM_EVENT_START_GUI:
                     {
-                        ucm_dtrace ("%s: %S\n", "Catch start GUI signal", (wchar_t*)lctx);
+                        ucm_dtrace ("%s: %s\n", "Catch start GUI signal", ((ucm_evgui_t*)lctx)->pid);
                         // TODO start select GUI plugin or default
                         break;
                     }
+            }
+            // free events context memory
+            if (EVENT_ALLOCATED (id)) {
+                ucm_dtrace("%s: %d\n","Event destroy",id);
+                UniAPI->app.mainloop_ev_free((ucm_ev_t**)(&lctx));
             }
         }
         if (term) {
@@ -70,13 +75,13 @@ loop_core (void* ctx)
 static UCM_RET
 _stop_core (void)
 {
-    
+
     if (kernel.loop_ucore) {
         UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->sys.thread_join(kernel.loop_ucore);
         UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
     }
-    
+
     db_close ();
 
     plugins_stop_all();
@@ -91,7 +96,7 @@ _stop_core (void)
     log_release();
 
     compat_layer_release();
-    
+
     return UCM_RET_SUCCESS;
 }
 
@@ -102,7 +107,7 @@ _run_core (void)
 
     log_init();
     init_ucm_entropy();
-    
+
     if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
         hooks_event_init ();
         kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
@@ -135,7 +140,7 @@ _message_core(uint32_t id,
 
 {
     switch (id) {
-        case UCM_EVENT_TERM: 
+        case UCM_EVENT_TERM:
             {
                 ucm_dtrace("Catch TERM message", "");
                 break;
@@ -169,7 +174,7 @@ static ucm_core_t kernel = {
     },
     .base.info.flags       = UCM_FLAG_PLUG_LOGGED,
 
-    .base.info.pid         = L"ucm_core",
+    .base.info.pid         = "ucm_core",
     .base.info.name        = L"UniChatMod core plugin",
     .base.info.developer   = L"SkyMaverick",
     .base.info.description = L"UniChatMod core library plugin",

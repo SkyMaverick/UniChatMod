@@ -84,7 +84,7 @@ static mdbx_database_t dba = {
         .options                    = UCM_BUILD_OPTS,
         .flags                      = UCM_BUILD_FLAGS,
     },
-    .plugin.core.info.pid           = L"dbmdbx",
+    .plugin.core.info.pid           = "dbmdbx",
     .plugin.core.info.name          = L"Storage mdbx plugin",
     .plugin.core.info.developer     = L"SkyMaverick",
     .plugin.core.info.description   = L"System standart storage plugin (based on libmdbx).",
@@ -100,6 +100,8 @@ static mdbx_database_t dba = {
     .plugin.db_check                = NULL,
     .plugin.db_flush                = mdbx_db_flush,
     .plugin.db_close                = mdbx_db_close,
+    
+    .plugin.db_backup               = mdbx_db_backup
 };
 
 mdbx_database_t* UniDB = &dba;

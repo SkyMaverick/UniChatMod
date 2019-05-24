@@ -133,11 +133,13 @@
 
 #if defined (UCM_OS_WINDOWS)
     #include "Windows.h"
-#endif 
+#endif
 #if defined (UCM_OS_POSIX)
     #include <sys/types.h>
     #include <sys/stat.h>
     #include <unistd.h>
+    #include <dlfcn.h>
+    #include <errno.h>
 #endif
 
 /* **************************************************
@@ -252,7 +254,7 @@
     #define UCM_NAME_MAX 256
 #endif
 
-#define UCM_PID_MAX 100 * sizeof(wchar_t)
+#define UCM_PID_MAX 50
 #define UNUSED(x) (void)(x);
 
 #define UCM_CONTACT_ID_MAX   256
@@ -331,29 +333,35 @@ enum {
     UCM_FLAG_CHECKPROF  = 1 << 2
 };
 
-// Events ---------------------
+// Messages and events ID  ---------------------
 enum {
-    UCM_EVENT_TERM              = 0,
-    UCM_EVENT_RUN               = 1 << 0,
-    UCM_EVENT_INFO              = 1 << 1,
-    UCM_EVENT_LOAD_SUCCESS      = 1 << 2,
-    UCM_EVENT_DBLOAD_SUCCESS    = 1 << 3,
-    UCM_EVENT_START_GUI         = 1 << 4,
-    UCM_EVENT_START_GUI2        = 1 << 5
+    UCM_EVENT_TERM             =  0x00000000,
+    UCM_EVENT_RUN              =  0x00000001,
+    UCM_EVENT_INFO             =  0x00000002,
+    UCM_EVENT_LOAD_SUCCESS     =  0x00000003,
+    UCM_EVENT_DBLOAD_SUCCESS   =  0x00000004,
+// events with allocated memory
+    UCM_EVENT_START_GUI        =  0x80000000,
+    UCM_EVENT_START_GUI2       =  0x80000001,
 };
+#define EVENT_ALLOCATED(X) ((X) >> 31) & 1
 
 typedef struct {
     ucm_object_t oid;
 
-    uint8_t ev;
-    size_t  size;
-    void*   sender;
+    uint32_t    ev;
+    size_t      size;
+    void*       sender;
+    void*       ctx;
 } ucm_ev_t;
+#define U_EVENT(X) ((ucm_ev_t*)(X))
 
 typedef struct {
-    ucm_ev_t base;
+    ucm_ev_t    base;
+    char        pid [UCM_PID_MAX + 1];
     // TODO
 } ucm_evgui_t;
+#define U_EVENT_GUI(X) ((ucm_evgui_t*)(X))
 
 // Messages -------------------
 enum {
@@ -451,7 +459,7 @@ typedef struct {
         const wchar_t*   options;            /// build options
         const wchar_t*   flags;              /// build with flags
     } build;
-    const wchar_t* const pid;                /// plugin id for internal ident (required)
+    const char* const    pid;                /// plugin id for internal ident (required)
     // developer info
     const wchar_t* const name;               /// plugin name for user
     const wchar_t* const developer;          /// developer name
@@ -530,6 +538,8 @@ typedef struct {
     UCM_RET     (*db_check) (void);
     void        (*db_flush) (bool force);
     UCM_RET     (*db_close) (void);
+
+    UCM_RET     (*db_backup) (char* path);
 
 
 
@@ -917,7 +927,8 @@ typedef struct _ucm_functions_s {
 
         /*! general queue access */
         int         (*mainloop_msg_send)    (uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
-        ucm_ev_t*   (*mainloop_ev_alloc)    (int id);
+        ucm_ev_t*   (*mainloop_ev_alloc)    (uint32_t id);
+        ucm_ev_t*   (*mainloop_ev_alloc2)   (uint32_t id, void* ctx, size_t mem);
         int         (*mainloop_ev_push)     (ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
         void        (*mainloop_ev_free)     (ucm_ev_t** event);
         void        (*mainloop_flush)       (void);

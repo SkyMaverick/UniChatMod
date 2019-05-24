@@ -72,8 +72,11 @@ _plugin_verify (ucm_plugin_t* plugin)
     }
     // TODO strongly PID validation
     if (plugin->info.pid) {
-        if ( wcscmp (plugin->info.pid, L"") == 0 ) {
+        if ( strcmp (plugin->info.pid, "") == 0 ) {
             return UCM_RET_NOOBJECT;
+        } 
+        if ( strlen(plugin->info.pid) > UCM_PID_MAX ) {
+            return UCM_RET_WRONGPARAM;
         }
     }
     if (( plugin->run  == NULL ) ||

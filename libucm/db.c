@@ -44,8 +44,8 @@ db_open ( const char* aPath,
 
         if (r < 0) {
             ucm_dtrace ("%s: %s\n", aPath, "fail open");
-            UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
-            UniAPI->uv.fs_req_cleanup(&ufs_req);
+//            UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
+//            UniAPI->uv.fs_req_cleanup(&ufs_req);
 
             if (flags & UCM_FLAG_ROPROF)
                 return UCM_RET_NOACCESS;

@@ -72,40 +72,54 @@ ucm_mloop_free (void)
         mq_free (messages);
 }
 
-ucm_ev_t*
-ucm_mloop_event_alloc (int id)
-{
-    size_t size = 0;
-    ucm_ev_t* event = NULL;
+static inline size_t
+event_size_get (uint32_t id) {
+
     switch (id) {
         case UCM_EVENT_START_GUI:
         case UCM_EVENT_START_GUI2:
-            {
-                size = sizeof (ucm_evgui_t);
-                break;
-            };
+            return sizeof (ucm_evgui_t);
         default:
-            {
-                ucm_etrace("%s: %d. %s\n", _("Don't create event:"),id,_("Use message push interface"));
-                return NULL;
-            };
+            return 0;
     }
+}
 
+ucm_ev_t*
+ucm_event_alloc2 (uint32_t  id,
+                  void*     ctx,
+                  size_t    mem)
+{
+    ucm_ev_t* event = NULL;
+
+    size_t size = event_size_get(id);
     if (size) {
         ucm_dtrace("%s: %d. %s: %d\n","Event alloc",id,"Allocated",size);
-        event = UniAPI->sys.zmalloc(size);
+        event = UniAPI->sys.zmalloc (size + mem);
+        if (event) {
+            // Define EVENT arguments
+            event->oid      = UCM_TYPE_OBJECT_EVENT;
+            event->ev       = id;
+            event->size     = size + mem;
+            event->sender   = NULL;
 
-        event->oid = UCM_TYPE_OBJECT_EVENT;
-        event->ev = id;
-        event->size = size;
-        event->sender = NULL;
-    };
-
+            // copy context
+            if (ctx) {
+                event->ctx = event + size;
+                memcpy (event->ctx, ctx, mem);
+            }
+        }
+    }
     return event;
 }
 
+ucm_ev_t*
+ucm_event_alloc (uint32_t id)
+{
+    return ucm_event_alloc2 (id, NULL,  0);
+}
+
 void
-ucm_mloop_event_free (ucm_ev_t** event)
+ucm_event_free (ucm_ev_t** event)
 {
     if (*event) {
         ucm_dtrace("Free event: %d\n",(*event)->ev);
@@ -117,7 +131,7 @@ ucm_mloop_event_free (ucm_ev_t** event)
 }
 
 int
-ucm_mloop_event_push (ucm_ev_t* event,
+ucm_event_push (ucm_ev_t* event,
                       uint32_t x1,
                       uint32_t x2,
                       void*    sender)
