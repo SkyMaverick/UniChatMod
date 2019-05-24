@@ -4,10 +4,20 @@ tuiapp_src = files('''
     app.h
 '''.split()) + shared_headers
 
-tuiapp_dep = [
-    system_library_dynload,
-    system_dependencies
-]
+if not (target_machine.system() == 'windows')
+    tuiapp_dep = [
+        system_library_dynload,
+        system_dependencies
+    ]
+else
+    tuiapp_src += files ('''
+        getopt_win.h
+    '''.split())
+
+    tuiapp_dep = [
+        system_dependencies
+    ]
+endif
 
 tuiapp = executable (tuiapp_name,
              tuiapp_src,

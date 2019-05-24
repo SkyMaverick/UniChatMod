@@ -38,9 +38,9 @@ cb_create_backup (uv_fs_t* open_req) {
         trace_inf ("%s: %s\n", "Create backup on file", open_req->file)
         uv_fs_t close_req;
 #if defined (UCM_OS_WINDOWS)
-        int res = mdbx_env_copy2fd (UniDB->mdbx.env, open_req->file.fd, MDBX_CP_COMPACT);
+        int res = mdbx_env_copy2fd (UniDB->mdbx.env, open_req->result, MDBX_CP_COMPACT);
 #else
-        int res = mdbx_env_copy2fd (UniDB->mdbx.env, open_req->file, MDBX_CP_COMPACT);
+        int res = mdbx_env_copy2fd (UniDB->mdbx.env, open_req->result, MDBX_CP_COMPACT);
 #endif
         if (res == MDBX_SUCCESS) {
             // TODO Send message OK async operation
@@ -48,7 +48,7 @@ cb_create_backup (uv_fs_t* open_req) {
             // TODO Send message FAIL async operation
         }
 
-        app->uv.fs_close(&close_req, open_req->file, NULL);
+        app->uv.fs_close(&close_req, open_req->result, NULL);
         app->uv.fs_req_cleanup(&close_req);
     } else {
         // TODO Send message FAIL async operation
