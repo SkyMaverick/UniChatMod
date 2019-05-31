@@ -20,33 +20,33 @@ _curses_loop (void* ctx)
     ucm_cargs_t* args = (ucm_cargs_t*) ctx;
     fprintf (stdout, "%s\n", "Start curses APP");
 
-    initscr();
-    keypad(stdscr, TRUE);
-    (void) nonl();
-    (void) cbreak();
-    (void) noecho();
-
-    if (has_colors())
-    {
-        start_color();
-
-        init_pair (COLOR_BLACK,   COLOR_BLACK,   COLOR_BLACK);
-        init_pair (COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
-        init_pair (COLOR_RED,     COLOR_RED,     COLOR_BLACK);
-        init_pair (COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
-        init_pair (COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
-        init_pair (COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-        init_pair (COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
-        init_pair (COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
-    }
-
-    for (;;)
-    {
-        int c = getch();
-        if (c == 'q')
-            break;
-    }
-
+//    initscr();
+//    keypad(stdscr, TRUE);
+//    (void) nonl();
+//    (void) cbreak();
+//    (void) noecho();
+//
+//    if (has_colors())
+//    {
+//        start_color();
+//
+//        init_pair (COLOR_BLACK,   COLOR_BLACK,   COLOR_BLACK);
+//        init_pair (COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
+//        init_pair (COLOR_RED,     COLOR_RED,     COLOR_BLACK);
+//        init_pair (COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
+//        init_pair (COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
+//        init_pair (COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+//        init_pair (COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
+//        init_pair (COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
+//    }
+//
+//    for (;;)
+//    {
+//        int c = getch();
+//        if (c == 'q')
+//            break;
+//    }
+//
     _curses_cleanup();
     return NULL;
 }

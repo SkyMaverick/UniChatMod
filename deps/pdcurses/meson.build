@@ -18,7 +18,7 @@ subdir ('pdcurses')
 pdc_includes = include_directories('.')
 
 pdc_backend = ''
-if ccid == 'windows'
+if sysid == 'windows'
     pdc_backend = 'wincon'
 else
     pdc_backend = 'x11'

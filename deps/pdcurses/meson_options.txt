@@ -1,10 +1,14 @@
+option ('enable_widec', type: 'boolean', value: 'true')
+option ('enable_force_utf8', type: 'boolean', value: 'true')
+
+# == for X11 only ==============
 option ('use_nextaw', type: 'boolean', value: 'false',
         description: 'Define if you want to use neXtaw library')
 option ('use_xaw3d', type: 'boolean', value: 'false',
         description: 'Define if you want to use Xaw3d library')
 
-option ('enable_widec', type: 'boolean', value: 'true')
-option ('enable_force_utf8', type: 'boolean', value: 'true')
+# == for Windows only ==========
+option ('no_infoex', type: 'boolean', value: 'false')
 
 # == subproject install hack ===
 option ('build_bundle', type: 'boolean', value: 'false')

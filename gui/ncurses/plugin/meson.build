@@ -8,7 +8,6 @@ tuilib_dep = [
     system_dependencies
 ]
 
-# add utf8proc dependency
 if not get_option('custom_libs')
     pdc_dep = cc.find_library('pdcurses', required: false)
     if not pdc_dep.found()
