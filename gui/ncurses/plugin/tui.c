@@ -11,7 +11,7 @@ static uintptr_t    hwnd = 0;
 static void
 _curses_cleanup (void)
 {
-    endwin();
+//    endwin();
 }
 
 static void* 

@@ -1,0 +1,11 @@
+option ('use_nextaw', type: 'boolean', value: 'false',
+        description: 'Define if you want to use neXtaw library')
+option ('use_xaw3d', type: 'boolean', value: 'false',
+        description: 'Define if you want to use Xaw3d library')
+
+option ('enable_widec', type: 'boolean', value: 'true')
+option ('enable_force_utf8', type: 'boolean', value: 'true')
+
+# == subproject install hack ===
+option ('build_bundle', type: 'boolean', value: 'false')
+option ('path_install', type: 'string', value: '')
