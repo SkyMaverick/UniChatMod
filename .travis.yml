@@ -12,6 +12,7 @@ env:
   - NINJA_PATH="${CI_TOOLS}/ninja"
   - COVERITY_BUILD_PATH="${TRAVIS_BUILD_DIR}/cov_build"
   - PROJECT_SCRIPT="${TRAVIS_BUILD_DIR}/run.py"
+  - FILE_RSA="${CI_TOOLS}/id_rsa"
   - secure: QRORzlDpl1W4JVYKCuZvLmoY49ZNu+dLm/fFp+jG/69cZ7rD1W68TFLD4Hje7Wu4VN/Tc0/AYpgqQgbD1OtBlshjczwSr+fxOuHHbV4vZ5F2Xxkf35jS0saefFhymlRGZKZG7M8cLhc9wRu60IdpzqqyIX/A4zXVIDxzg3Sr1hsDQ7bgLdXGiLWDtsoMFh2l8BaILeD/yN1MQrJMNVAunvg8LVq0CKSn7t7vPbScbo0g+F3W/CPopH0486LSnTWNncFhdFHHkw+0/JKpfj2yyUBoSXzb5C/g9CXSLUaPr2KnGlCZEpXz1A3C8eZHHqLx9lNYM7K9gHx4guDHcaboy9M3RHFQ+J+yOf1ci0yUzUl+jn4PhM8RhHOpUidOBw6PkyyHoC2jXO1LsW8fp+OX2cvWQiNwJ6LEEcH3tikNbG4dh3pjmTPzDVLGEVtROSfBOk3Fnsr8x7y9bYjAw8cp9Wjf6jJgyu9u6HXEFiaoGM4GnEp0XFGx60ul6h5McHoZo5nmvmYvju4Lwlt2OzAxE3Ano8XfSlRIH5pyk7KRtjtQWCQgufQ1xrCz4GZr98ATMornLGtxOc72kEXhXH+2Cug2Aqmbf0UspBr3U/FV8+X2aq364+gEduZOohm9u1uTcbU+ZWuL9KECU/hQ/TaVH5Ix4MY/nQpGsv+oMFnMGvM=
 branches:
   only:
@@ -50,21 +51,17 @@ before_install:
 - sudo python3 -m pip install meson
 
 script:
-- case "${TRAVIS_OS_NAME}" in
-    linux)
-        case "${TRAVIS_BRANCH}" in
-            master)
-                ${PROJECT_SCRIPT} debug
-            ;;
-            release)
-                ${PROJECT_SCRIPT} release
-            ;; esac
-    ;; esac
+- case "${TRAVIS_BRANCH}" in
+      master)
+          ${PROJECT_SCRIPT} debug
+      ;;
+      release)
+          ${PROJECT_SCRIPT} release
+      ;; esac
 after_success:
 # create packages
-- case "${TRAVIS_OS_NAME}" in
-    linux)
-        ${PROJECT_SCRIPT} pack_arc
-        ${PROJECT_SCRIPT} pack_deb
-        ${PROJECT_SCRIPT} pack_sh
-    ;; esac
+-  ${PROJECT_SCRIPT} pack_arc
+-  ${PROJECT_SCRIPT} pack_deb
+-  ${PROJECT_SCRIPT} pack_sh
+
+-  ${CI_TOOLS}/sfupload.sh ${TRAVIS_BUILD_DIR}

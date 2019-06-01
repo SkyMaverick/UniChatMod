@@ -157,16 +157,6 @@ def action_log():
     else:
         error ('Meson configure files don\'t create')
 
-def action_dockerhub ():
-    info ('Update docker image on DockerHub (signin if need)')
-    action_clean_all ()
-    result = 1
-    if os.path.exists (file_shell_travis):
-        result = shell_cmd(file_shell_travis, 'UPDATE_DH')
-    else:
-        error ('Don\'t found travis shell file: {file}'.format(file=file_shell_travis))
-    return result
-
 def action_bundle ():
     info ('Create application bundle in: {path}'.format(path=path_bundle))
     if platform.system().lower() == 'windows':
@@ -292,7 +282,6 @@ actions = {
         'log'               : action_log,
         'pkg_src'           : action_dummy,
         'laz_gui'           : action_dummy,
-        'docker_hub'        : action_dockerhub,
         'bundle'            : action_bundle,
         'pack_arc'          : action_arcxz,
         'pack_deb'          : action_deb,
