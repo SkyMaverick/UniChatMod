@@ -1,25 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 
-echo Decrtypting id_rsa...
-openssl aes-256-cbc -K $encrypted_cafd02e1f1a1_key -iv $encrypted_cafd02e1f1a1_iv -in ${TRAVIS_BUILD_DIR}/tools/travis/id_rsa.enc -out ${TRAVIS_BUILD_DIR}/tools/travis/id_rsa -d
+echo Add id_rsa in SSH ...
+
 eval "$(ssh-agent -s)"
-chmod 600 tools/travis/id_rsa
-ssh-add tools/travis/id_rsa || exit 1
+ssh-add ${1}/tools/appveyor/id_rsa || exit 1
 
-PKGSDIR=${TRAVIS_BUILD_DIR}/build/pkgs
+PKGSDIR=${1}/build/pkgs
 SSHOPTS="ssh -o StrictHostKeyChecking=no"
 
-case "$TRAVIS_OS_NAME" in
-    linux)
-        echo Uploading linux artifacts...
-        if [ -d ${PKGSDIR} ]
-        then
-            if [ "${TRAVIS_BRANCH}" == "master" ]
-            then
-                rsync -e "$SSHOPTS" ${PKGSDIR}/*.* skymaverick,unicm@frs.sourceforge.net:/home/frs/project/unicm/daily/linux || exit 1
-            fi
-        else
-            echo "Don't found packages"
-        fi
-    ;;
-esac
+if [ -d ${PKGSDIR} ]
+then
+    rsync -e "$SSHOPTS" ${PKGSDIR}/*.* skymaverick,unicm@frs.sourceforge.net:/home/frs/project/unicm/daily/windows || exit 1
+else
+    echo "Don't found packages"
+fi

@@ -1,21 +1,17 @@
-sudo: false
 os:
 - linux
+dist: xenial
+
 language:
 - c
-services:
-- docker
 env:
   global:
   - CI_TOOLS="$TRAVIS_BUILD_DIR/tools/travis"
-  - CI_MANAGER="$CI_TOOLS/manager.sh"
   - PLATFORM="$(uname)"
-  - TOOL_ARCHIVE="/var/tmp/cov-analysis-$PLATFORM.tgz
-  - SCAN_URL="https://scan.coverity.com"
-  - UPLOAD_URL="https://scan.coverity.com/builds"
-  - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
-  - COVERITY_SCAN_NOTIFICATION_EMAIL="skymaverickas@gmail.com"
-  - COVERITY_SCAN_BRANCH_PATTERN="$TRAVIS_BRANCH"
+  - NINJA_NETFILE="https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip"
+  - NINJA_PATH="${CI_TOOLS}/ninja"
+  - COVERITY_BUILD_PATH="${TRAVIS_BUILD_DIR}/cov_build"
+  - PROJECT_SCRIPT="${TRAVIS_BUILD_DIR}/run.py"
   - secure: QRORzlDpl1W4JVYKCuZvLmoY49ZNu+dLm/fFp+jG/69cZ7rD1W68TFLD4Hje7Wu4VN/Tc0/AYpgqQgbD1OtBlshjczwSr+fxOuHHbV4vZ5F2Xxkf35jS0saefFhymlRGZKZG7M8cLhc9wRu60IdpzqqyIX/A4zXVIDxzg3Sr1hsDQ7bgLdXGiLWDtsoMFh2l8BaILeD/yN1MQrJMNVAunvg8LVq0CKSn7t7vPbScbo0g+F3W/CPopH0486LSnTWNncFhdFHHkw+0/JKpfj2yyUBoSXzb5C/g9CXSLUaPr2KnGlCZEpXz1A3C8eZHHqLx9lNYM7K9gHx4guDHcaboy9M3RHFQ+J+yOf1ci0yUzUl+jn4PhM8RhHOpUidOBw6PkyyHoC2jXO1LsW8fp+OX2cvWQiNwJ6LEEcH3tikNbG4dh3pjmTPzDVLGEVtROSfBOk3Fnsr8x7y9bYjAw8cp9Wjf6jJgyu9u6HXEFiaoGM4GnEp0XFGx60ul6h5McHoZo5nmvmYvju4Lwlt2OzAxE3Ano8XfSlRIH5pyk7KRtjtQWCQgufQ1xrCz4GZr98ATMornLGtxOc72kEXhXH+2Cug2Aqmbf0UspBr3U/FV8+X2aq364+gEduZOohm9u1uTcbU+ZWuL9KECU/hQ/TaVH5Ix4MY/nQpGsv+oMFnMGvM=
 branches:
   only:
@@ -25,41 +21,50 @@ branches:
 addons:
   apt:
     packages:
-    - python3
+# for meson support
+    - python3 python3-setuptools python3-pip
+# need utilites
+    - tar unzip xz-utils fakeroot
+# headers and dependencies
+    - libcunit1-dev libucl-dev libncurses5-dev libncursesw5-dev
+      libx11-dev libxaw7-dev libxmu-dev libxt-dev libsm-dev
+      libice-dev libxext-dev libxpm-dev
+
+  coverity_scan:
+    project:
+      name: SkyMaverick/UniChatMod 
+      version: 0.1
+
+    notification_email: skymaverickas@gmail.com
+    build_command_prepend: meson ${TRAVIS_BUILD_DIR} ${COVERITY_BUILD_PATH}
+    build_command: ninja -C ${COVERITY_BUILD_PATH}
+    branch_pattern: coverity
+  
 before_install:
-- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-- case "${TRAVIS_BRANCH}" in
-    coverity)
-        env | grep -E "TRAVIS|COV|TOOL|URL" > .cov-env;
-    ;;
-  esac
+# get ninja build system
+- wget $NINJA_NETFILE && unzip -q ninja-linux.zip -d $NINJA_PATH
+- export PATH="$NINJA_PATH:$PATH"
+
+# install meson
+- sudo python3 -m pip install --upgrade pip
+- sudo python3 -m pip install meson
+
 script:
 - case "${TRAVIS_OS_NAME}" in
     linux)
         case "${TRAVIS_BRANCH}" in
             master)
-                ${CI_MANAGER} CREATE_FAST;
-                ${CI_MANAGER} RUN_DEBUG;
+                ${PROJECT_SCRIPT} debug
             ;;
             release)
-                ${CI_MANAGER} CREATE;
-                ${CI_MANAGER} RUN_RELEASE;
-            ;;
-            coverity)
-                ${CI_MANAGER} CREATE;
-                ${CI_MANAGER} RUN_COVERITY;
+                ${PROJECT_SCRIPT} release
             ;; esac
-    ;;
-  esac
+    ;; esac
 after_success:
+# create packages
 - case "${TRAVIS_OS_NAME}" in
     linux)
-        ${CI_MANAGER} DEPLOY;
-    ;;
-  esac
-after_script:
-- case "${TRAVIS_OS_NAME}" in
-    linux)
-        ${CI_MANAGER} CLEANUP;
-    ;;
-  esac
+        ${PROJECT_SCRIPT} pack_arc
+        ${PROJECT_SCRIPT} pack_deb
+        ${PROJECT_SCRIPT} pack_sh
+    ;; esac
