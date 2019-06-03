@@ -212,7 +212,7 @@ dbi_core_init (void)
             dbi_core_release();
             return UCM_RET_NONALLOC;
        } else {
-            trace_dbg ("%s\n: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.clk_flush);
+            trace_dbg ("%s: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.clk_flush);
        }
     return UCM_RET_SUCCESS;
 }

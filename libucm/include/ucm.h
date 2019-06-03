@@ -132,6 +132,12 @@
 #endif
 
 #if defined (UCM_OS_WINDOWS)
+    #define PATH_DELIM '\\'
+#else
+    #define PATH_DELIM '/'
+#endif
+
+#if defined (UCM_OS_WINDOWS)
     #include "Windows.h"
 #endif
 #if defined (UCM_OS_POSIX)
@@ -982,6 +988,7 @@ enum {
 // core start arguments
 typedef struct {
     char*    path_abs       ;
+    char*    path_lib_abs   ;
     char*    path_plug_abs  ;
     char*    path_store_abs ;
 

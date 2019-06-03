@@ -215,10 +215,13 @@ __loaddir_cb (uv_fs_t* req)
     uv_fs_t     close_req;
     char buffer [UCM_PATH_MAX];
 
+    ucm_dtrace("%s ...\n", "Scan plugin directory");
+
     while ( UniAPI->uv.fs_scandir_next(req, &dent) != UV__EOF) {
         ucm_dtrace("%s/%s\n", req->path, dent.name);
         
-        snprintf (buffer, UCM_PATH_MAX, "%s/%s", req->path, dent.name);
+        snprintf (buffer, UCM_PATH_MAX, "%s%c%s", req->path, PATH_DELIM, dent.name);
+
         ucm_module_t* tmp = _plugin_load(buffer);
         if (tmp) {
             // update modules list
@@ -247,6 +250,8 @@ plugins_load_registry (const char* plug_path)
 
     _lock = UniAPI->sys.rwlock_create();
     int r = UniAPI->uv.fs_scandir ((uv_fs_t*)(&ireq), plug_path, O_RDONLY, __loaddir_cb);
+    UNUSED(r);
+
     UniAPI->uv.run (UCM_LOOP_SYSTEM, UV_RUN_ONCE);
 
     ucm_dtrace ("%s: %zu\n", "Found plugins count", ireq.count);

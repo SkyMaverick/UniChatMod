@@ -5,6 +5,7 @@
 #include <stdarg.h>
 
 #include "ucm.h"
+#include "config.h"
 
 #include "app.h"
 #include "gettext.h"
@@ -25,10 +26,8 @@
 
 #if defined (UCM_OS_POSIX)
     #define LIBCORE_NAME "libucm.so"
-    #define LIBCORE_PATH_SEPARATOR '/'
 #else
     #define LIBCORE_NAME "ucm.dll"
-    #define LIBCORE_PATH_SEPARATOR '\\'
 #endif
 #define LIBCORE_API_MAJVER  1
 #define LIBCORE_API_MINVER  1
@@ -36,11 +35,13 @@
 #define STACK_TRACE_BUFFER  4096
 
 static char pa_buf  [UCM_PATH_MAX];
+static char pla_buf [UCM_PATH_MAX];
 static char ppa_buf [UCM_PATH_MAX];
 static char psa_buf [UCM_PATH_MAX];
 
 static ucm_cargs_t args = {
    .path_abs        = pa_buf,
+   .path_lib_abs    = pla_buf,
    .path_plug_abs   = ppa_buf,
    .path_store_abs  = psa_buf,
 
@@ -209,8 +210,17 @@ main (int argc, char* argv[])
         snprintf (args.path_abs, UCM_PATH_MAX, "%s", argv[0]);
     }
 
-    char* e = strrchr(args.path_abs, '/');
+#ifdef DEBUG
+    fprintf (stdout, "%s: %s\n", "Start application", args.path_abs);
+#endif
+
+    char* e = strrchr(args.path_abs, PATH_DELIM);
     if (e) *e = '\0';
+
+#ifdef DEBUG
+    fprintf (stdout, "%s: %s\n", "Application path", args.path_abs);
+#endif
+
 
     /* check portable application objects */
     while (!portable || !portable_base) {
@@ -218,12 +228,12 @@ main (int argc, char* argv[])
 
         if (!portable) {
             // TODO
-            snprintf (tmp, UCM_PATH_MAX, "%s%c%ls", args.path_abs, LIBCORE_PATH_SEPARATOR, UCM_PATH_MODULES);
+            snprintf (tmp, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_MODULES);
                 break;
             portable = 1;
         }
         if (!portable_base) {
-            snprintf (tmp, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, LIBCORE_PATH_SEPARATOR, TUI_APP_NAME);
+            snprintf (tmp, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, TUI_APP_NAME);
                 break;
             portable_base = 1;
         }
@@ -231,13 +241,14 @@ main (int argc, char* argv[])
     }
 
     if (portable) {
-        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, LIBCORE_PATH_SEPARATOR, UCM_PATH_MODULES);
+        snprintf (args.path_lib_abs,  UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_DEPENDS);
+        snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_MODULES);
     } else {
         //TODO
     }
 
     if (portable_base ) {
-        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, LIBCORE_PATH_SEPARATOR, UCM_DB_DEFAULT_NAME);
+        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, UCM_DB_DEFAULT_NAME);
     } else {
         // TODO
     }
@@ -262,6 +273,11 @@ main (int argc, char* argv[])
         ucm_cstop_func  core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
         ucm_cinfo_func  core_info  = dlsym (core_handle, UCM_INFO_FUNC);
 #else
+#ifdef DEBUG
+    fprintf (stdout, "%s: %s\n", "Library search path", args.path_lib_abs);
+#endif
+
+    SetDllDirectoryA(args.path_lib_abs);
     core_handle = LoadLibraryA (LIBCORE_NAME);
     if (core_handle != INVALID_HANDLE_VALUE) {
         ucm_cstart_func core_start = (ucm_cstart_func)GetProcAddress(core_handle, UCM_START_FUNC);
@@ -282,7 +298,6 @@ main (int argc, char* argv[])
                         snprintf ( U_EVENT_GUI(ev)->pid, UCM_PID_MAX, "%s", "uincurses");
                         core->app.mainloop_ev_push(ev, 0, 0, NULL);
                     }
-//                    core->app.mainloop_msg_send (UCM_EVENT_START_GUI, (uintptr_t)L"uincurses",0,0);
                 } else {
                     fprintf (stderr, "%s\n", "Core information load FAIL");
                     ret_status = UCM_RET_EMPTY;

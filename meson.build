@@ -27,17 +27,17 @@ if get_option('valgrind_support')
 endif
 
 if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
-    
+
     add_project_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
     # --- compiler arguments ----------
     cc_args = '''
         -std=gnu11
         -Wall
     '''.split()
-    
+
     cc_link_args = '''
     '''.split()
-    
+
     if get_option('buildtype').startswith('debug')
         cc_args += '''
                     -O0
@@ -49,7 +49,7 @@ if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
                     -s
                 '''.split()
     endif
-    
+
     if get_option('build_with_hidden_api')
         cc_args += '''
             -fvisibility=hidden
@@ -119,7 +119,7 @@ if not get_option('custom_libs')
     if not system_library_uv.found()
         uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
         system_library_uv = uv_lib.get_variable('uv_dep')
-        
+
         shared_headers += uv_lib.get_variable('uv_header')
         system_dependencies += system_library_uv.partial_dependency(
                     includes: true
@@ -130,12 +130,12 @@ if not get_option('custom_libs')
 else
     uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
     system_library_uv = uv_lib.get_variable('uv_dep')
-    
+
     shared_headers += uv_lib.get_variable('uv_header')
     system_dependencies += system_library_uv.partial_dependency(
                     includes: true
                 )
-    
+
     add_project_arguments('-DENABLE_CUSTOM_LIBS', language: 'c')
 endif
 
