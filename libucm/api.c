@@ -334,6 +334,8 @@ static ucm_functions_t core_api = {
     .sys.ustrstr                    = ucm_strstr             ,
     .sys.ustrcasestr                = ucm_strcasestr         ,
 
+    .app.wait_exit                  = wait_core_loop         ,
+
     .app.get_int                    = NULL                   ,
     .app.get_int64                  = NULL                   ,
     .app.get_float                  = NULL                   ,

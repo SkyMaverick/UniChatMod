@@ -8,3 +8,6 @@ get_handle_mainloop (void);
 
 uv_loop_t*
 get_handle_netloop (void);
+
+void
+wait_core_loop(void);

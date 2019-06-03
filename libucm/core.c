@@ -151,6 +151,11 @@ _message_core(uint32_t id,
     UNUSED(x2);
 }
 
+void
+wait_core_loop (void) {
+    UniAPI->sys.thread_join(kernel.loop_ucore);
+}
+
 /***************************************************
     EXTERANAL FUNCTIONS
  ***************************************************/

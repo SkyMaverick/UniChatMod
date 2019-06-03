@@ -915,6 +915,7 @@ typedef struct _ucm_functions_s {
     } sys;
 
     struct {
+        void        (*wait_exit)    (void);
         /*! low-level settings provider functions */
         int         (*get_int)      (ucm_object_t* obj, char* key, int def);
         int64_t     (*get_int64)    (ucm_object_t* obj, char* key, int64_t def);

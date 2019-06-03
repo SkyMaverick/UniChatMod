@@ -55,6 +55,10 @@ static ucm_cargs_t args = {
     static HMODULE      core_handle;
 #endif
 
+static ucm_cstart_func core_start = NULL;
+static ucm_cstop_func  core_stop  = NULL;
+static ucm_cinfo_func  core_info  = NULL;
+
 static const        ucm_plugin_info_t* info;
 
 static int portable = 0;
@@ -110,6 +114,67 @@ app_realpath (const char*  path)
 }
 
 static void
+exit_func (int ret_status)
+{
+    if (core_stop)
+        core_stop ();
+#if defined (UCM_OS_POSIX) || \
+    defined (UCM_OS_WINEMULATOR)
+
+    #ifndef ENABLE_VALGRIND
+        dlclose(core_handle);
+    #endif
+#else
+    FreeLibrary (core_handle);
+#endif
+    exit (ret_status);
+}
+
+#if defined (UCM_OS_WINDOWS)
+    BOOL
+    TermHandler (DWORD fwdhandlerType)
+    {
+        fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch signal ..."));
+    }
+#else
+    static void
+    _stack_trace (int sig)
+    {
+        fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch SEGV signal ..."));
+        void* buf[STACK_TRACE_BUFFER];
+        char** strs;
+
+        int ptrs = backtrace(buf, STACK_TRACE_BUFFER);
+        if (ptrs)
+            fprintf (stderr, "%s: %d\n",_("Trace last addresses"), ptrs);
+
+        strs = backtrace_symbols(buf, ptrs);
+        if (strs != NULL) {
+            for (int i=0; i < ptrs; i++)
+                fprintf (stderr, "%s\n", strs[i]);
+        } else fprintf (stderr, "%s\n",_("backtrace symbols error"));
+        free(strs);
+    }
+
+    static void
+    _crash_handler (int sig)
+    {
+    #ifdef DEBUG
+        _stack_trace (sig);
+    #endif
+        // TODO maybe clean
+        exit (UCM_RET_EXCEPTION);
+    }
+
+    static void
+    _term_handler (int sig)
+    {
+        fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch TERM signal ..."));
+        exit_func(UCM_RET_SUCCESS);
+    }
+#endif
+
+static void
 _args_parse (int argc, char* argv[])
 {
     int opt = 0;
@@ -157,38 +222,6 @@ _args_parse (int argc, char* argv[])
     }
 }
 
-#if defined (UCM_OS_POSIX) || \
-    defined (UCM_OS_WINEMULATOR)
-static inline void
-_stack_trace (int sig)
-{
-    fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch SEGV signal ..."));
-    void* buf[STACK_TRACE_BUFFER];
-    char** strs;
-
-    int ptrs = backtrace(buf, STACK_TRACE_BUFFER);
-    if (ptrs)
-        fprintf (stderr, "%s: %d\n",_("Trace last addresses"), ptrs);
-
-    strs = backtrace_symbols(buf, ptrs);
-    if (strs != NULL) {
-        for (int i=0; i < ptrs; i++)
-            fprintf (stderr, "%s\n", strs[i]);
-    } else fprintf (stderr, "%s\n",_("backtrace symbols error"));
-    free(strs);
-}
-
-static void
-_crash_handler (int sig)
-{
-#ifdef DEBUG
-    _stack_trace (sig);
-#endif
-    // TODO maybe clean
-    exit (UCM_RET_EXCEPTION);
-}
-
-#endif
 
 int
 main (int argc, char* argv[])
@@ -258,10 +291,17 @@ main (int argc, char* argv[])
     if (terminated)
         return ret_status;
 
-#if defined (UCM_OS_POSIX) || \
-    defined (UCM_OS_WINEMULATOR)
+#if defined (UCM_OS_WINDOWS)
+    BOOL fRet = SetConsoleCtrlHandler (
+                (PHANDLER_ROUTINE) TermHandler,
+                TRUE
+            );
+    if ( !fRet )
+        fprintf(stderr, "%s\n", "Couldn't set control handlers.");
+#else
     signal (SIGINT, _crash_handler);
     signal (SIGSEGV, _crash_handler);
+    signal (SIGTERM, _term_handler);
 #endif /* POSIX or WINEMU */
 
 #if defined (UCM_OS_POSIX) || \
@@ -269,9 +309,9 @@ main (int argc, char* argv[])
 
     core_handle = dlopen (LIBCORE_NAME, RTLD_LAZY);
     if (core_handle) {
-        ucm_cstart_func core_start = dlsym (core_handle, UCM_START_FUNC);
-        ucm_cstop_func  core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
-        ucm_cinfo_func  core_info  = dlsym (core_handle, UCM_INFO_FUNC);
+        core_start = dlsym (core_handle, UCM_START_FUNC);
+        core_stop  = dlsym (core_handle, UCM_STOP_FUNC);
+        core_info  = dlsym (core_handle, UCM_INFO_FUNC);
 #else
 #ifdef DEBUG
     fprintf (stdout, "%s: %s\n", "Library search path", args.path_lib_abs);
@@ -280,45 +320,35 @@ main (int argc, char* argv[])
     SetDllDirectoryA(args.path_lib_abs);
     core_handle = LoadLibraryA (LIBCORE_NAME);
     if (core_handle != INVALID_HANDLE_VALUE) {
-        ucm_cstart_func core_start = (ucm_cstart_func)GetProcAddress(core_handle, UCM_START_FUNC);
-        ucm_cstop_func  core_stop  = (ucm_cstop_func) GetProcAddress(core_handle, UCM_STOP_FUNC);
-        ucm_cinfo_func  core_info  = (ucm_cinfo_func) GetProcAddress(core_handle, UCM_INFO_FUNC);
+        core_start = (ucm_cstart_func)GetProcAddress(core_handle, UCM_START_FUNC);
+        core_stop  = (ucm_cstop_func) GetProcAddress(core_handle, UCM_STOP_FUNC);
+        core_info  = (ucm_cinfo_func) GetProcAddress(core_handle, UCM_INFO_FUNC);
 #endif
         if ( core_start && core_stop && core_info ) {
-            core = core_start (&args);
-            if (core) {
-                info = core_info();
-                if (   (info)
-                    && (info->api.vmajor >= LIBCORE_API_MAJVER)
-                    && (info->api.vminor >= LIBCORE_API_MINVER))
-                {
-                    // start curses
+            info = core_info();
+            if (info
+                && (info->api.vmajor >= LIBCORE_API_MAJVER)
+                && (info->api.vminor >= LIBCORE_API_MINVER))
+            {
+                core = core_start (&args);
+                if (core) {
                     ucm_ev_t* ev = core->app.mainloop_ev_alloc (UCM_EVENT_START_GUI);
                     if (ev) {
-                        snprintf ( U_EVENT_GUI(ev)->pid, UCM_PID_MAX, "%s", "uincurses");
-                        core->app.mainloop_ev_push(ev, 0, 0, NULL);
+                      snprintf ( U_EVENT_GUI(ev)->pid, UCM_PID_MAX, "%s", "uincurses");
+                      core->app.mainloop_ev_push(ev, 0, 0, NULL);
                     }
+                    core->app.wait_exit();
+                    exit_func (UCM_RET_SUCCESS);
                 } else {
-                    fprintf (stderr, "%s\n", "Core information load FAIL");
-                    ret_status = UCM_RET_EMPTY;
+                    fprintf (stderr, "%s\n", "Core API load FAIL");
+                    exit_func (UCM_RET_UNREALIZED);
                 }
-                core_stop();
-            } else {
-                fprintf (stderr, "%s\n", "Core API load FAIL");
-                ret_status = UCM_RET_UNREALIZED;
             }
+        } else {
+            fprintf (stderr, "%s\n", "Core information load FAIL");
+            exit_func (UCM_RET_EMPTY);
         }
-#if defined (UCM_OS_POSIX) || \
-    defined (UCM_OS_WINEMULATOR)
-
-    #ifndef ENABLE_VALGRIND
-            dlclose(core_handle);
-    #endif
-#else
-    FreeLibrary (core_handle);
-#endif
-    }
-    else {
+    } else {
         fprintf (stderr, "%s: %s\n", "Don't load core library", LIBCORE_NAME);
         ret_status = UCM_RET_NOOBJECT;
     }
