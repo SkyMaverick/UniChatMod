@@ -112,7 +112,7 @@ _run_core (void)
         hooks_event_init ();
         kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
     } else {
-        kernel.base.stop();
+//        kernel.base.stop();
         ucm_etrace("%s\n", _("Critical system error"));
         return UCM_RET_NONALLOC;
     }
@@ -123,7 +123,7 @@ _run_core (void)
     /*TODO UniAPI add state status */
     if (db_open (UniAPI->app.get_store_path(), 0) != UCM_RET_SUCCESS) {
         ucm_etrace("%s: %s\n", _("Critical database error"), UniAPI->app.get_store_path())
-        kernel.base.stop ();
+//        kernel.base.stop ();
         return UCM_RET_DBERROR;
     }
     // TODO db open

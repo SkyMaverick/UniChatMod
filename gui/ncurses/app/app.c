@@ -132,9 +132,16 @@ exit_func (int ret_status)
 
 #if defined (UCM_OS_WINDOWS)
     BOOL
-    TermHandler (DWORD fwdhandlerType)
+    TermHandler (DWORD fwdHandlerType)
     {
         fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch signal ..."));
+        switch (fwdHandlerType) {
+            default:
+                {
+                    //TODO
+                }
+        }
+        return TRUE;
     }
 #else
     static void

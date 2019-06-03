@@ -208,7 +208,7 @@ plugins_stop_all (void)
     NULL_REG (plugins_stuff);
 }
 
-static void
+void
 __loaddir_cb (uv_fs_t* req)
 {
     uv_dirent_t dent;
@@ -239,7 +239,7 @@ __loaddir_cb (uv_fs_t* req)
 #else
     UniAPI->uv.fs_close (&close_req, req->file, NULL);
 #endif
-    UniAPI->uv.fs_req_cleanup(req);
+    UniAPI->uv.fs_req_cleanup(&close_req);
 }
 
 UCM_RET
@@ -250,9 +250,12 @@ plugins_load_registry (const char* plug_path)
 
     _lock = UniAPI->sys.rwlock_create();
     int r = UniAPI->uv.fs_scandir ((uv_fs_t*)(&ireq), plug_path, O_RDONLY, __loaddir_cb);
-    UNUSED(r);
-
-    UniAPI->uv.run (UCM_LOOP_SYSTEM, UV_RUN_ONCE);
+    if (r) {
+        ucm_dtrace ("%s: %s\n", "Scandir error", UniAPI->uv.strerror(r));
+        return UCM_RET_EXCEPTION;
+    }
+    UniAPI->uv.run (UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
+    UniAPI->uv.fs_req_cleanup(&(ireq.fs));
 
     ucm_dtrace ("%s: %zu\n", "Found plugins count", ireq.count);
     return UCM_RET_SUCCESS;
