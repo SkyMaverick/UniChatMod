@@ -208,7 +208,7 @@ plugins_stop_all (void)
     NULL_REG (plugins_stuff);
 }
 
-void
+static void
 __loaddir_cb (uv_fs_t* req)
 {
     uv_dirent_t dent;
@@ -218,7 +218,7 @@ __loaddir_cb (uv_fs_t* req)
     ucm_dtrace("%s ...\n", "Scan plugin directory");
 
     while ( UniAPI->uv.fs_scandir_next(req, &dent) != UV__EOF) {
-        ucm_dtrace("%s/%s\n", req->path, dent.name);
+        ucm_dtrace("%s%c%s\n", req->path, PATH_DELIM, dent.name);
         
         snprintf (buffer, UCM_PATH_MAX, "%s%c%s", req->path, PATH_DELIM, dent.name);
 
