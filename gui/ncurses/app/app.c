@@ -1,5 +1,15 @@
 #include "ucm.h"
 
+#if defined (UCM_OS_WINDOWS) && \
+    defined (DEBUG)
+    #define _CRTDBG_MAP_ALLOC
+
+    #include <stdlib.h>
+    #include <crtdbg.h>
+#else
+    #include <stdlib.h>
+#endif
+
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
@@ -188,13 +198,9 @@ exit_func (int ret_status)
     {
         fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch signal ..."));
         switch (fwdHandlerType) {
-			case CTRL_C_EVENT:
-			case CTRL_BREAK_EVENT:
-			case CTRL_LOGOFF_EVENT:
-			case CTRL_SHUTDOWN_EVENT:
             default:
                 {
-					exit_func(UCM_RET_SUCCESS);
+                    //TODO
                 }
         }
         return TRUE;
@@ -289,6 +295,10 @@ _args_parse (int argc, char* argv[])
 int
 main (int argc, char* argv[])
 {
+#if defined (UCM_OS_WINDOWS) && \
+    defined (DEBUG)
+    _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
     portable = 1;
     int ret_status = UCM_RET_SUCCESS;
 // *********************************************************
