@@ -2,6 +2,7 @@
 
 /* GhostCommander (gc) - simple, modular, scalable file manager */
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
