@@ -275,8 +275,6 @@ _args_parse (int argc, char* argv[])
                         snprintf (args.path_store_abs, UCM_PATH_MAX, "%s", optarg);
                     }
                     portable_base = 0;
-
-                    args.options |= UCM_FLAG_CORE_DBNEW;
                     break;
                 }
         }
