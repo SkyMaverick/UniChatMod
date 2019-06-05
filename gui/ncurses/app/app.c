@@ -1,6 +1,7 @@
+#include "ucm.h"
+
 #if defined (UCM_OS_WINDOWS) && \
     defined (DEBUG)
-    #define _DEBUG
     #define _CRTDBG_MAP_ALLOC
 
     #include <stdlib.h>
@@ -14,7 +15,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "ucm.h"
 #include "config.h"
 
 #include "app.h"
