@@ -1,4 +1,14 @@
-#include <stdlib.h>
+#if defined (UCM_OS_WINDOWS) && \
+    defined (DEBUG)
+    #define _DEBUG
+    #define _CRTDBG_MAP_ALLOC
+
+    #include <stdlib.h>
+    #include <crtdbg.h>
+#else
+    #include <stdlib.h>
+#endif
+
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
@@ -33,6 +43,7 @@
 #define LIBCORE_API_MINVER  1
 
 #define STACK_TRACE_BUFFER  4096
+
 
 static char pa_buf  [UCM_PATH_MAX];
 static char pla_buf [UCM_PATH_MAX];
@@ -112,6 +123,57 @@ app_realpath (const char*  path)
     return tmp_path;
 #endif
 }
+
+static inline int
+app_realloc (void** mem,
+             size_t size)
+{
+    void* old_mem = *mem;
+    *mem = realloc (*mem, size);
+    if ( *mem != old_mem ) {
+        if ( *mem == NULL ) {
+            *mem = old_mem;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static char*
+app_mypath (char* path)
+{
+#if defined (UCM_OS_POSIX) || \
+    defined (UCM_OS_WINEMULATOR)
+    return app_realpath(path);
+#else
+    size_t size = UCM_PATH_MAX;
+
+    char* tmp_path = malloc((size + 1) * sizeof(TCHAR));
+    if (tmp_path) {
+        do {
+            size_t r = GetModuleFileNameA(NULL, (LPSTR)tmp_path, size);
+            if ( (r < size) && (r != 0)) {
+                size = r;
+                if (app_realloc (&tmp_path, size + 1) != 0) {
+                    free (tmp_path);
+                    goto bailout;
+                }
+                tmp_path [size] = '\0';
+                break;
+            }
+
+            size *= 2;
+            if ( app_realloc ( &tmp_path, size + 1 ) != 0) {
+                free (tmp_path);
+                goto bailout;
+            }
+        } while(1);
+        return tmp_path;
+    }
+    bailout: return 0;
+#endif
+}
+
 
 static void
 exit_func (int ret_status)
@@ -233,6 +295,10 @@ _args_parse (int argc, char* argv[])
 int
 main (int argc, char* argv[])
 {
+#if defined (UCM_OS_WINDOWS) && \
+    defined (DEBUG)
+    _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
     portable = 1;
     int ret_status = UCM_RET_SUCCESS;
 // *********************************************************
@@ -242,7 +308,7 @@ main (int argc, char* argv[])
 #ifdef ENABLE_BUNDLE
         portable_base = 1;
 #endif
-    char* rpath = app_realpath(argv[0]);
+    char* rpath = app_mypath(argv[0]);
     if (rpath) {
         snprintf (args.path_abs, UCM_PATH_MAX, "%s", rpath);
         free (rpath);
@@ -359,5 +425,7 @@ main (int argc, char* argv[])
         fprintf (stderr, "%s: %s\n", "Don't load core library", LIBCORE_NAME);
         ret_status = UCM_RET_NOOBJECT;
     }
+
+
     return ret_status;
 }

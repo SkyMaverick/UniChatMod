@@ -8,7 +8,8 @@ project ('ucm', 'c',
 
 message ('Build configuration - @0@'.format(get_option('buildtype')))
 
-cc = meson.get_compiler('c')
+ccid = meson.get_compiler('c')
+
 # --- compiler preferences ----------
 if get_option('buildtype').startswith('debug')
     add_project_arguments ('-DDEBUG', language: 'c')

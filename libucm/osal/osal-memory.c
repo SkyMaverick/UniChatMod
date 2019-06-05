@@ -56,12 +56,10 @@ osal_realloc2 (void** mem, size_t size)
     void* old_mem = *mem;
     *mem = osal_realloc (*mem, size);
     if ( __likely(*mem != old_mem) ) {
-        if ( __ulikely(*mem != NULL) ) {
-            osal_free (old_mem);
-        } else {
+        if ( __ulikely(*mem == NULL) ) {
             *mem = old_mem;
+            return 1;
         }
-        return 1;
     }
     return 0;
 }
