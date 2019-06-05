@@ -190,7 +190,6 @@ exit_func (int ret_status)
 
         switch (fwdHandlerType) {
             case CTRL_C_EVENT:
-            case CTRL_C_BREAK:
             case CTRL_CLOSE_EVENT:
             case CTRL_SHUTDOWN_EVENT:
             default:
