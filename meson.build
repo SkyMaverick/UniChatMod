@@ -77,11 +77,15 @@ if (ccid == 'gcc') or (ccid == 'clang')
         '''.split()
     endif
 elif ccid == 'msvc'
-    cc_args = '''
-    '''.split()
+    if get_option('buildtype').startswith('debug')
+        cc_args = '''
+            /Zi
+            /Ob0
+            /Oy-
+            /DEBUG
+        '''.split()
+    endif
 
-    cc_link_args = '''
-    '''.split()
 else
     error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
 endif

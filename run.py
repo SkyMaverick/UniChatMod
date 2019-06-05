@@ -172,6 +172,10 @@ def action_bundle ():
     else:
         return ninja_cmd('install')
 
+def action_bundle_dbg ():
+    info ('Create application bundle in: {path}'.format(path=path_bundle))
+    return ninja_cmd('install')
+
 def action_arcxz ():
     action_bundle ()
     open_all (path_build_root)
@@ -283,6 +287,7 @@ actions = {
         'pkg_src'           : action_dummy,
         'laz_gui'           : action_dummy,
         'bundle'            : action_bundle,
+        'bundle_dbg'        : action_bundle_dbg,
         'pack_arc'          : action_arcxz,
         'pack_deb'          : action_deb,
         'pack_sh'           : action_shell,
