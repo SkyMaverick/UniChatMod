@@ -2,27 +2,9 @@
 
 /* GhostCommander (gc) - simple, modular, scalable file manager */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <time.h>
-#include <limits.h>
-#include <wchar.h>
-
-#if defined (ENABLE_CUSTOM_LIBS)
-    #include "uv.h"
-#else
-    #include <uv.h>
-#endif
-
 #ifdef __cplusplus
     extern "C" {
 #endif
-
-/* **************************************************
-    Operation System Abstraction Layer (OSAL)
-   ************************************************** */
 
 // *** OPERATING SYSTEM MACRO ****************************************
 
@@ -138,7 +120,7 @@
 #endif
 
 #if defined (UCM_OS_WINDOWS)
-    #include "Windows.h"
+    // #include "Windows.h"
 #endif
 #if defined (UCM_OS_POSIX)
     #include <sys/types.h>
@@ -146,6 +128,21 @@
     #include <unistd.h>
     #include <dlfcn.h>
     #include <errno.h>
+#endif
+
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <time.h>
+#include <limits.h>
+#include <wchar.h>
+
+#if defined (ENABLE_CUSTOM_LIBS)
+    #include "uv.h"
+#else
+    #include <uv.h>
 #endif
 
 /* **************************************************

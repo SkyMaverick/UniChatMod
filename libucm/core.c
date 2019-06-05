@@ -121,7 +121,7 @@ _run_core (void)
     plugins_run_all ();
 
     /*TODO UniAPI add state status */
-    if (db_open (UniAPI->app.get_store_path(), 0) != UCM_RET_SUCCESS) {
+     if (db_open (UniAPI->app.get_store_path(), 0) != UCM_RET_SUCCESS) {
         ucm_etrace("%s: %s\n", _("Critical database error"), UniAPI->app.get_store_path())
 //        kernel.base.stop ();
         return UCM_RET_DBERROR;

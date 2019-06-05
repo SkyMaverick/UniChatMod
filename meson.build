@@ -8,57 +8,80 @@ project ('ucm', 'c',
 
 message ('Build configuration - @0@'.format(get_option('buildtype')))
 
-ccid = meson.get_compiler('c')
+cc = meson.get_compiler('c')
+
+ccid = cc.get_id()
+osid = target_machine.system()
+
+ucm_cflags  = []
+ucm_ldflags = []
+ucm_defines = []
+ucm_deps    = []
 
 # --- compiler preferences ----------
 if get_option('buildtype').startswith('debug')
-    add_project_arguments ('-DDEBUG', language: 'c')
+    if ccid == 'msvc'
+        ucm_defines += '''
+            /DDEBUG
+            /D_DEBUG
+        '''.split ()
+    else
+        ucm_defines += '-DDEBUG'
+    endif
 endif
 if get_option('enable_traces')
-    add_project_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
+    if ccid == 'msvc'
+        ucm_defines += '/DENABLE_TRACE_MESSAGES'
+    else
+        ucm_defines += '-DENABLE_TRACE_MESSAGES'
+    endif
 endif
 if get_option('build_bundle')
-    add_project_arguments ('-DENABLE_BUNDLE', language: 'c')
+    if ccid == 'msvc'
+        ucm_defines += '/DENABLE_BUNDLE'
+    else
+        ucm_defines += '-DENABLE_BUNDLE'
+    endif
 endif
 if get_option('build_with_hidden_api')
-    add_project_arguments ('-DLIBUCM_EXPORTS', language: 'c')
+    if ccid == 'msvc'
+        ucm_defines += '/DLIBUCM_EXPORTS'
+    else
+        ucm_defines += '-DLIBUCM_EXPORTS'
+    endif
 endif
 if get_option('valgrind_support')
-    add_project_arguments ('-DENABLE_VALGRIND', language: 'c')
+    if not (ccid == 'msvc')
+        ucm_defines += '-DENABLE_VALGRIND'
+    endif
 endif
 
-if (cc.get_id() == 'gcc') or (cc.get_id() == 'clang')
-
+if (ccid == 'gcc') or (ccid == 'clang')
     add_project_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
     # --- compiler arguments ----------
-    cc_args = '''
+    ucm_cflags = '''
         -std=gnu11
         -Wall
     '''.split()
 
-    cc_link_args = '''
-    '''.split()
-
     if get_option('buildtype').startswith('debug')
-        cc_args += '''
+        ucm_cflags += '''
                     -O0
                     -g
                   '''.split()
     elif get_option('buildtype').startswith('release')
-        cc_args += '''
+        ucm_cflags += '''
                     -O3
                     -s
                 '''.split()
     endif
 
     if get_option('build_with_hidden_api')
-        cc_args += '''
+        ucm_cflags += '''
             -fvisibility=hidden
         '''.split()
     endif
-elif cc.get_id() == 'msvc'
-#    message ('Temporary use default case')
-
+elif ccid == 'msvc'
     cc_args = '''
     '''.split()
 
@@ -67,19 +90,8 @@ elif cc.get_id() == 'msvc'
 else
     error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
 endif
+
 # --- Add all switches in project command line -----------
-foreach arg : cc_args
-    if cc.has_argument(arg)
-        add_project_arguments(arg, language: 'c')
-    endif
-endforeach
-
-foreach arg : cc_link_args
-    if cc.has_link_argument (arg)
-        add_project_link_arguments(arg, language: 'c')
-    endif
-endforeach
-
 lib_inc = [
     '.',
     '.'/'libucm',
@@ -125,8 +137,11 @@ if not get_option('custom_libs')
         system_dependencies += system_library_uv.partial_dependency(
                     includes: true
                 )
-
-        add_project_arguments('-DENABLE_CUSTOM_LIBS', language: 'c')
+        if (ccid == 'msvc')
+            ucm_defines += '/DENABLE_CUSTOM_LIBS'
+        else
+            ucm_defines += '-DENABLE_CUSTOM_LIBS'
+        endif
     endif
 else
     uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
@@ -137,8 +152,28 @@ else
                     includes: true
                 )
 
-    add_project_arguments('-DENABLE_CUSTOM_LIBS', language: 'c')
+    if (ccid == 'msvc')
+        ucm_defines += '/DENABLE_CUSTOM_LIBS'
+    else
+        ucm_defines += '-DENABLE_CUSTOM_LIBS'
+    endif
 endif
+
+foreach item : ucm_cflags
+    if cc.has_argument(item)
+        add_project_arguments(item, language: 'c')
+    endif
+endforeach
+
+foreach item : ucm_ldflags
+    if cc.has_link_argument(item)
+        add_project_link_arguments(item, language:'c')
+    endif
+endforeach
+
+foreach item : ucm_defines
+    add_project_arguments (item, language: 'c')
+endforeach
 
 # --- include headers paths ----------
 libucm_inc = include_directories (lib_inc)
