@@ -6,6 +6,14 @@ project ('mdbx', 'c',
          meson_version: '>=0.46')
 
 cc = meson.get_compiler('c')
+ccid = cc.get_id()
+osid = target_machine.system()
+
+if get_option('buildtype').endswith('debug')
+    enable_debug = true
+else
+    enable_debug = false
+endif
 
 # ==================================================
 #   SOURCE FILES
@@ -21,7 +29,7 @@ mdbx_src = '''
     version.c
 '''.split()
 
-if target_machine.system() == 'windows'
+if osid == 'windows'
     message ('Use lck-windows functionality on @0@ platform'.format (host_machine.system()) )
     mdbx_src += ['lck-windows.c']
 else
@@ -37,15 +45,38 @@ endforeach
 # ==================================================
 #   BUILD ARGUMENTS
 # ==================================================
-add_project_arguments ('-DNDEBUG=1', language: 'c')
-add_project_arguments ('-DMDBX_DEBUG=0', language: 'c')
-add_project_arguments ('-DLIBMDBX_EXPORTS=1', language: 'c')
-add_project_arguments ('-D_GNU_SOURCE=1', language: 'c')
 
-cc_name = cc.get_id()
-if (cc_name == 'gcc') or (cc_name == 'clang')
+cc_args = []
+cc_link_args = []
+cc_defs = []
+
+if ccid == 'msvc'
+    cc_defs += '''
+        /DNDEBUG=1
+        /DLIBMDBX_EXPORTS=1
+        /D_GNU_SOURCE=1
+    '''.split()
+    if enable_debug
+        cc_defs  += '/DMDBX_DEBUG=1'
+    else
+        cc_defs  += '/DMDBX_DEBUG=0'
+    endif
+else
+    cc_defs += '''
+        -DNDEBUG=1
+        -DLIBMDBX_EXPORTS=1
+        -D_GNU_SOURCE=1
+    '''.split()
+    if enable_debug
+        cc_defs  += '-DMDBX_DEBUG=1'
+    else
+        cc_defs  += '-DMDBX_DEBUG=0'
+    endif
+endif
+
+if (ccid == 'gcc') or (ccid == 'clang')
     # Build on linux (or difffernt *nix) system
-    if get_option('buildtype').startswith('debug')
+    if enable_debug
         cc_args = '''
             -std=gnu11
             -O0
@@ -76,7 +107,7 @@ if (cc_name == 'gcc') or (cc_name == 'clang')
         -O
         -Wl,--no-as-needed
     '''.split()
-elif cc_name == 'msvc'
+elif ccid == 'msvc'
     # Build on Windows with native Visual Studio
     cc_args = '''
     '''.split()
@@ -84,9 +115,7 @@ elif cc_name == 'msvc'
     cc_link_args = '''
     '''.split()
 else
-    # Build with default params for unknown compilator
-    cc_args = []
-    cc_link_args = []
+    warning ('Unkonown compiler name: @0@ . No use flags.'.format(ccid))
 endif
 
 foreach arg : cc_args
@@ -94,15 +123,17 @@ foreach arg : cc_args
         add_project_arguments(arg, language: 'c')
     endif
 endforeach
-
 foreach arg : cc_link_args
     if cc.has_link_argument (arg)
         add_project_link_arguments(arg, language: 'c')
     endif
 endforeach
+foreach arg : cc_defs
+    add_project_arguments(arg, language: 'c')
+endforeach
 
 mdbx_deps = []
-if not (target_machine.system() == 'windows')
+if not (osid == 'windows')
     mdbx_deps += [
         cc.find_library ('pthread', required: true),
         cc.find_library ('rt', required: true)

@@ -3,7 +3,7 @@ pdc_lflags = []
 
 if get_option('buildtype').endswith('debug')
     pdc_cflags += '''
-        -DPDCDEBUG
+        /DPDCDEBUG
     '''.split()
     pdc_lflags += '''
     '''.split()
@@ -21,13 +21,13 @@ foreach flag : pdc_lflags
 endforeach
 
 if get_option ('enable_widec')
-    add_project_arguments('-DPDC_WIDE', language: 'c')
+    add_project_arguments('/DPDC_WIDE', language: 'c')
 endif
 if get_option ('enable_force_utf8')
-    add_project_arguments('-DPDC_FORCE_UTF8', language: 'c')
+    add_project_arguments('/DPDC_FORCE_UTF8', language: 'c')
 endif
 if get_option ('no_infoex')
-    add_project_arguments('-DHAVE_NO_INFOEX', language: 'c')
+    add_project_arguments('/DHAVE_NO_INFOEX', language: 'c')
 endif
 
 pdc_deps += [
@@ -46,7 +46,7 @@ pdc_source = files ('''
         pdcutil.c
 '''.split()) + pdc_core
 
-add_project_arguments ('-DPDC_DLL_BUILD', language: 'c')
+add_project_arguments ('/DPDC_DLL_BUILD', language: 'c')
 if meson.is_subproject()
     pdc_lib_shared = shared_library (meson.project_name(),
                                     pdc_source,

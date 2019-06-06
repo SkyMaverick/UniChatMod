@@ -207,6 +207,12 @@ foreach id : ['openbsd']
     endif
 endforeach
 
+if ccid == 'msvc'
+    uv_defines += '/DBUILDING_UV_SHARED=1'
+else
+    uv_defines += '-DBUILDING_UV_SHARED=1'
+endif
+
 # Apply all arg-lists
 foreach def : uv_defines
     add_project_arguments (def, language: 'c')
@@ -232,7 +238,6 @@ if meson.is_subproject()
                                     uv_source,
                                     dependencies: uv_dep,
                                     include_directories: uv_includes,
-                                    c_args: '-DBUILDING_UV_SHARED=1',
                                     install: true,
                                     install_dir: get_option('path_install'))
     uv_dep = declare_dependency (
@@ -245,6 +250,5 @@ else
                                     uv_source,
                                     dependencies: uv_dep,
                                     include_directories: uv_includes,
-                                    c_args: '-DBUILDING_UV_SHARED=1',
                                     install: true)
 endif

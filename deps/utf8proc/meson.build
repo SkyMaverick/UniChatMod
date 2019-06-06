@@ -6,6 +6,12 @@ project ('utf8proc', 'c',
          meson_version: '>=0.46')
 
 cc = meson.get_compiler('c')
+cc_name = cc.get_id()
+os_name = target_machine.system()
+
+cc_args         = []
+cc_link_args    = []
+cc_defs         = []
 
 # ==================================================
 #   SOURCE FILES
@@ -20,10 +26,13 @@ u8proc_src = '''
 # ==================================================
 #   BUILD ARGUMENTS
 # ==================================================
-add_project_arguments ('-DUTF8PROC_EXPORTS', language: 'c')
+if cc_name == 'msvc'
+    cc_defs += '/DUTF8PROC_EXPORTS'
+else
+    cc_defs += '-DUTF8PROC_EXPORTS'
+endif
 
-cc_name = cc.get_id()
-if (cc_name == 'gcc') or (cc_name == 'clang')
+if not (cc_name == 'msvc')
     # Build on linux (or difffernt *nix) system
     cc_args = '''
         -std=c99
@@ -34,17 +43,6 @@ if (cc_name == 'gcc') or (cc_name == 'clang')
 
     cc_link_args = '''
     '''.split()
-elif cc_name == 'msvc'
-    # Build on Windows with native Visual Studio
-    cc_args = '''
-    '''.split()
-
-    cc_link_args = '''
-    '''.split()
-else
-    # Build with default params for unknown compilator
-    cc_args = []
-    cc_link_args = []
 endif
 
 foreach arg : cc_args
@@ -57,6 +55,10 @@ foreach arg : cc_link_args
     if cc.has_link_argument (arg)
         add_project_link_arguments(arg, language: 'c')
     endif
+endforeach
+
+foreach arg : cc_defs
+    add_project_arguments(arg, language: 'c')
 endforeach
 
 u8proc_deps = []
