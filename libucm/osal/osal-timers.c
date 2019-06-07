@@ -10,9 +10,6 @@ uintptr_t osal_timer_create (void)
     return (uintptr_t) ret;
 }
 
-int osal_timer_init (uintptr_t handle) {
-    return uv_timer_init (LOOP_KRNL, (uv_timer_t*)handle);
-}
 int osal_timer_start (uintptr_t handle, uv_timer_cb cb, uint64_t timeout, uint64_t repeat) {
     return uv_timer_start ((uv_timer_t*) handle, cb, timeout, repeat);
 }
