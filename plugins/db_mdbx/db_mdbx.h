@@ -102,8 +102,8 @@ typedef struct {
     db_header_t header;
 
     struct {
-        uintptr_t mtx;
-        uintptr_t clk_flush;
+         uintptr_t mtx;
+         uintptr_t tmFlush;
     } sys;
 
     uint32_t    flags;

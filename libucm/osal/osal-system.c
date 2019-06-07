@@ -26,19 +26,21 @@ osal_errno ()
 uintptr_t
 osal_init (void)
 {
-    o_krnl->loop_system = osal_zmalloc (sizeof(uv_loop_t));
+    o_krnl->loop_system = uv_default_loop();
     if (o_krnl->loop_system == NULL) {
         return 0;
     }
 
     o_krnl->loop_network = osal_zmalloc (sizeof(uv_loop_t));
     if (o_krnl->loop_network == NULL) {
-        osal_free_null (o_krnl->loop_system);
+        osal_release();
         return 0;
     }
     
-    uv_loop_init (o_krnl->loop_system);
     uv_loop_init (o_krnl->loop_network);
+
+    uv_run (o_krnl->loop_system, UV_RUN_DEFAULT);
+    uv_run (o_krnl->loop_network, UV_RUN_DEFAULT);
 
     return (uintptr_t)o_krnl;
 }
@@ -47,7 +49,6 @@ int
 osal_release (void)
 {
     uv_loop_close   (o_krnl->loop_system);
-    osal_free_null  (o_krnl->loop_system);
     uv_loop_close   (o_krnl->loop_network);
     osal_free_null  (o_krnl->loop_network);
 

@@ -195,25 +195,18 @@ mdbx_core_unload (void) {
 static inline void
 dbi_core_release (void)
 {
+    app->sys.timer_release (UniDB->sys.tmFlush);
     mdbx_core_unload();
-    if (UniDB->sys.mtx)
-        app->sys.rwlock_free (UniDB->sys.mtx);
-    if (UniDB->sys.clk_flush)
-        app->sys.timer_release (UniDB->sys.clk_flush);
 }
 
 static inline UCM_RET
 dbi_core_init (void)
 {
-    if ( ( (UniDB->sys.mtx = app->sys.rwlock_create()) == 0 ) ||
-         ( (UniDB->sys.clk_flush = app->sys.timer_create()) == 0 )
-       ) {
-            trace_dbg ("%s\n", "Don't create DB_CORE object");
-            dbi_core_release();
-            return UCM_RET_NONALLOC;
-       } else {
-            trace_dbg ("%s: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.clk_flush);
-       }
+    UniDB->sys.tmFlush = app->sys.timer_create();
+    if (UniDB->sys.tmFlush == 0)
+        return UCM_RET_DBERROR;
+
+    trace_dbg ("%s: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.tmFlush);
     return UCM_RET_SUCCESS;
 }
 
@@ -229,7 +222,6 @@ mdbx_db_open  (uint32_t flags)
     if (dbi_core_init() == UCM_RET_SUCCESS) {
         if ((mdbx_core_map()  == UCM_RET_SUCCESS) &&
             (mdbx_core_load() == UCM_RET_SUCCESS) ) {
-                app->sys.timer_start (UniDB->sys.clk_flush, cb_mdbx_timer, 1, 50);
                 return UCM_RET_SUCCESS;
         }
     }
@@ -241,7 +233,6 @@ UCM_RET
 mdbx_db_close (void)
 {
     // TODO
-    app->sys.timer_stop(UniDB->sys.clk_flush);
     dbi_core_release();
     return UCM_RET_SUCCESS;
 }
@@ -251,7 +242,7 @@ mdbx_db_flush (bool force)
 {
     mdbx_env_sync (UniDB->mdbx.env, true);
     if (force) {
-        app->sys.timer_again (UniDB->sys.clk_flush);
+        // TODO
     }
 }
 
