@@ -163,9 +163,8 @@ mdbx_core_load (void)
                     return UCM_RET_EXCEPTION;
                 }
             }
-
-            mdbx_txn_commit(txn_tmp);
         }
+        mdbx_txn_commit(txn_tmp);
     }
 
     mdbx_txn_begin (UniDB->mdbx.env, NULL, MDBX_RDONLY, &(UniDB->mdbx.txn_ro));
@@ -183,6 +182,8 @@ return UCM_RET_SUCCESS;
 static void
 mdbx_core_unload (void) {
     trace_dbg ("%s\n", "Unload MDBX");
+
+    mdbx_txn_commit (UniDB->mdbx.txn_ro);
 
     mdbx_cursor_close (UniDB->mdbx.cur_events);
     mdbx_cursor_close (UniDB->mdbx.cur_contacts);

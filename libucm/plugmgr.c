@@ -270,8 +270,11 @@ plugins_release_registry (void)
     while(m_tmp) {
         m_del = m_tmp;
         m_tmp = m_tmp->next;
-
+#ifndef ENABLE_VALGRIND
         UniAPI->sys.dlclose(m_del->handle);
+#else
+        UniAPI->sys.free((void*)m_del->handle);
+#endif
         UniAPI->sys.free (m_del);
     }
     UniAPI->sys.rwlock_free(_lock);
