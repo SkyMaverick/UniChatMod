@@ -61,16 +61,14 @@ def remove_dir (path):
         return shutil.rmtree (path, ignore_errors=False, onerror=None)
 
 def meson_cmd (type, cross, path, prefix):
+    args = ['--buildtype='+type, '-Dprefix='+prefix]
     if os.path.exists(path):
-        if cross:
-            return meson_internal (path, '--cross-file', cross, '--reconfigure')
-        else:
-            return meson_internal (path, '--reconfigure')
-    else:
-        if cross:
-            return meson_internal (path, '--cross-file', cross, '--buildtype='+type, '-Dprefix='+prefix)
-        else:
-            return meson_internal (path, '--buildtype='+type, '-Dprefix='+prefix)
+        args += ['--reconfigure']
+    if cross:
+        args += ['--cross-file', cross]
+    if type == 'release':
+        args += ['--strip']
+    return meson_internal (path, *args)
 
 def shell_cmd_out (app, *args):
     cmd = [app]
