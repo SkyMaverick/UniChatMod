@@ -8,19 +8,7 @@ from colorize import *
 project_name = 'ucm'
 project_version = '0.1.1'
 
-path_script = os.path.abspath (os.path.curdir)
-
-path_build_root = os.path.join (path_script, 'build')
-path_build  = os.path.join (path_build_root, os.name)
-path_libs   = os.path.join (path_build, 'libs')
-
-path_bundle = os.path.join (path_build, 'bundle')
-path_bundle_app = os.path.join (path_bundle, project_name)
-
-path_packages = os.path.join (path_build_root, 'pkgs')
-path_temp = os.path.join (path_build, 'temp')
-
-file_shell_travis = os.path.join (path_script, 'tools', 'travis', 'manager.sh')
+path_build_pathname = 'build'
 
 _clean_files = '''
     *.so
@@ -33,35 +21,38 @@ _clean_files = '''
 '''.split()
 
 # =================================================
-# SERVICE FUNCTIONS 
+# SERVICE FUNCTIONS
 # ==================================================
 
-def ninja_cmd (*args):
+def ninja_cmd (path, *args):
     result = 1
-    if os.path.exists ( os.path.join (path_build, 'build.ninja')):
-        os.chdir (path_build)
+    if os.path.exists ( os.path.join (path, 'build.ninja')):
+        curr_path = os.path.curdir
+        os.chdir (path)
 
         cmd = ['ninja']
         for i in args:
             cmd += [i]
         result = subprocess.call(' '.join(cmd), shell=True)
 
-        os.chdir (path_script)
+        os.chdir (curr_path)
     else:
         error ('Meson configure files don\'t create')
     return result
 
-def meson_cmd (*args):
-    cmd = ['meson'] + ['.'] + [path_build]
+def meson_internal (path, *args):
+    cmd = ['meson'] + ['.'] + [path]
     for i in args:
         cmd += [i]
+
+    print (' '.join(cmd))
     return subprocess.call(' '.join(cmd), shell=True)
 
 def shell_cmd (shell, *args):
     cmd = [shell]
     for i in args:
        cmd += [i]
-    
+
     return subprocess.call (' '.join(cmd), env=os.environ.copy(), shell=True)
 
 
@@ -69,17 +60,23 @@ def remove_dir (path):
     if os.path.exists (path):
         return shutil.rmtree (path, ignore_errors=False, onerror=None)
 
-def build_cmd (type, prefix):
-    if os.path.exists(path_build):
-        return meson_cmd ('--reconfigure')
+def meson_cmd (type, cross, path, prefix):
+    if os.path.exists(path):
+        if cross:
+            return meson_internal (path, '--cross-file', cross, '--reconfigure')
+        else:
+            return meson_internal (path, '--reconfigure')
     else:
-        return meson_cmd ('--buildtype='+type, '-Dprefix='+prefix)
+        if cross:
+            return meson_internal (path, '--cross-file', cross, '--buildtype='+type, '-Dprefix='+prefix)
+        else:
+            return meson_internal (path, '--buildtype='+type, '-Dprefix='+prefix)
 
 def shell_cmd_out (app, *args):
     cmd = [app]
     for i in args:
        cmd += [i]
-    
+
     shell=subprocess.Popen (cmd, stdout=subprocess.PIPE)
     data=shell.communicate()
     return (data)[0].decode()
@@ -117,37 +114,52 @@ package_name = project_name +'-' \
 #   ACTIONS
 # ==================================================
 
-def action_clean():
+def action_clean(**defs):
+    path_script = defs['path_script']
+    path_build = defs['path_build']
+
     info ('Cleanup in source dir: {path}'.format(path=path_script))
     remove_dir (path_build)
     for path_base, dirs, files in os.walk (path_script):
         for fname in files:
             for i in _clean_files:
                 strName = os.path.join(path_base, fname)
-                if fnmatch.fnmatch(os.path.basename(strName), i): 
+                if fnmatch.fnmatch(os.path.basename(strName), i):
                     if os.access(strName, os.W_OK):
                         os.remove(strName)
 
-def action_clean_all():
-    info ('Cleanup in source dir: {path}'.format(path=path_script))
-    remove_dir (path_build_root)
-          
-def action_build ():
-    return ninja_cmd()
+def action_clean_all(**defs):
+    info ('Cleanup in source dir: {path}'.format(path=defs['path_script']))
+    remove_dir (defs['path_make'])
 
-def action_debug ():
-    build_cmd ('debug', path_bundle)
-    return action_build()
+def action_ninja (**defs):
+    return ninja_cmd(defs['path_build'])
 
-def action_release ():
-    build_cmd ('release', path_bundle)
-    return action_build()
+def action_debug (**defs):
+    if 'cross_file' in defs:
+        cfile = defs['cross_file']
+    else:
+        cfile = ''
 
-def action_test():
+    meson_cmd ('debug', cfile, defs ['path_build'], defs ['path_bundle'])
+    return action_ninja (**defs)
+
+def action_release (**defs):
+    if 'cross_file' in defs:
+        cfile = defs['cross_file']
+    else:
+        cfile = ''
+
+    meson_cmd ('release', cfile, defs ['path_build'], defs ['path_bundle'])
+    return action_ninja (**defs)
+
+def action_test(**defs):
     info ('Start test framework in: {path}'.format(path=path_build))
-    return ninja_cmd('test_bot')
+    return ninja_cmd(defs['path_build'], 'test_bot')
 
-def action_log():
+def action_log(**defs):
+    path_build = defs['path_build']
+
     info ('Meson system build log in: {path}'.format(path=path_build))
     flog_path = os.path.join(path_build, 'meson-logs','meson-log.txt')
     if os.path.exists (flog_path) :
@@ -157,10 +169,13 @@ def action_log():
     else:
         error ('Meson configure files don\'t create')
 
-def action_bundle ():
+def action_bundle (**defs):
+    path_bundle = defs['path_bundle']
+    path_build  = defs['path_build']
+
     info ('Create application bundle in: {path}'.format(path=path_bundle))
     if platform.system().lower() == 'windows':
-        if ninja_cmd('install') == 0:
+        if ninja_cmd(path_build, 'install') == 0:
             for root, dirs, files in os.walk (path_bundle):
                for item in files:
                    if item.endswith('.lib') or \
@@ -170,14 +185,22 @@ def action_bundle ():
         else:
             return 1
     else:
-        return ninja_cmd('install')
+        return ninja_cmd(path_build, 'install')
 
-def action_bundle_dbg ():
+def action_bundle_dbg (**defs):
+    path_bundle = defs['path_bundle']
+    path_build  = defs['path_build']
+
     info ('Create application bundle in: {path}'.format(path=path_bundle))
-    return ninja_cmd('install')
+    return ninja_cmd(path_build, 'install')
 
-def action_arcxz ():
-    action_bundle ()
+def action_arcxz (**defs):
+    if (action_bundle (**defs) != 0):
+        return 1
+    path_bundle     = defs ['path_bundle'   ]
+    path_packages   = defs ['path_packages' ]
+    path_script     = defs ['path_script'   ]
+
     open_all (path_build_root)
     if os.path.exists(path_bundle):
         if not os.path.exists(path_packages):
@@ -191,9 +214,14 @@ def action_arcxz ():
                         os.path.join (path_packages, package_name+'.tar.xz'),
                         '-C', os.path.join (path_bundle, project_name), '.')
 
-def action_deb ():
-    if (action_bundle () != 0):
+def action_deb (**defs):
+    if (action_bundle (**defs) != 0):
         return 1
+    path_bundle     = defs ['path_bundle'   ]
+    path_packages   = defs ['path_packages' ]
+    path_script     = defs ['path_script'   ]
+    path_temp       = defs ['path_temp'     ]
+
     open_all (path_build_root)
     path_debconf = os.path.join (path_script, 'tools', 'packages', 'debian')
     if os.path.exists (path_bundle):
@@ -204,7 +232,7 @@ def action_deb ():
             remove_dir (path_tmpdeb)
             shutil.copytree (path_debconf, path_tmpdeb)
             shutil.copytree (path_bundle, os.path.join(path_tmpdeb, 'opt'))
-            
+
             os.chdir (path_tmpdeb)
             if (shell_cmd (os.path.join(path_tmpdeb,'build.sh'), \
                        project_name, \
@@ -220,9 +248,14 @@ def action_deb ():
                 os.chdir (path_script)
                 return 1
 
-def action_shell ():
-    if (action_bundle () != 0):
+def action_shell (**defs):
+    if (action_bundle (**defs) != 0):
         return 1
+    path_bundle     = defs ['path_bundle'   ]
+    path_packages   = defs ['path_packages' ]
+    path_script     = defs ['path_script'   ]
+    path_temp       = defs ['path_temp'     ]
+
     open_all (path_build_root)
     path_shconf = os.path.join (path_script, 'tools', 'packages', 'shell')
     if os.path.exists (path_bundle):
@@ -244,9 +277,14 @@ def action_shell ():
                 os.chdir (path_script)
                 return 1
 
-def action_7z ():
-    if (action_bundle () != 0):
+def action_7z (**defs):
+    if (action_bundle (**defs) != 0):
         return 1
+    path_bundle     = defs ['path_bundle'   ]
+    path_packages   = defs ['path_packages' ]
+    path_script     = defs ['path_script'   ]
+    path_temp       = defs ['path_temp'     ]
+
     open_all (path_build_root)
     path_bat = os.path.join (path_script, 'tools', 'packages', '7z')
     if os.path.exists (path_bundle):
@@ -268,7 +306,7 @@ def action_7z ():
                 os.chdir (path_script)
                 return 1
 
-def action_dummy ():
+def action_dummy (**defs):
     info ("Run dummy function for test")
     return
 
@@ -277,7 +315,7 @@ def action_dummy ():
 # ==================================================
 
 actions = {
-        'build'             : action_build,
+        'build'             : action_ninja,
         'debug'             : action_debug,
         'release'           : action_release,
         'clean'             : action_clean,
@@ -301,8 +339,36 @@ actions = {
 
 try:
     action = actions [argv[1]]
+
+    path_current = os.path.abspath (os.path.curdir)
+    path_build_root = os.path.join (path_current, path_build_pathname)
+
+    if ( len(argv) > 2):
+        args = {
+            'target'        : argv[2],
+            'path_build'    : os.path.join (path_build_root, argv[2]),
+            'path_bundle'   : os.path.join (path_build_root, argv[2], 'bundle'),
+
+            'path_script'   : path_current,
+            'path_make'     : path_build_root,
+            'path_packages' : os.path.join (path_build_root, 'pkgs'),
+            'path_temp'     : os.path.join (path_build_root, 'temp'),
+
+            'cross_file'    : os.path.join (path_current, ''.join([argv[2],'_cross','.txt']))
+        }
+    else:
+        args = {
+            'target'        : os.name,
+            'path_build'    : os.path.join (path_build_root, os.name),
+            'path_bundle'   : os.path.join (path_build_root, os.name, 'bundle'),
+
+            'path_script'   : path_current,
+            'path_make'     : path_build_root,
+            'path_packages' : os.path.join (path_build_root, 'pkgs'),
+            'path_temp'     : os.path.join (path_build_root, 'temp'),
+        }
 except KeyError as e:
     print ("I don't know this command: {}".format(argv[1]))
     exit (1)
 else:
-    exit (action())
+    exit (action(**args))
