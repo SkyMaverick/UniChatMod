@@ -32,6 +32,12 @@ cb_mdbx_timer (uv_timer_t* timer) {
 }
 
 static void
+mdbx_autosync (void)
+{
+    
+}
+
+static void
 cb_create_backup (uv_fs_t* open_req) {
     // TODO
     if (open_req->result >= 0) {
@@ -196,7 +202,7 @@ mdbx_core_unload (void) {
 static inline void
 dbi_core_release (void)
 {
-    app->sys.timer_release (UniDB->sys.tmFlush);
+//    app->sys.timer_release (UniDB->sys.tmFlush);
     mdbx_core_unload();
 }
 
@@ -223,6 +229,9 @@ mdbx_db_open  (uint32_t flags)
     if (dbi_core_init() == UCM_RET_SUCCESS) {
         if ((mdbx_core_map()  == UCM_RET_SUCCESS) &&
             (mdbx_core_load() == UCM_RET_SUCCESS) ) {
+//                app->sys.timer_start(UniDB->sys.tmFlush, cb_mdbx_timer, 0, 50);
+                
+                app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
                 return UCM_RET_SUCCESS;
         }
     }
@@ -234,6 +243,8 @@ UCM_RET
 mdbx_db_close (void)
 {
     // TODO
+//    app->sys.timer_stop(UniDB->sys.tmFlush);
+//    app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
     dbi_core_release();
     return UCM_RET_SUCCESS;
 }
