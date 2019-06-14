@@ -298,7 +298,7 @@ static ucm_functions_t core_api = {
     .sys.dlclose                    = osal_dlclose           ,
     .sys.dlsym                      = osal_dlsym             ,
     .sys.dlerror                    = osal_dlerror           ,
-    
+
     .sys.timer_create               = osal_timer_create      ,
     .sys.timer_start                = osal_timer_start       ,
     .sys.timer_stop                 = osal_timer_stop        ,
