@@ -400,7 +400,7 @@ main (int argc, char* argv[])
                     exit_func (UCM_RET_SUCCESS);
                 } else {
                     fprintf (stderr, "%s\n", "Core API load FAIL");
-                    exit_func (UCM_RET_UNREALIZED);
+                    exit_func (UCM_RET_NOTIMPLEMENT);
                 }
             }
         } else {
@@ -408,8 +408,7 @@ main (int argc, char* argv[])
             exit_func (UCM_RET_EMPTY);
         }
     } else {
-        fprintf (stderr, "%s: %s\n", "Don't load core library", LIBCORE_NAME);
-        ret_status = UCM_RET_NOOBJECT;
+        ret_status = UCM_RET_SYSTEM_DLERROR;
     }
 
 

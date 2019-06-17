@@ -107,26 +107,23 @@ _run_core (void)
 
     log_init();
     init_ucm_entropy();
-
-    if ( ucm_mloop_init(UCM_DEF_MQ_LIMIT) == UCM_RET_SUCCESS ) {
+    
+    int ret_code = ucm_mloop_init(UCM_DEF_MQ_LIMIT);
+    if ( ret_code == UCM_RET_SUCCESS) {
         hooks_event_init ();
         kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
     } else {
-//        kernel.base.stop();
-        ucm_etrace("%s\n", _("Critical system error"));
-        return UCM_RET_NONALLOC;
+        return ret_code;
     }
 
     plugins_load_registry(UniAPI->app.get_plugins_path());
     plugins_run_all ();
 
     /*TODO UniAPI add state status */
-    if (db_open (UniAPI->app.get_store_path(), 0) != UCM_RET_SUCCESS) {
-        ucm_etrace("%s: %s\n", _("Critical database error"), UniAPI->app.get_store_path())
-//        kernel.base.stop ();
-        return UCM_RET_DBERROR;
+    ret_code = db_open (UniAPI->app.get_store_path(), 0);
+    if ( ret_code != UCM_RET_SUCCESS) {
+        return ret_code;
     }
-    // TODO db open
 
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;

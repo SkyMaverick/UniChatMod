@@ -84,7 +84,7 @@ mdbx_core_map (void)
             512ul << 10,
                      -1);
     if (rc != MDBX_SUCCESS)
-        return UCM_RET_EXCEPTION;
+        return UCM_RET_DATABASE_BADINIT;
 
     unsigned int mode =   MDBX_NOSUBDIR
                         | MDBX_MAPASYNC
@@ -101,7 +101,7 @@ mdbx_core_map (void)
     return ( mdbx_env_open (UniDB->mdbx.env,
                             app->app.get_store_path(),
                             mode,
-                            0664) != MDBX_SUCCESS ) ? UCM_RET_NOACCESS :
+                            0664) != MDBX_SUCCESS ) ? UCM_RET_DATABASE_BADINIT :
                                                       UCM_RET_SUCCESS;
 }
 
@@ -135,12 +135,12 @@ mdbx_core_load (void)
                     /* Databse signature valide  */
                     if (hdr->signature != DBSYS_HEADER_SIGNATURE) {
                         trace_err ("%s\n", "Header signature not found. Maybe this not UCM database.");
-                        return UCM_RET_INVALID;
+                        return UCM_RET_DATABASE_BADFORMAT;
                     }
                     /*  Database format version valide */
                     if (hdr->version != MakeLong (DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR)) {
                         trace_err ("%s: %d \n", "Bad database major version. Need convert to", DBSYS_VERSION_MAJOR);
-                        return UCM_RET_BADVERSION;
+                        return UCM_RET_DATABASE_BADVERSION;
                     }
                     UniDB->header = * hdr;
                     trace_inf("%s (%S): %zu.%zu\n", "Database version",
@@ -150,7 +150,7 @@ mdbx_core_load (void)
 
                 } else {
                     trace_dbg ("%s\n", "Return NULL header");
-                    return UCM_RET_EMPTY;
+                    return UCM_RET_DATABASE_BADMETADATA;
                 }
             /* Create new header with new tables */
             } else {
@@ -164,11 +164,11 @@ mdbx_core_load (void)
                         mdbx_db_flush (true);
                     } else {
                         trace_err ("%s: %s\n", "Create database error", mdbx_strerror(errno));
-                        return UCM_RET_EXCEPTION;
+                        return UCM_RET_DATABASE_NOTCHANGE;
                     }
                 } else {
                     trace_err ("%s : %s\n", "Open database error", mdbx_strerror(errno));
-                    return UCM_RET_EXCEPTION;
+                    return UCM_RET_DATABASE_NOTCHANGE;
                 }
             }
         }
@@ -213,7 +213,7 @@ dbi_core_init (void)
 {
     UniDB->sys.tmFlush = app->sys.timer_create();
     if (UniDB->sys.tmFlush == 0)
-        return UCM_RET_DBERROR;
+        return UCM_RET_SYSTEM_NOCREATE;
 
     trace_dbg ("%s: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.tmFlush);
     return UCM_RET_SUCCESS;
@@ -228,15 +228,21 @@ mdbx_db_open  (uint32_t flags)
 {
     UniDB->flags = flags;
 
-    if (dbi_core_init() == UCM_RET_SUCCESS) {
-        if ((mdbx_core_map()  == UCM_RET_SUCCESS) &&
-            (mdbx_core_load() == UCM_RET_SUCCESS) ) {
-                app->sys.thread_create (mdbx_autosync, (void*)(UniDB->sys.tmFlush));
-                return UCM_RET_SUCCESS;
-        }
-    }
+    int ret_code = dbi_core_init();
+    if ( ret_code != UCM_RET_SUCCESS)
+        return ret_code;
 
-    return UCM_RET_DBERROR;
+    ret_code = mdbx_core_map();
+    if ( ret_code != UCM_RET_SUCCESS)
+        return ret_code;
+
+    ret_code = mdbx_core_load();
+    if ( ret_code != UCM_RET_SUCCESS)
+        return ret_code;
+    
+    app->sys.thread_create (mdbx_autosync, (void*)(UniDB->sys.tmFlush));
+
+    return UCM_RET_SUCCESS;
 }
 
 UCM_RET
@@ -266,7 +272,7 @@ mdbx_db_backup (char* path)
     if (app->uv.fs_open(&open_req, path, O_WRONLY | O_CREAT, 0664, cb_create_backup) > 0) {
         trace_err ("%s: %s\n", "Backup fail. Don't create file", path);
         app->uv.fs_req_cleanup(&open_req);
-        return UCM_RET_NOACCESS;
+        return UCM_RET_SYSTEM_NOACCESS;
     }
     app->uv.run (UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
     app->uv.fs_req_cleanup(&open_req);

@@ -27,7 +27,7 @@ db_open ( const char* aPath,
     // init mutex
     db.mtx  = UniAPI->sys.mutex_create();
     if (db.mtx <= 0) {
-        return UCM_RET_EXCEPTION;
+        return UCM_RET_SYSTEM_NOCREATE;
     }
 
     // Try file access
@@ -44,11 +44,8 @@ db_open ( const char* aPath,
 
         if (r < 0) {
             ucm_dtrace ("%s: %s\n", aPath, "fail open");
-//            UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
-//            UniAPI->uv.fs_req_cleanup(&ufs_req);
-
             if (flags & UCM_FLAG_ROPROF)
-                return UCM_RET_NOACCESS;
+                return UCM_RET_SYSTEM_NOACCESS;
             if (flags & UCM_FLAG_NEWPROF)
                 return UCM_RET_BUSY;
 
@@ -62,19 +59,22 @@ db_open ( const char* aPath,
     UniAPI->uv.fs_req_cleanup(&ufs_req);
 
     // Open database
+    int ret_code = UCM_RET_SUCCESS;
+
     UniAPI->sys.mutex_lock(db.mtx);
     while (*plugins) {
         if ( (*plugins)->db_open != NULL ) {
-            if ( ( ret = (*plugins)->db_open(flags) ) == UCM_RET_SUCCESS ) {
+            ret_code = (*plugins)->db_open(flags);
+            if ( ret_code == UCM_RET_SUCCESS ) {
                 db.worker = *plugins;
             } else {
                 switch (ret) {
-                    case UCM_RET_INVALID:
+                    case UCM_RET_DATABASE_BADFORMAT:
                         {
                             // TODO check database
                             break;
                         }
-                    case UCM_RET_BADVERSION:
+                    case UCM_RET_DATABASE_BADVERSION:
                         {
                             // TODO remake database
                             break;
@@ -87,7 +87,10 @@ db_open ( const char* aPath,
         plugins++;
     }
     UniAPI->sys.mutex_unlock(db.mtx);
-    return (db.worker == NULL) ? UCM_RET_NOOBJECT : UCM_RET_SUCCESS;
+    if (db.worker == NULL)
+        ret_code = UCM_RET_DATABASE_BADFORMAT;
+
+    return ret_code;
 }
 
 UCM_RET

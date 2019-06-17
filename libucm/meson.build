@@ -3,7 +3,7 @@ libucm_src = files('''
     core.c
     cpentupd.c
     db.c
-    errors.c
+    errors.h
     evhook.c
     mainloop.c
     logger.c

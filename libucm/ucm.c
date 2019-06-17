@@ -23,8 +23,13 @@ ucm_core_start (ucm_cargs_t* args)
     } else {
         return NULL;
     }
+    int ret_code = ucm_core->run();
+    if ( ret_code != UCM_RET_SUCCESS) {
+        ucm_etrace("%s\n", ucm_strerr (ret_code));
+        return NULL;
+    };
 
-    return (ucm_core->run() == UCM_RET_SUCCESS) ? UniAPI : NULL;
+    return UniAPI;
 }
 
 LIBUCM_API const ucm_plugin_info_t*

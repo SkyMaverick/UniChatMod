@@ -61,27 +61,27 @@ static UCM_RET
 _plugin_verify (ucm_plugin_t* plugin)
 {
     if (plugin->oid != UCM_TYPE_OBJECT_PLUGIN) {
-        return UCM_RET_INVALID;
+        return UCM_RET_PLUGIN_BADMODULE;
     }
 
     if (plugin->info.api.vmajor != UCM_API_MAJOR_VER) {
-        return UCM_RET_UNREALIZED;
+        return UCM_RET_PLUGIN_BADVERSION;
     }
     if (plugin->info.sys > UCM_TYPE_PLUG_STUFF) {
-        return UCM_RET_UBOUND;
+        return UCM_RET_PLUGIN_BADSYSTEM;
     }
     // TODO strongly PID validation
     if (plugin->info.pid) {
         if ( strcmp (plugin->info.pid, "") == 0 ) {
-            return UCM_RET_NOOBJECT;
+            return UCM_RET_PLUGIN_BADPID;
         } 
         if ( strlen(plugin->info.pid) > UCM_PID_MAX ) {
-            return UCM_RET_WRONGPARAM;
+            return UCM_RET_PLUGIN_BADPID;;
         }
     }
     if (( plugin->run  == NULL ) ||
         ( plugin->stop == NULL )) {
-        return UCM_RET_UNREALIZED;
+        return UCM_RET_PLUGIN_BADIFACE;
     }
     return UCM_RET_SUCCESS;
 }
@@ -101,7 +101,8 @@ _plugin_load (char* filename)
     if ( _pfunc ) {
         ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
-            if ( _plugin_verify (plug) == UCM_RET_SUCCESS ) {
+            int ret_code = _plugin_verify (plug);
+            if (  ret_code == UCM_RET_SUCCESS ) {
                 module = UniAPI->sys.zmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
@@ -109,7 +110,7 @@ _plugin_load (char* filename)
                     return module;
                 }
            } else {
-               ucm_etrace ("%s: %s\n", filename, _("this plugin broken"));
+               ucm_etrace ("%s. %s\n", filename, ucm_strerr(ret_code));
            }
         } else {
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));

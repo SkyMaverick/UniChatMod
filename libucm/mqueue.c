@@ -66,7 +66,7 @@ if(h){
         if (h->tail == h->q_size) h->tail = 0;
     } else {
         UniAPI->sys.mutex_unlock (h->mtx);
-        return UCM_RET_OVERFLOW;
+        return UCM_RET_MQUEUE_OVERFLOW;
     }
     UniAPI->sys.cond_signal (h->cond);
     UniAPI->sys.mutex_unlock (h->mtx);
@@ -95,7 +95,7 @@ mq_pop (mq_block_t* h,
                 if (h->head == h->q_size) h->head = 0;
             } else {
                 UniAPI->sys.mutex_unlock (h->mtx);
-                return UCM_RET_EMPTY;
+                return UCM_RET_MQUEUE_EMPTY;
             }
         UniAPI->sys.mutex_unlock (h->mtx);
         return UCM_RET_SUCCESS;

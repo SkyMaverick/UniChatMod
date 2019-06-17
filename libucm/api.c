@@ -10,6 +10,8 @@
 #include "unicode.h"
 #include "cpentupd.h"
 
+#include "errors.h"
+
 #include "osal/osal-intrnl.h"
 
 char ucm_path        [UCM_PATH_MAX];
@@ -333,6 +335,8 @@ static ucm_functions_t core_api = {
     .sys.umstrbrkjoin               = ucm_mstrbrkjoin        ,
     .sys.ustrstr                    = ucm_strstr             ,
     .sys.ustrcasestr                = ucm_strcasestr         ,
+    
+    .sys.strerr                     = ucm_strerr_func        ,
 
     .app.wait_exit                  = wait_core_loop         ,
 

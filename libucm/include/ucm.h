@@ -292,22 +292,37 @@ typedef uint8_t ucm_object_t;
 
 /*! Core return status */
 typedef enum _ucm_status_return_e {
-    UCM_RET_SUCCESS,
-    UCM_RET_UNKNOWERROR,
+    UCM_RET_SUCCESS = 0,
     UCM_RET_WRONGPARAM,
     UCM_RET_EXCEPTION,
-    UCM_RET_UBOUND,
-    UCM_RET_UNREALIZED,
-    UCM_RET_NONALLOC,
+    UCM_RET_NOTIMPLEMENT,
     UCM_RET_NOOBJECT,
-    UCM_RET_NOACCESS,
-    UCM_RET_OVERFLOW,
     UCM_RET_EMPTY,
-    UCM_RET_DUPLICATE,
     UCM_RET_BUSY,
-    UCM_RET_INVALID,
-    UCM_RET_BADVERSION,
-    UCM_RET_DBERROR
+
+    UCM_RET_DATABASE_UNKWNERROR,
+    UCM_RET_DATABASE_BADFORMAT,
+    UCM_RET_DATABASE_BADINIT,
+    UCM_RET_DATABASE_BADINTERNAL,
+    UCM_RET_DATABASE_BADVERSION,
+    UCM_RET_DATABASE_BADMETADATA,
+    UCM_RET_DATABASE_NOTCHANGE,
+
+    UCM_RET_SYSTEM_NOCREATE,
+    UCM_RET_SYSTEM_NOACCESS,
+    UCM_RET_SYSTEM_NOMEMORY,
+    UCM_RET_SYSTEM_DLERROR,
+
+    UCM_RET_MQUEUE_OVERFLOW,
+    UCM_RET_MQUEUE_EMPTY,
+
+    UCM_RET_PLUGIN_BADMODULE,
+    UCM_RET_PLUGIN_BADVERSION,
+    UCM_RET_PLUGIN_BADSYSTEM,
+    UCM_RET_PLUGIN_BADPID,
+    UCM_RET_PLUGIN_BADIFACE,
+
+    UCM_RET_UNKNOWERROR
 } UCM_RET;
 
 enum {
@@ -913,6 +928,8 @@ typedef struct _ucm_functions_s {
         u32char_t*  (*umstrbrkjoin) (u32char_t brk,   size_t num, ...);
         int64_t     (*ustrstr)      (u32char_t* str,  u32char_t* sstr);
         int64_t     (*ustrcasestr)  (u32char_t* str,  u32char_t* sstr);
+
+        const char* (*strerr)       (const unsigned errcode);
     } sys;
 
     struct {
