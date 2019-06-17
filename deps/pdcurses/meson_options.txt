@@ -11,5 +11,5 @@ option ('use_xaw3d', type: 'boolean', value: 'false',
 option ('no_infoex', type: 'boolean', value: 'false')
 
 # == subproject install hack ===
-option ('build_bundle', type: 'boolean', value: 'false')
+option ('create_bundle', type: 'boolean', value: 'false')
 option ('path_install', type: 'string', value: '')

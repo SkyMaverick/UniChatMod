@@ -11,7 +11,7 @@ option ('string_buffer_capacity', type: 'integer', value: 4096,
 option ('limit_plugins_count', type: 'integer', value: 100,
         description: 'limit loaded plugins count')
 
-option ('build_bundle', type: 'boolean', value: 'true',
+option ('create_bundle', type: 'boolean', value: 'true',
         description: 'build single path application or classic *nix')
 option ('base_inbundle', type: 'boolean', value: 'true',
         description: 'build basepath into bandle (full portable app)')
@@ -24,9 +24,9 @@ option ('path_devels_lookup', type: 'string', value: 'include',
 option ('path_docs_lookup', type: 'string', value: 'docs',
         description: 'documents (manuals, README, LICENSE etc.) path')
 
-option ('build_with_plugins', type: 'boolean', value: 'true',
+option ('create_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
-option ('build_with_tests', type: 'boolean', value: 'false',
+option ('create_with_tests', type: 'boolean', value: 'false',
         description: 'build and run enabled tests')
 
 # === ATTENTION !!! ===
@@ -34,12 +34,12 @@ option ('build_with_tests', type: 'boolean', value: 'false',
 
 option ('custom_libs', type: 'boolean', value: 'true',
         description: 'build with target system libraries if available')
-option ('build_with_hidden_api', type: 'boolean', value: 'true',
+option ('create_with_hidden_api', type: 'boolean', value: 'true',
         description: 'build with hidden internal API')
-option ('build_with_full_commit', type: 'boolean', value: 'true',
+option ('create_with_full_commit', type: 'boolean', value: 'true',
         description: 'full (without --short key) rev-value commit code in plugin options')
 
-option ('build_with_gui', type: 'boolean', value: 'true',
+option ('create_with_gui', type: 'boolean', value: 'true',
         description: 'build standart gui')
 option ('gui_enable_lazarus', type: 'boolean', value: 'false',
         description: 'enable lazarus based gui as variant')

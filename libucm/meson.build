@@ -3,6 +3,7 @@ libucm_src = files('''
     core.c
     cpentupd.c
     db.c
+    errors.c
     evhook.c
     mainloop.c
     logger.c
@@ -59,7 +60,7 @@ libucm_commit = ''
 git_app = find_program('git', required: false)
 if git_app.found()
     repo = meson.current_source_dir()
-    if get_option('build_with_full_commit')
+    if get_option('create_with_full_commit')
         git_commit = run_command(git_app, '-C', repo, 'rev-parse','HEAD')
     else
         git_commit = run_command(git_app, '-C', repo, 'rev-parse','--short','HEAD')

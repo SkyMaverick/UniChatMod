@@ -31,14 +31,14 @@ if get_option('enable_traces')
         add_project_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
     endif
 endif
-if get_option('build_bundle')
+if get_option('create_bundle')
     if ccid == 'msvc'
         add_project_arguments ('/DENABLE_BUNDLE', language: 'c')
     else
         add_project_arguments ('-DENABLE_BUNDLE', language: 'c')
     endif
 endif
-if get_option('build_with_hidden_api')
+if get_option('create_with_hidden_api')
     if ccid == 'msvc'
         add_project_arguments ('/DLIBUCM_EXPORTS', language: 'c')
     else
@@ -71,7 +71,7 @@ if (ccid == 'gcc') or (ccid == 'clang')
                 '''.split()
     endif
 
-    if get_option('build_with_hidden_api')
+    if get_option('create_with_hidden_api')
         ucm_cflags += '''
             -fvisibility=hidden
         '''.split()
@@ -177,15 +177,15 @@ libucm_inc = include_directories (lib_inc)
 # --- walk in subdirs ----------
 subdir('libucm')
 
-if get_option('build_with_plugins')
+if get_option('create_with_plugins')
     subdir('plugins')
 endif
 
-if get_option('build_with_gui')
+if get_option('create_with_gui')
     subdir('gui')
 endif
 
-if get_option('build_with_tests')
+if get_option('create_with_tests')
     subdir('tests')
 endif
 
