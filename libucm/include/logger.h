@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-void log_init(void);
+UCM_RET log_init(void);
 void log_release(void);
 
 void logger_vlog(ucm_plugin_t* plugin, uint32_t type, const char* fmt, va_list va);

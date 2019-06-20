@@ -27,7 +27,6 @@ __log_cmp_helper (const MDBX_val* a,
 
 static void
 cb_mdbx_timer (uv_timer_t* timer) {
-    trace_dbg ("%s\n", "Timer tick");
     mdbx_db_flush(true);
 }
 

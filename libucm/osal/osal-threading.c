@@ -151,7 +151,6 @@ osal_rwlock_free (uintptr_t _rwl)
 void
 osal_rwlock_rlock (uintptr_t _rwl)
 {
-
     uv_rwlock_rdlock ( (uv_rwlock_t*)_rwl );
     ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_READ;
 }
@@ -192,7 +191,8 @@ osal_rwlock_unlock (uintptr_t _rwl)
         case OSAL_RWLMODE_WRITE:
             {
                 ((osal_rwlock_t*)_rwl)->mode = OSAL_RWLMODE_IDLE;
-                uv_rwlock_wrunlock ( (uv_rwlock_t*)_rwl ); break;
+                uv_rwlock_wrunlock ( (uv_rwlock_t*)_rwl );
+                break;
             };
     }
 }

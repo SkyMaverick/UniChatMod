@@ -12,16 +12,21 @@ typedef struct _logger_s {
     struct _logger_s* next;
 } ucm_logger_t;
 
-static ucm_logger_t* logs;
+static ucm_logger_t* logs = NULL;
 static uintptr_t lock_mtx;
 static uint32_t log_types = UCM_TYPE_LOG_INFO  |
                             UCM_TYPE_LOG_DEBUG |
                             UCM_TYPE_LOG_ERROR;
 
+#define LOG_BUFFER_SIZE 65535
+#define LOG_TYPE_SIZE sizeof(uint32_t)
+
+static char* buffer     = NULL;
+static char* buffer_tmp = NULL;
+
 static void
-_log_core (ucm_plugin_t* plug,
-           uint32_t      type,
-           const char* txt)
+_log_console (const char* txt,
+              uint32_t    type)
 {
     switch (type){
         case UCM_TYPE_LOG_DEBUG:
@@ -35,10 +40,36 @@ _log_core (ucm_plugin_t* plug,
         case UCM_TYPE_LOG_ERROR: fwrite(txt,strlen(txt),1,stderr);
                         break;
     }
+}
 
+static void
+_log_core (ucm_plugin_t* plug,
+           uint32_t      type,
+           const char*   txt)
+{
     UniAPI->sys.rwlock_rlock(lock_mtx);
+
+    _log_console (txt, type);
+
     for (ucm_logger_t* i=logs; i; i=i->next)
         i->cb_log(plug,type,txt);
+
+#ifdef DEBUG
+    if (buffer) {
+#else
+    if (buffer && (type != UCM_TYPE_LOG_DEBUG)) {
+#endif
+        size_t len = strlen (txt);
+        if ( (buffer_tmp - buffer + len + 1 + LOG_TYPE_SIZE) < LOG_BUFFER_SIZE ) {
+
+            memcpy (buffer_tmp + LOG_TYPE_SIZE, txt, len);
+            *buffer_tmp = type;
+            buffer_tmp += len + LOG_TYPE_SIZE;
+            *buffer_tmp = 0;
+
+        }
+    }
+
     UniAPI->sys.rwlock_unlock(lock_mtx);
 }
 
@@ -54,6 +85,15 @@ _log_enabled (ucm_plugin_t* plug,
 }
 
 static void
+_buffer_release (void)
+{
+    if (buffer) {
+        ucm_free_null (buffer);
+        buffer_tmp = NULL;
+    }
+}
+
+static void
 _log_flush (ucm_logger_t** list)
 {
     ucm_logger_t* tmp = NULL;
@@ -64,17 +104,31 @@ _log_flush (ucm_logger_t** list)
     }
 }
 
-void
+UCM_RET
 log_init (void)
 {
-    logs = NULL;
     lock_mtx = UniAPI->sys.rwlock_create();
+    if (!lock_mtx) {
+        return UCM_RET_SYSTEM_NOCREATE;
+    }
+    buffer = UniAPI->sys.zmalloc (LOG_BUFFER_SIZE);
+    if (!buffer) {
+        return UCM_RET_SYSTEM_NOMEMORY;
+    }
+    buffer_tmp = buffer;
+    return UCM_RET_SUCCESS;
 }
 
 void
 log_release (void)
 {
-    _log_flush(&logs);
+    UniAPI->sys.rwlock_wlock(lock_mtx);
+
+    _log_flush (&logs);
+
+    _buffer_release ();
+
+    UniAPI->sys.rwlock_unlock(lock_mtx);
     UniAPI->sys.rwlock_free(lock_mtx);
 }
 
@@ -135,6 +189,15 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
         tmp->cb_log = callback;
         tmp->next = logs;
         logs = tmp;
+
+        if (buffer) {
+            while (*buffer) {
+                callback (NULL, *buffer, buffer + LOG_TYPE_SIZE);
+                buffer += strlen(buffer) + LOG_TYPE_SIZE;
+            }
+            _buffer_release();
+        }
+
         UniAPI->sys.rwlock_unlock(lock_mtx);
     }
 }
