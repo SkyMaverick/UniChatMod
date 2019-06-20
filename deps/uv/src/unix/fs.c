@@ -168,7 +168,7 @@ static ssize_t uv__fs_fsync(uv_fs_t* req) {
 
   r = fcntl(req->file, F_FULLFSYNC);
   if (r != 0)
-    r = fcntl(req->file, F_BARRIERFSYNC);  /* fsync + barrier */
+    r = fcntl(req->file, 85 /* F_BARRIERFSYNC */);  /* fsync + barrier */
   if (r != 0)
     r = fsync(req->file);
   return r;
@@ -278,6 +278,54 @@ static ssize_t uv__fs_open(uv_fs_t* req) {
 }
 
 
+static ssize_t uv__fs_preadv(uv_file fd,
+                             uv_buf_t* bufs,
+                             unsigned int nbufs,
+                             off_t off) {
+  uv_buf_t* buf;
+  uv_buf_t* end;
+  ssize_t result;
+  ssize_t rc;
+  size_t pos;
+
+  assert(nbufs > 0);
+
+  result = 0;
+  pos = 0;
+  buf = bufs + 0;
+  end = bufs + nbufs;
+
+  for (;;) {
+    do
+      rc = pread(fd, buf->base + pos, buf->len - pos, off + result);
+    while (rc == -1 && errno == EINTR);
+
+    if (rc == 0)
+      break;
+
+    if (rc == -1 && result == 0)
+      return UV__ERR(errno);
+
+    if (rc == -1)
+      break;  /* We read some data so return that, ignore the error. */
+
+    pos += rc;
+    result += rc;
+
+    if (pos < buf->len)
+      continue;
+
+    pos = 0;
+    buf += 1;
+
+    if (buf == end)
+      break;
+  }
+
+  return result;
+}
+
+
 static ssize_t uv__fs_read(uv_fs_t* req) {
 #if defined(__linux__)
   static int no_preadv;
@@ -307,7 +355,7 @@ static ssize_t uv__fs_read(uv_fs_t* req) {
     if (no_preadv) retry:
 # endif
     {
-      result = pread(req->file, req->bufs[0].base, req->bufs[0].len, req->off);
+      result = uv__fs_preadv(req->file, req->bufs, req->nbufs, req->off);
     }
 # if defined(__linux__)
     else {
@@ -471,22 +519,13 @@ static int uv__fs_closedir(uv_fs_t* req) {
   return 0;
 }
 
-#if defined(_POSIX_PATH_MAX)
-# define UV__FS_PATH_MAX _POSIX_PATH_MAX
-#elif defined(PATH_MAX)
-# define UV__FS_PATH_MAX PATH_MAX
-#else
-# define UV__FS_PATH_MAX_FALLBACK 8192
-# define UV__FS_PATH_MAX UV__FS_PATH_MAX_FALLBACK
-#endif
-
 static ssize_t uv__fs_pathmax_size(const char* path) {
   ssize_t pathmax;
 
   pathmax = pathconf(path, _PC_PATH_MAX);
 
   if (pathmax == -1)
-    pathmax = UV__FS_PATH_MAX;
+    pathmax = UV__PATH_MAX;
 
   return pathmax;
 }
@@ -497,7 +536,9 @@ static ssize_t uv__fs_readlink(uv_fs_t* req) {
   char* buf;
   char* newbuf;
 
-#if defined(UV__FS_PATH_MAX_FALLBACK)
+#if defined(_POSIX_PATH_MAX) || defined(PATH_MAX)
+  maxlen = uv__fs_pathmax_size(req->path);
+#else
   /* We may not have a real PATH_MAX.  Read size of link.  */
   struct stat st;
   int ret;
@@ -515,8 +556,6 @@ static ssize_t uv__fs_readlink(uv_fs_t* req) {
      for some symlinks, such as those in /proc or /sys.  */
   if (maxlen == 0)
     maxlen = uv__fs_pathmax_size(req->path);
-#else
-  maxlen = uv__fs_pathmax_size(req->path);
 #endif
 
   buf = uv__malloc(maxlen);
