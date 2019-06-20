@@ -1,6 +1,7 @@
 plugins = '''
     db_mdbx
     net_uc2
+    log_file
 '''.split()
 
 plugins_only_nix = '''

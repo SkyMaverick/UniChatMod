@@ -41,8 +41,6 @@ option ('create_with_full_commit', type: 'boolean', value: 'true',
 
 option ('create_with_gui', type: 'boolean', value: 'true',
         description: 'build standart gui')
-option ('gui_enable_lazarus', type: 'boolean', value: 'false',
-        description: 'enable lazarus based gui as variant')
 option ('gui_enable_ncurses', type: 'boolean', value: 'true',
         description: 'enable tui interface')
 option ('auto_generate_icons', type: 'boolean', value: 'false',
