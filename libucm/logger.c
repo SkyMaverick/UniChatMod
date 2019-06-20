@@ -8,7 +8,8 @@
 #include "api.h"
 
 typedef struct _logger_s {
-    void (*cb_log)(ucm_plugin_t* plug, uint32_t type, const char* text);
+    void (*cb_log)(ucm_plugin_t* plug, uint32_t type, const char* text, void* ctx);
+    void* ctx;
     struct _logger_s* next;
 } ucm_logger_t;
 
@@ -52,7 +53,7 @@ _log_core (ucm_plugin_t* plug,
     _log_console (txt, type);
 
     for (ucm_logger_t* i=logs; i; i=i->next)
-        i->cb_log(plug,type,txt);
+        i->cb_log ( plug, type, txt, i->ctx );
 
 #ifdef DEBUG
     if (buffer) {
@@ -181,18 +182,19 @@ ucm_log (const char* fmt,
 }
 
 void
-logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
+logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), void* ctx )
 {
     ucm_logger_t* tmp = UniAPI->sys.zmalloc (sizeof(ucm_logger_t));
     if (tmp) {
         UniAPI->sys.rwlock_wlock(lock_mtx);
         tmp->cb_log = callback;
         tmp->next = logs;
+        tmp->ctx  = ctx;
         logs = tmp;
 
         if (buffer) {
             while (*buffer) {
-                callback (NULL, *buffer, buffer + LOG_TYPE_SIZE);
+                callback (NULL, *buffer, buffer + LOG_TYPE_SIZE, ctx);
                 buffer += strlen(buffer) + LOG_TYPE_SIZE;
             }
             _buffer_release();
@@ -203,7 +205,7 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
 }
 
 void
-logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*) )
+logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), void* ctx )
 {
     ucm_logger_t* prev = NULL;
 
