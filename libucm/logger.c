@@ -66,8 +66,7 @@ _log_core (ucm_plugin_t* plug,
             memcpy (buffer_tmp + LOG_TYPE_SIZE, txt, len);
             *buffer_tmp = type;
             buffer_tmp += len + LOG_TYPE_SIZE;
-            *buffer_tmp = 0;
-
+            *( ++buffer_tmp ) = '\0';
         }
     }
 
@@ -192,10 +191,12 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), voi
         tmp->ctx  = ctx;
         logs = tmp;
 
+        // Flush buffer in first connected logger
         if (buffer) {
-            while (*buffer) {
-                callback (NULL, *buffer, buffer + LOG_TYPE_SIZE, ctx);
-                buffer += strlen(buffer) + LOG_TYPE_SIZE;
+            char* mark = buffer;
+            while (mark != buffer_tmp) {
+                callback (NULL, *((uint32_t*)mark), mark + LOG_TYPE_SIZE, ctx);
+                mark += strlen (mark + LOG_TYPE_SIZE) + LOG_TYPE_SIZE + 1;
             }
             _buffer_release();
         }
@@ -205,7 +206,7 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), voi
 }
 
 void
-logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), void* ctx )
+logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*))
 {
     ucm_logger_t* prev = NULL;
 

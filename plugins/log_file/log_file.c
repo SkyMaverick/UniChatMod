@@ -9,16 +9,27 @@
 const ucm_functions_t* app;
 static const ucm_plugin_t plugin;
 
-    
+
+static void
+cb_logger_function (ucm_plugin_t*   plugin,
+                    uint32_t        type,
+                    const char*     txt,
+                    void*           ctx)
+{
+    fprintf (stdout, "\t[%s] %s:%d\t%s", "LOGGER", "type", type, txt);
+}
+
 static UCM_RET
 _run_logger (void)
 {
+    app->app.logger_connect (cb_logger_function, NULL);
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
 _stop_logger (void)
 {
+    app->app.logger_disconnect (cb_logger_function);
     return UCM_RET_SUCCESS;
 }
 
@@ -42,7 +53,7 @@ static const ucm_plugin_t plugin = {
         .vmajor         = UCM_API_MAJOR_VER,
         .vminor         = UCM_API_MINOR_VER
     },
-    .info.sys           = UCM_TYPE_PLUG_PROTO,
+    .info.sys           = UCM_TYPE_PLUG_STUFF,
     .info.vmajor        = UCM_VERSION_MAJOR,
     .info.vminor        = UCM_VERSION_MINOR,
     .info.vpatch        = UCM_VERSION_PATCH,
