@@ -981,9 +981,9 @@ typedef struct _ucm_functions_s {
         const ucm_plugin_t** (*get_plugins_stuff) (void);
 
         /*! get global paths */
-        const char* (*get_startup_path) (void);
-        const char* (*get_store_path)   (void);
-        const char* (*get_plugins_path) (void);
+        char* (*get_startup_path) (void);
+        char* (*get_store_path)   (void);
+        char* (*get_plugins_path) (void);
         /*! system entropy functions */
         int (*get_entropy) (void);
 

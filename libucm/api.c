@@ -31,19 +31,19 @@ compat_layer_release(void)
 }
 
 // application global parameters (paths, vars, etc.)
-static const char*
+static char*
 g_startup_path (void)
 {
     return ucm_path;
 }
 
-static const char*
+static char*
 g_store_path (void)
 {
     return ucm_path_store;
 }
 
-static const char*
+static char*
 g_plugins_path (void)
 {
     return ucm_path_plugs;
