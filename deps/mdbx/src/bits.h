@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Leonid Yuriev <leo@yuriev.ru>
+ * Copyright 2015-2019 Leonid Yuriev <leo@yuriev.ru>
  * and other libmdbx authors: please see AUTHORS file.
  * All rights reserved.
  *
@@ -28,6 +28,12 @@
 /* Should be defined before any includes */
 #ifndef _GNU_SOURCE
 #   define _GNU_SOURCE 1
+#endif
+#ifndef _POSIX_C_SOURCE
+#   define _POSIX_C_SOURCE 200112L
+#endif
+#ifndef _XOPEN_SOURCE
+#   define _XOPEN_SOURCE 500
 #endif
 #ifndef _FILE_OFFSET_BITS
 #   define _FILE_OFFSET_BITS 64
@@ -1149,7 +1155,7 @@ typedef struct MDBX_node {
 #define LEAF2KEY(p, i, ks) ((char *)(p) + PAGEHDRSZ + ((i) * (ks)))
 
 /* Set the node's key into keyptr, if requested. */
-#define MDBX_GET_KEY(node, keyptr)                                             \
+#define MDBX_GET_MAYNULL_KEYPTR(node, keyptr)                                  \
   do {                                                                         \
     if ((keyptr) != NULL) {                                                    \
       (keyptr)->iov_len = NODEKSZ(node);                                       \
@@ -1158,7 +1164,7 @@ typedef struct MDBX_node {
   } while (0)
 
 /* Set the node's key into key. */
-#define MDBX_GET_KEY2(node, key)                                               \
+#define MDBX_GET_KEYVALUE(node, key)                                           \
   do {                                                                         \
     key.iov_len = NODEKSZ(node);                                               \
     key.iov_base = NODEKEY(node);                                              \

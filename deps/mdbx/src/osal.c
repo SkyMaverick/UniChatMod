@@ -1,7 +1,7 @@
 /* https://en.wikipedia.org/wiki/Operating_system_abstraction_layer */
 
 /*
- * Copyright 2015-2018 Leonid Yuriev <leo@yuriev.ru>
+ * Copyright 2015-2019 Leonid Yuriev <leo@yuriev.ru>
  * and other libmdbx authors: please see AUTHORS file.
  * All rights reserved.
  *
@@ -153,8 +153,10 @@ typedef struct _FILE_PROVIDER_EXTERNAL_INFO_V1 {
 
 /*----------------------------------------------------------------------------*/
 
-#ifndef _MSC_VER
-/* Prototype should match libc runtime. ISO POSIX (2003) & LSB 3.1 */
+#if !defined(_MSC_VER) &&                                                      \
+    /* workaround for avoid musl libc wrong prototype */ (                     \
+        defined(__GLIBC__) || defined(__GNU_LIBRARY__))
+/* Prototype should match libc runtime. ISO POSIX (2003) & LSB 1.x-3.x */
 __nothrow __noreturn void __assert_fail(const char *assertion, const char *file,
                                         unsigned line, const char *function);
 #endif /* _MSC_VER */
@@ -581,17 +583,25 @@ int mdbx_pwrite(mdbx_filehandle_t fd, const void *buf, size_t bytes,
     return (bytes == written) ? MDBX_SUCCESS : MDBX_EIO /* ERROR_WRITE_FAULT */;
   return GetLastError();
 #else
-  int rc;
-  intptr_t written;
-  do {
+  while (true) {
     STATIC_ASSERT_MSG(sizeof(off_t) >= sizeof(size_t),
                       "libmdbx requires 64-bit file I/O on 64-bit systems");
-    written = pwrite(fd, buf, bytes, offset);
+    const intptr_t written =
+        pwrite(fd, buf, (bytes <= MAX_WRITE) ? bytes : MAX_WRITE, offset);
     if (likely(bytes == (size_t)written))
       return MDBX_SUCCESS;
-    rc = errno;
-  } while (rc == EINTR);
-  return (written < 0) ? rc : MDBX_EIO /* Use which error code (ENOSPC)? */;
+    if (written < 0) {
+      const int rc = errno;
+      if (rc != EINTR)
+        return rc;
+    } else if (written > 0) {
+      bytes -= written;
+      offset += written;
+      buf = (char *)buf + written;
+    } else {
+      return -1;
+    }
+  }
 #endif
 }
 
@@ -673,34 +683,27 @@ int mdbx_filesync(mdbx_filehandle_t fd, bool filesize_changed) {
 #if defined(_WIN32) || defined(_WIN64)
   (void)filesize_changed;
   return FlushFileBuffers(fd) ? MDBX_SUCCESS : GetLastError();
-#elif __GLIBC_PREREQ(2, 16) || _BSD_SOURCE || _XOPEN_SOURCE ||                 \
-    (__GLIBC_PREREQ(2, 8) && _POSIX_C_SOURCE >= 200112L)
-  for (;;) {
-/* LY: It is no reason to use fdatasync() here, even in case
- * no such bug in a kernel. Because "no-bug" mean that a kernel
- * internally do nearly the same, e.g. fdatasync() == fsync()
- * when no-kernel-bug and file size was changed.
- *
- * So, this code is always safe and without appreciable
- * performance degradation.
- *
- * For more info about of a corresponding fdatasync() bug
- * see http://www.spinics.net/lists/linux-ext4/msg33714.html */
-#if _POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500 ||                      \
-    defined(_POSIX_SYNCHRONIZED_IO)
-    if (!filesize_changed && fdatasync(fd) == 0)
-      return MDBX_SUCCESS;
+#else
+  int rc;
+  do {
+#if defined(_POSIX_SYNCHRONIZED_IO) && _POSIX_SYNCHRONIZED_IO > 0
+    /* LY: This code is always safe and without appreciable performance
+     * degradation, even on a kernel with fdatasync's bug.
+     *
+     * For more info about of a corresponding fdatasync() bug
+     * see http://www.spinics.net/lists/linux-ext4/msg33714.html */
+    if (!filesize_changed) {
+      if (fdatasync(fd) == 0)
+        return MDBX_SUCCESS;
+    } else
 #else
     (void)filesize_changed;
 #endif
-    if (fsync(fd) == 0)
+        if (fsync(fd) == 0)
       return MDBX_SUCCESS;
-    int rc = errno;
-    if (rc != EINTR)
-      return rc;
-  }
-#else
-#error FIXME
+    rc = errno;
+  } while (rc == EINTR);
+  return rc;
 #endif
 }
 
@@ -741,11 +744,21 @@ int mdbx_filesize(mdbx_filehandle_t fd, uint64_t *length) {
 
 int mdbx_ftruncate(mdbx_filehandle_t fd, uint64_t length) {
 #if defined(_WIN32) || defined(_WIN64)
-  LARGE_INTEGER li;
-  li.QuadPart = length;
-  return (SetFilePointerEx(fd, li, NULL, FILE_BEGIN) && SetEndOfFile(fd))
-             ? MDBX_SUCCESS
-             : GetLastError();
+  if (mdbx_SetFileInformationByHandle) {
+    FILE_END_OF_FILE_INFO EndOfFileInfo;
+    EndOfFileInfo.EndOfFile.QuadPart = length;
+    return mdbx_SetFileInformationByHandle(fd, FileEndOfFileInfo,
+                                           &EndOfFileInfo,
+                                           sizeof(FILE_END_OF_FILE_INFO))
+               ? MDBX_SUCCESS
+               : GetLastError();
+  } else {
+    LARGE_INTEGER li;
+    li.QuadPart = length;
+    return (SetFilePointerEx(fd, li, NULL, FILE_BEGIN) && SetEndOfFile(fd))
+               ? MDBX_SUCCESS
+               : GetLastError();
+  }
 #else
   STATIC_ASSERT_MSG(sizeof(off_t) >= sizeof(size_t),
                     "libmdbx requires 64-bit file I/O on 64-bit systems");
