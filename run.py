@@ -66,7 +66,8 @@ def meson_cmd (type, cross, path, prefix):
         args += ['--reconfigure']
     if cross:
         args += ['--cross-file', cross]
-    if type == 'release':
+    if (type == 'release') \
+        and (platform.system().lower() != 'windows'):
         args += ['--strip']
     return meson_internal (path, *args)
 
