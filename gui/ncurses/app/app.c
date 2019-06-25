@@ -198,24 +198,26 @@ exit_func (int ret_status)
         return TRUE;
     }
 #else
-    static void
-    _stack_trace (int sig)
-    {
-        fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch SEGV signal ..."));
-        void* buf[STACK_TRACE_BUFFER];
-        char** strs;
+    #ifdef DEBUG
+        static void
+        _stack_trace (int sig)
+        {
+            fprintf (stderr, "[%s] %s\n", TUI_APP_NAME,_("Catch SEGV signal ..."));
+            void* buf[STACK_TRACE_BUFFER];
+            char** strs;
 
-        int ptrs = backtrace(buf, STACK_TRACE_BUFFER);
-        if (ptrs)
-            fprintf (stderr, "%s: %d\n",_("Trace last addresses"), ptrs);
+            int ptrs = backtrace(buf, STACK_TRACE_BUFFER);
+            if (ptrs)
+                fprintf (stderr, "%s: %d\n",_("Trace last addresses"), ptrs);
 
-        strs = backtrace_symbols(buf, ptrs);
-        if (strs != NULL) {
-            for (int i=0; i < ptrs; i++)
-                fprintf (stderr, "%s\n", strs[i]);
-        } else fprintf (stderr, "%s\n",_("backtrace symbols error"));
-        free(strs);
-    }
+            strs = backtrace_symbols(buf, ptrs);
+            if (strs != NULL) {
+                for (int i=0; i < ptrs; i++)
+                    fprintf (stderr, "%s\n", strs[i]);
+            } else fprintf (stderr, "%s\n",_("backtrace symbols error"));
+            free(strs);
+        }
+    #endif
 
     static void
     _crash_handler (int sig)

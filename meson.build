@@ -19,40 +19,40 @@ ucm_defs    = []
 # --- compiler preferences ----------
 if get_option('buildtype').startswith('debug')
     if ccid == 'msvc'
-        add_project_arguments ('/DDEBUG', language: 'c')
+        ucm_defs += '/DDEBUG'
     else
-        add_project_arguments ('-DDEBUG', language: 'c')
+        ucm_defs += '-DDEBUG'
     endif
 endif
 if get_option('enable_traces')
     if ccid == 'msvc'
-        add_project_arguments ('/DENABLE_TRACE_MESSAGES', language: 'c')
+        ucm_defs += '/DENABLE_TRACE_MESSAGES'
     else
-        add_project_arguments ('-DENABLE_TRACE_MESSAGES', language: 'c')
+        ucm_defs += '-DENABLE_TRACE_MESSAGES'
     endif
 endif
 if get_option('create_bundle')
     if ccid == 'msvc'
-        add_project_arguments ('/DENABLE_BUNDLE', language: 'c')
+        ucm_defs += '/DENABLE_BUNDLE'
     else
-        add_project_arguments ('-DENABLE_BUNDLE', language: 'c')
+        ucm_defs += '-DENABLE_BUNDLE'
     endif
 endif
 if get_option('create_with_hidden_api')
     if ccid == 'msvc'
-        add_project_arguments ('/DLIBUCM_EXPORTS', language: 'c')
+        ucm_defs += '/DLIBUCM_EXPORTS'
     else
-        add_project_arguments ('-DLIBUCM_EXPORTS', language: 'c')
+        ucm_defs += '-DLIBUCM_EXPORTS'
     endif
 endif
 if get_option('valgrind_support')
     if not (ccid == 'msvc')
-        add_project_arguments ('-DENABLE_VALGRIND', language: 'c')
+        ucm_defs += '-DENABLE_VALGRIND'
     endif
 endif
 
 if (ccid == 'gcc') or (ccid == 'clang')
-    add_project_arguments ('-D_XOPEN_SOURCE=700', language: 'c')
+    ucm_defs += '-D_XOPEN_SOURCE=700'
     # --- compiler arguments ----------
     ucm_cflags += '''
         -std=gnu11

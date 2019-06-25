@@ -27,7 +27,7 @@ cb_logger_function (ucm_plugin_t*   plugin,
 {
     size_t len = strlen(txt);
 
-    uv_buf_t buffer = app->uv.buf_init (txt, len);
+    uv_buf_t buffer = app->uv.buf_init ((char*)txt, len);
     app->uv.fs_write (&(log.write_req), log.req.result, &buffer, 1, log.offset, NULL);
 
     log.offset += len;
@@ -38,11 +38,9 @@ _run_logger (void)
 {
     char path [UCM_PATH_MAX];
     snprintf (path, UCM_PATH_MAX, "%s%c%s", app->app.get_startup_path(), PATH_DELIM, "ucm.log");
-    fprintf (stdout, "\t[LOGGER] %s\n", path);
     log.offset = 0;
 
-    // TODO
-    int ret = app->uv.fs_open (&(log.req), path, UV_FS_O_APPEND | UV_FS_O_RDWR | UV_FS_O_CREAT, 0666, NULL);
+    int ret = app->uv.fs_open (&(log.req), path, UV_FS_O_RDWR | UV_FS_O_CREAT, 0666, NULL);
     if (ret)
         return UCM_RET_EXCEPTION;
 
