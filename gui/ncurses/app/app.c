@@ -56,7 +56,7 @@ static ucm_cstart_func core_start = NULL;
 static ucm_cstop_func  core_stop  = NULL;
 static ucm_cinfo_func  core_info  = NULL;
 
-static const ucm_plugin_info_t* info;
+static ucm_plugin_info_t* info;
 
 
 static uint32_t global_flags = 0;
@@ -78,6 +78,9 @@ unset_flag (const app_flag_t flag) {
 static void
 exit_func (int ret_status)
 {
+    if (info)
+        core->sys.free (info);
+
     if (core_stop)
         core_stop ();
 #if defined (UCM_OS_POSIX) || \
@@ -181,7 +184,7 @@ main (int argc, char* argv[])
 
 
     /* check portable application objects */
-    while (!get_flag (FLAG_APP_PORTABLE) || 
+    while (!get_flag (FLAG_APP_PORTABLE) ||
            !get_flag (FLAG_APP_PORTABLE_BASE)) {
         char tmp [UCM_PATH_MAX];
 
@@ -251,8 +254,7 @@ main (int argc, char* argv[])
         core_info  = (ucm_cinfo_func) GetProcAddress(core_handle, UCM_INFO_FUNC);
 #endif
         if ( core_start && core_stop && core_info ) {
-            info = core_info();
-            if (info
+            if (core_info ( (void**)&info, &args, UCM_INFO_CORE)
                 && (info->api.vmajor >= LIBCORE_API_MAJVER)
                 && (info->api.vminor >= LIBCORE_API_MINVER))
             {

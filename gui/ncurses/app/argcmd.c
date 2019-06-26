@@ -32,7 +32,7 @@ void
 app_args_parse (int argc, char* argv[], ucm_cargs_t* args)
 {
     int opt = 0;
-    while ( ( opt = getopt(argc, argv, "rs:p:v?") ) != -1 )
+    while ( ( opt = getopt(argc, argv, "rs:p:vV?") ) != -1 )
     {
         switch (opt) {
             /* display help info */
@@ -48,6 +48,10 @@ app_args_parse (int argc, char* argv[], ucm_cargs_t* args)
                     _display_version();
                     set_flag (FLAG_APP_TERMINATED);
                     break;
+                }
+            case 'V':
+                {
+
                 }
             case 'r':
                 {

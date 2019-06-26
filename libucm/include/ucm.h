@@ -1012,15 +1012,21 @@ typedef struct {
     uint64_t options;
 } ucm_cargs_t;
 
+enum {
+    UCM_INFO_CORE     = 0,
+    UCM_INFO_PLUGINS  = 1,
+};
+
 // ******* LOAD FUNCTIONS ************
+
 LIBUCM_API const ucm_functions_t*
 ucm_core_start (ucm_cargs_t* args);
 
 LIBUCM_API UCM_RET
 ucm_core_stop (void);
 
-LIBUCM_API const ucm_plugin_info_t*
-ucm_core_info (void);
+LIBUCM_API const size_t
+ucm_core_info (void** info, ucm_cargs_t* args, unsigned mode);
 
 // ******* DYNAMIC LOAD FUNCTIONS ***********
 
@@ -1032,8 +1038,8 @@ typedef UCM_RET
 (*ucm_cstop_func) (void);
 #define UCM_STOP_FUNC  "ucm_core_stop"
 
-typedef const ucm_plugin_info_t*
-(*ucm_cinfo_func) (void);
+typedef const size_t
+(*ucm_cinfo_func) (void** info, ucm_cargs_t* args, unsigned mode);
 #define UCM_INFO_FUNC  "ucm_core_info"
 
 #undef UCM_DEPRECATED

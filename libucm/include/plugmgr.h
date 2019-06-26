@@ -39,3 +39,6 @@ plugins_get_gui (void);
 
 const ucm_plugin_t**
 plugins_get_stuff (void);
+
+const size_t
+plugins_count (void);

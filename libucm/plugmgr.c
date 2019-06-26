@@ -38,7 +38,7 @@ ucm_module_t modules = {
 static uintptr_t _lock = 0;
 
 static size_t plugins_limit        = UCM_DEF_PLUG_COUNT;
-static size_t plugins_count        = 0;
+static size_t plugins_all_count        = 0;
 static ucm_plugin_t* plugins_all   [UCM_DEF_PLUG_COUNT + 1];
 static size_t plugins_db_count     = 0;
 static ucm_plugin_t* plugins_db    [UCM_DEF_PLUG_COUNT + 1];
@@ -126,7 +126,7 @@ _plugin_load (char* filename)
 static inline void
 _plugin_registry_add (ucm_plugin_t* plugin)
 {
-                plugins_all[ plugins_count ] = plugin;
+                plugins_all[ plugins_all_count ] = plugin;
 
                 switch (plugin->info.sys) {
                     case UCM_TYPE_PLUG_DB:
@@ -179,10 +179,10 @@ plugins_run_all (void)
     ucm_module_t* m_tmp = modules.next;
 
     for ( ; m_tmp; m_tmp = m_tmp->next) {
-        if ( plugins_limit > plugins_count ) {
+        if ( plugins_limit > plugins_all_count ) {
             if ( m_tmp->plugin->run() == UCM_RET_SUCCESS ) {
                 _plugin_registry_add(m_tmp->plugin);
-                plugins_count += 1;
+                plugins_all_count += 1;
             } else {
                 ucm_etrace("%ls: %s\n", m_tmp->plugin->info.pid,
                      _("plugin start missing. Ignore this plugin."));
@@ -290,7 +290,7 @@ plugins_message_dispatch (const uint32_t* id,
     if (modules.plugin)
         modules.plugin->message(*id, *ctx, *x1, *x2);   // core receive message first
 
-    for ( size_t i = 0; i < plugins_count; i++ ) {
+    for ( size_t i = 0; i < plugins_all_count; i++ ) {
         if (plugins_all[i] && plugins_all[i]->message) {
             plugins_all[i]->message (*id, *ctx, *x1, *x2);
         }
@@ -337,4 +337,9 @@ const ucm_plugin_t**
 plugins_get_stuff (void)
 {
     return (const ucm_plugin_t**) plugins_stuff;
+}
+
+const size_t
+plugins_count (void) {
+    return plugins_all_count;
 }
