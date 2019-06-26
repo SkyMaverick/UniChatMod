@@ -247,8 +247,6 @@
 
 #if defined(PATH_MAX)
     #define UCM_PATH_MAX PATH_MAX
-#elif defined(_UCM_CONFIG_H_)
-    #define UCM_PATH_MAX DEF_PATH_MAX
 #else
     #define UCM_PATH_MAX 4096
 #endif

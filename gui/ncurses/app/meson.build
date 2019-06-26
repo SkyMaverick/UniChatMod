@@ -2,6 +2,10 @@ tuiapp_name = 'ucmc'
 tuiapp_src = files('''
     app.c
     app.h
+    argcmd.c
+    argcmd.h
+    osal.h
+    osal.c
 '''.split()) + shared_headers
 
 if not (target_machine.system() == 'windows')

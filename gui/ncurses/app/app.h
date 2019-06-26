@@ -1,8 +1,20 @@
-#ifndef _NCURSES_APP_H_
-#define _NCURSES_APP_H_
+#pragma once
 
 #define TUI_APP_NAME "ucmc"
 
+#include "ucm.h"
+#include "config.h"
+
+#include <stdbool.h>
+
+typedef enum {
+    FLAG_APP_PORTABLE       = 1 << 0,
+    FLAG_APP_PORTABLE_BASE  = 1 << 1,
+    FLAG_APP_TERMINATED     = 1 << 2
+} app_flag_t;
+
 const ucm_functions_t* core;
 
-#endif
+const bool get_flag (const app_flag_t flag);
+void set_flag (const app_flag_t flag);
+void unset_flag (const app_flag_t flag);

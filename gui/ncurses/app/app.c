@@ -1,4 +1,3 @@
-#include "ucm.h"
 
 #include <stdio.h>
 #include <limits.h>
@@ -11,17 +10,14 @@
 #include "gettext.h"
 #include "config.h"
 
+#include "argcmd.h"
+#include "osal.h"
+
 #if defined (UCM_OS_POSIX) || \
     defined (UCM_OS_WINEMULATOR)
 
     #include <signal.h>
     #include <execinfo.h>
-#endif
-
-#if defined (UCM_OS_POSIX)
-    #include <getopt.h>
-#else
-    #include "getopt_win.h"
 #endif
 
 #if defined (UCM_OS_POSIX)
@@ -35,12 +31,19 @@
 #define STACK_TRACE_BUFFER  4096
 
 
+#if defined (UCM_OS_POSIX) || \
+    defined (UCM_OS_WINEMULATOR)
+    static void*        core_handle;
+#else
+    static HMODULE      core_handle;
+#endif
+
 static char pa_buf  [UCM_PATH_MAX];
 static char pla_buf [UCM_PATH_MAX];
 static char ppa_buf [UCM_PATH_MAX];
 static char psa_buf [UCM_PATH_MAX];
 
-static ucm_cargs_t args = {
+ucm_cargs_t args = {
    .path_abs        = pa_buf,
    .path_lib_abs    = pla_buf,
    .path_plug_abs   = ppa_buf,
@@ -49,119 +52,26 @@ static ucm_cargs_t args = {
    .options         = 0
 };
 
-#if defined (UCM_OS_POSIX) || \
-    defined (UCM_OS_WINEMULATOR)
-    static void*        core_handle;
-#else
-    static HMODULE      core_handle;
-#endif
-
 static ucm_cstart_func core_start = NULL;
 static ucm_cstop_func  core_stop  = NULL;
 static ucm_cinfo_func  core_info  = NULL;
 
-static const        ucm_plugin_info_t* info;
+static const ucm_plugin_info_t* info;
 
-static int portable = 0;
-static int portable_base = 0;
-static int terminated = 0;
 
-static inline void
-_display_help (void)
-{
-    fprintf (stdout, "%s\n", "Usage UniChatMod tui mode: ucmc [options]");
-    fprintf (stdout, "%s\n", "Options:");
-    fprintf (stdout, "%s\n", "    -?              help");
-    fprintf (stdout, "%s\n", "    -v              program version");
-    fprintf (stdout, "%s\n", "    -r              read-only database mode");
-    fprintf (stdout, "%s\n", "    -p <base path>  load or create external database file");
+static uint32_t global_flags = 0;
+
+const bool
+get_flag (const app_flag_t flag) {
+    return (global_flags & flag);
 }
-
-static inline void
-_display_version (void)
-{
-    fprintf (stdout, "%s\n", UCM_VERSION);
+void
+set_flag (const app_flag_t flag) {
+    global_flags |= flag;
 }
-
-static char*
-app_realpath (const char*  path)
-{
-#if defined (UCM_OS_POSIX) || \
-    defined (UCM_OS_WINEMULATOR)
-    return realpath(path, NULL);
-#else
-    char* tmp_path = NULL;
-    HANDLE handle = CreateFileA(path,
-                         0,
-                         0,
-                         NULL,
-                         OPEN_EXISTING,
-                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS,
-                         NULL);
-    if (handle = INVALID_HANDLE_VALUE)
-        return NULL;
-
-    size_t path_len = GetFinalPathNameByHandleA(handle, NULL, 0, VOLUME_NAME_DOS);
-    if (path_len) {
-        tmp_path = malloc ((path_len + 1) * sizeof(TCHAR));
-        if (tmp_path == NULL) {
-            ZeroMemory(tmp_path, (path_len + 1) * sizeof(TCHAR));
-            GetFinalPathNameByHandleA(handle, tmp_path, path_len, VOLUME_NAME_DOS);
-        }
-    }
-    CloseHandle(handle);
-    return tmp_path;
-#endif
-}
-
-static inline int
-app_realloc (void** mem,
-             size_t size)
-{
-    void* old_mem = *mem;
-    *mem = realloc (*mem, size);
-    if ( *mem != old_mem ) {
-        if ( *mem == NULL ) {
-            *mem = old_mem;
-            return 1;
-        }
-    }
-    return 0;
-}
-
-static char*
-app_mypath (char* path)
-{
-#if defined (UCM_OS_POSIX) || \
-    defined (UCM_OS_WINEMULATOR)
-    return app_realpath(path);
-#else
-    size_t size = UCM_PATH_MAX;
-
-    char* tmp_path = malloc((size + 1) * sizeof(TCHAR));
-    if (tmp_path) {
-        do {
-            size_t r = GetModuleFileNameA(NULL, (LPSTR)tmp_path, size);
-            if ( (r < size) && (r != 0)) {
-                size = r;
-                if (app_realloc (&tmp_path, size + 1) != 0) {
-                    free (tmp_path);
-                    goto bailout;
-                }
-                tmp_path [size] = '\0';
-                break;
-            }
-
-            size *= 2;
-            if ( app_realloc ( &tmp_path, size + 1 ) != 0) {
-                free (tmp_path);
-                goto bailout;
-            }
-        } while(1);
-        return tmp_path;
-    }
-    bailout: return 0;
-#endif
+void
+unset_flag (const app_flag_t flag) {
+    global_flags &= ~flag;
 }
 
 
@@ -237,64 +147,18 @@ exit_func (int ret_status)
     }
 #endif
 
-static void
-_args_parse (int argc, char* argv[])
-{
-    int opt = 0;
-    while ( ( opt = getopt(argc, argv, "rs:p:v?") ) != -1 )
-    {
-        switch (opt) {
-            case '?':
-                {
-                    _display_help();
-                    terminated = 1;
-                    break;
-                }
-            case 'v':
-                {
-                    _display_version();
-                    terminated = 1;
-                    break;
-                }
-            case 'r':
-                {
-                    args.options |= UCM_FLAG_CORE_DBRO;
-                    break;
-                }
-            case 's':
-                {
-                    // TODO server for proto list
-                    break;
-                }
-            case 'p':
-            /* Change custom storage file */
-                {
-                    char* rpath = app_realpath(optarg);
-                    if (rpath) {
-                        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s", rpath);
-                        free (rpath);
-                    } else {
-                        snprintf (args.path_store_abs, UCM_PATH_MAX, "%s", optarg);
-                    }
-                    portable_base = 0;
-                    break;
-                }
-        }
-    }
-}
-
 
 int
 main (int argc, char* argv[])
 {
-    portable = 1;
+    set_flag (FLAG_APP_PORTABLE);
     int ret_status = UCM_RET_SUCCESS;
 // *********************************************************
 //      DEFINE STARTUP FILES AND CHECK ENV PATHS
 // *********************************************************
 
 #ifdef ENABLE_BUNDLE
-        portable_base = 1;
+        set_flag (FLAG_APP_PORTABLE_BASE);
 #endif
     char* rpath = app_mypath(argv[0]);
     if (rpath) {
@@ -317,39 +181,40 @@ main (int argc, char* argv[])
 
 
     /* check portable application objects */
-    while (!portable || !portable_base) {
+    while (!get_flag (FLAG_APP_PORTABLE) || 
+           !get_flag (FLAG_APP_PORTABLE_BASE)) {
         char tmp [UCM_PATH_MAX];
 
-        if (!portable) {
+        if (!get_flag (FLAG_APP_PORTABLE)) {
             // TODO
             snprintf (tmp, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_MODULES);
                 break;
-            portable = 1;
+            set_flag (FLAG_APP_PORTABLE);
         }
-        if (!portable_base) {
+        if (!get_flag (FLAG_APP_PORTABLE_BASE)) {
             snprintf (tmp, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, TUI_APP_NAME);
                 break;
-            portable_base = 1;
+            set_flag (FLAG_APP_PORTABLE_BASE);
         }
         break;
     }
 
-    if (portable) {
+    if ( get_flag (FLAG_APP_PORTABLE) ) {
         snprintf (args.path_lib_abs,  UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_DEPENDS);
         snprintf (args.path_plug_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_MODULES);
     } else {
         //TODO
     }
 
-    if (portable_base ) {
+    if ( get_flag (FLAG_APP_PORTABLE_BASE) ) {
         snprintf (args.path_store_abs, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, UCM_DB_DEFAULT_NAME);
     } else {
         // TODO
     }
 
-    _args_parse (argc, argv);
+    app_args_parse (argc, argv, &args);
 
-    if (terminated)
+    if (get_flag (FLAG_APP_TERMINATED))
         return ret_status;
 
 #if defined (UCM_OS_WINDOWS)
