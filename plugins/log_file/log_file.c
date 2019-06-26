@@ -41,7 +41,7 @@ _run_logger (void)
     flog.offset = 0;
 
     int ret = app->uv.fs_open (&(flog.req), path, UV_FS_O_RDWR | UV_FS_O_CREAT, 0666, NULL);
-    if (ret)
+    if (ret < 0)
         return UCM_RET_EXCEPTION;
 
     app->app.logger_connect (cb_logger_function, NULL);
