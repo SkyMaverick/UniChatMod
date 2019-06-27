@@ -94,7 +94,6 @@ _stop_core (void)
     ucm_mloop_free();
 
     log_release();
-
     compat_layer_release();
 
     return UCM_RET_SUCCESS;

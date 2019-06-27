@@ -46,6 +46,8 @@ LIBUCM_API UCM_RET
 ucm_core_stop (void)
 {
     ucm_core->stop();
+    compat_layer_release();
+    
     return UCM_RET_SUCCESS;
 }
 
@@ -66,6 +68,8 @@ static size_t
 handle_info_plug (void**       info,
                   ucm_cargs_t* args)
 {
+    compat_layer_init ();
+
     if ( plugins_load_registry (UniAPI->app.get_plugins_path()) != UCM_RET_SUCCESS )
         return 0;
 
@@ -84,7 +88,8 @@ handle_info_plug (void**       info,
         *info = (void*) inf_arr;
         return count;
     }
-bailout: plugins_release_registry();
+bailout: compat_layer_release ();
+    plugins_release_registry();
     return 0;
 
 }

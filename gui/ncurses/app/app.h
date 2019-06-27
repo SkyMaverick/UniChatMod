@@ -13,7 +13,11 @@ typedef enum {
     FLAG_APP_TERMINATED     = 1 << 2
 } app_flag_t;
 
-const ucm_functions_t* core;
+extern const ucm_functions_t* core;
+
+extern ucm_cstart_func core_start;
+extern ucm_cstop_func  core_stop;
+extern ucm_cinfo_func  core_info;
 
 const bool get_flag (const app_flag_t flag);
 void set_flag (const app_flag_t flag);

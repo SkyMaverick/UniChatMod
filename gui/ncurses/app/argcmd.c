@@ -51,6 +51,11 @@ app_args_parse (int argc, char* argv[], ucm_cargs_t* args)
                 }
             case 'V':
                 {
+                    ucm_plugin_info_t* info = NULL;
+                    int len = core_info ((void**)&info, args, UCM_INFO_PLUGINS);
+                    if (len) {
+                        // TODO
+                    }
 
                 }
             case 'r':

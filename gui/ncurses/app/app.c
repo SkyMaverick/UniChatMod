@@ -38,6 +38,8 @@
     static HMODULE      core_handle;
 #endif
 
+const ucm_functions_t* core;
+
 static char pa_buf  [UCM_PATH_MAX];
 static char pla_buf [UCM_PATH_MAX];
 static char ppa_buf [UCM_PATH_MAX];
@@ -52,9 +54,9 @@ ucm_cargs_t args = {
    .options         = 0
 };
 
-static ucm_cstart_func core_start = NULL;
-static ucm_cstop_func  core_stop  = NULL;
-static ucm_cinfo_func  core_info  = NULL;
+ucm_cstart_func core_start = NULL;
+ucm_cstop_func  core_stop  = NULL;
+ucm_cinfo_func  core_info  = NULL;
 
 static ucm_plugin_info_t* info;
 
@@ -215,11 +217,7 @@ main (int argc, char* argv[])
         // TODO
     }
 
-    app_args_parse (argc, argv, &args);
-
-    if (get_flag (FLAG_APP_TERMINATED))
-        return ret_status;
-
+//
 #if defined (UCM_OS_WINDOWS)
     BOOL fRet = SetConsoleCtrlHandler (
                 (PHANDLER_ROUTINE) TermHandler,
@@ -254,23 +252,32 @@ main (int argc, char* argv[])
         core_info  = (ucm_cinfo_func) GetProcAddress(core_handle, UCM_INFO_FUNC);
 #endif
         if ( core_start && core_stop && core_info ) {
-            if (core_info ( (void**)&info, &args, UCM_INFO_CORE)
-                && (info->api.vmajor >= LIBCORE_API_MAJVER)
-                && (info->api.vminor >= LIBCORE_API_MINVER))
-            {
-                core = core_start (&args);
-                if (core) {
-                    ucm_ev_t* ev = core->app.mainloop_ev_alloc (UCM_EVENT_START_GUI);
-                    if (ev) {
-                      snprintf ( U_EVENT_GUI(ev)->pid, UCM_PID_MAX, "%s", "uincurses");
-                      core->app.mainloop_ev_push(ev, 0, 0, NULL);
+            size_t len = core_info ( (void**)&info, &args, UCM_INFO_CORE);
+            if (len) {
+                if ( (info->api.vmajor >= LIBCORE_API_MAJVER) && (info->api.vminor >= LIBCORE_API_MINVER) )
+                {
+                    app_args_parse (argc, argv, &args);
+
+                    if (get_flag (FLAG_APP_TERMINATED))
+                        return ret_status;
+
+                    core = core_start (&args);
+                    if (core) {
+                        ucm_ev_t* ev = core->app.mainloop_ev_alloc (UCM_EVENT_START_GUI);
+                        if (ev) {
+                          snprintf ( U_EVENT_GUI(ev)->pid, UCM_PID_MAX, "%s", "uincurses");
+                          core->app.mainloop_ev_push(ev, 0, 0, NULL);
+                        }
+                        core->app.wait_exit();
+                        exit_func (UCM_RET_SUCCESS);
+                    } else {
+                        fprintf (stderr, "%s\n", "Core API load FAIL");
+                        exit_func (UCM_RET_NOTIMPLEMENT);
                     }
-                    core->app.wait_exit();
-                    exit_func (UCM_RET_SUCCESS);
-                } else {
-                    fprintf (stderr, "%s\n", "Core API load FAIL");
-                    exit_func (UCM_RET_NOTIMPLEMENT);
                 }
+            }  else {
+                // TODO
+                exit_func (UCM_RET_EXCEPTION);
             }
         } else {
             fprintf (stderr, "%s\n", "Core information load FAIL");
