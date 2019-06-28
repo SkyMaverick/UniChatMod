@@ -52,11 +52,12 @@ app_args_parse (int argc, char* argv[], ucm_cargs_t* args)
             case 'V':
                 {
                     ucm_plugin_info_t* info = NULL;
-                    int len = core_info ((void**)&info, args, UCM_INFO_PLUGINS);
+                    size_t len = core_info ((void**)&info, args, UCM_INFO_PLUGINS);
                     if (len) {
-                        // TODO
+                        for (size_t i; i < len; i++)
+                            fprintf (stdout, "%s\n", info[i].pid);
                     }
-
+                    set_flag (FLAG_APP_TERMINATED);
                 }
             case 'r':
                 {

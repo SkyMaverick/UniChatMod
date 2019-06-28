@@ -48,29 +48,31 @@ _log_core (ucm_plugin_t* plug,
            uint32_t      type,
            const char*   txt)
 {
-    UniAPI->sys.rwlock_rlock(lock_mtx);
+    if (lock_mtx) {
+        UniAPI->sys.rwlock_rlock(lock_mtx);
 
-    _log_console (txt, type);
+        _log_console (txt, type);
 
-    for (ucm_logger_t* i=logs; i; i=i->next)
-        i->cb_log ( plug, type, txt, i->ctx );
+        for (ucm_logger_t* i=logs; i; i=i->next)
+            i->cb_log ( plug, type, txt, i->ctx );
 
 #ifdef DEBUG
-    if (buffer) {
+        if (buffer) {
 #else
-    if (buffer && (type != UCM_TYPE_LOG_DEBUG)) {
+        if (buffer && (type != UCM_TYPE_LOG_DEBUG)) {
 #endif
-        size_t len = strlen (txt);
-        if ( (buffer_tmp - buffer + len + 1 + LOG_TYPE_SIZE) < LOG_BUFFER_SIZE ) {
+            size_t len = strlen (txt);
+            if ( (buffer_tmp - buffer + len + 1 + LOG_TYPE_SIZE) < LOG_BUFFER_SIZE ) {
 
-            memcpy (buffer_tmp + LOG_TYPE_SIZE, txt, len);
-            *buffer_tmp = type;
-            buffer_tmp += len + LOG_TYPE_SIZE;
-            *( ++buffer_tmp ) = '\0';
+                memcpy (buffer_tmp + LOG_TYPE_SIZE, txt, len);
+                *buffer_tmp = type;
+                buffer_tmp += len + LOG_TYPE_SIZE;
+                *( ++buffer_tmp ) = '\0';
+            }
         }
-    }
 
-    UniAPI->sys.rwlock_unlock(lock_mtx);
+        UniAPI->sys.rwlock_unlock(lock_mtx);
+    }
 }
 
 static int

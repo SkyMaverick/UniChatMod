@@ -46,7 +46,6 @@ LIBUCM_API UCM_RET
 ucm_core_stop (void)
 {
     ucm_core->stop();
-    compat_layer_release();
     
     return UCM_RET_SUCCESS;
 }
@@ -69,14 +68,11 @@ handle_info_plug (void**       info,
                   ucm_cargs_t* args)
 {
     compat_layer_init ();
-
-    if ( plugins_load_registry (UniAPI->app.get_plugins_path()) != UCM_RET_SUCCESS )
-        return 0;
-
-    size_t count = plugins_count();
-    ucm_plugin_info_t* inf_arr;
-
+    size_t count = plugins_load_registry (UniAPI->app.get_plugins_path());
+    
     if (count > 0) {
+        
+        ucm_plugin_info_t* inf_arr;
         inf_arr = UniAPI->sys.zmalloc (sizeof(ucm_plugin_info_t) * count);
         if (inf_arr == NULL)
             goto bailout;
@@ -86,11 +82,10 @@ handle_info_plug (void**       info,
             memcpy (&(inf_arr[i]), &((*tmp)->info), sizeof(ucm_plugin_info_t));
 
         *info = (void*) inf_arr;
-        return count;
     }
-bailout: compat_layer_release ();
-    plugins_release_registry();
-    return 0;
+bailout: plugins_release_registry();
+    compat_layer_release ();
+    return count;
 
 }
 

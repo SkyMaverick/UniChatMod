@@ -2,7 +2,7 @@
 
 #include "ucm.h"
 
-UCM_RET
+size_t
 plugins_load_registry (const char* plug_path);
 
 void

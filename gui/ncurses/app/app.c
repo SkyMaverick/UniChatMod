@@ -173,16 +173,8 @@ main (int argc, char* argv[])
         snprintf (args.path_abs, UCM_PATH_MAX, "%s", argv[0]);
     }
 
-#ifdef DEBUG
-    fprintf (stdout, "%s: %s\n", "Start application", args.path_abs);
-#endif
-
     char* e = strrchr(args.path_abs, PATH_DELIM);
     if (e) *e = '\0';
-
-#ifdef DEBUG
-    fprintf (stdout, "%s: %s\n", "Application path", args.path_abs);
-#endif
 
 
     /* check portable application objects */

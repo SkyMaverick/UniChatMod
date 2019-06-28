@@ -22,11 +22,6 @@ typedef struct ucm_module_s {
     struct ucm_module_s* next;
 } ucm_module_t;
 
-typedef struct {
-    uv_fs_t fs;
-    size_t  count;
-} uvi_scanfs_t;
-
 #define PLUGIN(X) X->plugin
 #define NULL_REG(X) UniAPI->sys.zmemory ((X), sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
 
@@ -209,12 +204,14 @@ plugins_stop_all (void)
     NULL_REG (plugins_stuff);
 }
 
-static void
+static size_t
 __loaddir_cb (uv_fs_t* req)
 {
     uv_dirent_t dent;
     uv_fs_t     close_req;
     char buffer [UCM_PATH_MAX];
+
+    size_t count = 0;
 
     ucm_dtrace("%s ...\n", "Scan plugin directory");
 
@@ -230,7 +227,8 @@ __loaddir_cb (uv_fs_t* req)
 
             tmp->next = modules.next;
             modules.next = tmp;
-            ((uvi_scanfs_t*)req)->count++;
+
+            count ++;
 
             UniAPI->sys.rwlock_unlock(_lock);
         }
@@ -241,25 +239,27 @@ __loaddir_cb (uv_fs_t* req)
     UniAPI->uv.fs_close (&close_req, req->file, NULL);
 #endif
     UniAPI->uv.fs_req_cleanup(&close_req);
+
+    return count;
 }
 
-UCM_RET
+size_t
 plugins_load_registry (const char* plug_path)
 {
-    uvi_scanfs_t ireq;
-    UniAPI->sys.zmemory(&ireq, sizeof(uvi_scanfs_t));
+    uv_fs_t req;
+    size_t ret = 0;
 
     _lock = UniAPI->sys.rwlock_create();
-    int r = UniAPI->uv.fs_scandir ((uv_fs_t*)(&ireq), plug_path, O_RDONLY, __loaddir_cb);
-    if (r) {
+    int r = UniAPI->uv.fs_scandir (&req, plug_path, O_RDONLY, NULL);
+    if (r < 0) {
         ucm_dtrace ("%s: %s\n", "Scandir error", UniAPI->uv.strerror(r));
-        return UCM_RET_EXCEPTION;
+        return 0;
     }
-    UniAPI->uv.run (UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
-    UniAPI->uv.fs_req_cleanup(&(ireq.fs));
+    __loaddir_cb (&req);
+    UniAPI->uv.fs_req_cleanup(&req);
 
-    ucm_dtrace ("%s: %zu\n", "Found plugins count", ireq.count);
-    return UCM_RET_SUCCESS;
+    ucm_dtrace ("%s: %zu\n", "Found plugins count", plugins_all_count);
+    return ret;
 }
 
 void
