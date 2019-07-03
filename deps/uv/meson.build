@@ -1,5 +1,5 @@
 project ('uv', 'c',
-         version: '1.29.2',
+         version: '1.30.1',
          license: 'BSD license',
          default_options:[
             'c_std=gnu89'
@@ -126,7 +126,6 @@ if sysid == 'android'
        src/unix/procfs-exepath.c
        src/unix/pthread-fixes.c
        src/unix/sysinfo-loadavg.c
-       src/unix/sysinfo-memory.c
     '''.split())
 endif
 

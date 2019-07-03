@@ -36,6 +36,10 @@ Building
 Usage
 -----
 
+PDCurses for X11 uses the System V IPC shared memory facility, along
+with sockets, to share data between the curses program and the child
+process created to manage the X stuff.
+
 When compiling your application, you need to include the \<curses.h\>
 that comes with PDCurses. You also need to link your code with
 libXCurses. You may need to link with the following libraries:
@@ -212,6 +216,24 @@ argument to the string() action can be either a string or a hex
 representation of a character; e.g., string(0x1b) will send the ASCII
 escape character to the application; string("[11~") will send [ 1 1 ~ ,
 as separate keystrokes.
+
+### shmmin
+
+On most systems, there are two Unix kernel parameters that determine the
+allowable size of a shared memory segment. These parameters are usually
+something like SHMMIN and SHMMAX. To use shared memory, a program must
+allocate a segment of shared memory that is between these two values.
+Usually these values are like 1 for SHMMIN and some large number for
+SHMMAX. Sometimes the Unix kernel is configured to have a value of
+SHMMIN that is bigger than the size of one of the shared memory segments
+that libXCurses uses. On these systems an error message like:
+
+    Cannot allocate shared memory for SCREEN: Invalid argument
+
+will result. To overcome this problem, this resource should be set to
+the kernel value for SHMMIN. This ensures that a shared memory segment
+will always be bigger than the kernel value for SHMMIN (and hopefully
+less than SHMMAX!) Default: 0
 
 ### borderColor
 

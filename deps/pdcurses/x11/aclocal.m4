@@ -1,6 +1,7 @@
 dnl ---------------------------------------------------------------------------
 dnl This file offers the following macros...
 dnl ---------------------------------------------------------------------------
+dnl MH_IPC
 dnl MH_CHECK_X_INC
 dnl MH_CHECK_X_LIB
 dnl MH_CHECK_X_HEADERS
@@ -11,6 +12,18 @@ dnl MH_HOWTO_DYN_LINK
 dnl MH_CHECK_CC_O
 dnl MH_SHLPST
 dnl MH_CHECK_MAX_SIGNALS
+
+dnl ---------------------------------------------------------------------------
+dnl Determine if the system has System V IPC. ie sys/ipc.h and sys/shm.h
+dnl headers.
+dnl ---------------------------------------------------------------------------
+AC_DEFUN([MH_IPC],
+[
+AC_CHECK_HEADER(sys/ipc.h)
+if test $ac_cv_header_sys_ipc_h = no; then
+	AC_MSG_ERROR(Cannot find required header file sys/ipc.h; PDCurses cannot be configured)
+fi
+])dnl
 
 dnl ---------------------------------------------------------------------------
 dnl Set up the correct X header file location
@@ -399,7 +412,7 @@ case "$target" in
 		;;
 	*darwin*)
 		DYN_COMP="-fno-common"
-		LD_RXLIB1="${CC} -flat_namespace -undefined suppress -dynamiclib -install_name=\$(@)"
+		LD_RXLIB1="${CC} -flat_namespace -undefined suppress -dynamiclib"
 		;;
 	*)
 		;;
