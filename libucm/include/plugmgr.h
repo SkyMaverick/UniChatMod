@@ -2,43 +2,24 @@
 
 #include "ucm.h"
 
+// enum {
+//     PMGR_FLAG_NORMAL     = 0,
+// //    PMGR_FLAG_ONLYINIT   = 1 << 0,
+// };
+// 
 size_t
-plugins_load_registry (const char* plug_path);
-
+pmgr_load (char*    path,
+           uint32_t flags);
 void
-plugins_release_registry (void);
-
+pmgr_unload (void);
+const ucm_plugin_t**
+pmgr_get (unsigned type);
 void
-plugins_run_all (void);
-
+pmgr_message_process (const uint32_t* id,
+                      const uintptr_t* ctx,
+                      const uint32_t* x1,
+                      const uint32_t* x2);
+size_t
+pmgr_group_run (uint8_t sys);
 void
-plugins_stop_all (void);
-
-void
-plugins_message_dispatch (const uint32_t* id,
-                          const uintptr_t* ctx,
-                          const uint32_t* x1,
-                          const uint32_t* x2);
-const ucm_plugin_t**
-plugins_get_all (void);
-
-const ucm_plugin_t**
-plugins_get_db (void);
-
-const ucm_plugin_t**
-plugins_get_proto (void);
-
-const ucm_plugin_t**
-plugins_get_crypt (void);
-
-const ucm_plugin_t**
-plugins_get_hist (void);
-
-const ucm_plugin_t**
-plugins_get_gui (void);
-
-const ucm_plugin_t**
-plugins_get_stuff (void);
-
-const size_t
-plugins_count (void);
+pmgr_group_stop (uint8_t sys);

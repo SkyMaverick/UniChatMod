@@ -46,7 +46,7 @@ LIBUCM_API UCM_RET
 ucm_core_stop (void)
 {
     ucm_core->stop();
-    
+
     return UCM_RET_SUCCESS;
 }
 
@@ -67,26 +67,27 @@ static size_t
 handle_info_plug (void**       info,
                   ucm_cargs_t* args)
 {
-    compat_layer_init ();
-    size_t count = plugins_load_registry (UniAPI->app.get_plugins_path());
-    
-    if (count > 0) {
-        
-        ucm_plugin_info_t* inf_arr;
-        inf_arr = UniAPI->sys.zmalloc (sizeof(ucm_plugin_info_t) * count);
-        if (inf_arr == NULL)
-            goto bailout;
-
-        ucm_plugin_t** tmp = (ucm_plugin_t**) UniAPI->app.get_plugins_all();
-        for ( size_t i = 0; *tmp; tmp++, i++ )
-            memcpy (&(inf_arr[i]), &((*tmp)->info), sizeof(ucm_plugin_info_t));
-
-        *info = (void*) inf_arr;
-    }
-bailout: plugins_release_registry();
-    compat_layer_release ();
-    return count;
-
+//    compat_layer_init ();
+//    size_t count = plugins_load_registry (UniAPI->app.get_plugins_path());
+//
+//    if (count > 0) {
+//
+//        ucm_plugin_info_t* inf_arr;
+//        inf_arr = UniAPI->sys.zmalloc (sizeof(ucm_plugin_info_t) * count);
+//        if (inf_arr == NULL)
+//            goto bailout;
+//
+//        ucm_plugin_t** tmp = (ucm_plugin_t**) UniAPI->app.get_plugins_all();
+//        for ( size_t i = 0; *tmp; tmp++, i++ )
+//            memcpy (&(inf_arr[i]), &((*tmp)->info), sizeof(ucm_plugin_info_t));
+//
+//        *info = (void*) inf_arr;
+//    }
+//bailout: plugins_release_registry();
+//    compat_layer_release ();
+//    return count;
+//
+    return 0;
 }
 
 LIBUCM_API const size_t

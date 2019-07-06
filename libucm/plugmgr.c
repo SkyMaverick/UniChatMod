@@ -9,51 +9,54 @@
 #include "core.h"
 #include "defs.h"
 #include "api.h"
-
-#if defined (ENABLE_CUSTOM_LIBS)
-    #include "uv.h"
-#else
-    #include <uv.h>
-#endif
+#include "plugmgr.h"
 
 typedef struct ucm_module_s {
-    ucm_plugin_t* plugin;
-    uintptr_t handle;
-    struct ucm_module_s* next;
+    ucm_plugin_t* plugin;       /* plugin handler */
+    uintptr_t handle;           /* library descriptor */
+
+    struct ucm_module_s* next; /* linked list element */
 } ucm_module_t;
 
-#define PLUGIN(X) X->plugin
-#define NULL_REG(X) UniAPI->sys.zmemory ((X), sizeof(ucm_plugin_t*) * UCM_DEF_PLUG_COUNT + 1);
+typedef struct {
+    // modules chain. Base structure which contain all load modules
+    ucm_module_t* m_list;
+    size_t found;
+    // RWL-mutex for block update store
+    uintptr_t lock;
+    // flags
+    uint32_t flags;
 
-ucm_module_t modules = {
-    .plugin = NULL,
-    .handle = 0,
-    .next   = NULL
-};
-static uintptr_t _lock = 0;
+    struct {
+        // All plugins count
+        size_t count;
+        // index last element for each type array
+        size_t idx [UCM_TYPE_PLUG_STUFF + 1];
 
-static size_t plugins_limit        = UCM_DEF_PLUG_COUNT;
-static size_t plugins_all_count        = 0;
-static ucm_plugin_t* plugins_all   [UCM_DEF_PLUG_COUNT + 1];
-static size_t plugins_db_count     = 0;
-static ucm_plugin_t* plugins_db    [UCM_DEF_PLUG_COUNT + 1];
-static size_t plugins_proto_count  = 0;
-static ucm_plugin_t* plugins_proto [UCM_DEF_PLUG_COUNT + 1];
-static size_t plugins_cript_count  = 0;
-static ucm_plugin_t* plugins_crypt [UCM_DEF_PLUG_COUNT + 1];
-static size_t plugins_hist_count   = 0;
-static ucm_plugin_t* plugins_hist  [UCM_DEF_PLUG_COUNT + 1];
-static size_t plugins_gui_count    = 0;
-static ucm_plugin_t* plugins_gui   [UCM_DEF_PLUG_COUNT + 1];
-static size_t plugins_stuff_count  = 0;
-static ucm_plugin_t* plugins_stuff [UCM_DEF_PLUG_COUNT + 1];
+        /* Store for plugins pointer (format)
 
-// ######################################################################
-//      PRIVATE API IMPLEMENTATION
-// ######################################################################
+                                          idx [type]
+                                           |
+             [          0          ] [p1* ... pn*, <NULL>]
+             [ UCM_TYPE_PLUG_DB    ] [p1* ... pn*, <NULL>]
+                                ... *** ...
+             [ UCM_TYPE_PLUG_STUFF ] [p1* ... pn*, <NULL>]
+
+         */
+        ucm_plugin_t* items [UCM_TYPE_PLUG_STUFF + 1][UCM_DEF_PLUG_COUNT + 1];
+    } registry;
+} ucm_pmgr_t;
+
+static ucm_pmgr_t* UniPMgr = NULL;
+#define U__REG(X,Y) UniPMgr->registry.items[(X)][(Y)]
+#define U__IDX(X)   UniPMgr->registry.idx[(X)]
+
+/***************************************************
+    INTERNAL API
+ ***************************************************/
 
 static UCM_RET
-_plugin_verify (ucm_plugin_t* plugin)
+plugin_verify (ucm_plugin_t* plugin)
 {
     if (plugin->oid != UCM_TYPE_OBJECT_PLUGIN) {
         return UCM_RET_PLUGIN_BADMODULE;
@@ -69,9 +72,9 @@ _plugin_verify (ucm_plugin_t* plugin)
     if (plugin->info.pid) {
         if ( strcmp (plugin->info.pid, "") == 0 ) {
             return UCM_RET_PLUGIN_BADPID;
-        } 
+        }
         if ( strlen(plugin->info.pid) > UCM_PID_MAX ) {
-            return UCM_RET_PLUGIN_BADPID;;
+            return UCM_RET_PLUGIN_BADPID;
         }
     }
     if (( plugin->run  == NULL ) ||
@@ -82,22 +85,26 @@ _plugin_verify (ucm_plugin_t* plugin)
 }
 
 static ucm_module_t*
-_plugin_load (char* filename)
+plugin_load (char* filename)
 {
     ucm_module_t* module = NULL;
 
+// 1. Load library witch plugin potential
     uintptr_t handle = UniAPI->sys.dlopen (filename);
     if (!handle) {
         ucm_etrace ("%s: %s\n", filename, _("plugin don't load"));
         return module;
     }
 
+// 2. Run INIT function. Provide core API or get plugin handle
     cb_init_plugin _pfunc = (cb_init_plugin) UniAPI->sys.dlsym(handle,"_init_plugin");
     if ( _pfunc ) {
         ucm_plugin_t*plug = _pfunc (UniAPI);
         if (plug) {
-            int ret_code = _plugin_verify (plug);
+// 3. Verfify plugin handle (check needed function)
+            int ret_code = plugin_verify (plug);
             if (  ret_code == UCM_RET_SUCCESS ) {
+// 4. Create module object
                 module = UniAPI->sys.zmalloc (sizeof(ucm_module_t));
                 if (module) {
                     module->plugin = plug;
@@ -105,7 +112,7 @@ _plugin_load (char* filename)
                     return module;
                 }
            } else {
-               ucm_etrace ("%s. %s\n", filename, ucm_strerr(ret_code));
+               ucm_etrace ("%s. %s\n", filename, UniAPI->sys.strerr(ret_code));
            }
         } else {
             ucm_etrace ("%s: %s\n", filename, _("this plugin broken initialization"));
@@ -118,228 +125,155 @@ _plugin_load (char* filename)
     return module;
 }
 
-static inline void
-_plugin_registry_add (ucm_plugin_t* plugin)
-{
-                plugins_all[ plugins_all_count ] = plugin;
-
-                switch (plugin->info.sys) {
-                    case UCM_TYPE_PLUG_DB:
-                        {
-                            plugins_db [plugins_db_count++] = plugin;
-                            break;
-                        }
-                    case UCM_TYPE_PLUG_PROTO:
-                        {
-                            plugins_proto [plugins_proto_count++] = plugin;
-                            break;
-                        }
-                    case UCM_TYPE_PLUG_CRYPTO:
-                        {
-                            plugins_crypt [plugins_cript_count++] = plugin;
-                            break;
-                        }
-                    case UCM_TYPE_PLUG_HIST:
-                        {
-                            plugins_hist [plugins_hist_count++] = plugin;
-                            break;
-                        }
-                    case UCM_TYPE_PLUG_GUI:
-                        {
-                            plugins_gui [plugins_gui_count++] = plugin;
-                            break;
-                        }
-                    case UCM_TYPE_PLUG_STUFF:
-                        {
-                            plugins_stuff [plugins_stuff_count++] = plugin;
-                            break;
-                        }
-                }
-}
-
-// ######################################################################
-//      PUBLIC API IMPLEMENTATION
-// ######################################################################
-
-void
-plugins_run_all (void)
-{
-    NULL_REG (plugins_all);
-    NULL_REG (plugins_db);
-    NULL_REG (plugins_proto);
-    NULL_REG (plugins_crypt);
-    NULL_REG (plugins_hist);
-    NULL_REG (plugins_stuff);
-
-    ucm_module_t* m_tmp = modules.next;
-
-    for ( ; m_tmp; m_tmp = m_tmp->next) {
-        if ( plugins_limit > plugins_all_count ) {
-            if ( m_tmp->plugin->run() == UCM_RET_SUCCESS ) {
-                _plugin_registry_add(m_tmp->plugin);
-                plugins_all_count += 1;
-            } else {
-                ucm_etrace("%ls: %s\n", m_tmp->plugin->info.pid,
-                     _("plugin start missing. Ignore this plugin."));
-            }
-        }
-    }
-}
-
-void
-plugins_stop_all (void)
-{
-    for (size_t i = 0; i < UCM_DEF_PLUG_COUNT; i++) {
-        if (plugins_all[i] != NULL) {
-            plugins_all[i]->stop();
-        } else {
-            break;
-        }
-    }
-    NULL_REG (plugins_all);
-    NULL_REG (plugins_db);
-    NULL_REG (plugins_proto);
-    NULL_REG (plugins_crypt);
-    NULL_REG (plugins_hist);
-    NULL_REG (plugins_stuff);
-}
-
-static size_t
-__loaddir_cb (uv_fs_t* req)
+static void
+scan_result_process (uv_fs_t* req)
 {
     uv_dirent_t dent;
     uv_fs_t     close_req;
     char buffer [UCM_PATH_MAX];
 
-    size_t count = 0;
-
     ucm_dtrace("%s ...\n", "Scan plugin directory");
 
     while ( UniAPI->uv.fs_scandir_next(req, &dent) != UV__EOF) {
         ucm_dtrace("%s%c%s\n", req->path, PATH_DELIM, dent.name);
-        
+
         snprintf (buffer, UCM_PATH_MAX, "%s%c%s", req->path, PATH_DELIM, dent.name);
 
-        ucm_module_t* tmp = _plugin_load(buffer);
+        ucm_module_t* tmp = plugin_load(buffer);
         if (tmp) {
-            // update modules list
-            UniAPI->sys.rwlock_wlock(_lock);
+            UniAPI->sys.rwlock_wlock (UniPMgr->lock);
 
-            tmp->next = modules.next;
-            modules.next = tmp;
+// update modules list
+            tmp->next = UniPMgr->m_list->next;
+            UniPMgr->m_list->next = tmp;
 
-            count ++;
+            UniPMgr->found ++;
 
-            UniAPI->sys.rwlock_unlock(_lock);
+            UniAPI->sys.rwlock_unlock (UniPMgr->lock);
         }
     }
-#if defined (UCM_OS_WINDOWS) 
+#if defined (UCM_OS_WINDOWS)
     UniAPI->uv.fs_close (&close_req, req->file.fd, NULL);
 #else
     UniAPI->uv.fs_close (&close_req, req->file, NULL);
 #endif
     UniAPI->uv.fs_req_cleanup(&close_req);
+}
 
-    return count;
+/***************************************************
+    EXTERNAL API
+ ***************************************************/
+size_t
+pmgr_load (char*    path,
+           uint32_t flags)
+{
+    if (UniPMgr != NULL)
+        return UniPMgr->registry.count;
+
+    uv_fs_t req;
+// 1. Create manager object
+    UniPMgr = UniAPI->sys.zmalloc (sizeof(ucm_pmgr_t));
+    if (UniPMgr) {
+        UniPMgr->flags = flags;
+// 2. Create modules list head element
+        UniPMgr->m_list = UniAPI->sys.zmalloc (sizeof(ucm_module_t));
+        if (UniPMgr->m_list ) {
+// 3. Let head element is root core plugin
+            UniPMgr->m_list->plugin = ucm_core;
+// 4. Create global mutex
+            UniPMgr->lock = UniAPI->sys.rwlock_create();
+            if (UniPMgr->lock) {
+// 5. Scan plugins directory and process it
+                int r = UniAPI->uv.fs_scandir (&req, path, O_RDONLY, NULL);
+                if (r >= 0) {
+                    scan_result_process (&req);
+                    UniAPI->uv.fs_req_cleanup(&req);
+
+                    return UniPMgr->found;
+                }
+                UniAPI->uv.fs_req_cleanup(&req);
+                ucm_dtrace ("%s: %s\n", "Scandir error", UniAPI->uv.strerror(r));
+
+                UniAPI->sys.rwlock_free (UniPMgr->lock);
+            }
+            ucm_free_null (UniPMgr->m_list);
+        }
+        ucm_free_null (UniPMgr);
+    }
+    return 0;
 }
 
 size_t
-plugins_load_registry (const char* plug_path)
+pmgr_group_run (uint8_t sys)
 {
-    uv_fs_t req;
-    size_t ret = 0;
-
-    _lock = UniAPI->sys.rwlock_create();
-    int r = UniAPI->uv.fs_scandir (&req, plug_path, O_RDONLY, NULL);
-    if (r < 0) {
-        ucm_dtrace ("%s: %s\n", "Scandir error", UniAPI->uv.strerror(r));
-        return 0;
-    }
-    __loaddir_cb (&req);
-    UniAPI->uv.fs_req_cleanup(&req);
-
-    ucm_dtrace ("%s: %zu\n", "Found plugins count", plugins_all_count);
-    return ret;
-}
-
-void
-plugins_release_registry (void)
-{
-    ucm_module_t* m_tmp = modules.next;
-    ucm_module_t* m_del = NULL;
-
-    while(m_tmp) {
-        m_del = m_tmp;
-        m_tmp = m_tmp->next;
-#ifndef ENABLE_VALGRIND
-        UniAPI->sys.dlclose(m_del->handle);
-#else
-        UniAPI->sys.free((void*)m_del->handle);
-#endif
-        UniAPI->sys.free (m_del);
-    }
-    UniAPI->sys.rwlock_free(_lock);
-}
-
-void
-plugins_message_dispatch (const uint32_t* id,
-                          const uintptr_t* ctx,
-                          const uint32_t* x1,
-                          const uint32_t* x2)
-{
-    if (modules.plugin)
-        modules.plugin->message(*id, *ctx, *x1, *x2);   // core receive message first
-
-    for ( size_t i = 0; i < plugins_all_count; i++ ) {
-        if (plugins_all[i] && plugins_all[i]->message) {
-            plugins_all[i]->message (*id, *ctx, *x1, *x2);
+    for (ucm_module_t* tmp = UniPMgr->m_list; tmp; tmp = tmp->next) {
+        if (tmp->plugin->info.sys == sys) {
+            int err = tmp->plugin->run();
+            if ( err == UCM_RET_SUCCESS) {
+                size_t idx = U__IDX(sys);
+                U__REG(sys,idx) = tmp->plugin;
+                U__IDX(sys)++;
+            } else {
+                ucm_etrace("%s - %s: %s\n", _("Broken"), tmp->plugin->info.pid, UniAPI->sys.strerr(err));
+            }
         }
     }
+    return U__IDX(sys);
+}
+
+void
+pmgr_group_stop (uint8_t sys)
+{
+    for (size_t i = 0; U__REG(sys,i) != NULL; i++) {
+        U__REG(sys,i)->stop();
+        U__REG(sys,i) = NULL;
+
+        U__IDX(sys) --;
+    }
+}
+
+void
+pmgr_unload (void)
+{
+    UniAPI->sys.rwlock_wlock (UniPMgr->lock);
+    while (UniPMgr->m_list) {
+        ucm_module_t* tmp = UniPMgr->m_list;
+        UniPMgr->m_list = UniPMgr->m_list->next;
+
+        if (tmp->handle)
+            UniAPI->sys.dlclose (tmp->handle);
+        ucm_free_null(tmp);
+    }
+    UniAPI->sys.rwlock_unlock (UniPMgr->lock);
+
+    UniAPI->sys.rwlock_free (UniPMgr->lock);
+    ucm_free_null (UniPMgr);
 }
 
 const ucm_plugin_t**
-plugins_get_all (void)
+pmgr_get (unsigned type)
 {
-    return (const ucm_plugin_t**) plugins_all;
+    return (const ucm_plugin_t**)(UniPMgr->registry.items[type]);
 }
 
-const ucm_plugin_t**
-plugins_get_db (void)
+void
+pmgr_message_process (const uint32_t* id,
+                      const uintptr_t* ctx,
+                      const uint32_t* x1,
+                      const uint32_t* x2)
 {
-    return (const ucm_plugin_t**) plugins_db;
+    UniAPI->sys.rwlock_rlock (UniPMgr->lock);
+
+    for (size_t i = 0; i < UCM_TYPE_PLUG_STUFF; i++) {
+        for (size_t j = 0; U__REG(i,j); j++) {
+            if ( U__REG(i,j)->message ) {
+                U__REG(i,j)->message (*id, *ctx, *x1, *x2);
+            }
+        }
+    }
+
+    UniAPI->sys.rwlock_unlock (UniPMgr->lock);
 }
 
-const ucm_plugin_t**
-plugins_get_proto (void)
-{
-    return (const ucm_plugin_t**) plugins_proto;
-}
-
-const ucm_plugin_t**
-plugins_get_crypt (void)
-{
-    return (const ucm_plugin_t**) plugins_crypt;
-}
-
-const ucm_plugin_t**
-plugins_get_hist (void)
-{
-    return (const ucm_plugin_t**) plugins_hist;
-}
-
-const ucm_plugin_t**
-plugins_get_gui (void)
-{
-    return (const ucm_plugin_t**) plugins_gui;
-}
-
-const ucm_plugin_t**
-plugins_get_stuff (void)
-{
-    return (const ucm_plugin_t**) plugins_stuff;
-}
-
-const size_t
-plugins_count (void) {
-    return plugins_all_count;
-}
+#undef U__REG
+#undef U__IDX

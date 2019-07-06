@@ -335,7 +335,7 @@ static ucm_functions_t core_api = {
     .sys.umstrbrkjoin               = ucm_mstrbrkjoin        ,
     .sys.ustrstr                    = ucm_strstr             ,
     .sys.ustrcasestr                = ucm_strcasestr         ,
-    
+
     .sys.strerr                     = ucm_strerr_func        ,
 
     .app.wait_exit                  = wait_core_loop         ,
@@ -373,13 +373,7 @@ static ucm_functions_t core_api = {
     .app.logger_connect             = logger_connect         ,
     .app.logger_disconnect          = logger_disconnect      ,
 
-    .app.get_plugins_all            = plugins_get_all        ,
-    .app.get_plugins_db             = plugins_get_db         ,
-    .app.get_plugins_proto          = plugins_get_proto      ,
-    .app.get_plugins_crypt          = plugins_get_crypt      ,
-    .app.get_plugins_hist           = plugins_get_hist       ,
-    .app.get_plugins_gui            = plugins_get_gui        ,
-    .app.get_plugins_stuff          = plugins_get_stuff      ,
+    .app.plugins_by_type            = pmgr_get               ,
 
     .app.get_entropy                = get_ucm_entropy        ,
 

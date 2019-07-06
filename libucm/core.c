@@ -42,7 +42,7 @@ loop_core (void* ctx)
             // hook events for host applications
             hooks_event(id, lctx, x1, x2);
             // send message to all plugins
-            plugins_message_dispatch(&id, &lctx, &x1, &x2);
+            pmgr_message_process(&id, &lctx, &x1, &x2);
 
             switch (id) {
                 case UCM_EVENT_TERM:
@@ -83,10 +83,7 @@ _stop_core (void)
     }
 
     db_close ();
-
-    plugins_stop_all();
-
-    plugins_release_registry();
+    pmgr_unload();
 
     free_ucm_entropy();
 
@@ -106,7 +103,7 @@ _run_core (void)
 
     log_init();
     init_ucm_entropy();
-    
+
     int ret_code = ucm_mloop_init(UCM_DEF_MQ_LIMIT);
     if ( ret_code == UCM_RET_SUCCESS) {
         hooks_event_init ();
@@ -115,8 +112,7 @@ _run_core (void)
         return ret_code;
     }
 
-    plugins_load_registry(UniAPI->app.get_plugins_path());
-    plugins_run_all ();
+    pmgr_load (UniAPI->app.get_plugins_path(), 0);
 
     /*TODO UniAPI add state status */
     ret_code = db_open (UniAPI->app.get_store_path(), 0);

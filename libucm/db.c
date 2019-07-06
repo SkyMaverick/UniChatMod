@@ -20,7 +20,7 @@ db_open ( const char* aPath,
     // zero database structure
     UniAPI->sys.zmemory(&db, sizeof(ucm_db_t));
 
-    ucm_plugdb_t** plugins = (ucm_plugdb_t**) (UniAPI->app.get_plugins_db());
+    ucm_plugdb_t** plugins = (ucm_plugdb_t**) (UniAPI->app.plugins_by_type(UCM_TYPE_PLUG_DB));
     unsigned ret = 0;
     uv_fs_t ufs_req;
 

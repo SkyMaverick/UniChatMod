@@ -445,12 +445,12 @@ enum {
 
 /*! Enums what defines the plugin area */
 enum {
-    UCM_TYPE_PLUG_DB       = 1 << 0,
-    UCM_TYPE_PLUG_PROTO    = 1 << 1,
-    UCM_TYPE_PLUG_CRYPTO   = 1 << 2,
-    UCM_TYPE_PLUG_HIST     = 1 << 3,
-    UCM_TYPE_PLUG_GUI      = 1 << 4,
-    UCM_TYPE_PLUG_STUFF    = 1 << 5
+    UCM_TYPE_PLUG_DB       = 1,
+    UCM_TYPE_PLUG_PROTO    = 2,
+    UCM_TYPE_PLUG_CRYPTO   = 3,
+    UCM_TYPE_PLUG_HIST     = 4,
+    UCM_TYPE_PLUG_GUI      = 5,
+    UCM_TYPE_PLUG_STUFF    = 6
 };
 
 /*! Usage API version */
@@ -970,13 +970,7 @@ typedef struct _ucm_functions_s {
         void        (*logger_disconnect)(void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*));
 
         /*! get plugins by category */
-        const ucm_plugin_t** (*get_plugins_all)   (void);
-        const ucm_plugin_t** (*get_plugins_db)    (void);
-        const ucm_plugin_t** (*get_plugins_proto) (void);
-        const ucm_plugin_t** (*get_plugins_crypt) (void);
-        const ucm_plugin_t** (*get_plugins_hist)  (void);
-        const ucm_plugin_t** (*get_plugins_gui)   (void);
-        const ucm_plugin_t** (*get_plugins_stuff) (void);
+        const ucm_plugin_t** (*plugins_by_type)   (unsigned type);
 
         /*! get global paths */
         char* (*get_startup_path) (void);
