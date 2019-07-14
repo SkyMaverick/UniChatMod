@@ -37,51 +37,34 @@ app_args_parse (int argc, char* argv[], ucm_cargs_t* args)
         switch (opt) {
             /* display help info */
             case '?':
-                {
-                    _display_help();
-                    set_flag (FLAG_APP_TERMINATED);
-                    break;
-                }
+                _display_help();
+                set_flag (FLAG_APP_TERMINATED);
+                break;
             /* display version application info */
             case 'v':
-                {
-                    _display_version();
-                    set_flag (FLAG_APP_TERMINATED);
-                    break;
-                }
+                _display_version();
+                set_flag (FLAG_APP_TERMINATED);
+                break;
             case 'V':
-                {
- //                   ucm_plugin_info_t* info = NULL;
- //                   size_t len = core_info ((void**)&info, args, UCM_INFO_PLUGINS);
- //                   if (len) {
- //                       for (size_t i; i < len; i++)
- //                           fprintf (stdout, "%s\n", info[i].pid);
- //                   }
-                    set_flag (FLAG_APP_TERMINATED);
-                }
+                set_flag (FLAG_APP_TERMINATED);
             case 'r':
-                {
-                    args->options |= UCM_FLAG_CORE_DBRO;
-                    break;
-                }
+                args->options |= UCM_FLAG_CORE_DBRO;
+                break;
             case 's':
-                {
-                    // TODO server for proto list
-                    break;
-                }
-            case 'p':
+                // TODO server for proto list
+                break;
+            case 'p': {
             /* Change custom storage file */
-                {
-                    char* rpath = app_realpath(optarg);
-                    if (rpath) {
-                        snprintf (args->path_store_abs, UCM_PATH_MAX, "%s", rpath);
-                        free (rpath);
-                    } else {
-                        snprintf (args->path_store_abs, UCM_PATH_MAX, "%s", optarg);
-                    }
-                    unset_flag (FLAG_APP_PORTABLE_BASE);
-                    break;
+                char* rpath = app_realpath(optarg);
+                if (rpath) {
+                    snprintf (args->path_store_abs, UCM_PATH_MAX, "%s", rpath);
+                    free (rpath);
+                } else {
+                    snprintf (args->path_store_abs, UCM_PATH_MAX, "%s", optarg);
                 }
+                unset_flag (FLAG_APP_PORTABLE_BASE);
+                break;
+            }
         }
     }
 }
