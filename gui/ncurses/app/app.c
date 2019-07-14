@@ -81,7 +81,7 @@ static void
 exit_func (int ret_status)
 {
     if (info)
-        core->sys.free (info);
+        free (info);
 
     if (core_stop)
         core_stop ();
@@ -244,8 +244,9 @@ main (int argc, char* argv[])
         core_info  = (ucm_cinfo_func) GetProcAddress(core_handle, UCM_INFO_FUNC);
 #endif
         if ( core_start && core_stop && core_info ) {
-            size_t len = core_info ( (void**)&info, &args, UCM_INFO_CORE);
-            if (len) {
+            info = malloc (sizeof(ucm_plugin_info_t));
+            if (info) {
+                core_info ( UCM_INFO_CORE, (void*)info, sizeof(ucm_plugin_info_t), &args);
                 if ( (info->api.vmajor >= LIBCORE_API_MAJVER) && (info->api.vminor >= LIBCORE_API_MINVER) )
                 {
                     app_args_parse (argc, argv, &args);

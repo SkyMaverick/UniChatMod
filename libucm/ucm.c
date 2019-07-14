@@ -53,19 +53,23 @@ ucm_core_stop (void)
 /* This functions provide information for external applications */
 
 static size_t
-handle_info_core (void**       info,
-                  ucm_cargs_t* args)
+handle_info_core (void*          mem,
+                  size_t         mem_size,
+                  ucm_cargs_t*   args)
 {
-    *info = UniAPI->sys.zmalloc (sizeof(ucm_plugin_info_t));
-    if (info == NULL)
-        return 0;
-    memcpy (*info, &(ucm_core->info), sizeof(ucm_plugin_info_t));
-    return 1;
+    size_t needed = sizeof (ucm_plugin_info_t);
+    if (mem) {
+        if (mem_size < needed)
+            needed = mem_size;
+        memcpy (mem, &(ucm_core->info), needed);
+    }
+    return needed;
 }
 
 static size_t
-handle_info_plug (void**       info,
-                  ucm_cargs_t* args)
+handle_info_plug (void*         mem,
+                  size_t        mem_size,
+                  ucm_cargs_t*  args)
 {
 //    compat_layer_init ();
 //    size_t count = plugins_load_registry (UniAPI->app.get_plugins_path());
@@ -91,18 +95,19 @@ handle_info_plug (void**       info,
 }
 
 LIBUCM_API const size_t
-ucm_core_info (void**       info,
-               ucm_cargs_t* args,
-               unsigned     mode)
+ucm_core_info (uint8_t       mode,
+               void*         mem,
+               size_t        mem_size,
+               ucm_cargs_t*  args)
 {
     if ( ! _prepare_args (args) )
         goto bailout;
 
     switch (mode) {
         case UCM_INFO_CORE:
-            return handle_info_core (info, args);
+            return handle_info_core (mem, mem_size, args);
         case UCM_INFO_PLUGINS:
-            return handle_info_plug (info, args);
+            return handle_info_plug (mem, mem_size, args);
     }
 bailout: return 0;
 }

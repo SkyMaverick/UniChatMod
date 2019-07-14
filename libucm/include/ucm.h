@@ -360,6 +360,7 @@ enum {
     UCM_EVENT_INFO             =  0x00000002,
     UCM_EVENT_LOAD_SUCCESS     =  0x00000003,
     UCM_EVENT_DBLOAD_SUCCESS   =  0x00000004,
+    UCM_EVENT_PLUGS_SUCCESS    =  0x00000005,
 // events with allocated memory
     UCM_EVENT_START_GUI        =  0x80000000,
     UCM_EVENT_START_GUI2       =  0x80000001,
@@ -1020,7 +1021,7 @@ LIBUCM_API UCM_RET
 ucm_core_stop (void);
 
 LIBUCM_API const size_t
-ucm_core_info (void** info, ucm_cargs_t* args, unsigned mode);
+ucm_core_info (uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args);
 
 // ******* DYNAMIC LOAD FUNCTIONS ***********
 
@@ -1033,7 +1034,7 @@ typedef UCM_RET
 #define UCM_STOP_FUNC  "ucm_core_stop"
 
 typedef const size_t
-(*ucm_cinfo_func) (void** info, ucm_cargs_t* args, unsigned mode);
+(*ucm_cinfo_func) (uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args);
 #define UCM_INFO_FUNC  "ucm_core_info"
 
 #undef UCM_DEPRECATED

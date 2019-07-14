@@ -124,10 +124,11 @@ log_init (void)
 void
 log_release (void)
 {
-    UniAPI->sys.rwlock_wlock(lock_mtx);
+    while (UniAPI->sys.rwlock_trywlock (lock_mtx) != 0) {
+        continue;
+    }
 
     _log_flush (&logs);
-
     _buffer_release ();
 
     UniAPI->sys.rwlock_unlock(lock_mtx);
@@ -187,7 +188,11 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), voi
 {
     ucm_logger_t* tmp = UniAPI->sys.zmalloc (sizeof(ucm_logger_t));
     if (tmp) {
-        UniAPI->sys.rwlock_wlock(lock_mtx);
+
+        while (UniAPI->sys.rwlock_trywlock (lock_mtx) != 0) {
+            continue;
+        }
+
         tmp->cb_log = callback;
         tmp->next = logs;
         tmp->ctx  = ctx;
@@ -212,7 +217,10 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*))
 {
     ucm_logger_t* prev = NULL;
 
-    UniAPI->sys.rwlock_wlock(lock_mtx);
+    while (UniAPI->sys.rwlock_trywlock (lock_mtx) != 0) {
+        continue;
+    }
+
     for(ucm_logger_t* i = logs; i;prev=i,i=i->next) {
         if(i->cb_log == callback){
             if(prev){

@@ -51,6 +51,11 @@ loop_core (void* ctx)
                         ucm_dtrace ("%s\n", "Catch TERM message. Core loop exit.");
                         break;
                     }
+                case UCM_EVENT_PLUGS_SUCCESS:
+                    {
+                        ucm_dtrace ("[EVENT] %s: %d\n", "Found plugins", x1);
+                        break;
+                    }
                 case UCM_EVENT_START_GUI:
                     {
                         ucm_dtrace ("%s: %s\n", "Catch start GUI signal", ((ucm_evgui_t*)lctx)->pid);
@@ -82,7 +87,7 @@ _stop_core (void)
         UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
     }
 
-    db_close ();
+//    db_close ();
     pmgr_unload();
 
     free_ucm_entropy();
@@ -115,11 +120,11 @@ _run_core (void)
     pmgr_load (UniAPI->app.get_plugins_path(), 0);
 
     /*TODO UniAPI add state status */
-    ret_code = db_open (UniAPI->app.get_store_path(), 0);
-    if ( ret_code != UCM_RET_SUCCESS) {
-        return ret_code;
-    }
-
+//    ret_code = db_open (UniAPI->app.get_store_path(), 0);
+//    if ( ret_code != UCM_RET_SUCCESS) {
+//        return ret_code;
+//    }
+//
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
