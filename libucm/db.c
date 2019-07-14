@@ -70,15 +70,11 @@ db_open ( const char* aPath,
             } else {
                 switch (ret) {
                     case UCM_RET_DATABASE_BADFORMAT:
-                        {
                             // TODO check database
                             break;
-                        }
                     case UCM_RET_DATABASE_BADVERSION:
-                        {
                             // TODO remake database
                             break;
-                        }
                 }
             }
         } else {

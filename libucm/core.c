@@ -46,22 +46,15 @@ loop_core (void* ctx)
 
             switch (id) {
                 case UCM_EVENT_TERM:
-                    {
                         term = 1;
                         ucm_dtrace ("%s\n", "Catch TERM message. Core loop exit.");
                         break;
-                    }
                 case UCM_EVENT_PLUGS_SUCCESS:
-                    {
                         ucm_dtrace ("[EVENT] %s: %d\n", "Found plugins", x1);
                         break;
-                    }
                 case UCM_EVENT_START_GUI:
-                    {
                         ucm_dtrace ("%s: %s\n", "Catch start GUI signal", ((ucm_evgui_t*)lctx)->pid);
-                        // TODO start select GUI plugin or default
                         break;
-                    }
             }
             // free events context memory
             if (EVENT_ALLOCATED (id)) {
@@ -89,12 +82,9 @@ _stop_core (void)
 
 //    db_close ();
     pmgr_unload();
-
     free_ucm_entropy();
-
     hooks_event_release();
     ucm_mloop_free();
-
     log_release();
     compat_layer_release();
 
@@ -138,10 +128,8 @@ _message_core(uint32_t id,
 {
     switch (id) {
         case UCM_EVENT_TERM:
-            {
                 ucm_dtrace("Catch TERM message", "");
                 break;
-            }
     };
     UNUSED(ctx);
     UNUSED(x1);
