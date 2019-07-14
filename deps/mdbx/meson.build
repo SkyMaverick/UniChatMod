@@ -1,5 +1,5 @@
 project ('mdbx', 'c',
-         version: '0.3.0',
+         version: '0.3.1',
          license: 'ReOpenLDAP',
          default_options:[
          ],

@@ -1,5 +1,5 @@
 project ('utf8proc', 'c',
-         version: '2.4.0',
+         version: '2.3.1',
          license: 'MIT',
          default_options:[
          ],
