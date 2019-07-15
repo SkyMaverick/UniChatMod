@@ -26,6 +26,8 @@ option ('path_docs_lookup', type: 'string', value: 'docs',
 
 option ('create_with_plugins', type: 'boolean', value: 'true',
         description: 'build only core or with all plugins')
+option ('create_with_experimental', type: 'boolean', value: 'true',
+        description: 'build only core or with experimental plugins')
 option ('create_with_tests', type: 'boolean', value: 'false',
         description: 'build and run enabled tests')
 

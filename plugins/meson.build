@@ -1,24 +1,42 @@
-plugins = '''
-    db_mdbx
-    net_uc2
-    log_file
-'''.split()
+p_matrix = {
+    'uno'       : '''
+         db_mdbx
+         log_file
+        '''.split(),
+    'linux'     : '''
+        '''.split(),
+    'windows'   : '''
+        '''.split(),
+}
 
-plugins_only_nix = '''
-'''.split()
+p_matrix_exp = {
+    'uno'       : '''
+         net_uc2
+        '''.split(),
+    'linux'     : '''
+        '''.split(),
+    'windows'   : '''
+        '''.split(),
+}
 
-plugins_only_win = '''
-'''.split()
+plugins = []
 
-if target_machine.system() == 'windows'
-    message ('Build windows-only plugins: @0@'.format(plugins_only_win))
-    plugins += plugins_only_win
+foreach system, source : p_matrix
+    if (system == 'uno') or (system == osid)
+        plugins += source
+    endif
+endforeach
+
+if get_option('create_with_experimental')
+    warning ('Build with experimental plugins. This plugins maybe unstable.')
+    foreach system, source : p_matrix_exp
+        if (system == 'uno') or (system == osid)
+            plugins += source
+        endif
+    endforeach
 endif
-if target_machine.system() == 'linux'
-    message ('Build linux-only plugins: @0@'.format(plugins_only_nix))
-    plugins += plugins_only_nix
-endif
 
-foreach plugin : plugins
-    subdir (plugin)
+foreach item : plugins
+    message ('Build plugin: @0@'.format(item))
+    subdir (item)
 endforeach
