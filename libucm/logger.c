@@ -49,7 +49,7 @@ _log_core (ucm_plugin_t* plug,
            const char*   txt)
 {
     if (lock_mtx) {
-        UniAPI->sys.rwlock_rlock(lock_mtx);
+        UniAPI->sys.mutex_lock(lock_mtx);
 
         _log_console (txt, type);
 
@@ -71,7 +71,7 @@ _log_core (ucm_plugin_t* plug,
             }
         }
 
-        UniAPI->sys.rwlock_unlock(lock_mtx);
+        UniAPI->sys.mutex_unlock(lock_mtx);
     }
 }
 
@@ -109,7 +109,7 @@ _log_flush (ucm_logger_t** list)
 UCM_RET
 log_init (void)
 {
-    lock_mtx = UniAPI->sys.rwlock_create();
+    lock_mtx = UniAPI->sys.mutex_create();
     if (!lock_mtx) {
         return UCM_RET_SYSTEM_NOCREATE;
     }
@@ -124,15 +124,16 @@ log_init (void)
 void
 log_release (void)
 {
-    while (UniAPI->sys.rwlock_trywlock (lock_mtx) != 0) {
+    while (UniAPI->sys.mutex_trylock (lock_mtx) != 0) {
+//        fprintf (stdout, "LOCKTRY WRITE MUTEX\n");
         continue;
     }
 
     _log_flush (&logs);
     _buffer_release ();
 
-    UniAPI->sys.rwlock_unlock(lock_mtx);
-    UniAPI->sys.rwlock_free(lock_mtx);
+    UniAPI->sys.mutex_unlock(lock_mtx);
+    UniAPI->sys.mutex_free(lock_mtx);
 }
 
 void
@@ -189,7 +190,7 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), voi
     ucm_logger_t* tmp = UniAPI->sys.zmalloc (sizeof(ucm_logger_t));
     if (tmp) {
 
-        while (UniAPI->sys.rwlock_trywlock (lock_mtx) != 0) {
+        while (UniAPI->sys.mutex_trylock (lock_mtx) != 0) {
             continue;
         }
 
@@ -208,7 +209,7 @@ logger_connect ( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*), voi
             _buffer_release();
         }
 
-        UniAPI->sys.rwlock_unlock(lock_mtx);
+        UniAPI->sys.mutex_unlock(lock_mtx);
     }
 }
 
@@ -217,7 +218,7 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*))
 {
     ucm_logger_t* prev = NULL;
 
-    while (UniAPI->sys.rwlock_trywlock (lock_mtx) != 0) {
+    while (UniAPI->sys.mutex_trylock (lock_mtx) != 0) {
         continue;
     }
 
@@ -232,5 +233,5 @@ logger_disconnect( void (*callback)(ucm_plugin_t*,uint32_t,const char*,void*))
             break;
         }
     }
-    UniAPI->sys.rwlock_unlock(lock_mtx);
+    UniAPI->sys.mutex_unlock(lock_mtx);
 }
