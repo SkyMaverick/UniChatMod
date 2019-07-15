@@ -11,3 +11,9 @@ get_handle_netloop (void);
 
 void
 wait_core_loop(void);
+
+UCM_RET
+core_load (void);
+
+UCM_RET
+core_unload (void);

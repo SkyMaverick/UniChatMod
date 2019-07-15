@@ -502,6 +502,7 @@ typedef struct _ucm_plugin_s {
     // TODO define this prototype
     void              (*msg_process)(void);
 } ucm_plugin_t;
+#define U_PLUGIN(X) ((ucm_plugin_t*)(X))
 
 // *********************************************************
 //      DataBase plugins functionality

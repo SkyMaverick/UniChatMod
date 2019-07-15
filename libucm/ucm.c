@@ -33,7 +33,7 @@ ucm_core_start (ucm_cargs_t* args)
     if ( ! _prepare_args (args) )
         return NULL;
 
-    int ret_code = ucm_core->run();
+    int ret_code = core_load();
     if ( ret_code != UCM_RET_SUCCESS) {
         ucm_etrace("%s\n", ucm_strerr (ret_code));
         return NULL;
@@ -45,9 +45,8 @@ ucm_core_start (ucm_cargs_t* args)
 LIBUCM_API UCM_RET
 ucm_core_stop (void)
 {
-    ucm_core->stop();
-
-    return UCM_RET_SUCCESS;
+    int ret_code = core_unload();
+    return ret_code;
 }
 
 /* This functions provide information for external applications */

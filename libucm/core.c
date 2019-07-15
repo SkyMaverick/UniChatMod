@@ -47,13 +47,25 @@ loop_core (void* ctx)
             switch (id) {
                 case UCM_EVENT_TERM:
                         term = 1;
-                        ucm_dtrace ("%s\n", "Catch TERM message. Core loop exit.");
+                        ucm_dtrace ("[EVENT] %s\n", "Catch TERM message. Core loop exit.");
                         break;
                 case UCM_EVENT_PLUGS_SUCCESS:
                         ucm_dtrace ("[EVENT] %s: %d\n", "Found plugins", x1);
+
+                        pmgr_group_run (0);
+                        pmgr_group_run (UCM_TYPE_PLUG_DB);
+
+                        db_open(UniAPI->app.get_store_path(), 0);
+                        break;
+                case UCM_EVENT_DBLOAD_SUCCESS:
+                        if (x1 == UCM_RET_SUCCESS) {
+                            ucm_dtrace ("[EVENT] %s: %s\n", "Start database with plugin", U_PLUGIN(lctx)->info.pid);
+                            for (int i = UCM_TYPE_PLUG_DB + 1; i <= UCM_TYPE_PLUG_STUFF; i++)
+                                pmgr_group_run (i);
+                        }
                         break;
                 case UCM_EVENT_START_GUI:
-                        ucm_dtrace ("%s: %s\n", "Catch start GUI signal", ((ucm_evgui_t*)lctx)->pid);
+                        ucm_dtrace ("[EVENT] %s: %s\n", "Catch start GUI signal", U_EVENT_GUI(lctx)->pid);
                         break;
             }
             // free events context memory
@@ -74,25 +86,40 @@ static UCM_RET
 _stop_core (void)
 {
 
-    if (kernel.loop_ucore) {
-        UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
-        UniAPI->sys.thread_join(kernel.loop_ucore);
-        UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
-    }
-
-//    db_close ();
-    pmgr_unload();
-    free_ucm_entropy();
-    hooks_event_release();
-    ucm_mloop_free();
-    log_release();
-    compat_layer_release();
-
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
 _run_core (void)
+{
+    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
+    return UCM_RET_SUCCESS;
+}
+
+static void
+_message_core(uint32_t id,
+              uintptr_t ctx,
+              uint32_t x1,
+              uint32_t x2)
+
+{
+    switch (id) {
+        case UCM_EVENT_TERM:
+                ucm_dtrace("[EVENT CORE] %s\n","Catch TERM message");
+                break;
+    };
+    UNUSED(ctx);
+    UNUSED(x1);
+    UNUSED(x2);
+}
+
+void
+wait_core_loop (void) {
+    UniAPI->sys.thread_join(kernel.loop_ucore);
+}
+
+UCM_RET
+core_load (void)
 {
     kernel.osal_handle = compat_layer_init();
 
@@ -109,38 +136,28 @@ _run_core (void)
 
     pmgr_load (UniAPI->app.get_plugins_path(), 0);
 
-    /*TODO UniAPI add state status */
-//    ret_code = db_open (UniAPI->app.get_store_path(), 0);
-//    if ( ret_code != UCM_RET_SUCCESS) {
-//        return ret_code;
-//    }
-//
-    ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
 
-static void
-_message_core(uint32_t id,
-              uintptr_t ctx,
-              uint32_t x1,
-              uint32_t x2)
-
+UCM_RET
+core_unload (void)
 {
-    switch (id) {
-        case UCM_EVENT_TERM:
-                ucm_dtrace("Catch TERM message", "");
-                break;
-    };
-    UNUSED(ctx);
-    UNUSED(x1);
-    UNUSED(x2);
-}
+    if (kernel.loop_ucore) {
+        UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
+        UniAPI->sys.thread_join(kernel.loop_ucore);
+        UniAPI->sys.thread_cleanup (&kernel.loop_ucore);
+    }
 
-void
-wait_core_loop (void) {
-    UniAPI->sys.thread_join(kernel.loop_ucore);
-}
+    db_close();
+    pmgr_unload();
+    free_ucm_entropy();
+    hooks_event_release();
+    ucm_mloop_free();
+    log_release();
+    compat_layer_release();
 
+    return UCM_RET_SUCCESS;
+}
 /***************************************************
     EXTERANAL FUNCTIONS
  ***************************************************/
