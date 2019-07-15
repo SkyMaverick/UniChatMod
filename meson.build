@@ -181,10 +181,6 @@ if get_option('create_with_plugins')
     subdir('plugins')
 endif
 
-if get_option('create_with_gui')
-    subdir('gui')
-endif
-
 if get_option('create_with_tests')
     subdir('tests')
 endif

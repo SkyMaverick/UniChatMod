@@ -12,6 +12,7 @@ p_matrix = {
 p_matrix_exp = {
     'uno'       : '''
          net_uc2
+         gui_curses
         '''.split(),
     'linux'     : '''
         '''.split(),
