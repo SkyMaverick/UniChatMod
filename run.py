@@ -6,7 +6,7 @@ from sys import argv
 from colorize import *
 
 project_name = 'ucm'
-project_version = '0.1.1'
+project_version = '0.1.2'
 
 path_build_pathname = 'build'
 
