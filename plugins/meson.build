@@ -38,6 +38,12 @@ if get_option('create_with_experimental')
 endif
 
 foreach item : plugins
+    if get_option ('create_with_gui') == false
+        if item.startwith('gui')
+            continue
+        endif
+    endif
+
     message ('Build plugin: @0@'.format(item))
     subdir (item)
 endforeach
