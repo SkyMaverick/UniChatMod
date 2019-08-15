@@ -26,15 +26,6 @@
 /*----------------------------------------------------------------------------*/
 
 /* Should be defined before any includes */
-#ifndef _GNU_SOURCE
-#   define _GNU_SOURCE 1
-#endif
-#ifndef _POSIX_C_SOURCE
-#   define _POSIX_C_SOURCE 200112L
-#endif
-#ifndef _XOPEN_SOURCE
-#   define _XOPEN_SOURCE 500
-#endif
 #ifndef _FILE_OFFSET_BITS
 #   define _FILE_OFFSET_BITS 64
 #endif
@@ -1222,3 +1213,16 @@ static __inline void mdbx_jitter4testing(bool tiny) {
   (void)tiny;
 #endif
 }
+
+/* Controls checking PID against reuse DB environment after the fork() */
+#ifndef MDBX_TXN_CHECKPID
+#if defined(MADV_DONTFORK) || defined(_WIN32) || defined(_WIN64)
+/* PID check could be ommited:
+ *  - on Linux when madvise(MADV_DONTFORK) is available. i.e. after the fork()
+ *    mapped pages will not be available for child process.
+ *  - in Windows where fork() not available. */
+#define MDBX_TXN_CHECKPID 0
+#else
+#define MDBX_TXN_CHECKPID 1
+#endif
+#endif /* MDBX_TXN_CHECKPID */

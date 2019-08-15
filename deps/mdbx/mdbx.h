@@ -112,7 +112,11 @@ typedef DWORD mdbx_tid_t;
 typedef int mdbx_filehandle_t;
 typedef pid_t mdbx_pid_t;
 typedef pthread_t mdbx_tid_t;
+#ifdef ENODATA
 #define MDBX_ENODATA ENODATA
+#else
+#define MDBX_ENODATA -1
+#endif
 #define MDBX_EINVAL EINVAL
 #define MDBX_EACCESS EACCES
 #define MDBX_ENOMEM ENOMEM
@@ -731,6 +735,8 @@ LIBMDBX_API int mdbx_env_copy2fd(MDBX_env *env, mdbx_filehandle_t fd,
  * [out] stat   The address of an MDBX_stat structure where the statistics
  *              will be copied */
 LIBMDBX_API int mdbx_env_stat(MDBX_env *env, MDBX_stat *stat, size_t bytes);
+LIBMDBX_API int mdbx_env_stat2(const MDBX_env *env, const MDBX_txn *txn,
+                               MDBX_stat *stat, size_t bytes);
 
 /* Return information about the MDBX environment.
  *
@@ -738,6 +744,8 @@ LIBMDBX_API int mdbx_env_stat(MDBX_env *env, MDBX_stat *stat, size_t bytes);
  * [out] stat   The address of an MDBX_envinfo structure
  *              where the information will be copied */
 LIBMDBX_API int mdbx_env_info(MDBX_env *env, MDBX_envinfo *info, size_t bytes);
+LIBMDBX_API int mdbx_env_info2(const MDBX_env *env, const MDBX_txn *txn,
+                               MDBX_envinfo *info, size_t bytes);
 
 /* Flush the data buffers to disk.
  *

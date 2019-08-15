@@ -30,10 +30,13 @@ mdbx_src = '''
 '''.split()
 
 if osid == 'windows'
-    message ('Use lck-windows functionality on @0@ platform'.format (host_machine.system()) )
+    message ('Use lck-windows functionality on @0@ platform'.format (osid))
     mdbx_src += ['lck-windows.c']
+elif osid == 'linux'
+    message ('Use lck-linux functionality on @0@ platform'.format (osid))
+    mdbx_src += ['lck-linux.c']
 else
-    message ('Use lck-posix functionality on @0@ platform'.format (host_machine.system()) )
+    message ('Use lck-posix functionality on @0@ platform'.format (osid))
     mdbx_src += ['lck-posix.c']
 endif
 
@@ -104,7 +107,7 @@ if (ccid == 'gcc') or (ccid == 'clang')
     cc_link_args = '''
         -Wl,--gc-sections
         -z,relro
-        -O
+        -O1
         -Wl,--no-as-needed
     '''.split()
 elif ccid == 'msvc'
