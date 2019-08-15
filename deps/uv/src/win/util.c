@@ -1325,7 +1325,7 @@ int uv__convert_utf8_to_utf16(const char* utf8, int utf8len, WCHAR** utf16) {
     return uv_translate_sys_error(GetLastError());
   }
 
-  (*utf16)[bufsize] = '\0';
+  (*utf16)[bufsize] = L'\0';
   return 0;
 }
 
@@ -1397,6 +1397,75 @@ int uv_os_get_passwd(uv_passwd_t* pwd) {
 }
 
 
+int uv_os_environ(uv_env_item_t** envitems, int* count) {
+  wchar_t* env;
+  wchar_t* penv;
+  int i, cnt;
+  uv_env_item_t* envitem;
+
+  *envitems = NULL;
+  *count = 0;
+
+  env = GetEnvironmentStringsW();
+  if (env == NULL)
+    return 0;
+
+  for (penv = env, i = 0; *penv != L'\0'; penv += wcslen(penv) + 1, i++);
+
+  *envitems = uv__calloc(i, sizeof(**envitems));
+  if (envitems == NULL) {
+    FreeEnvironmentStringsW(env);
+    return UV_ENOMEM;
+  }
+
+  penv = env;
+  cnt = 0;
+
+  while (*penv != L'\0' && cnt < i) {
+    char* buf;
+    char* ptr;
+
+    if (uv__convert_utf16_to_utf8(penv, -1, &buf) != 0)
+      goto fail;
+
+    ptr = strchr(buf, '=');
+    if (ptr == NULL) {
+      uv__free(buf);
+      goto do_continue;
+    }
+
+    *ptr = '\0';
+
+    envitem = &(*envitems)[cnt];
+    envitem->name = buf;
+    envitem->value = ptr + 1;
+
+    cnt++;
+
+  do_continue:
+    penv += wcslen(penv) + 1;
+  }
+
+  FreeEnvironmentStringsW(env);
+
+  *count = cnt;
+  return 0;
+
+fail:
+  FreeEnvironmentStringsW(env);
+
+  for (i = 0; i < cnt; i++) {
+    envitem = &(*envitems)[cnt];
+    uv__free(envitem->name);
+  }
+  uv__free(*envitems);
+
+  *envitems = NULL;
+  *count = 0;
+  return UV_ENOMEM;
+}
+
+
 int uv_os_getenv(const char* name, char* buffer, size_t* size) {
   wchar_t var[MAX_ENV_VAR_LENGTH];
   wchar_t* name_w;
@@ -1412,17 +1481,15 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
   if (r != 0)
     return r;
 
+  SetLastError(ERROR_SUCCESS);
   len = GetEnvironmentVariableW(name_w, var, MAX_ENV_VAR_LENGTH);
   uv__free(name_w);
   assert(len < MAX_ENV_VAR_LENGTH); /* len does not include the null */
 
   if (len == 0) {
     r = GetLastError();
-
-    if (r == ERROR_ENVVAR_NOT_FOUND)
-      return UV_ENOENT;
-
-    return uv_translate_sys_error(r);
+    if (r != ERROR_SUCCESS)
+      return uv_translate_sys_error(r);
   }
 
   /* Check how much space we need */
