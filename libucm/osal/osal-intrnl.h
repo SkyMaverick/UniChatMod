@@ -2,6 +2,7 @@
 
 #include "ucm.h"
 
+#include "osal-uvwrap.h"
 #include "osal-dynlib.h"
 #include "osal-fs.h"
 #include "osal-memory.h"
@@ -32,3 +33,4 @@ osal_release (void);
 
 #define LOOP_KRNL   o_krnl->loop_system
 #define LOOP_NET    o_krnl->loop_network
+
