@@ -8,6 +8,7 @@ from colorize import *
 project_name = 'ucm'
 project_version = '0.1.2'
 
+
 path_build_pathname = 'build'
 
 _clean_files = '''
@@ -23,6 +24,13 @@ _clean_files = '''
 # =================================================
 # SERVICE FUNCTIONS
 # ==================================================
+def meson_internal (path, *args):
+    cmd = ['meson'] + ['.'] + [path]
+    for i in args:
+        cmd += [i]
+
+    print (' '.join(cmd))
+    return subprocess.call(' '.join(cmd), shell=True)
 
 def ninja_cmd (path, *args):
     result = 1
@@ -40,14 +48,6 @@ def ninja_cmd (path, *args):
         error ('Meson configure files don\'t create')
     return result
 
-def meson_internal (path, *args):
-    cmd = ['meson'] + ['.'] + [path]
-    for i in args:
-        cmd += [i]
-
-    print (' '.join(cmd))
-    return subprocess.call(' '.join(cmd), shell=True)
-
 def shell_cmd (shell, *args):
     cmd = [shell]
     for i in args:
@@ -55,10 +55,14 @@ def shell_cmd (shell, *args):
 
     return subprocess.call (' '.join(cmd), env=os.environ.copy(), shell=True)
 
+def shell_cmd_out (app, *args):
+    cmd = [app]
+    for i in args:
+       cmd += [i]
 
-def remove_dir (path):
-    if os.path.exists (path):
-        return shutil.rmtree (path, ignore_errors=False, onerror=None)
+    shell=subprocess.Popen (cmd, stdout=subprocess.PIPE)
+    data=shell.communicate()
+    return (data)[0].decode()
 
 def meson_cmd (type, cross, path, prefix):
     args = ['--buildtype='+type, '-Dprefix='+prefix]
@@ -71,14 +75,9 @@ def meson_cmd (type, cross, path, prefix):
         args += ['--strip']
     return meson_internal (path, *args)
 
-def shell_cmd_out (app, *args):
-    cmd = [app]
-    for i in args:
-       cmd += [i]
-
-    shell=subprocess.Popen (cmd, stdout=subprocess.PIPE)
-    data=shell.communicate()
-    return (data)[0].decode()
+def remove_dir (path):
+    if os.path.exists (path):
+        return shutil.rmtree (path, ignore_errors=False, onerror=None)
 
 def open_all (path):
     for root, dirs, files in os.walk (path):
@@ -87,8 +86,9 @@ def open_all (path):
 
 def move_with_replace (file, path):
     try:
-        if os.path.exists (os.path.join (path, file)):
-            os.remove (os.path.join(path, file))
+        fname = os.path.basename(file)
+        if os.path.exists (os.path.join (path, fname)):
+            os.remove (os.path.join(path, fname))
     except OSError:
         pass
     else:
@@ -190,7 +190,7 @@ def action_bundle_dbg (**defs):
     path_bundle = defs['path_bundle']
     path_build  = defs['path_build']
 
-    info ('Create application bundle in: {path}'.format(path=path_bundle))
+    info ('Create application DEBUG bundle in: {path}'.format(path=path_bundle))
     return ninja_cmd(path_build, 'install')
 
 def action_arcxz (**defs):
@@ -229,8 +229,9 @@ def action_deb (**defs):
                 os.makedirs (path_packages)
             path_tmpdeb = os.path.join (path_temp, 'deb')
             remove_dir (path_tmpdeb)
-            shutil.copytree (path_debconf, path_tmpdeb)
-            shutil.copytree (path_bundle, os.path.join(path_tmpdeb, 'opt'))
+
+            copytree2 (path_debconf, path_tmpdeb)
+            copytree2 (path_bundle, os.path.join(path_tmpdeb, 'opt'))
 
             os.chdir (path_tmpdeb)
             if (shell_cmd (os.path.join(path_tmpdeb,'build.sh'), \
@@ -240,7 +241,7 @@ def action_deb (**defs):
                 for paths, dirs, files in os.walk (path_tmpdeb):
                     for item in files:
                         if item.endswith('.deb'):
-                            move_with_replace (item, path_packages)
+                            move_with_replace (os.path.join(paths,item), path_packages)
                 os.chdir (path_script)
                 return 0
             else:
@@ -322,7 +323,6 @@ actions = {
         'test'              : action_test,
         'log'               : action_log,
         'pkg_src'           : action_dummy,
-        'laz_gui'           : action_dummy,
         'bundle'            : action_bundle,
         'bundle_dbg'        : action_bundle_dbg,
         'pack_arc'          : action_arcxz,
@@ -367,7 +367,7 @@ try:
             'path_temp'     : os.path.join (path_build_root, 'temp'),
         }
 except KeyError as e:
-    print ("I don't know this command: {}".format(argv[1]))
+    error ("I don't know this command: {}".format(argv[1]))
     exit (1)
 else:
     exit (action(**args))
