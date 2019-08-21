@@ -23,8 +23,6 @@ foreach src : '''
                 osal-intrnl.h
                 osal-memory.c
                 osal-memory.h
-                osal-system.c
-                osal-system.h
                 osal-threading.c
                 osal-threading.h
                 osal-timers.c
