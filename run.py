@@ -21,6 +21,22 @@ _clean_files = '''
     *.dbg
 '''.split()
 
+ignore_format_paths = [
+    '.git',
+    'deps',
+    'tools',
+    'build'
+]
+
+format_exts = '''
+    *.c
+    *.cpp
+    *.cxx
+    *.h
+    *.hpp
+    *.hxx
+'''.split()
+
 # =================================================
 # SERVICE FUNCTIONS
 # ==================================================
@@ -306,6 +322,20 @@ def action_7z (**defs):
                 os.chdir (path_script)
                 return 1
 
+def action_format (**defs):
+    path = defs ['path_script']
+    for root, dirs, files in os.walk (path):
+        for item in dirs:
+            if item in ignore_format_paths:
+                dirs.remove(item)
+        for item in files:
+            absName = os.path.join(root, item)
+            for ext in format_exts:
+                if fnmatch.fnmatch(os.path.basename(absName), ext):
+                    print ('Format file > {0}'.format(os.path.join(root,item)))
+                    if shell_cmd ('clang-format', '-i', absName) != 0:
+                        error ('Error formating file: {0}'.format(item))
+
 def action_dummy (**defs):
     info ("Run dummy function for test")
     return
@@ -318,6 +348,7 @@ actions = {
         'build'             : action_ninja,
         'debug'             : action_debug,
         'release'           : action_release,
+        'format'            : action_format,
         'clean'             : action_clean,
         'clean_all'         : action_clean_all,
         'test'              : action_test,
