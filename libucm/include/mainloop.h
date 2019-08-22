@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ucm.h"
 #include <stdint.h>
 
 int ucm_mloop_init(int size);

@@ -1,6 +1,5 @@
-#include "osal.h"
-
 #include "ucm.h"
+#include "osal.h"
 
 char* app_realpath(const char* path)
 {
