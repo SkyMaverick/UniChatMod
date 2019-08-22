@@ -6,14 +6,23 @@
 extern const ucm_functions_t* app;
 extern const ucm_plugproto_t* plucl;
 
-#define trace_dbg(fmt, ...) {app->app.log ( (ucm_plugin_t*)(plucl), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__);}
-#define trace_inf(fmt, ...) {app->app.log ( (ucm_plugin_t*)(plucl), UCM_TYPE_LOG_INFO,  fmt, __VA_ARGS__);}
-#define trace_err(fmt, ...) {app->app.log ( (ucm_plugin_t*)(plucl), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__);}
+#define trace_dbg(fmt, ...)                                                         \
+    {                                                                               \
+        app->app.log((ucm_plugin_t*)(plucl), UCM_TYPE_LOG_DEBUG, fmt, __VA_ARGS__); \
+    }
+#define trace_inf(fmt, ...)                                                        \
+    {                                                                              \
+        app->app.log((ucm_plugin_t*)(plucl), UCM_TYPE_LOG_INFO, fmt, __VA_ARGS__); \
+    }
+#define trace_err(fmt, ...)                                                         \
+    {                                                                               \
+        app->app.log((ucm_plugin_t*)(plucl), UCM_TYPE_LOG_ERROR, fmt, __VA_ARGS__); \
+    }
 
-#define ucm_free_null(X)    \
-    do {                    \
-        app->sys.free(X);   \
-        X = NULL;           \
+#define ucm_free_null(X)  \
+    do {                  \
+        app->sys.free(X); \
+        X = NULL;         \
     } while (0)
 
 #endif

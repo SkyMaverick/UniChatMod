@@ -1,14 +1,14 @@
 #pragma once
 
-#include <stdio.h>
-#include <limits.h>
-
-#include "ucm.h"
-#include "config.h"
-#include "gettext.h"
 #include "api.h"
+#include "config.h"
 #include "core.h"
+#include "gettext.h"
+#include "ucm.h"
+
+#include <limits.h>
+#include <stdio.h>
 
 #ifndef _countof
-    #define _countof(x) (sizeof(x)/sizeof(x[0]))
+    #define _countof(x) (sizeof(x) / sizeof(x[0]))
 #endif
