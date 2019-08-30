@@ -19,16 +19,11 @@ foreach src : '''
                 osal-dynlib.h
                 osal-fs.c
                 osal-fs.h
-                osal-intrnl.c
                 osal-intrnl.h
                 osal-memory.c
                 osal-memory.h
                 osal-threading.c
                 osal-threading.h
-                osal-timers.c
-                osal-timers.h
-                osal-uvwrap.c
-                osal-uvwrap.h
               '''.split()
     osal_src += 'osal' / src
 endforeach
