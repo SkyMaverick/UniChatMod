@@ -59,7 +59,7 @@ ucm_ev_t* ucm_event_alloc2(uint32_t id, void* ctx, size_t mem)
 
     size_t size = event_size_get(id);
     if (size) {
-        ucm_dtrace("%s: %d. %s: %d\n", "Event alloc", id, "Allocated", size);
+        ucm_dtrace("%s: %zu. %s: %d\n", "Event alloc", id, "Allocated", size);
         event = UniAPI->sys.zmalloc(size + mem);
         if (event) {
             // Define EVENT arguments

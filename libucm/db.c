@@ -36,7 +36,7 @@ db_open(const char* aPath, uint32_t flags)
             UniAPI->sys.fs_fcreate(aPath);
             flag_exit++;
         }
-        int r = UniAPI->uv.fs_access(&ufs_req, aPath, (flags & UCM_FLAG_ROPROF) ? R_OK : R_OK | W_OK, NULL);
+        int r = UniAPI->uv.fs_access(UCM_LOOP_SYSTEM(UniAPI), &ufs_req, aPath, (flags & UCM_FLAG_ROPROF) ? R_OK : R_OK | W_OK, NULL);
 
         if (r < 0) {
             ucm_dtrace("%s: %s\n", aPath, "fail open");
@@ -52,7 +52,7 @@ db_open(const char* aPath, uint32_t flags)
             break;
     } while (!flag_exit);
 
-    UniAPI->uv.run(UCM_LOOP_SYSTEM, UV_RUN_ONCE);
+    UniAPI->uv.run(UCM_LOOP_SYSTEM(UniAPI), UV_RUN_ONCE);
     UniAPI->uv.fs_req_cleanup(&ufs_req);
 
     // Open database

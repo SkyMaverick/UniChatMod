@@ -150,9 +150,9 @@ static void scan_result_process(uv_fs_t* req)
         }
     }
 #if defined(UCM_OS_WINDOWS)
-    UniAPI->uv.fs_close(&close_req, req->file.fd, NULL);
+    UniAPI->uv.fs_close(UCM_LOOP_SYSTEM(UniAPI), &close_req, req->file.fd, NULL);
 #else
-    UniAPI->uv.fs_close(&close_req, req->file, NULL);
+    UniAPI->uv.fs_close(UCM_LOOP_SYSTEM(UniAPI), &close_req, req->file, NULL);
 #endif
     UniAPI->uv.fs_req_cleanup(&close_req);
 }
@@ -179,7 +179,7 @@ size_t pmgr_load(char* path, uint32_t flags)
             UniPMgr->lock = UniAPI->sys.rwlock_create();
             if (UniPMgr->lock) {
                 // 5. Scan plugins directory and process it
-                int r = UniAPI->uv.fs_scandir(&req, path, O_RDONLY, NULL);
+                int r = UniAPI->uv.fs_scandir(UCM_LOOP_SYSTEM(UniAPI), &req, path, O_RDONLY, NULL);
                 if (r >= 0) {
                     scan_result_process(&req);
                     UniAPI->uv.fs_req_cleanup(&req);

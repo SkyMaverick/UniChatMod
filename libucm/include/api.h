@@ -6,9 +6,6 @@
 extern "C" {
 #endif
 
-uintptr_t compat_layer_init(void);
-void compat_layer_release(void);
-
 extern ucm_functions_t* UniAPI;
 
 #if defined(DEBUG)

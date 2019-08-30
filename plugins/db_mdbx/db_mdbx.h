@@ -103,7 +103,7 @@ typedef struct {
 
     struct {
         uintptr_t mtx;
-        uintptr_t tmFlush;
+        uv_timer_t* tick;
     } sys;
 
     uint32_t flags;

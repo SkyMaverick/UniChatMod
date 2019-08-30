@@ -8,6 +8,8 @@
 #include <wchar.h>
 
 const ucm_functions_t* app;
+#define LOOP_SYSTEM app->bind.loop_sys
+
 static const ucm_plugin_t plugin;
 
 typedef struct {
@@ -24,7 +26,7 @@ static void cb_logger_function(ucm_plugin_t* plugin, uint32_t type, const char* 
     size_t len = strlen(txt);
 
     uv_buf_t buffer = app->uv.buf_init((char*)txt, len);
-    app->uv.fs_write(&(flog.write_req), flog.req.result, &buffer, 1, flog.offset, NULL);
+    app->uv.fs_write(LOOP_SYSTEM, &(flog.write_req), flog.req.result, &buffer, 1, flog.offset, NULL);
 
     flog.offset += len;
 }
@@ -35,7 +37,7 @@ static UCM_RET _run_logger(void)
     snprintf(path, UCM_PATH_MAX, "%s%c%s", app->app.get_startup_path(), PATH_DELIM, "ucm.log");
     flog.offset = 0;
 
-    int ret = app->uv.fs_open(&(flog.req), path, UV_FS_O_RDWR | UV_FS_O_CREAT, 0666, NULL);
+    int ret = app->uv.fs_open(LOOP_SYSTEM, &(flog.req), path, UV_FS_O_RDWR | UV_FS_O_CREAT, 0666, NULL);
     if (ret < 0)
         return UCM_RET_EXCEPTION;
 
@@ -51,9 +53,9 @@ static UCM_RET _stop_logger(void)
     uv_fs_t close_req;
 
 #if defined(UCM_OS_WINDOWS)
-    app->uv.fs_close(&close_req, flog.req.file.fd, NULL);
+    app->uv.fs_close(LOOP_SYSTEM, &close_req, flog.req.file.fd, NULL);
 #else
-    app->uv.fs_close(&close_req, flog.req.file, NULL);
+    app->uv.fs_close(LOOP_SYSTEM, &close_req, flog.req.file, NULL);
 #endif
     app->uv.fs_req_cleanup(&(flog.req));
     app->uv.fs_req_cleanup(&(flog.write_req));

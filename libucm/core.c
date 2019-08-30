@@ -21,7 +21,10 @@ typedef struct {
     // message/event communication loop (custom implementation)
     uintptr_t loop_ucore;
     // osal system handle
-    uintptr_t osal_handle;
+    struct {
+        uv_loop_t* loop_sys;
+        uv_loop_t* loop_net;
+    } uv;
 } ucm_core_t;
 // forward structure declaration
 static ucm_core_t kernel;
@@ -104,25 +107,56 @@ static void _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 
 void wait_core_loop(void) { UniAPI->sys.thread_join(kernel.loop_ucore); }
 
+static inline UCM_RET uv_init (void)
+{
+    kernel.uv.loop_sys = uv_default_loop();
+    if (kernel.uv.loop_sys == NULL)
+        return UCM_RET_NOOBJECT;
+    kernel.uv.loop_net = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
+    if (kernel.uv.loop_net == NULL) {
+        return UCM_RET_SYSTEM_NOMEMORY;
+    }
+    UniAPI->bind.loop_sys = kernel.uv.loop_sys;
+    UniAPI->bind.loop_net = kernel.uv.loop_net;
+
+    uv_loop_init (kernel.uv.loop_net);
+    uv_run (kernel.uv.loop_sys, UV_RUN_DEFAULT);
+    uv_run (kernel.uv.loop_net, UV_RUN_DEFAULT);
+
+    return UCM_RET_SUCCESS;
+}
+static inline void uv_destroy (void)
+{
+    uv_loop_close (kernel.uv.loop_sys);
+    uv_loop_close (kernel.uv.loop_net);
+    if (kernel.uv.loop_net != NULL)
+        ucm_free_null (kernel.uv.loop_net);
+}
+
+
 UCM_RET
 core_load(void)
 {
-    kernel.osal_handle = compat_layer_init();
 
     log_init();
     init_ucm_entropy();
 
-    int ret_code = ucm_mloop_init(UCM_DEF_MQ_LIMIT);
+    int ret_code = uv_init();
     if (ret_code == UCM_RET_SUCCESS) {
-        hooks_event_init();
-        kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
+        ret_code = ucm_mloop_init(UCM_DEF_MQ_LIMIT);
+        if (ret_code == UCM_RET_SUCCESS) {
+            hooks_event_init();
+            kernel.loop_ucore = UniAPI->sys.thread_create(loop_core, NULL);
+        } else {
+            uv_destroy();
+            return ret_code;
+        }
+
+        pmgr_load(UniAPI->app.get_plugins_path(), 0);
     } else {
-        return ret_code;
+        uv_destroy();
     }
-
-    pmgr_load(UniAPI->app.get_plugins_path(), 0);
-
-    return UCM_RET_SUCCESS;
+    return ret_code;
 }
 
 UCM_RET
@@ -140,7 +174,7 @@ core_unload(void)
     hooks_event_release();
     ucm_mloop_free();
     log_release();
-    compat_layer_release();
+    uv_destroy();
 
     return UCM_RET_SUCCESS;
 }

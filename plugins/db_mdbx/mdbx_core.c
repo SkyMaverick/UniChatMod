@@ -25,8 +25,8 @@ static void cb_mdbx_timer(uv_timer_t* timer) { mdbx_db_flush(true); }
 
 static void* mdbx_autosync(void* ctx)
 {
-    app->sys.timer_start((uintptr_t)ctx, cb_mdbx_timer, 0, 50);
-    app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
+    app->uv.timer_start((uv_timer_t*)ctx, cb_mdbx_timer, 0, 50);
+    app->uv.run(UCM_LOOP_SYSTEM(app), UV_RUN_DEFAULT);
     return NULL;
 }
 
@@ -46,7 +46,7 @@ static void cb_create_backup(uv_fs_t* open_req)
             // TODO Send message FAIL async operation
         }
 
-        app->uv.fs_close(&close_req, open_req->result, NULL);
+        app->uv.fs_close(UCM_LOOP_SYSTEM(app), &close_req, open_req->result, NULL);
         app->uv.fs_req_cleanup(&close_req);
     } else {
         // TODO Send message FAIL async operation
@@ -183,11 +183,14 @@ static inline void dbi_core_release(void)
 
 static inline UCM_RET dbi_core_init(void)
 {
-    UniDB->sys.tmFlush = app->sys.timer_create();
-    if (UniDB->sys.tmFlush == 0)
-        return UCM_RET_SYSTEM_NOCREATE;
+    UniDB->sys.tick = app->sys.zmalloc (sizeof(uv_timer_t));
+    if (UniDB->sys.tick == NULL)
+        return UCM_RET_SYSTEM_NOMEMORY;
 
-    trace_dbg("%s: %zu - %zu\n", "Create mutex and clock", UniDB->sys.mtx, UniDB->sys.tmFlush);
+    if ( app->uv.timer_init(UCM_LOOP_SYSTEM(app), UniDB->sys.tick) ) {
+        app->sys.free (UniDB->sys.tick);
+        return UCM_RET_SYSTEM_NOCREATE;
+    }
     return UCM_RET_SUCCESS;
 }
 
@@ -212,7 +215,7 @@ mdbx_db_open(uint32_t flags)
     if (ret_code != UCM_RET_SUCCESS)
         return ret_code;
 
-    app->sys.thread_create(mdbx_autosync, (void*)(UniDB->sys.tmFlush));
+    app->sys.thread_create(mdbx_autosync, (void*)(UniDB->sys.tick));
 
     return UCM_RET_SUCCESS;
 }
@@ -221,8 +224,8 @@ UCM_RET
 mdbx_db_close(void)
 {
     // TODO
-    app->sys.timer_stop(UniDB->sys.tmFlush);
-    app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
+    app->uv.timer_stop(UniDB->sys.tick);
+    app->uv.run(UCM_LOOP_SYSTEM(app), UV_RUN_DEFAULT);
 
     dbi_core_release();
     return UCM_RET_SUCCESS;
@@ -240,12 +243,17 @@ UCM_RET
 mdbx_db_backup(char* path)
 {
     uv_fs_t open_req;
-    if (app->uv.fs_open(&open_req, path, O_WRONLY | O_CREAT, 0664, cb_create_backup) > 0) {
+    if (app->uv.fs_open(UCM_LOOP_SYSTEM(app),
+                        &open_req,
+                        path,
+                        O_WRONLY | O_CREAT,
+                        0664,
+                        cb_create_backup) > 0) {
         trace_err("%s: %s\n", "Backup fail. Don't create file", path);
         app->uv.fs_req_cleanup(&open_req);
         return UCM_RET_SYSTEM_NOACCESS;
     }
-    app->uv.run(UCM_LOOP_SYSTEM, UV_RUN_DEFAULT);
+    app->uv.run(UCM_LOOP_SYSTEM(app), UV_RUN_DEFAULT);
     app->uv.fs_req_cleanup(&open_req);
     return UCM_RET_SUCCESS;
 }
