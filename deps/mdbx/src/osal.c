@@ -18,6 +18,8 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 
+#include <winioctl.h>
+
 static int waitstatus2errcode(DWORD result) {
   switch (result) {
   case WAIT_OBJECT_0:
@@ -157,18 +159,44 @@ typedef struct _FILE_PROVIDER_EXTERNAL_INFO_V1 {
     /* workaround for avoid musl libc wrong prototype */ (                     \
         defined(__GLIBC__) || defined(__GNU_LIBRARY__))
 /* Prototype should match libc runtime. ISO POSIX (2003) & LSB 1.x-3.x */
-__nothrow __noreturn void __assert_fail(const char *assertion, const char *file,
-                                        unsigned line, const char *function);
+__extern_C void __assert_fail(const char *assertion, const char *file,
+                              unsigned line, const char *function)
+#ifdef __THROW
+    __THROW
+#else
+    __nothrow
+#endif /* __THROW */
+    __noreturn;
+
 #elif defined(__APPLE__) || defined(__MACH__)
-__nothrow __noreturn void __assert_rtn(const char *function, const char *file,
-                                       int line, const char *assertion);
+__extern_C void __assert_rtn(const char *function, const char *file, int line,
+                             const char *assertion) /* __nothrow */
+#ifdef __dead2
+    __dead2
+#else
+    __noreturn
+#endif /* __dead2 */
+#ifdef __disable_tail_calls
+    __disable_tail_calls
+#endif /* __disable_tail_calls */
+    ;
+
 #define __assert_fail(assertion, file, line, function)                         \
   __assert_rtn(function, file, line, assertion)
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||   \
     defined(__BSD__) || defined(__NETBSD__) || defined(__bsdi__) ||            \
     defined(__DragonFly__)
-__nothrow __noreturn void __assert(const char *function, const char *file,
-                                   int line, const char *assertion);
+__extern_C void __assert(const char *function, const char *file, int line,
+                         const char *assertion) /* __nothrow */
+#ifdef __dead2
+    __dead2
+#else
+    __noreturn
+#endif /* __dead2 */
+#ifdef __disable_tail_calls
+    __disable_tail_calls
+#endif /* __disable_tail_calls */
+    ;
 #define __assert_fail(assertion, file, line, function)                         \
   __assert(function, file, line, assertion)
 
@@ -674,7 +702,7 @@ int mdbx_filesync(mdbx_filehandle_t fd, enum mdbx_syncmode_bits mode_bits) {
     return likely(fcntl(fd, F_FULLFSYNC) != -1) ? MDBX_SUCCESS : errno;
 #endif /* MacOS */
 #if defined(__linux__) || defined(__gnu_linux__)
-  if (mode_bits == MDBX_SYNC_SIZE && linux_kernel_version >= 0x03060000)
+  if (mode_bits == MDBX_SYNC_SIZE && mdbx_linux_kernel_version >= 0x03060000)
     return MDBX_SUCCESS;
 #endif /* Linux */
   int rc;
@@ -789,7 +817,7 @@ int mdbx_msync(mdbx_mmap_t *map, size_t offset, size_t length, int async) {
   return GetLastError();
 #else
 #ifdef __linux__
-  if (async && linux_kernel_version > 0x02061300)
+  if (async && mdbx_linux_kernel_version > 0x02061300)
     /* Since Linux 2.6.19, MS_ASYNC is in fact a no-op,
        since the kernel properly tracks dirty pages and flushes them to storage
        as necessary. */
@@ -1222,4 +1250,72 @@ __cold void mdbx_osal_jitter(bool tiny) {
       usleep(coin);
 #endif
   }
+}
+
+#if defined(_WIN32) || defined(_WIN64)
+#elif defined(__APPLE__) || defined(__MACH__)
+#include <mach/mach_time.h>
+#elif defined(__linux__) || defined(__gnu_linux__)
+static __cold clockid_t choice_monoclock() {
+  struct timespec probe;
+#if defined(CLOCK_BOOTTIME)
+  if (clock_gettime(CLOCK_BOOTTIME, &probe) == 0)
+    return CLOCK_BOOTTIME;
+#elif defined(CLOCK_MONOTONIC_RAW)
+  if (clock_gettime(CLOCK_MONOTONIC_RAW, &probe) == 0)
+    return CLOCK_MONOTONIC_RAW;
+#elif defined(CLOCK_MONOTONIC_COARSE)
+  if (clock_gettime(CLOCK_MONOTONIC_COARSE, &probe) == 0)
+    return CLOCK_MONOTONIC_COARSE;
+#endif
+  return CLOCK_MONOTONIC;
+}
+#endif
+
+uint64_t mdbx_osal_16dot16_to_monotime(uint32_t seconds_16dot16) {
+#if defined(_WIN32) || defined(_WIN64)
+  static LARGE_INTEGER performance_frequency;
+  if (performance_frequency.QuadPart == 0)
+    QueryPerformanceFrequency(&performance_frequency);
+  const uint64_t ratio = performance_frequency.QuadPart;
+#elif defined(__APPLE__) || defined(__MACH__)
+  static uint64_t ratio;
+  if (!ratio) {
+    mach_timebase_info_data_t ti;
+    mach_timebase_info(&ti);
+    ratio = UINT64_C(1000000000) * ti.denom / ti.numer;
+  }
+#else
+  const uint64_t ratio = UINT64_C(1000000000);
+#endif
+  return (ratio * seconds_16dot16 + 32768) >> 16;
+}
+
+uint64_t mdbx_osal_monotime(void) {
+#if defined(_WIN32) || defined(_WIN64)
+  LARGE_INTEGER counter;
+  counter.QuadPart = 0;
+  QueryPerformanceCounter(&counter);
+  return counter.QuadPart;
+#elif defined(__APPLE__) || defined(__MACH__)
+  return mach_absolute_time();
+#else
+
+#if defined(__linux__) || defined(__gnu_linux__)
+  static clockid_t posix_clockid = -1;
+  if (unlikely(posix_clockid < 0))
+    posix_clockid = choice_monoclock();
+#elif defined(CLOCK_MONOTONIC)
+#define posix_clockid CLOCK_MONOTONIC
+#else
+#define posix_clockid CLOCK_REALTIME
+#endif
+
+  struct timespec ts;
+  if (unlikely(clock_gettime(posix_clockid, &ts) != 0)) {
+    ts.tv_nsec = 0;
+    ts.tv_sec = 0;
+  }
+  return ts.tv_sec * UINT64_C(1000000000) + ts.tv_nsec;
+#endif
 }

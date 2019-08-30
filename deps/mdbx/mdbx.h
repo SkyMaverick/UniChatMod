@@ -148,8 +148,8 @@ typedef pthread_t mdbx_tid_t;
 #else
 #define __dll_export
 #endif
-#elif defined(__GNUC__) || __has_attribute(visibility)
-#define __dll_export __attribute__((visibility("default")))
+#elif defined(__GNUC__) || __has_attribute(__visibility__)
+#define __dll_export __attribute__((__visibility__("default")))
 #else
 #define __dll_export
 #endif
@@ -1581,14 +1581,15 @@ LIBMDBX_API char *mdbx_dkey(const MDBX_val *key, char *const buf,
 
 LIBMDBX_API int mdbx_env_close_ex(MDBX_env *env, int dont_sync);
 
-/* Set threshold to force flush the data buffers to disk,
+/* Sets threshold to force flush the data buffers to disk,
  * even of MDBX_NOSYNC, MDBX_NOMETASYNC and MDBX_MAPASYNC flags
- * in the environment.
+ * in the environment. The value affects all processes which operates with given
+ * DB until the last process close DB or a new value will be settled.
  *
  * Data is always written to disk when mdbx_txn_commit() is called,
  * but the operating system may keep it buffered. MDBX always flushes
  * the OS buffers upon commit as well, unless the environment was
- * opened with MDBX_NOSYNC or in part MDBX_NOMETASYNC.
+ * opened with MDBX_NOSYNC, MDBX_MAPASYNC or in part MDBX_NOMETASYNC.
  *
  * The default is 0, than mean no any threshold checked, and no additional
  * flush will be made.
@@ -1599,6 +1600,32 @@ LIBMDBX_API int mdbx_env_close_ex(MDBX_env *env, int dont_sync);
  *
  * Returns A non-zero error value on failure and 0 on success. */
 LIBMDBX_API int mdbx_env_set_syncbytes(MDBX_env *env, size_t bytes);
+
+/* Sets relative period since the last unsteay commit to force flush the data
+ * buffers to disk, even of MDBX_NOSYNC, MDBX_NOMETASYNC and MDBX_MAPASYNC flags
+ * in the environment. The value affects all processes which operates with given
+ * DB until the last process close DB or a new value will be settled.
+ *
+ * Data is always written to disk when mdbx_txn_commit() is called,
+ * but the operating system may keep it buffered. MDBX always flushes
+ * the OS buffers upon commit as well, unless the environment was
+ * opened with MDBX_NOSYNC, MDBX_MAPASYNC or in part MDBX_NOMETASYNC.
+ *
+ * Settled period don't checked asynchronously, but only inside the functions.
+ * mdbx_txn_commit() and mdbx_env_sync(). Therefore, in cases where transactions
+ * are committed infrequently and/or irregularly, polling by mdbx_env_sync() may
+ * be a reasonable solution to timeout enforcement.
+ *
+ * The default is 0, than mean no any timeout checked, and no additional
+ * flush will be made.
+ *
+ * [in] env               An environment handle returned by mdbx_env_create()
+ * [in] seconds_16dot16   The period in 1/65536 of second when a synchronous
+ *                        flush would be made since the last unsteay commit.
+ *
+ * Returns A non-zero error value on failure and 0 on success. */
+LIBMDBX_API int mdbx_env_set_syncperiod(MDBX_env *env,
+                                        unsigned seconds_16dot16);
 
 /* Returns a lag of the reading for the given transaction.
  *
@@ -1657,6 +1684,7 @@ LIBMDBX_API MDBX_oom_func *mdbx_env_get_oomfunc(MDBX_env *env);
 #define MDBX_DBG_AUDIT 16
 #define MDBX_DBG_JITTER 32
 #define MDBX_DBG_DUMP 64
+#define MDBX_DBG_LEGACY_MULTIOPEN 128
 
 typedef void MDBX_debug_func(int type, const char *function, int line,
                              const char *msg, va_list args);

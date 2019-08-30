@@ -55,7 +55,6 @@ cc_defs = []
 
 if ccid == 'msvc'
     cc_defs += '''
-        /DNDEBUG=1
         /DLIBMDBX_EXPORTS=1
         /D_GNU_SOURCE=1
     '''.split()
@@ -66,7 +65,6 @@ if ccid == 'msvc'
     endif
 else
     cc_defs += '''
-        -DNDEBUG=1
         -DLIBMDBX_EXPORTS=1
         -D_GNU_SOURCE=1
     '''.split()

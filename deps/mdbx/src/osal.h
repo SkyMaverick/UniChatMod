@@ -41,7 +41,6 @@
 
 /*----------------------------------------------------------------------------*/
 /* C99 includes */
-
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -53,12 +52,29 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#if !(defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||   \
-      defined(__BSD__) || defined(__NETBSD__) || defined(__bsdi__) ||          \
-      defined(__DragonFly__) || defined(__APPLE__) || defined(__MACH__))
-#include <malloc.h>
-#endif /* xBSD */
 
+/* C11 stdalign.h */
+#if __has_include(<stdalign.h>)
+#include <stdalign.h>
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define alignas(N) _Alignas(N)
+#elif defined(_MSC_VER)
+#define alignas(N) __declspec(align(N))
+#elif __has_attribute(__aligned__) || defined(__GNUC__)
+#define alignas(N) __attribute__((__aligned__(N)))
+#else
+#error "FIXME: Required _alignas() or equivalent."
+#endif
+
+/*----------------------------------------------------------------------------*/
+/* Systems includes */
+
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||     \
+    defined(__BSD__) || defined(__NETBSD__) || defined(__bsdi__) ||            \
+    defined(__DragonFly__) || defined(__APPLE__) || defined(__MACH__)
+#include <sys/cdefs.h>
+#else
+#include <malloc.h>
 #ifndef _POSIX_C_SOURCE
 #ifdef _POSIX_SOURCE
 #define _POSIX_C_SOURCE 1
@@ -66,13 +82,11 @@
 #define _POSIX_C_SOURCE 0
 #endif
 #endif
+#endif /* !xBSD */
 
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 0
 #endif
-
-/*----------------------------------------------------------------------------*/
-/* Systems includes */
 
 #if defined(_WIN32) || defined(_WIN64)
 #define WIN32_LEAN_AND_MEAN
@@ -177,6 +191,22 @@ typedef pthread_mutex_t mdbx_fastmutex_t;
 #ifndef SSIZE_MAX
 #define SSIZE_MAX INTPTR_MAX
 #endif
+
+#if !defined(MADV_DODUMP) && defined(MADV_CORE)
+#define MADV_DODUMP MADV_CORE
+#endif /* MADV_CORE -> MADV_DODUMP */
+
+#if !defined(MADV_DONTDUMP) && defined(MADV_NOCORE)
+#define MADV_DONTDUMP MADV_NOCORE
+#endif /* MADV_NOCORE -> MADV_DONTDUMP */
+
+#ifndef MADV_REMOVE_OR_FREE
+#ifdef MADV_REMOVE
+#define MADV_REMOVE_OR_FREE MADV_REMOVE
+#elif defined(MADV_FREE)
+#define MADV_REMOVE_OR_FREE MADV_FREE
+#endif
+#endif /* MADV_REMOVE_OR_FREE */
 
 #if defined(i386) || defined(__386) || defined(__i386) || defined(__i386__) || \
     defined(i486) || defined(__i486) || defined(__i486__) ||                   \
@@ -463,7 +493,7 @@ int mdbx_vasprintf(char **strp, const char *fmt, va_list ap);
 #define MAX_WRITE UINT32_C(0x3fff0000)
 
 #if defined(__linux__) || defined(__gnu_linux__)
-extern uint32_t linux_kernel_version;
+extern uint32_t mdbx_linux_kernel_version;
 #endif /* Linux */
 
 /* Get the size of a memory page for the system.
@@ -587,6 +617,8 @@ static __inline mdbx_tid_t mdbx_thread_self(void) {
 }
 
 void mdbx_osal_jitter(bool tiny);
+uint64_t mdbx_osal_monotime(void);
+uint64_t mdbx_osal_16dot16_to_monotime(uint32_t seconds_16dot16);
 
 /*----------------------------------------------------------------------------*/
 /* lck stuff */
@@ -598,12 +630,6 @@ void mdbx_osal_jitter(bool tiny);
 #define MDBX_OSAL_LOCK pthread_mutex_t
 #define MDBX_OSAL_LOCK_SIGN UINT32_C(0x8017)
 #endif /* MDBX_OSAL_LOCK */
-
-#ifdef MDBX_OSAL_LOCK
-#define MDBX_OSAL_LOCK_SIZE sizeof(MDBX_OSAL_LOCK)
-#else
-#define MDBX_OSAL_LOCK_SIZE 0
-#endif /* MDBX_OSAL_LOCK_SIZE */
 
 /// \brief Инициализация объектов синхронизации внутри текущего процесса
 ///   связанных с экземпляром MDBX_env.
@@ -706,7 +732,6 @@ typedef BOOL(WINAPI *MDBX_GetVolumeInformationByHandleW)(
     _Out_opt_ LPDWORD lpMaximumComponentLength,
     _Out_opt_ LPDWORD lpFileSystemFlags,
     _Out_opt_ LPWSTR lpFileSystemNameBuffer, _In_ DWORD nFileSystemNameSize);
-
 extern MDBX_GetVolumeInformationByHandleW mdbx_GetVolumeInformationByHandleW;
 
 typedef DWORD(WINAPI *MDBX_GetFinalPathNameByHandleW)(_In_ HANDLE hFile,
@@ -718,7 +743,6 @@ extern MDBX_GetFinalPathNameByHandleW mdbx_GetFinalPathNameByHandleW;
 typedef BOOL(WINAPI *MDBX_SetFileInformationByHandle)(
     _In_ HANDLE hFile, _In_ FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
     _Out_ LPVOID lpFileInformation, _In_ DWORD dwBufferSize);
-
 extern MDBX_SetFileInformationByHandle mdbx_SetFileInformationByHandle;
 
 typedef NTSTATUS(NTAPI *MDBX_NtFsControlFile)(
@@ -727,8 +751,19 @@ typedef NTSTATUS(NTAPI *MDBX_NtFsControlFile)(
     OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG FsControlCode,
     IN OUT PVOID InputBuffer, IN ULONG InputBufferLength,
     OUT OPTIONAL PVOID OutputBuffer, IN ULONG OutputBufferLength);
-
 extern MDBX_NtFsControlFile mdbx_NtFsControlFile;
+
+#if !defined(_WIN32_WINNT_WIN8) || _WIN32_WINNT < _WIN32_WINNT_WIN8
+typedef struct _WIN32_MEMORY_RANGE_ENTRY {
+  PVOID VirtualAddress;
+  SIZE_T NumberOfBytes;
+} WIN32_MEMORY_RANGE_ENTRY, *PWIN32_MEMORY_RANGE_ENTRY;
+#endif /* Windows 8.x */
+
+typedef BOOL(WINAPI *MDBX_PrefetchVirtualMemory)(
+    HANDLE hProcess, ULONG_PTR NumberOfEntries,
+    PWIN32_MEMORY_RANGE_ENTRY VirtualAddresses, ULONG Flags);
+extern MDBX_PrefetchVirtualMemory mdbx_PrefetchVirtualMemory;
 
 #endif /* Windows */
 
@@ -835,8 +870,8 @@ static __inline bool mdbx_atomic_compare_and_swap64(volatile uint64_t *p,
 
 /*----------------------------------------------------------------------------*/
 
-#if defined(_MSC_VER) && _MSC_VER >= 1900 && _MSC_VER < 1920
-/* LY: MSVC 2015/2017 has buggy/inconsistent PRIuPTR/PRIxPTR macros
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+/* LY: MSVC 2015/2017/2019 has buggy/inconsistent PRIuPTR/PRIxPTR macros
  * for internal format-args checker. */
 #undef PRIuPTR
 #undef PRIiPTR
