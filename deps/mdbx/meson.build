@@ -145,7 +145,7 @@ endif
 #   INCLUDES AND TARGETS
 # ==================================================
 
-mdbx_inc = include_directories('.')
+mdbx_inc = include_directories('.', 'src')
 
 if meson.is_subproject()
     message ('install dir: @0@'.format (get_option('path_install')))

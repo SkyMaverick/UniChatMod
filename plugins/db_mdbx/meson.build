@@ -31,3 +31,35 @@ lib_db_mdbx = shared_library(plug_name,
                              install_rpath: libs_rpath,
                              install: true,
                              install_dir: install_path_mods)
+
+# ==================================================
+#   MDBX TOOLS
+# ==================================================
+
+check_src = '''
+    tools/mdbx_chk.c
+    tools/wingetopt.c
+    tools/wingetopt.h
+'''.split()
+
+check_app = executable('mdbx_check',
+                       check_src,
+                       dependencies: mdbx_dep,
+                       build_rpath: libs_rpath,
+                       install_rpath: libs_rpath,
+                       install: true,
+                       install_dir: install_path_root)
+
+dump_src = '''
+    tools/mdbx_dump.c
+    tools/wingetopt.c
+    tools/wingetopt.h
+'''.split()
+
+dump_app = executable('mdbx_dump',
+                       dump_src,
+                       dependencies: mdbx_dep,
+                       build_rpath: libs_rpath,
+                       install_rpath: libs_rpath,
+                       install: true,
+                       install_dir: install_path_root)
