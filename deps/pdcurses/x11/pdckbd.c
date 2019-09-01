@@ -2,80 +2,59 @@
 
 #include "pdcx11.h"
 
-/*man-start**************************************************************
-
-pdckbd
-------
-
-### Synopsis
-
-    unsigned long PDC_get_input_fd(void);
-
-### Description
-
-   PDC_get_input_fd() returns the file descriptor that PDCurses reads
-   its input from. It can be used for select().
-
-### Portability
-                             X/Open  ncurses  NetBSD
-    PDC_get_input_fd            -       -       -
-
-**man-end****************************************************************/
-
 /* check if a key or mouse event is waiting */
 
 bool PDC_check_key(void)
 {
-    struct timeval socket_timeout = {0};
-    int s;
-
-    /* Is something ready to be read on the socket ? Must be a key. */
-
-    FD_ZERO(&xc_readfds);
-    FD_SET(xc_key_sock, &xc_readfds);
-
-    s = select(FD_SETSIZE, (FD_SET_CAST)&xc_readfds, NULL, NULL,
-               &socket_timeout);
-    if (s < 0)
-        XCursesExitCursesProcess(3, "child - exiting from "
-                                    "PDC_check_key select failed");
+    XtInputMask s = XtAppPending(app_context);
 
     PDC_LOG(("%s:PDC_check_key() - returning %s\n", XCLOGMSG,
              s ? "TRUE" : "FALSE"));
 
-    return !!s;
+    return xc_resize_now || !!s;
 }
 
 /* return the next available key or mouse event */
 
 int PDC_get_key(void)
 {
+    XEvent event;
     unsigned long newkey = 0;
     int key = 0;
 
-    if (XC_read_socket(xc_key_sock, &newkey, sizeof(unsigned long)) < 0)
-        XCursesExitCursesProcess(2, "exiting from PDC_get_key");
-
-    pdc_key_modifiers = (newkey >> 24) & 0xFF;
-    key = (int)(newkey & 0x00FFFFFF);
-
-    if (key == KEY_MOUSE && SP->key_code)
+    if (xc_resize_now)
     {
-        if (XC_read_socket(xc_key_sock, &pdc_mouse_status,
-            sizeof(MOUSE_STATUS)) < 0)
-            XCursesExitCursesProcess(2, "exiting from PDC_get_key");
+        xc_resize_now = FALSE;
+        SP->key_code = TRUE;
+        return KEY_RESIZE;
     }
+
+    XtAppNextEvent(app_context, &event);
+
+    switch (event.type)
+    {
+    case KeyPress:
+    case KeyRelease:
+        newkey = XCursesKeyPress(&event);
+        break;
+    case ButtonPress:
+    case ButtonRelease:
+    case MotionNotify:
+        newkey = XCursesMouse(&event);
+        break;
+    default:
+        XtDispatchEvent(&event);
+        return -1;
+    }
+
+    if ((unsigned long)(-1) == newkey)
+        return -1;
+
+    key = (int)newkey;
 
     PDC_LOG(("%s:PDC_get_key() - key %d returned\n", XCLOGMSG, key));
 
     return key;
-}
-
-unsigned long PDC_get_input_fd(void)
-{
-    PDC_LOG(("PDC_get_input_fd() - called\n"));
-
-    return xc_key_sock;
 }
 
 void PDC_set_keyboard_binary(bool on)

@@ -56,33 +56,29 @@ int PDC_curs_set(int visibility)
 
 void PDC_set_title(const char *title)
 {
-    int len;
-
     PDC_LOG(("PDC_set_title() - called:<%s>\n", title));
 
-    len = strlen(title) + 1;        /* write nul character */
-
-    XCursesInstruct(CURSES_TITLE);
-
-    if (XC_write_display_socket_int(len) >= 0)
-        if (XC_write_socket(xc_display_sock, title, len) >= 0)
-            return;
-
-    XCursesExitCursesProcess(1, "exiting from PDC_set_title");
+    XCursesTitle(title);
 }
 
 int PDC_set_blink(bool blinkon)
 {
-    if (pdc_color_started)
+    if (!SP)
+        return ERR;
+
+    if (SP->color_started)
         COLORS = PDC_MAXCOL;
 
-    XCursesInstruct(blinkon ? CURSES_BLINK_ON : CURSES_BLINK_OFF);
+    XC_set_blink(blinkon);
 
     return OK;
 }
 
 int PDC_set_bold(bool boldon)
 {
+    if (!SP)
+        return ERR;
+
     if (boldon)
         SP->termattrs |= A_BOLD;
     else

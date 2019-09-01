@@ -44,16 +44,10 @@ XCursesAppData xc_app_data;
 #include "../common/icon64.xpm"
 #include "../common/icon32.xpm"
 
-static void _selection_off(void);
 static void _display_cursor(int, int, int, int);
 static void _redraw_cursor(void);
-static void _exit_process(int, int, char *);
-static void _send_key_to_curses(unsigned long, MOUSE_STATUS *, bool);
 
 static void XCursesButton(Widget, XEvent *, String *, Cardinal *);
-static void XCursesHandleString(Widget, XEvent *, String *, Cardinal *);
-static void XCursesKeyPress(Widget, XEvent *, String *, Cardinal *);
-static void XCursesPasteSelection(Widget, XButtonEvent *);
 
 static struct
 {
@@ -201,31 +195,37 @@ static struct
  {0,            0,      0,           0,            0,           0}
 };
 
-#define BITMAPDEPTH 1
-
-unsigned long pdc_key_modifiers = 0L;
-
 static GC normal_gc, rect_cursor_gc, italic_gc, bold_gc, border_gc;
 static int font_height, font_width, font_ascent, font_descent,
            window_width, window_height;
 static int resize_window_width = 0, resize_window_height = 0;
 static KeySym keysym = 0;
+
+XtAppContext app_context;
+Widget topLevel;
+
 static Atom wm_atom[2];
 static String class_name = "XCurses";
-static XtAppContext app_context;
-static Widget topLevel, drawing, scrollBox, scrollVert, scrollHoriz;
+static Widget drawing, scrollBox, scrollVert, scrollHoriz;
 static int received_map_notify = 0;
-static bool mouse_selection = FALSE;
-static chtype *tmpsel = NULL;
+static char *tmpsel = NULL;
 static unsigned long tmpsel_length = 0;
-static int selection_start_x = 0, selection_start_y = 0,
-           selection_end_x = 0, selection_end_y = 0;
 static Pixmap icon_pixmap;
 static Pixmap icon_pixmap_mask;
 static bool visible_cursor = FALSE;
 static bool window_entered = TRUE;
+static bool exposed = FALSE;
 static char *program_name;
 static bool blinked_off;
+
+unsigned char *Xcurscr;
+
+int XCursesLINES = 24;
+int XCursesCOLS = 80;
+
+bool xc_resize_now = FALSE;
+char *xc_selection = NULL;
+long xc_selection_len = 0;
 
 /* Macros just for app_resources */
 
@@ -306,13 +306,11 @@ static XtResource app_resources[] =
 
     RSTRING(bitmap, Bitmap),
     RSTRING(pixmap, Pixmap),
-
     RCURSOR(pointer, Pointer, xterm),
 
     RPIXEL(pointerForeColor, PointerForeColor, Black),
     RPIXEL(pointerBackColor, PointerBackColor, White),
 
-    RINT(shmmin, Shmmin, 0),
     RINT(borderWidth, BorderWidth, 0),
 
     RPIXEL(borderColor, BorderColor, Black),
@@ -347,7 +345,7 @@ static XrmOptionDescRec options[] =
     COPT(lines), COPT(cols), COPT(normalFont), COPT(italicFont),
     COPT(boldFont), COPT(bitmap),
     COPT(pixmap),
-    COPT(pointer), COPT(shmmin), COPT(clickPeriod),
+    COPT(pointer), COPT(clickPeriod),
     COPT(doubleClickPeriod), COPT(scrollbarWidth),
     COPT(pointerForeColor), COPT(pointerBackColor),
     COPT(cursorBlinkRate), COPT(cursorColor), COPT(textCursor),
@@ -366,13 +364,9 @@ static XrmOptionDescRec options[] =
 
 static XtActionsRec action_table[] =
 {
-    {"XCursesButton",         (XtActionProc)XCursesButton},
-    {"XCursesKeyPress",       (XtActionProc)XCursesKeyPress},
-    {"XCursesPasteSelection", (XtActionProc)XCursesPasteSelection},
-    {"string",                (XtActionProc)XCursesHandleString}
+    {"XCursesButton",         (XtActionProc)XCursesButton}
 };
 
-static bool after_first_curses_request = FALSE;
 static Pixel colors[PDC_MAXCOL + 2];
 static bool vertical_cursor = FALSE;
 
@@ -381,88 +375,17 @@ static XIC Xic = NULL;
 
 static const char *default_translations =
 {
-    "<Key>: XCursesKeyPress() \n" \
-    "<KeyUp>: XCursesKeyPress() \n" \
     "<BtnDown>: XCursesButton() \n" \
     "<BtnUp>: XCursesButton() \n" \
     "<BtnMotion>: XCursesButton()"
 };
 
-static int _to_utf8(char *outcode, chtype code)
+#ifdef PDCDEBUG
+void XC_say(const char *msg)
 {
-#ifdef PDC_WIDE
-    if (code & A_ALTCHARSET && !(code & 0xff80))
-        code = acs_map[code & 0x7f];
+    PDC_LOG(("%s:%s", XCLOGMSG, msg));
+}
 #endif
-    code &= A_CHARTEXT;
-
-    if (code < 0x80)
-    {
-        outcode[0] = code;
-        return 1;
-    }
-    else
-        if (code < 0x800)
-        {
-            outcode[0] = ((code & 0x07c0) >> 6) | 0xc0;
-            outcode[1] = (code & 0x003f) | 0x80;
-            return 2;
-        }
-        else
-        {
-            outcode[0] = ((code & 0xf000) >> 12) | 0xe0;
-            outcode[1] = ((code & 0x0fc0) >> 6) | 0x80;
-            outcode[2] = (code & 0x003f) | 0x80;
-            return 3;
-        }
-}
-
-static int _from_utf8(wchar_t *pwc, const char *s, size_t n)
-{
-    wchar_t key;
-    int i = -1;
-    const unsigned char *string;
-
-    if (!s || (n < 1))
-        return -1;
-
-    if (!*s)
-        return 0;
-
-    string = (const unsigned char *)s;
-
-    key = string[0];
-
-    /* Simplistic UTF-8 decoder -- only does the BMP, minimal validation */
-
-    if (key & 0x80)
-    {
-        if ((key & 0xe0) == 0xc0)
-        {
-            if (1 < n)
-            {
-                key = ((key & 0x1f) << 6) | (string[1] & 0x3f);
-                i = 2;
-            }
-        }
-        else if ((key & 0xe0) == 0xe0)
-        {
-            if (2 < n)
-            {
-                key = ((key & 0x0f) << 12) |
-                      ((string[1] & 0x3f) << 6) | (string[2] & 0x3f);
-                i = 3;
-            }
-        }
-    }
-    else
-        i = 1;
-
-    if (i)
-        *pwc = key;
-
-    return i;
-}
 
 #ifndef X_HAVE_UTF8_STRING
 static Atom XA_UTF8_STRING(Display *dpy)
@@ -476,52 +399,6 @@ static Atom XA_UTF8_STRING(Display *dpy)
 }
 #endif
 
-signal_handler XCursesSetSignal(int signo, signal_handler action)
-{
-#if defined(SA_INTERRUPT) || defined(SA_RESTART)
-    struct sigaction sigact, osigact;
-
-    sigact.sa_handler = action;
-
-    sigact.sa_flags =
-# ifdef SA_INTERRUPT
-#  ifdef SA_RESTART
-        SA_INTERRUPT | SA_RESTART;
-#  else
-        SA_INTERRUPT;
-#  endif
-# else  /* must be SA_RESTART */
-        SA_RESTART;
-# endif
-    sigemptyset(&sigact.sa_mask);
-
-    if (sigaction(signo, &sigact, &osigact))
-        return SIG_ERR;
-
-    return osigact.sa_handler;
-
-#else   /* not SA_INTERRUPT or SA_RESTART, use plain signal */
-    return signal(signo, action);
-#endif
-}
-
-void XCursesSigwinchHandler(int signo)
-{
-    PDC_LOG(("%s:XCursesSigwinchHandler() - called: SIGNO: %d\n",
-             XCLOGMSG, signo));
-
-    /* Patch by: Georg Fuchs, georg.fuchs@rz.uni-regensburg.de
-       02-Feb-1999 */
-
-    SP->resized += 1;
-
-    /* Always trap SIGWINCH if the C library supports SIGWINCH */
-
-#ifdef SIGWINCH
-    XCursesSetSignal(SIGWINCH, XCursesSigwinchHandler);
-#endif
-}
-
 /* Convert character positions x and y to pixel positions, stored in
    xpos and ypos */
 
@@ -534,7 +411,7 @@ static void _make_xy(int x, int y, int *xpos, int *ypos)
 
 /* Output a block of characters with common attributes */
 
-static int _new_packet(chtype attr, bool rev, int len, int col, int row,
+static int _new_packet(chtype attr, int len, int col, int row,
 #ifdef PDC_WIDE
                        XChar2b *text)
 #else
@@ -546,6 +423,7 @@ static int _new_packet(chtype attr, bool rev, int len, int col, int row,
     int xpos, ypos;
     short fore, back;
     attr_t sysattrs;
+    bool rev;
 
     PDC_pair_content(PAIR_NUMBER(attr), &fore, &back);
 
@@ -558,9 +436,7 @@ static int _new_packet(chtype attr, bool rev, int len, int col, int row,
     if ((attr & A_BLINK) && !(sysattrs & A_BLINK))
         back |= 8;
 
-    /* Reverse flag = highlighted selection XOR A_REVERSE set */
-
-    rev ^= !!(attr & A_REVERSE);
+    rev = !!(attr & A_REVERSE);
 
     /* Determine which GC to use - normal, italic or bold */
 
@@ -640,8 +516,7 @@ static int _new_packet(chtype attr, bool rev, int len, int col, int row,
 
 /* The core display routine -- update one line of text */
 
-static int _display_text(const chtype *ch, int row, int col,
-                         int num_cols, bool highlight)
+static int _display_text(const chtype *ch, int row, int col, int num_cols)
 {
 #ifdef PDC_WIDE
     XChar2b text[513];
@@ -682,7 +557,7 @@ static int _display_text(const chtype *ch, int row, int col,
 #endif
         if (attr != old_attr)
         {
-            if (_new_packet(old_attr, highlight, i, col, row, text) == ERR)
+            if (_new_packet(old_attr, i, col, row, text) == ERR)
                 return ERR;
 
             old_attr = attr;
@@ -698,7 +573,7 @@ static int _display_text(const chtype *ch, int row, int col,
 #endif
     }
 
-    return _new_packet(old_attr, highlight, i, col, row, text);
+    return _new_packet(old_attr, i, col, row, text);
 }
 
 static void _get_gc(GC *gc, XFontStruct *font_info, int fore, int back)
@@ -761,9 +636,9 @@ static void _initialize_colors(void)
     colors[COLOR_BORDER] = xc_app_data.borderColor;
 }
 
-static void _refresh_scrollbar(void)
+void XC_refresh_scrollbar(void)
 {
-    XC_LOG(("_refresh_scrollbar() - called\n"));
+    XC_LOG(("XC_refresh_scrollbar() - called\n"));
 
     if (SP->sb_on)
     {
@@ -909,12 +784,8 @@ static void _display_screen(void)
 
     for (row = 0; row < XCursesLINES; row++)
     {
-        XC_get_line_lock(row);
-
         _display_text((const chtype *)(Xcurscr + XCURSCR_Y_OFF(row)),
-                      row, 0, COLS, FALSE);
-
-        XC_release_line_lock(row);
+                      row, 0, COLS);
     }
 
     _redraw_cursor();
@@ -923,11 +794,11 @@ static void _display_screen(void)
 
 /* Draw changed portions of the screen */
 
-static void _refresh_screen(void)
+void XC_refresh_screen(void)
 {
     int row, start_col, num_cols;
 
-    XC_LOG(("_refresh_screen() - called\n"));
+    XC_LOG(("XC_refresh_screen() - called\n"));
 
     for (row = 0; row < XCursesLINES; row++)
     {
@@ -935,21 +806,15 @@ static void _refresh_screen(void)
 
         if (num_cols)
         {
-            XC_get_line_lock(row);
-
             start_col = (int)*(Xcurscr + XCURSCR_START_OFF + row);
 
             _display_text((const chtype *)(Xcurscr + XCURSCR_Y_OFF(row) +
                           (start_col * sizeof(chtype))), row, start_col,
-                          num_cols, FALSE);
+                          num_cols);
 
             *(Xcurscr + XCURSCR_LENGTH_OFF + row) = 0;
-
-            XC_release_line_lock(row);
         }
     }
-
-    _selection_off();
 }
 
 static void _handle_expose(Widget w, XtPointer client_data, XEvent *event,
@@ -962,7 +827,9 @@ static void _handle_expose(Widget w, XtPointer client_data, XEvent *event,
     if (event->xexpose.count)
         return;
 
-    if (after_first_curses_request && received_map_notify)
+    exposed = TRUE;
+
+    if (received_map_notify)
         _display_screen();
 }
 
@@ -971,8 +838,8 @@ static void _handle_nonmaskable(Widget w, XtPointer client_data, XEvent *event,
 {
     XClientMessageEvent *client_event = (XClientMessageEvent *)event;
 
-    PDC_LOG(("%s:_handle_nonmaskable called: xc_otherpid %d event %d\n",
-             XCLOGMSG, xc_otherpid, event->type));
+    PDC_LOG(("%s:_handle_nonmaskable called: event %d\n",
+             XCLOGMSG, event->type));
 
     if (event->type == ClientMessage)
     {
@@ -983,12 +850,11 @@ static void _handle_nonmaskable(Widget w, XtPointer client_data, XEvent *event,
            Removed on 3-3-2001. Now only exits on WM_DELETE_WINDOW. */
 
         if ((Atom)client_event->data.s[0] == wm_atom[0])
-            _exit_process(0, SIGKILL, "");
+            XCursesExit();
     }
 }
 
-static void XCursesKeyPress(Widget w, XEvent *event, String *params,
-                            Cardinal *nparams)
+unsigned long XCursesKeyPress(XEvent *event)
 {
     Status status;
     wchar_t buffer[120];
@@ -999,6 +865,11 @@ static void XCursesKeyPress(Widget w, XEvent *event, String *params,
     bool key_code = FALSE;
 
     XC_LOG(("XCursesKeyPress() - called\n"));
+
+    /* In compose -- ignore elements */
+
+    if (XFilterEvent(event, XCURSESWIN))
+        return -1;
 
     /* Handle modifier keys first; ignore other KeyReleases */
 
@@ -1031,10 +902,13 @@ static void XCursesKeyPress(Widget w, XEvent *event, String *params,
             }
 
             if (key)
-                _send_key_to_curses(key, NULL, TRUE);
+            {
+                SP->key_code = TRUE;
+                return key;
+            }
         }
 
-        return;
+        return -1;
     }
 
     buffer[0] = '\0';
@@ -1046,39 +920,25 @@ static void XCursesKeyPress(Widget w, XEvent *event, String *params,
 
     PDC_LOG(("%s:Key mask: %x\n", XCLOGMSG, event->xkey.state));
 
-#ifdef PDCDEBUG
-    for (i = 0; i < 4; i++)
-        PDC_debug("%s:Keysym %x %d\n", XCLOGMSG,
-                  XKeycodeToKeysym(XCURSESDISPLAY, event->xkey.keycode, i), i);
-#endif
+    /* 0x10: usually, numlock modifier */
 
-    /* To get here we are procesing "normal" keys */
+    if (event->xkey.state & Mod2Mask)
+        modifier |= PDC_KEY_MODIFIER_NUMLOCK;
 
-    PDC_LOG(("%s:Keysym %x %d\n", XCLOGMSG,
-             XKeycodeToKeysym(XCURSESDISPLAY, event->xkey.keycode, key), key));
+    /* 0x01: shift modifier */
 
-    if (SP->save_key_modifiers)
-    {
-        /* 0x10: usually, numlock modifier */
+    if (event->xkey.state & ShiftMask)
+        modifier |= PDC_KEY_MODIFIER_SHIFT;
 
-        if (event->xkey.state & Mod2Mask)
-            modifier |= PDC_KEY_MODIFIER_NUMLOCK;
+    /* 0x04: control modifier */
 
-        /* 0x01: shift modifier */
+    if (event->xkey.state & ControlMask)
+        modifier |= PDC_KEY_MODIFIER_CONTROL;
 
-        if (event->xkey.state & ShiftMask)
-            modifier |= PDC_KEY_MODIFIER_SHIFT;
+    /* 0x08: usually, alt modifier */
 
-        /* 0x04: control modifier */
-
-        if (event->xkey.state & ControlMask)
-            modifier |= PDC_KEY_MODIFIER_CONTROL;
-
-        /* 0x08: usually, alt modifier */
-
-        if (event->xkey.state & Mod1Mask)
-            modifier |= PDC_KEY_MODIFIER_ALT;
-    }
+    if (event->xkey.state & Mod1Mask)
+        modifier |= PDC_KEY_MODIFIER_ALT;
 
     for (i = 0; key_table[i].keycode; i++)
     {
@@ -1150,118 +1010,13 @@ static void XCursesKeyPress(Widget w, XEvent *event, String *params,
 
     if (key)
     {
-        key |= (modifier << 24);
+        SP->key_modifiers = modifier;
 
-        _send_key_to_curses(key, NULL, key_code);
-    }
-}
-
-static void XCursesHandleString(Widget w, XEvent *event, String *params,
-                                Cardinal *nparams)
-{
-    unsigned char *ptr;
-
-    if (*nparams != 1)
-        return;
-
-    ptr = (unsigned char *)*params;
-
-    if (ptr[0] == '0' && ptr[1] == 'x' && ptr[2] != '\0')
-    {
-        unsigned char c;
-        unsigned long total = 0;
-
-        for (ptr += 2; (c = tolower(*ptr)); ptr++)
-        {
-            total <<= 4;
-
-            if (c >= '0' && c <= '9')
-                total += c - '0';
-            else
-                if (c >= 'a' && c <= 'f')
-                    total += c - ('a' - 10);
-                else
-                    break;
-        }
-
-        if (c == '\0')
-            _send_key_to_curses(total, NULL, FALSE);
-    }
-    else
-        for (; *ptr; ptr++)
-            _send_key_to_curses((unsigned long)*ptr, NULL, FALSE);
-}
-
-static void _paste_string(Widget w, XtPointer data, Atom *selection, Atom *type,
-                          XtPointer value, unsigned long *length, int *format)
-{
-    unsigned long i, key;
-    unsigned char *string = value;
-
-    XC_LOG(("_paste_string() - called\n"));
-
-    if (!*type || !*length || !string)
-        return;
-
-    for (i = 0; string[i] && (i < (*length)); i++)
-    {
-        key = string[i];
-
-        if (key == 10)      /* new line - convert to ^M */
-            key = 13;
-
-        _send_key_to_curses(key, NULL, FALSE);
+        SP->key_code = key_code;
+        return key;
     }
 
-    XtFree(value);
-}
-
-static void _paste_utf8(Widget w, XtPointer event, Atom *selection, Atom *type,
-                        XtPointer value, unsigned long *length, int *format)
-{
-    wchar_t key;
-    size_t i = 0, len;
-    char *string = value;
-
-    XC_LOG(("_paste_utf8() - called\n"));
-
-    if (!*type || !*length)
-    {
-        XtGetSelectionValue(w, XA_PRIMARY, XA_STRING, _paste_string,
-                            event, ((XButtonEvent *)event)->time);
-        return;
-    }
-
-    len = *length;
-
-    if (!string)
-        return;
-
-    while (string[i] && (i < len))
-    {
-        int retval = _from_utf8(&key, string + i, len - i);
-
-        if (retval < 1)
-            return;
-
-        if (key == 10)      /* new line - convert to ^M */
-            key = 13;
-
-        _send_key_to_curses(key, NULL, FALSE);
-
-        i += retval;
-    }
-
-    XtFree(value);
-}
-
-static void XCursesPasteSelection(Widget w, XButtonEvent *button_event)
-{
-    XC_LOG(("XCursesPasteSelection() - called\n"));
-
-    XtGetSelectionValue(w, XA_PRIMARY, XA_UTF8_STRING(XtDisplay(w)),
-                        _paste_utf8, (XtPointer)button_event,
-                        button_event->time);
+    return -1;
 }
 
 static Boolean _convert_proc(Widget w, Atom *selection, Atom *target,
@@ -1295,28 +1050,21 @@ static Boolean _convert_proc(Widget w, Atom *selection, Atom *target,
 
         XtFree((char *)std_targets);
         *type_return = XA_ATOM;
-        *format_return = sizeof(Atom) * 8;
+        *format_return = 8;
 
         return True;
     }
     else if (*target == XA_UTF8_STRING(XtDisplay(topLevel)) ||
              *target == XA_STRING)
     {
-        bool utf8 = !(*target == XA_STRING);
-        char *data = XtMalloc(tmpsel_length * 3 + 1);
-        chtype *tmp = tmpsel;
+        char *data = XtMalloc(tmpsel_length + 1);
+        char *tmp = tmpsel;
         int ret_length = 0;
 
-        if (utf8)
-        {
-            while (*tmp)
-                ret_length += _to_utf8(data + ret_length, *tmp++);
-        }
-        else
-            while (*tmp)
-                data[ret_length++] = *tmp++ & 0xff;
+        while (*tmp)
+            data[ret_length++] = *tmp++;
 
-        data[ret_length++] = '\0';
+        data[ret_length] = '\0';
 
         *value_return = data;
         *length_return = ret_length;
@@ -1340,275 +1088,6 @@ static void _lose_ownership(Widget w, Atom *type)
 
     tmpsel = NULL;
     tmpsel_length = 0;
-    _selection_off();
-}
-
-static void _show_selection(int start_x, int start_y, int end_x, int end_y,
-                            bool highlight)
-{
-    int i, num_cols, start_col, row;
-
-    PDC_LOG(("%s:_show_selection() - called StartX: %d StartY: %d "
-             "EndX: %d EndY: %d Highlight: %d\n", XCLOGMSG,
-             start_x, start_y, end_x, end_y, highlight));
-
-    for (i = 0; i < end_y - start_y + 1; i++)
-    {
-        if (start_y == end_y)       /* only one line */
-        {
-            start_col = start_x;
-            num_cols = end_x - start_x + 1;
-            row = start_y;
-        }
-        else if (!i)            /* first line */
-        {
-            start_col = start_x;
-            num_cols = COLS - start_x;
-            row = start_y;
-        }
-        else if (start_y + i == end_y)  /* last line */
-        {
-            start_col = 0;
-            num_cols = end_x + 1;
-            row = end_y;
-        }
-        else                /* full line */
-        {
-            start_col = 0;
-            num_cols = COLS;
-            row = start_y + i;
-        }
-
-        XC_get_line_lock(row);
-
-        _display_text((const chtype *)(Xcurscr + XCURSCR_Y_OFF(row) +
-                      (start_col * sizeof(chtype))), row, start_col,
-                      num_cols, highlight);
-
-        XC_release_line_lock(row);
-    }
-}
-
-static void _selection_off(void)
-{
-    XC_LOG(("_selection_off() - called\n"));
-
-    if (mouse_selection)
-    {
-        _display_screen();
-
-        selection_start_x = selection_start_y = selection_end_x =
-            selection_end_y = 0;
-
-        mouse_selection = FALSE;
-    }
-}
-
-static void _selection_on(int x, int y)
-{
-    XC_LOG(("_selection_on() - called\n"));
-
-    selection_start_x = selection_end_x = x;
-    selection_start_y = selection_end_y = y;
-}
-
-static void _selection_extend(int x, int y)
-{
-    int temp, current_start, current_end, current_start_x,
-        current_end_x, current_start_y, current_end_y, new_start,
-        new_end, new_start_x, new_end_x, new_start_y, new_end_y;
-
-    XC_LOG(("_selection_extend() - called\n"));
-
-    mouse_selection = TRUE;
-
-    /* convert x/y coordinates into start/stop */
-
-    current_start = (selection_start_y * COLS) + selection_start_x;
-    current_end = (selection_end_y * COLS) + selection_end_x;
-
-    if (current_start > current_end)
-    {
-        current_start_x = selection_end_x;
-        current_start_y = selection_end_y;
-        current_end_x = selection_start_x;
-        current_end_y = selection_start_y;
-        temp = current_start;
-        current_start = current_end;
-        current_end = temp;
-    }
-    else
-    {
-        current_end_x = selection_end_x;
-        current_end_y = selection_end_y;
-        current_start_x = selection_start_x;
-        current_start_y = selection_start_y;
-    }
-
-    /* Now we have the current selection as a linear expression.
-       Convert the new position to a linear expression. */
-
-    selection_end_x = x;
-    selection_end_y = y;
-
-    /* convert x/y coordinates into start/stop */
-
-    new_start = (selection_start_y * COLS) + selection_start_x;
-    new_end = (selection_end_y * COLS) + selection_end_x;
-
-    if (new_start > new_end)
-    {
-        new_start_x = selection_end_x;
-        new_start_y = selection_end_y;
-        new_end_x = selection_start_x;
-        new_end_y = selection_start_y;
-        temp = new_start;
-        new_start = new_end;
-        new_end = temp;
-    }
-    else
-    {
-        new_end_x = selection_end_x;
-        new_end_y = selection_end_y;
-        new_start_x = selection_start_x;
-        new_start_y = selection_start_y;
-    }
-
-    if (new_end > current_end)
-        _show_selection(current_end_x, current_end_y, new_end_x,
-                        new_end_y, TRUE);
-    else if (new_end < current_end)
-        _show_selection(new_end_x, new_end_y, current_end_x,
-                        current_end_y, FALSE);
-    else if (new_start < current_start)
-        _show_selection(new_start_x, new_start_y, current_start_x,
-                        current_start_y, TRUE);
-    else if (new_start > current_start)
-        _show_selection(current_start_x, current_start_y,
-                        new_start_x, new_start_y, FALSE);
-    else
-        _show_selection(current_start_x, current_start_y,
-                        new_start_x, new_start_y, TRUE);
-}
-
-static void _selection_set(void)
-{
-    int i, j, start, end, start_x, end_x, start_y, end_y, num_cols,
-        start_col, row, num_chars, ch, last_nonblank, length, newlen;
-    chtype *ptr = NULL;
-
-    XC_LOG(("_selection_set() - called\n"));
-
-    /* convert x/y coordinates into start/stop */
-
-    start = (selection_start_y * COLS) + selection_start_x;
-    end = (selection_end_y * COLS) + selection_end_x;
-
-    if (start == end)
-    {
-        if (tmpsel)
-            free(tmpsel);
-
-        tmpsel = NULL;
-        tmpsel_length = 0;
-
-        return;
-    }
-
-    if (start > end)
-    {
-        start_x = selection_end_x;
-        start_y = selection_end_y;
-        end_x = selection_start_x;
-        end_y = selection_start_y;
-        length = start - end + 1;
-    }
-    else
-    {
-        end_x = selection_end_x;
-        end_y = selection_end_y;
-        start_x = selection_start_x;
-        start_y = selection_start_y;
-        length = end - start + 1;
-    }
-
-    newlen = length + end_y - start_y + 2;
-
-    if (length > (int)tmpsel_length)
-    {
-        if (!tmpsel_length)
-            tmpsel = malloc(newlen * sizeof(chtype));
-        else
-            tmpsel = realloc(tmpsel, newlen * sizeof(chtype));
-    }
-
-    if (!tmpsel)
-    {
-        tmpsel_length = 0;
-        return;
-    }
-
-    tmpsel_length = length;
-    num_chars = 0;
-
-    for (i = 0; i < end_y - start_y + 1; i++)
-    {
-
-        if (start_y == end_y)       /* only one line */
-        {
-            start_col = start_x;
-            num_cols = end_x - start_x + 1;
-            row = start_y;
-        }
-        else if (!i)            /* first line */
-        {
-            start_col = start_x;
-            num_cols = COLS - start_x;
-            row = start_y;
-        }
-        else if (start_y + i == end_y)  /* last line */
-        {
-            start_col = 0;
-            num_cols = end_x + 1;
-            row = end_y;
-        }
-        else                /* full line */
-        {
-            start_col = 0;
-            num_cols = COLS;
-            row = start_y + i;
-        }
-
-        XC_get_line_lock(row);
-
-        ptr = (chtype *)(Xcurscr + XCURSCR_Y_OFF(row) +
-              start_col * sizeof(chtype));
-
-        if (i < end_y - start_y)
-        {
-            last_nonblank = 0;
-
-            for (j = 0; j < num_cols; j++)
-            {
-                ch = (int)(ptr[j] & A_CHARTEXT);
-                if (ch != (int)' ')
-                    last_nonblank = j;
-            }
-        }
-        else
-            last_nonblank = num_cols - 1;
-
-        for (j = 0; j <= last_nonblank; j++)
-            tmpsel[num_chars++] = ptr[j];
-
-        XC_release_line_lock(row);
-
-        if (i < end_y - start_y)
-            tmpsel[num_chars++] = '\n';
-    }
-
-    tmpsel[num_chars] = '\0';
-    tmpsel_length = num_chars;
 }
 
 static void _display_cursor(int old_row, int old_x, int new_row, int new_x)
@@ -1633,7 +1112,7 @@ static void _display_cursor(int old_row, int old_x, int new_row, int new_x)
              XCLOGMSG, old_row, old_x));
 
     _display_text((const chtype *)(Xcurscr + (XCURSCR_Y_OFF(old_row) +
-                  (old_x * sizeof(chtype)))), old_row, old_x, 1, FALSE);
+                  (old_x * sizeof(chtype)))), old_row, old_x, 1);
 
     /* display the cursor at the new cursor position */
 
@@ -1717,51 +1196,11 @@ static void _handle_enter_leave(Widget w, XtPointer client_data,
     }
 }
 
-static void _send_key_to_curses(unsigned long key, MOUSE_STATUS *ms,
-                                bool key_code)
-{
-    PDC_LOG(("%s:_send_key_to_curses() - called: sending %d\n",
-             XCLOGMSG, key));
-
-    SP->key_code = key_code;
-
-    if (XC_write_socket(xc_key_sock, &key, sizeof(unsigned long)) < 0)
-        _exit_process(1, SIGKILL, "exiting from _send_key_to_curses");
-
-    if (ms)
-    {
-        MOUSE_LOG(("%s:writing mouse stuff\n", XCLOGMSG));
-
-        if (XC_write_socket(xc_key_sock, ms, sizeof(MOUSE_STATUS)) < 0)
-            _exit_process(1, SIGKILL, "exiting from _send_key_to_curses");
-    }
-}
-
 static void _blink_cursor(XtPointer unused, XtIntervalId *id)
 {
     XC_LOG(("_blink_cursor() - called:\n"));
 
-    if (window_entered)
-    {
-        if (visible_cursor)
-        {
-            /* Cursor currently ON, turn it off */
-
-            int save_visibility = SP->visibility;
-            SP->visibility = 0;
-            _redraw_cursor();
-            SP->visibility = save_visibility;
-            visible_cursor = FALSE;
-        }
-        else
-        {
-            /* Cursor currently OFF, turn it on */
-
-            _redraw_cursor();
-            visible_cursor = TRUE;
-        }
-    }
-
+    XCursesDisplayCursor();
     XtAppAddTimeOut(app_context, xc_app_data.cursorBlinkRate,
                     _blink_cursor, NULL);
 }
@@ -1789,9 +1228,7 @@ static void _blink_text(XtPointer unused, XtIntervalId *id)
                 while (ch[k] & A_BLINK && k < COLS)
                     k++;
 
-                XC_get_line_lock(row);
-                _display_text(ch + j, row, j, k - j, FALSE);
-                XC_release_line_lock(row);
+                _display_text(ch + j, row, j, k - j);
 
                 j = k;
             }
@@ -1808,19 +1245,17 @@ static void _blink_text(XtPointer unused, XtIntervalId *id)
 static void XCursesButton(Widget w, XEvent *event, String *params,
                           Cardinal *nparams)
 {
+}
+
+unsigned long XCursesMouse(XEvent *event)
+{
     int button_no;
     static int last_button_no = 0;
-    static Time last_button_press_time = 0;
-    MOUSE_STATUS save_mouse_status;
-    bool send_key = TRUE;
-    static bool remove_release;
-    static bool handle_real_release;
 
-    XC_LOG(("XCursesButton() - called\n"));
+    XC_LOG(("XCursesMouse() - called\n"));
 
     keysym = 0; /* suppress any modifier key return */
 
-    save_mouse_status = Mouse_status;
     button_no = event->xbutton.button;
 
     /* It appears that under X11R6 (at least on Linux), that an
@@ -1828,12 +1263,12 @@ static void XCursesButton(Widget w, XEvent *event, String *params,
        the event. The following code is designed to cater for this
        situation. */
 
-    if (!button_no)
-        button_no = last_button_no;
+    SP->mouse_status.changes = 0;
 
-    last_button_no = button_no;
-
-    Mouse_status.changes = 0;
+    SP->mouse_status.x = (event->xbutton.x - xc_app_data.borderWidth) /
+                         font_width;
+    SP->mouse_status.y = (event->xbutton.y - xc_app_data.borderWidth) /
+                         font_height;
 
     switch(event->type)
     {
@@ -1842,70 +1277,53 @@ static void XCursesButton(Widget w, XEvent *event, String *params,
            mouse scroll up and down, and button 6 and 7, which are
            normally mapped to the wheel mouse scroll left and right */
 
+        last_button_no = button_no;
+
         if (button_no >= 4 && button_no <= 7)
         {
             /* Send the KEY_MOUSE to curses program */
 
-            memset(&Mouse_status, 0, sizeof(Mouse_status));
+            memset(&SP->mouse_status, 0, sizeof(SP->mouse_status));
 
             switch(button_no)
             {
                case 4:
-                  Mouse_status.changes = PDC_MOUSE_WHEEL_UP;
+                  SP->mouse_status.changes = PDC_MOUSE_WHEEL_UP;
                   break;
                case 5:
-                  Mouse_status.changes = PDC_MOUSE_WHEEL_DOWN;
+                  SP->mouse_status.changes = PDC_MOUSE_WHEEL_DOWN;
                   break;
                case 6:
-                  Mouse_status.changes = PDC_MOUSE_WHEEL_LEFT;
+                  SP->mouse_status.changes = PDC_MOUSE_WHEEL_LEFT;
                   break;
                case 7:
-                  Mouse_status.changes = PDC_MOUSE_WHEEL_RIGHT;
+                  SP->mouse_status.changes = PDC_MOUSE_WHEEL_RIGHT;
             }
 
-            MOUSE_X_POS = MOUSE_Y_POS = -1;
-            _send_key_to_curses(KEY_MOUSE, &Mouse_status, TRUE);
-            remove_release = TRUE;
+            SP->mouse_status.x = SP->mouse_status.y = -1;
 
-            return;
+            SP->key_code = TRUE;
+            return KEY_MOUSE;
         }
-
-        if (button_no == 2 &&
-            (!SP->_trap_mbe || (event->xbutton.state & ShiftMask)))
-        {
-            XCursesPasteSelection(drawing, (XButtonEvent *)event);
-            remove_release = TRUE;
-
-            return;
-        }
-
-        remove_release = False;
-        handle_real_release = False;
 
         MOUSE_LOG(("\nButtonPress\n"));
 
-        if ((event->xbutton.time - last_button_press_time) <
-            xc_app_data.doubleClickPeriod)
-        {
-            MOUSE_X_POS = save_mouse_status.x;
-            MOUSE_Y_POS = save_mouse_status.y;
-            BUTTON_STATUS(button_no) = BUTTON_DOUBLE_CLICKED;
+        SP->mouse_status.button[button_no - 1] = BUTTON_PRESSED;
 
-            _selection_off();
-            remove_release = True;
-        }
-        else
+        napms(SP->mouse_wait);
+        while (XtAppPending(app_context))
         {
-            napms(SP->mouse_wait);
-            event->type = ButtonRelease;
-            XSendEvent(event->xbutton.display, event->xbutton.window,
-                       True, 0, event);
-            last_button_press_time = event->xbutton.time;
+            XEvent rel;
+            XtAppNextEvent(app_context, &rel);
 
-            return;
+            if (rel.type == ButtonRelease && rel.xbutton.button == button_no)
+                SP->mouse_status.button[button_no - 1] = BUTTON_CLICKED;
+            else
+                XSendEvent(XtDisplay(topLevel),
+                           RootWindowOfScreen(XtScreen(topLevel)),
+                           True, 0, &rel);
         }
 
-        last_button_press_time = event->xbutton.time;
         break;
 
     case MotionNotify:
@@ -1913,165 +1331,49 @@ static void XCursesButton(Widget w, XEvent *event, String *params,
                    "Height: %d\n", event->xbutton.y, event->xbutton.x,
                    font_width, font_height));
 
-        MOUSE_X_POS = (event->xbutton.x - xc_app_data.borderWidth) /
-                      font_width;
-        MOUSE_Y_POS = (event->xbutton.y - xc_app_data.borderWidth) /
-                      font_height;
+        button_no = last_button_no;
 
-        if (button_no == 1 &&
-            (!SP->_trap_mbe || (event->xbutton.state & ShiftMask)))
-        {
-            _selection_extend(MOUSE_X_POS, MOUSE_Y_POS);
-            send_key = FALSE;
-        }
-        else
-            _selection_off();
-
-        /* Throw away mouse movements if they are in the same character
-           position as the last mouse event, or if we are currently in
-           the middle of a double click event. */
-
-        if ((MOUSE_X_POS == save_mouse_status.x &&
-             MOUSE_Y_POS == save_mouse_status.y) ||
-             save_mouse_status.button[button_no - 1] == BUTTON_DOUBLE_CLICKED)
-        {
-            send_key = FALSE;
-            break;
-        }
-
-        Mouse_status.changes |= PDC_MOUSE_MOVED;
+        SP->mouse_status.changes |= PDC_MOUSE_MOVED;
         break;
 
     case ButtonRelease:
-        if (remove_release)
-        {
-            MOUSE_LOG(("Release at: %ld - removed\n", event->xbutton.time));
-            return;
-        }
-        else
-        {
-            MOUSE_X_POS = (event->xbutton.x - xc_app_data.borderWidth) /
-                          font_width;
-            MOUSE_Y_POS = (event->xbutton.y - xc_app_data.borderWidth) /
-                          font_height;
-
-            if (!handle_real_release)
-            {
-                if ((event->xbutton.time - last_button_press_time) <
-                    SP->mouse_wait &&
-                    (event->xbutton.time != last_button_press_time))
-                {
-                    /* The "real" release was shorter than usleep() time;
-                       therefore generate a click event */
-
-                    MOUSE_LOG(("Release at: %ld - click\n",
-                               event->xbutton.time));
-
-                    BUTTON_STATUS(button_no) = BUTTON_CLICKED;
-
-                    if (button_no == 1 && mouse_selection &&
-                        (!SP->_trap_mbe || (event->xbutton.state & ShiftMask)))
-                    {
-                        send_key = FALSE;
-
-                        if (XtOwnSelection(topLevel, XA_PRIMARY,
-                                           event->xbutton.time, _convert_proc,
-                                           _lose_ownership, NULL) == False)
-                            _selection_off();
-                    }
-                    else
-                        _selection_off();
-
-                    /* Ensure the "pseudo" release event is ignored */
-
-                    remove_release = True;
-                    handle_real_release = False;
-                    break;
-                }
-                else
-                {
-                    /* Button release longer than usleep() time;
-                       therefore generate a press and wait for the real
-                       release to occur later. */
-
-                    MOUSE_LOG(("Generated Release at: %ld - "
-                               "press & release\n", event->xbutton.time));
-
-                    BUTTON_STATUS(button_no) = BUTTON_PRESSED;
-
-                    if (button_no == 1 &&
-                        (!SP->_trap_mbe || (event->xbutton.state & ShiftMask)))
-                    {
-                        _selection_off();
-                        _selection_on(MOUSE_X_POS, MOUSE_Y_POS);
-                    }
-
-                    handle_real_release = True;
-                    break;
-                }
-            }
-            else
-            {
-                MOUSE_LOG(("Release at: %ld - released\n",
-                           event->xbutton.time));
-            }
-        }
-
         MOUSE_LOG(("\nButtonRelease\n"));
 
-        BUTTON_STATUS(button_no) = BUTTON_RELEASED;
+        /* ignore "releases" of scroll buttons */
 
-        if (button_no == 1 && mouse_selection &&
-            (!SP->_trap_mbe || (event->xbutton.state & ShiftMask)))
-        {
-            send_key = FALSE;
+        if (button_no >= 4 && button_no <= 7)
+            return -1;
 
-            if (XtOwnSelection(topLevel, XA_PRIMARY,
-                               event->xbutton.time, _convert_proc,
-                               _lose_ownership, NULL) == False)
-                _selection_off();
-
-            _selection_set();
-        }
-        else
-            _selection_off();
-
-        break;
+        SP->mouse_status.button[button_no - 1] = BUTTON_RELEASED;
     }
 
     /* Set up the mouse status fields in preparation for sending */
 
-    Mouse_status.changes |= 1 << (button_no - 1);
+    SP->mouse_status.changes |= 1 << (button_no - 1);
 
-    if (Mouse_status.changes & PDC_MOUSE_MOVED &&
-        BUTTON_STATUS(button_no) == BUTTON_PRESSED)
-        BUTTON_STATUS(button_no) = BUTTON_MOVED;
+    if (SP->mouse_status.changes & PDC_MOUSE_MOVED &&
+        (SP->mouse_status.button[button_no - 1] &
+         BUTTON_ACTION_MASK) == BUTTON_PRESSED)
+        SP->mouse_status.button[button_no - 1] = BUTTON_MOVED;
 
     if (event->xbutton.state & ShiftMask)
-        BUTTON_STATUS(button_no) |= BUTTON_SHIFT;
+        SP->mouse_status.button[button_no - 1] |= BUTTON_SHIFT;
     if (event->xbutton.state & ControlMask)
-        BUTTON_STATUS(button_no) |= BUTTON_CONTROL;
+        SP->mouse_status.button[button_no - 1] |= BUTTON_CONTROL;
     if (event->xbutton.state & Mod1Mask)
-        BUTTON_STATUS(button_no) |= BUTTON_ALT;
+        SP->mouse_status.button[button_no - 1] |= BUTTON_ALT;
 
     /* If we are ignoring the event, or the mouse position is outside
        the bounds of the screen (because of the border), return here */
 
-    MOUSE_LOG(("Button: %d x: %d y: %d Button status: %x "
-        "Mouse status: %x\n", button_no, MOUSE_X_POS, MOUSE_Y_POS,
-        BUTTON_STATUS(button_no), Mouse_status.changes));
-
-    MOUSE_LOG(("Send: %d Button1: %x Button2: %x Button3: %x %d %d\n",
-        send_key, BUTTON_STATUS(1), BUTTON_STATUS(2),
-        BUTTON_STATUS(3), XCursesLINES, XCursesCOLS));
-
-    if (!send_key || MOUSE_X_POS < 0 || MOUSE_X_POS >= XCursesCOLS ||
-        MOUSE_Y_POS < 0 || MOUSE_Y_POS >= XCursesLINES)
-        return;
+    if (SP->mouse_status.x < 0 || SP->mouse_status.x >= XCursesCOLS ||
+        SP->mouse_status.y < 0 || SP->mouse_status.y >= XCursesLINES)
+        return -1;
 
     /* Send the KEY_MOUSE to curses program */
 
-    _send_key_to_curses(KEY_MOUSE, &Mouse_status, TRUE);
+    SP->key_code = TRUE;
+    return KEY_MOUSE;
 }
 
 static void _scroll_up_down(Widget w, XtPointer client_data,
@@ -2100,10 +1402,6 @@ static void _scroll_up_down(Widget w, XtPointer client_data,
 
     XawScrollbarSetThumb(w, (double)((double)cur_y / (double)total_y),
                          (double)((double)viewport_y / (double)total_y));
-
-    /* Send a key: if pixels negative, send KEY_SCROLL_DOWN */
-
-    _send_key_to_curses(KEY_SF, NULL, TRUE);
 }
 
 static void _scroll_left_right(Widget w, XtPointer client_data,
@@ -2128,8 +1426,6 @@ static void _scroll_left_right(Widget w, XtPointer client_data,
 
     XawScrollbarSetThumb(w, (double)((double)cur_x / (double)total_x),
                          (double)((double)viewport_x / (double)total_x));
-
-    _send_key_to_curses(KEY_SR, NULL, TRUE);
 }
 
 static void _thumb_up_down(Widget w, XtPointer client_data,
@@ -2152,8 +1448,6 @@ static void _thumb_up_down(Widget w, XtPointer client_data,
 
     XawScrollbarSetThumb(w, (double)(cur_y / total_y),
                          (double)(viewport_y / total_y));
-
-    _send_key_to_curses(KEY_SF, NULL, TRUE);
 }
 
 static void _thumb_left_right(Widget w, XtPointer client_data,
@@ -2173,21 +1467,10 @@ static void _thumb_left_right(Widget w, XtPointer client_data,
 
     XawScrollbarSetThumb(w, (double)(cur_x / total_x),
                          (double)(viewport_x / total_x));
-
-    _send_key_to_curses(KEY_SR, NULL, TRUE);
 }
 
-static void _exit_process(int rc, int sig, char *msg)
+void XCursesExit(void)
 {
-    if (rc || sig)
-        fprintf(stderr, "%s:_exit_process() - called: rc:%d sig:%d <%s>\n",
-                XCLOGMSG, rc, sig, msg);
-
-    shmdt((char *)SP);
-    shmdt((char *)Xcurscr);
-    shmctl(shmidSP, IPC_RMID, 0);
-    shmctl(shmid_Xcurscr, IPC_RMID, 0);
-
     if (icon_pixmap)
         XFreePixmap(XCURSESDISPLAY, icon_pixmap);
     if (icon_pixmap_mask)
@@ -2200,26 +1483,12 @@ static void _exit_process(int rc, int sig, char *msg)
     XFreeGC(XCURSESDISPLAY, border_gc);
     XDestroyIC(Xic);
 
-    shutdown(xc_display_sock, 2);
-    close(xc_display_sock);
-
-    shutdown(xc_exit_sock, 2);
-    close(xc_exit_sock);
-
-    shutdown(xc_key_sock, 2);
-    close(xc_key_sock);
-
-    if (sig)
-        kill(xc_otherpid, sig); /* to kill parent process */
-
-    _exit(rc);
+    _exit(0);
 }
 
-static void _resize(void)
+void XC_resize(void)
 {
     short save_atrtab[PDC_COLOR_PAIRS * 2];
-
-    after_first_curses_request = FALSE;
 
     SP->lines = XCursesLINES = ((resize_window_height -
         (2 * xc_app_data.borderWidth)) / font_height);
@@ -2241,18 +1510,8 @@ static void _resize(void)
     memcpy(save_atrtab, xc_atrtab, sizeof(save_atrtab));
 
     SP->XcurscrSize = XCURSCR_SIZE;
-    shmdt((char *)Xcurscr);
-    shmctl(shmid_Xcurscr, IPC_RMID, 0);
 
-    if ((shmid_Xcurscr = shmget(shmkey_Xcurscr,
-        SP->XcurscrSize + XCURSESSHMMIN, 0700 | IPC_CREAT)) < 0)
-    {
-        perror("Cannot allocate shared memory for curscr");
-
-        _exit_process(4, SIGKILL, "exiting from _process_curses_requests");
-    }
-
-    Xcurscr = (unsigned char*)shmat(shmid_Xcurscr, 0, 0);
+    Xcurscr = (unsigned char*)malloc(XCURSCR_SIZE);
     memset(Xcurscr, 0, SP->XcurscrSize);
     xc_atrtab = (short *)(Xcurscr + XCURSCR_ATRTAB_OFF);
     memcpy(xc_atrtab, save_atrtab, sizeof(save_atrtab));
@@ -2260,50 +1519,33 @@ static void _resize(void)
 
 /* For PDC_set_title() */
 
-static void _set_title(void)
+void XCursesTitle(const char *title)
 {
-    char title[1024];   /* big enough for window title */
-    int pos;
-
-    if ((XC_read_socket(xc_display_sock, &pos, sizeof(int)) < 0) ||
-        (XC_read_socket(xc_display_sock, title, pos) < 0))
-    {
-        _exit_process(5, SIGKILL, "exiting from _set_title");
-    }
-
     XtVaSetValues(topLevel, XtNtitle, title, NULL);
 }
 
 /* For color_content() */
 
-static void _get_color(void)
+XColor XC_get_color(short index)
 {
-    XColor *tmp = (XColor *)(Xcurscr + XCURSCR_XCOLOR_OFF);
-    int index = tmp->pixel;
+    XColor tmp;
     Colormap cmap = DefaultColormap(XCURSESDISPLAY,
                                     DefaultScreen(XCURSESDISPLAY));
 
-    if (index < 0 || index >= PDC_MAXCOL)
-        _exit_process(4, SIGKILL, "exiting from _get_color");
-
-    tmp->pixel = colors[index];
-    XQueryColor(XCURSESDISPLAY, cmap, tmp);
+    tmp.pixel = colors[index];
+    XQueryColor(XCURSESDISPLAY, cmap, &tmp);
+    return tmp;
 }
 
 /* For init_color() */
 
-static void _set_color(void)
+void XC_set_color(short index, XColor tmp)
 {
-    XColor *tmp = (XColor *)(Xcurscr + XCURSCR_XCOLOR_OFF);
-    int index = tmp->pixel;
     Colormap cmap = DefaultColormap(XCURSESDISPLAY,
                                     DefaultScreen(XCURSESDISPLAY));
 
-    if (index < 0 || index >= PDC_MAXCOL)
-        _exit_process(4, SIGKILL, "exiting from _set_color");
-
-    if (XAllocColor(XCURSESDISPLAY, cmap, tmp))
-        colors[index] = tmp->pixel;
+    if (XAllocColor(XCURSESDISPLAY, cmap, &tmp))
+        colors[index] = tmp.pixel;
 }
 
 /* For PDC_getclipboard() */
@@ -2312,132 +1554,49 @@ static void _get_selection(Widget w, XtPointer data, Atom *selection,
                            Atom *type, XtPointer value,
                            unsigned long *length, int *format)
 {
-    unsigned char *src = value;
-    int pos, len = *length;
-
     XC_LOG(("_get_selection() - called\n"));
 
-    if (!value && !len)
+    if (value)
     {
-        if (XC_write_display_socket_int(PDC_CLIP_EMPTY) < 0)
-            _exit_process(4, SIGKILL, "exiting from _get_selection");
+        xc_selection = value;
+        xc_selection_len = (long)(*length);
     }
     else
-    {
-        /* Here all is OK, send PDC_CLIP_SUCCESS, then length, then
-           contents */
-
-        if (XC_write_display_socket_int(PDC_CLIP_SUCCESS) < 0)
-            _exit_process(4, SIGKILL, "exiting from _get_selection");
-
-        if (XC_write_display_socket_int(len) < 0)
-            _exit_process(4, SIGKILL, "exiting from _get_selection");
-
-        for (pos = 0; pos < len; pos++)
-        {
-#ifdef PDC_WIDE
-            wchar_t c;
-#else
-            unsigned char c;
-#endif
-            c = *src++;
-
-            if (XC_write_socket(xc_display_sock, &c, sizeof(c)) < 0)
-                _exit_process(4, SIGKILL, "exiting from _get_selection");
-        }
-    }
+        xc_selection_len = 0;
 }
 
-#ifdef PDC_WIDE
-static void _get_selection_utf8(Widget w, XtPointer data, Atom *selection,
-                                Atom *type, XtPointer value,
-                                unsigned long *length, int *format)
+void XC_get_selection(void)
 {
-    int len = *length;
+    XC_LOG(("XC_get_selection() - called\n"));
 
-    XC_LOG(("_get_selection_utf8() - called\n"));
-
-    if (!*type || !*length)
-    {
-        XtGetSelectionValue(w, XA_PRIMARY, XA_STRING, _get_selection,
-                            (XtPointer)NULL, 0);
-        return;
-    }
-
-    if (!value && !len)
-    {
-        if (XC_write_display_socket_int(PDC_CLIP_EMPTY) >= 0)
-            return;
-    }
-    else
-    {
-        wchar_t *wcontents = malloc((len + 1) * sizeof(wchar_t));
-        char *src = value;
-        int i = 0;
-
-        while (*src && i < (*length))
-        {
-            int retval = _from_utf8(wcontents + i, src, len);
-
-            src += retval;
-            len -= retval;
-            i++;
-        }
-
-        wcontents[i] = 0;
-        len = i;
-
-        /* Here all is OK, send PDC_CLIP_SUCCESS, then length, then
-           contents */
-
-        if (XC_write_display_socket_int(PDC_CLIP_SUCCESS) >= 0)
-            if (XC_write_display_socket_int(len) >= 0)
-                if (XC_write_socket(xc_display_sock,
-                    wcontents, len * sizeof(wchar_t)) >= 0)
-                {
-                    free(wcontents);
-                    return;
-                }
-    }
-
-    _exit_process(4, SIGKILL, "exiting from _get_selection_utf8");
-}
+    XtGetSelectionValue(topLevel, XA_PRIMARY,
+#ifdef PDC_WIDE
+                        XA_UTF8_STRING(XtDisplay(topLevel)),
+#else
+                        XA_STRING,
 #endif
+                        _get_selection, (XtPointer)NULL, 0);
+}
 
 /* For PDC_setclipboard() */
 
-static void _set_selection(void)
+int XC_set_selection(const char *contents, long length)
 {
-    long length, pos;
+    long pos;
     int status;
 
-    if (XC_read_socket(xc_display_sock, &length, sizeof(long)) < 0)
-        _exit_process(5, SIGKILL, "exiting from _set_selection");
+    XC_LOG(("XC_set_selection() - called\n"));
 
     if (length > (long)tmpsel_length)
     {
         if (!tmpsel_length)
-            tmpsel = malloc((length + 1) * sizeof(chtype));
+            tmpsel = malloc(length + 1);
         else
-            tmpsel = realloc(tmpsel, (length + 1) * sizeof(chtype));
+            tmpsel = realloc(tmpsel, length + 1);
     }
-
-    if (!tmpsel)
-        if (XC_write_display_socket_int(PDC_CLIP_MEMORY_ERROR) < 0)
-            _exit_process(4, SIGKILL, "exiting from _set_selection");
 
     for (pos = 0; pos < length; pos++)
-    {
-#ifdef PDC_WIDE
-        wchar_t c;
-#else
-        unsigned char c;
-#endif
-        if (XC_read_socket(xc_display_sock, &c, sizeof(c)) < 0)
-            _exit_process(5, SIGKILL, "exiting from _set_selection");
-
-        tmpsel[pos] = c;
-    }
+        tmpsel[pos] = contents[pos];
 
     tmpsel_length = length;
     tmpsel[length] = 0;
@@ -2453,208 +1612,59 @@ static void _set_selection(void)
     else
         status = PDC_CLIP_SUCCESS;
 
-    _selection_off();
-
-    if (XC_write_display_socket_int(status) < 0)
-        _exit_process(4, SIGKILL, "exiting from _set_selection");
+    return status;
 }
 
-/* The curses process is waiting; tell it to continue */
-
-static void _resume_curses(void)
+void XC_set_blink(bool blinkon)
 {
-    if (XC_write_display_socket_int(CURSES_CONTINUE) < 0)
-        _exit_process(4, SIGKILL, "exiting from _process_curses_requests");
-}
-
-/* The curses process sent us a message */
-
-static void _process_curses_requests(XtPointer client_data, int *fid,
-                                     XtInputId *id)
-{
-    struct timeval socket_timeout = {0};
-    int s;
-    int old_row, new_row;
-    int old_x, new_x;
-    int pos, num_cols;
-
-    char buf[12];       /* big enough for 2 integers */
-
-    XC_LOG(("_process_curses_requests() - called\n"));
-
-    if (!received_map_notify)
-        return;
-
-    FD_ZERO(&xc_readfds);
-    FD_SET(xc_display_sock, &xc_readfds);
-
-    if ((s = select(FD_SETSIZE, (FD_SET_CAST)&xc_readfds, NULL,
-                    NULL, &socket_timeout)) < 0)
-        _exit_process(2, SIGKILL, "exiting from _process_curses_requests"
-                                  " - select failed");
-
-    if (!s)     /* no requests pending - should never happen! */
-        return;
-
-    if (FD_ISSET(xc_display_sock, &xc_readfds))
+    if (blinkon)
     {
-        /* read first integer to determine total message has been
-           received */
-
-        XC_LOG(("_process_curses_requests() - before XC_read_socket()\n"));
-
-        if (XC_read_socket(xc_display_sock, &num_cols, sizeof(int)) < 0)
-            _exit_process(3, SIGKILL, "exiting from _process_curses_requests"
-                                      " - first read");
-
-        XC_LOG(("_process_curses_requests() - after XC_read_socket()\n"));
-
-        after_first_curses_request = TRUE;
-
-        switch(num_cols)
+        if (!(SP->termattrs & A_BLINK))
         {
-        case CURSES_EXIT:   /* request from curses to stop */
-            XC_LOG(("CURSES_EXIT received from child\n"));
-            _exit_process(0, 0, "XCursesProcess requested to exit by child");
-            break;
+            SP->termattrs |= A_BLINK;
+            blinked_off = FALSE;
+            XtAppAddTimeOut(app_context, xc_app_data.textBlinkRate,
+                            _blink_text, NULL);
+        }
+    }
+    else
+        SP->termattrs &= ~A_BLINK;
+}
 
-        case CURSES_BELL:
-            XC_LOG(("CURSES_BELL received from child\n"));
-            XBell(XCURSESDISPLAY, 50);
-            break;
+void XCursesCursor(int old_row, int old_x, int new_row, int new_x)
+{
+    XC_LOG(("XCursesCursor - called\n"));
 
-        /* request from curses to confirm completion of display */
+    visible_cursor = TRUE;
+    _display_cursor(old_row, old_x, new_row, new_x);
+}
 
-        case CURSES_REFRESH:
-            XC_LOG(("CURSES_REFRESH received from child\n"));
-            _refresh_screen();
-            _resume_curses();
-            break;
+void XCursesDisplayCursor(void)
+{
+    XC_LOG(("XCursesDisplayCursor - called. Vis now: "));
+    XC_LOG((visible_cursor ? "1\n" : "0\n"));
 
-        case CURSES_REFRESH_SCROLLBAR:
-            _refresh_scrollbar();
-            break;
+    /* If the window is not active, ignore this command. The
+       cursor will stay solid. */
 
-        case CURSES_BLINK_ON:
-            if (!(SP->termattrs & A_BLINK))
-            {
-                SP->termattrs |= A_BLINK;
-                blinked_off = FALSE;
-                XtAppAddTimeOut(app_context, xc_app_data.textBlinkRate,
-                                _blink_text, NULL);
-            }
-            break;
+    if (window_entered)
+    {
+        if (visible_cursor)
+        {
+            /* Cursor currently ON, turn it off */
 
-        case CURSES_BLINK_OFF:
-            SP->termattrs &= ~A_BLINK;
-            break;
+            int save_visibility = SP->visibility;
+            SP->visibility = 0;
+            _redraw_cursor();
+            SP->visibility = save_visibility;
+            visible_cursor = FALSE;
+        }
+        else
+        {
+            /* Cursor currently OFF, turn it on */
 
-        case CURSES_CURSOR:
-            XC_LOG(("CURSES_CURSOR received from child\n"));
-
-            if (XC_read_socket(xc_display_sock, buf, sizeof(int) * 2) < 0)
-                _exit_process(5, SIGKILL, "exiting from CURSES_CURSOR "
-                                          "_process_curses_requests");
-
-            memcpy(&pos, buf, sizeof(int));
-            old_row = pos & 0xFF;
-            old_x = pos >> 8;
-
-            memcpy(&pos, buf + sizeof(int), sizeof(int));
-            new_row = pos & 0xFF;
-            new_x = pos >> 8;
-
+            _redraw_cursor();
             visible_cursor = TRUE;
-            _display_cursor(old_row, old_x, new_row, new_x);
-            break;
-
-        case CURSES_DISPLAY_CURSOR:
-            XC_LOG(("CURSES_DISPLAY_CURSOR received from child. Vis now: "));
-            XC_LOG((visible_cursor ? "1\n" : "0\n"));
-
-            /* If the window is not active, ignore this command. The
-               cursor will stay solid. */
-
-            if (window_entered)
-            {
-                if (visible_cursor)
-                {
-                    /* Cursor currently ON, turn it off */
-
-                    int save_visibility = SP->visibility;
-                    SP->visibility = 0;
-                    _redraw_cursor();
-                    SP->visibility = save_visibility;
-                    visible_cursor = FALSE;
-                }
-                else
-                {
-                    /* Cursor currently OFF, turn it on */
-
-                    _redraw_cursor();
-                    visible_cursor = TRUE;
-                }
-            }
-
-            break;
-
-        case CURSES_TITLE:
-            XC_LOG(("CURSES_TITLE received from child\n"));
-            _set_title();
-            break;
-
-        case CURSES_RESIZE:
-            XC_LOG(("CURSES_RESIZE received from child\n"));
-            _resize();
-            _resume_curses();
-            break;
-
-        case CURSES_GET_SELECTION:
-            XC_LOG(("CURSES_GET_SELECTION received from child\n"));
-
-            _resume_curses();
-
-            XtGetSelectionValue(topLevel, XA_PRIMARY,
-#ifdef PDC_WIDE
-                                XA_UTF8_STRING(XtDisplay(topLevel)),
-                                _get_selection_utf8,
-#else
-                                XA_STRING, _get_selection,
-#endif
-                                (XtPointer)NULL, 0);
-
-            break;
-
-        case CURSES_SET_SELECTION:
-            XC_LOG(("CURSES_SET_SELECTION received from child\n"));
-            _set_selection();
-            break;
-
-        case CURSES_CLEAR_SELECTION:
-            XC_LOG(("CURSES_CLEAR_SELECTION received from child\n"));
-            _resume_curses();
-            _selection_off();
-            break;
-
-        case CURSES_GET_COLOR:
-            XC_LOG(("CURSES_GET_COLOR recieved from child\n"));
-            _get_color();
-            _resume_curses();
-            break;
-
-        case CURSES_SET_COLOR:
-            XC_LOG(("CURSES_SET_COLOR recieved from child\n"));
-            _set_color();
-            _resume_curses();
-            break;
-
-        case CURSES_DISPLAY_ALL:
-            XC_LOG(("CURSES_DISPLAY_ALL recieved from child\n"));
-            _display_screen();
-            break;
-
-        default:
-            PDC_LOG(("%s:Unknown request %d\n", XCLOGMSG, num_cols));
         }
     }
 }
@@ -2670,20 +1680,13 @@ static void _handle_structure_notify(Widget w, XtPointer client_data,
         XC_LOG(("ConfigureNotify received\n"));
 
         /* Window has been resized, change width and height to send to
-           place_text and place_graphics in next Expose. Also will need
-           to kill (SIGWINCH) curses process if screen size changes. */
+           place_text and place_graphics in next Expose. */
 
         resize_window_width = event->xconfigure.width;
         resize_window_height = event->xconfigure.height;
 
-        after_first_curses_request = FALSE;
-
-#ifdef SIGWINCH
-        SP->resized = 1;
-
-        kill(xc_otherpid, SIGWINCH);
-#endif
-        _send_key_to_curses(KEY_RESIZE, NULL, TRUE);
+        SP->resized = TRUE;
+        xc_resize_now = TRUE;
         break;
 
     case MapNotify:
@@ -2698,50 +1701,6 @@ static void _handle_structure_notify(Widget w, XtPointer client_data,
         PDC_LOG(("%s:_handle_structure_notify - unknown event %d\n",
                  XCLOGMSG, event->type));
     }
-}
-
-static void _handle_signals(int signo)
-{
-    int flag = CURSES_EXIT;
-
-    PDC_LOG(("%s:_handle_signals() - called: %d\n", XCLOGMSG, signo));
-
-    /* Patch by: Georg Fuchs */
-
-    XCursesSetSignal(signo, _handle_signals);
-
-#ifdef SIGTSTP
-    if (signo == SIGTSTP)
-    {
-        pause();
-        return;
-    }
-#endif
-#ifdef SIGCONT
-    if (signo == SIGCONT)
-        return;
-#endif
-#ifdef SIGCLD
-    if (signo == SIGCLD)
-        return;
-#endif
-#ifdef SIGTTIN
-    if (signo == SIGTTIN)
-        return;
-#endif
-#ifdef SIGWINCH
-    if (signo == SIGWINCH)
-        return;
-#endif
-
-    /* End of patch by: Georg Fuchs */
-
-    XCursesSetSignal(signo, SIG_IGN);
-
-    /* Send a CURSES_EXIT to myself */
-
-    if (XC_write_socket(xc_exit_sock, &flag, sizeof(int)) < 0)
-        _exit_process(7, signo, "exiting from _handle_signals");
 }
 
 static void _dummy_handler(Widget w, XtPointer client_data,
@@ -2770,22 +1729,6 @@ int XCursesSetupX(int argc, char *argv[])
 
     program_name = argv[0];
 
-    /* Keep open the 'write' end of the socket so the XCurses process
-       can send a CURSES_EXIT to itself from within the signal handler */
-
-    xc_exit_sock = xc_display_sockets[0];
-    xc_display_sock = xc_display_sockets[1];
-
-    close(xc_key_sockets[0]);
-    xc_key_sock = xc_key_sockets[1];
-
-    /* Trap all signals when XCurses is the child process, but only if
-       they haven't already been ignored by the application. */
-
-    for (i = 0; i < PDC_MAX_SIGNALS; i++)
-        if (XCursesSetSignal(i, _handle_signals) == SIG_IGN)
-            XCursesSetSignal(i, SIG_IGN);
-
     /* Start defining X Toolkit things */
 
 #if XtSpecificationRelease > 4
@@ -2797,7 +1740,6 @@ int XCursesSetupX(int argc, char *argv[])
     if (!getenv("DISPLAY"))
     {
         fprintf(stderr, "Error: no DISPLAY variable set\n");
-        kill(xc_otherpid, SIGKILL);
         return ERR;
     }
 
@@ -2915,15 +1857,7 @@ int XCursesSetupX(int argc, char *argv[])
     LINES = XCursesLINES;
     COLS = XCursesCOLS;
 
-    if ((shmidSP = shmget(shmkeySP, sizeof(SCREEN) + XCURSESSHMMIN,
-        0700 | IPC_CREAT)) < 0)
-    {
-        perror("Cannot allocate shared memory for SCREEN");
-        kill(xc_otherpid, SIGKILL);
-        return ERR;
-    }
-
-    SP = (SCREEN*)shmat(shmidSP, 0, 0);
+    SP = (SCREEN*)malloc(sizeof(SCREEN));
     memset(SP, 0, sizeof(SCREEN));
     SP->XcurscrSize = XCURSCR_SIZE;
     SP->lines = XCursesLINES;
@@ -2935,24 +1869,9 @@ int XCursesSetupX(int argc, char *argv[])
     SP->termattrs = A_COLOR | A_ITALIC | A_UNDERLINE | A_LEFT | A_RIGHT |
                     A_REVERSE;
 
-    PDC_LOG(("%s:SHM size for curscr %d\n", XCLOGMSG, SP->XcurscrSize));
-
-    if ((shmid_Xcurscr = shmget(shmkey_Xcurscr, SP->XcurscrSize +
-        XCURSESSHMMIN, 0700 | IPC_CREAT)) < 0)
-    {
-        perror("Cannot allocate shared memory for curscr");
-        kill(xc_otherpid, SIGKILL);
-        shmdt((char *)SP);
-        shmctl(shmidSP, IPC_RMID, 0);
-        return ERR;
-    }
-
-    Xcurscr = (unsigned char *)shmat(shmid_Xcurscr, 0, 0);
+    Xcurscr = (unsigned char *)malloc(SP->XcurscrSize);
     memset(Xcurscr, 0, SP->XcurscrSize);
     xc_atrtab = (short *)(Xcurscr + XCURSCR_ATRTAB_OFF);
-
-    PDC_LOG(("%s:shmid_Xcurscr %d shmkey_Xcurscr %d LINES %d COLS %d\n",
-             XCLOGMSG, shmid_Xcurscr, shmkey_Xcurscr, LINES, COLS));
 
     /* Add Event handlers to the drawing widget */
 
@@ -2963,23 +1882,11 @@ int XCursesSetupX(int argc, char *argv[])
                       _handle_enter_leave, NULL);
     XtAddEventHandler(topLevel, 0, True, _handle_nonmaskable, NULL);
 
-    /* Add input handler from xc_display_sock (requests from curses
-       program) */
-
-    XtAppAddInput(app_context, xc_display_sock, (XtPointer)XtInputReadMask,
-                  _process_curses_requests, NULL);
-
     /* If there is a cursorBlink resource, start the Timeout event */
 
     if (xc_app_data.cursorBlinkRate)
         XtAppAddTimeOut(app_context, xc_app_data.cursorBlinkRate,
                         _blink_cursor, NULL);
-
-    /* Leave telling the curses process that it can start to here so
-       that when the curses process makes a request, the Xcurses
-       process can service the request. */
-
-    XC_write_display_socket_int(CURSES_CHILD);
 
     XtRealizeWidget(topLevel);
 
@@ -3056,24 +1963,32 @@ int XCursesSetupX(int argc, char *argv[])
     else
     {
         perror("ERROR: Cannot create input context");
-        kill(xc_otherpid, SIGKILL);
-        shmdt((char *)SP);
-        shmdt((char *)Xcurscr);
-        shmctl(shmidSP, IPC_RMID, 0);
-        shmctl(shmid_Xcurscr, IPC_RMID, 0);
         return ERR;
     }
 
-    /* Wait for events */
+    while (!exposed)
     {
         XEvent event;
 
-        for (;;) /* forever */
-        {
-             XtAppNextEvent(app_context, &event);
-             XtDispatchEvent(&event);
-        }
+        XtAppNextEvent(app_context, &event);
+        XtDispatchEvent(&event);
     }
 
-    return OK;          /* won't get here */
+    return OK;          /* will get here */
+}
+
+int XCursesInitscr(int argc, char *argv[])
+{
+    XC_LOG(("XCursesInitscr() - called\n"));
+
+    if (ERR == XCursesSetupX(argc, argv))
+        return ERR;
+
+    XCursesLINES = SP->lines;
+    LINES = XCursesLINES - SP->linesrippedoff - SP->slklines;
+    XCursesCOLS = COLS = SP->cols;
+
+    atexit(XCursesExit);
+
+    return OK;
 }

@@ -27,11 +27,12 @@ Defined by this header:
 
 **man-end****************************************************************/
 
-#define PDCURSES        1      /* PDCurses-only routines */
-#define PDC_BUILD    3804
+#define PDCURSES        1
+#define PDC_BUILD    3813
 #define PDC_VER_MAJOR   3
 #define PDC_VER_MINOR   8
 #define PDC_VERDOT   "3.8"
+
 #define CHTYPE_LONG     1      /* chtype >= 32 bits */
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
@@ -46,7 +47,7 @@ Defined by this header:
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdio.h>             /* Required by X/Open usage below */
+#include <stdio.h>
 
 #ifdef PDC_WIDE
 # include <wchar.h>
@@ -128,7 +129,7 @@ enum
 
 /*----------------------------------------------------------------------
  *
- *  Mouse Interface -- SYSVR4, with extensions
+ *  Mouse Interface
  *
  */
 
@@ -314,7 +315,7 @@ typedef struct
     bool  raw_out;        /* raw output mode (7 v. 8 bits) */
     bool  audible;        /* FALSE if the bell is visual */
     bool  mono;           /* TRUE if current screen is mono */
-    short resized;        /* TRUE if TERM has been resized */
+    bool  resized;        /* TRUE if TERM has been resized */
     bool  orig_attr;      /* TRUE if we have the original colors */
     short orig_fore;      /* original screen foreground color */
     short orig_back;      /* original screen foreground color */
@@ -339,12 +340,13 @@ typedef struct
                                       to be preserved */
     int   _restore;                /* specifies if screen background
                                       to be restored, and how */
-    bool  save_key_modifiers;      /* TRUE if each key modifiers saved
-                                      with each key press */
+    unsigned long key_modifiers;   /* key modifiers (SHIFT, CONTROL, etc.)
+                                      on last key press */
     bool  return_key_modifiers;    /* TRUE if modifier keys are
                                       returned as "real" keys */
     bool  key_code;                /* TRUE if last key is a special key;
                                       used internally by get_wch() */
+    MOUSE_STATUS mouse_status;     /* last returned mouse status */
 #ifdef XCURSES
     int   XcurscrSize;    /* size of Xcurscr shared memory block */
     bool  sb_on;
@@ -357,6 +359,12 @@ typedef struct
 #endif
     short line_color;     /* color of line attributes - default -1 */
     attr_t termattrs;     /* attribute capabilities */
+    WINDOW *lastscr;      /* the last screen image */
+    FILE *dbfp;           /* debug trace file pointer */
+    bool  color_started;  /* TRUE after start_color() */
+    bool  dirty;          /* redraw on napms() after init_color() */
+    int   sel_start;      /* start of selection (y * COLS + x) */
+    int   sel_end;        /* end of selection */
 } SCREEN;
 
 /*----------------------------------------------------------------------
@@ -1327,7 +1335,6 @@ PDCEX  int     PDC_setclipboard(const char *, long);
 PDCEX  unsigned long PDC_get_input_fd(void);
 PDCEX  unsigned long PDC_get_key_modifiers(void);
 PDCEX  int     PDC_return_key_modifiers(bool);
-PDCEX  int     PDC_save_key_modifiers(bool);
 
 #ifdef XCURSES
 PDCEX  WINDOW *Xinitscr(int, char **);
@@ -1371,6 +1378,10 @@ PDCEX  int     wunderscore(WINDOW *);
 #ifdef NCURSES_MOUSE_VERSION
 # define getmouse(x) nc_getmouse(x)
 #endif
+
+/* Deprecated */
+
+#define PDC_save_key_modifiers(x)  (OK)
 
 /* return codes from PDC_getclipboard() and PDC_setclipboard() calls */
 

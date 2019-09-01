@@ -434,6 +434,8 @@ int PDC_scr_open(int argc, char **argv)
     SP->audible = TRUE;
 
     SP->termattrs = A_COLOR | A_REVERSE;
+    if (pdc_ansi)
+        SP->termattrs |= A_UNDERLINE | A_ITALIC;
 
     if (SP->lines < 2 || SP->lines > csbi.dwMaximumWindowSize.Y)
     {
@@ -659,12 +661,12 @@ int PDC_pair_content(short pair, short *fg, short *bg)
 
 bool PDC_can_change_color(void)
 {
-    return is_nt && !pdc_conemu;
+    return is_nt;
 }
 
 int PDC_color_content(short color, short *red, short *green, short *blue)
 {
-    if (color < 16)
+    if (color < 16 && !pdc_conemu)
     {
         COLORREF *color_table = _get_colors();
 
@@ -682,7 +684,10 @@ int PDC_color_content(short color, short *red, short *green, short *blue)
     else
     {
         if (!pdc_color[color].mapped)
+        {
+            *red = *green = *blue = -1;
             return ERR;
+        }
 
         *red = pdc_color[color].r;
         *green = pdc_color[color].g;
@@ -694,7 +699,13 @@ int PDC_color_content(short color, short *red, short *green, short *blue)
 
 int PDC_init_color(short color, short red, short green, short blue)
 {
-    if (color < 16)
+    if (red == -1 && green == -1 && blue == -1)
+    {
+        pdc_color[color].mapped = FALSE;
+        return OK;
+    }
+
+    if (color < 16 && !pdc_conemu)
     {
         COLORREF *color_table = _get_colors();
 

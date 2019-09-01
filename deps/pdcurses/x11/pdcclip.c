@@ -20,9 +20,9 @@ clipboard
 
    PDC_getclipboard() gets the textual contents of the system's
    clipboard. This function returns the contents of the clipboard in the
-   contents argument. It is the responsibilitiy of the caller to free
-   the memory returned, via PDC_freeclipboard(). The length of the
-   clipboard contents is returned in the length argument.
+   contents argument. It is the responsibility of the caller to free the
+   memory returned, via PDC_freeclipboard(). The length of the clipboard
+   contents is returned in the length argument.
 
    PDC_setclipboard copies the supplied text into the system's
    clipboard, emptying the clipboard prior to the copy.
@@ -49,98 +49,43 @@ clipboard
 
 int PDC_getclipboard(char **contents, long *length)
 {
-#ifdef PDC_WIDE
-    wchar_t *wcontents;
-#endif
-    int result = 0;
-    int len;
+    XEvent event;
 
     PDC_LOG(("PDC_getclipboard() - called\n"));
 
-    XCursesInstructAndWait(CURSES_GET_SELECTION);
+    xc_selection = NULL;
+    xc_selection_len = -1;
 
-    if (XC_read_socket(xc_display_sock, &result, sizeof(int)) < 0)
-        XCursesExitCursesProcess(5, "exiting from PDC_getclipboard");
-
-    if (result == PDC_CLIP_SUCCESS)
+    XC_get_selection();
+    while (-1 == xc_selection_len)
     {
-        if (XC_read_socket(xc_display_sock, &len, sizeof(int)) < 0)
-            XCursesExitCursesProcess(5, "exiting from PDC_getclipboard");
-#ifdef PDC_WIDE
-        wcontents = malloc((len + 1) * sizeof(wchar_t));
-        *contents = malloc(len * 3 + 1);
-
-        if (!wcontents || !*contents)
-#else
-            *contents = malloc(len + 1);
-
-        if (!*contents)
-#endif
-        XCursesExitCursesProcess(6, "exiting from PDC_getclipboard - "
-                                    "synchronization error");
-
-        if (len)
-        {
-            if (XC_read_socket(xc_display_sock,
-#ifdef PDC_WIDE
-                wcontents, len * sizeof(wchar_t)) < 0)
-#else
-                *contents, len) < 0)
-#endif
-                XCursesExitCursesProcess(5, "exiting from PDC_getclipboard");
-        }
-
-#ifdef PDC_WIDE
-        wcontents[len] = 0;
-        len = PDC_wcstombs(*contents, wcontents, len * 3);
-        free(wcontents);
-#endif
-        (*contents)[len] = '\0';
-        *length = len;
+        XtAppNextEvent(app_context, &event);
+        XtDispatchEvent(&event);
     }
 
-    return result;
+    if (xc_selection && xc_selection_len)
+    {
+        *contents = malloc(xc_selection_len + 1);
+
+        if (!*contents)
+            return PDC_CLIP_MEMORY_ERROR;
+
+        memcpy(*contents, xc_selection, xc_selection_len);
+
+        (*contents)[xc_selection_len] = '\0';
+        *length = xc_selection_len;
+
+        return PDC_CLIP_SUCCESS;
+    }
+
+    return PDC_CLIP_EMPTY;
 }
 
 int PDC_setclipboard(const char *contents, long length)
 {
-#ifdef PDC_WIDE
-    wchar_t *wcontents;
-#endif
-    int rc;
-
     PDC_LOG(("PDC_setclipboard() - called\n"));
 
-#ifdef PDC_WIDE
-    wcontents = malloc((length + 1) * sizeof(wchar_t));
-    if (!wcontents)
-        return PDC_CLIP_MEMORY_ERROR;
-
-    length = PDC_mbstowcs(wcontents, contents, length);
-#endif
-    XCursesInstruct(CURSES_SET_SELECTION);
-
-    /* Write, then wait for X to do its stuff; expect return code. */
-
-    if (XC_write_socket(xc_display_sock, &length, sizeof(long)) >= 0)
-    {
-        if (XC_write_socket(xc_display_sock,
-#ifdef PDC_WIDE
-            wcontents, length * sizeof(wchar_t)) >= 0)
-        {
-            free(wcontents);
-#else
-            contents, length) >= 0)
-        {
-#endif
-            if (XC_read_socket(xc_display_sock, &rc, sizeof(int)) >= 0)
-                return rc;
-        }
-    }
-
-    XCursesExitCursesProcess(5, "exiting from PDC_setclipboard");
-
-    return PDC_CLIP_ACCESS_ERROR;   /* not reached */
+    return XC_set_selection(contents, length);
 }
 
 int PDC_freeclipboard(char *contents)
@@ -153,20 +98,7 @@ int PDC_freeclipboard(char *contents)
 
 int PDC_clearclipboard(void)
 {
-    int rc;
-    long len = 0;
-
     PDC_LOG(("PDC_clearclipboard() - called\n"));
 
-    XCursesInstruct(CURSES_CLEAR_SELECTION);
-
-    /* Write, then wait for X to do its stuff; expect return code. */
-
-    if (XC_write_socket(xc_display_sock, &len, sizeof(long)) >= 0)
-        if (XC_read_socket(xc_display_sock, &rc, sizeof(int)) >= 0)
-            return rc;
-
-    XCursesExitCursesProcess(5, "exiting from PDC_clearclipboard");
-
-    return PDC_CLIP_ACCESS_ERROR;   /* not reached */
+    return PDC_CLIP_SUCCESS;
 }

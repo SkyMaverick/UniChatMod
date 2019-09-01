@@ -113,6 +113,9 @@ endif
 if get_option('enable_widec')
     add_project_arguments ('-DPDC_WIDE', language: 'c')
 endif
+if get_option('enable_force_utf8')
+    add_project_arguments ('-DPDC_FORCE_UTF8', language: 'c')
+endif
 # === configuration file ==========
 
 configure_file (input : 'config_meson.h.in',
@@ -123,21 +126,19 @@ add_project_arguments ('-DHAVE_CONFIG_H', language: 'c')
 # === build library ==========
 
 pdc_source = pdc_core + files ('''
-  pdcx11.h
-  pdcclip.c
-  pdcdisp.c
-  pdcgetsc.c
-  pdckbd.c
-  pdcscrn.c
-  pdcsetsc.c
-  pdcutil.c
-  pdcx11.c
-  
-  sb.c
-  ScrollBox.c
-  ScrollBox.h
-  ScrollBoxP.h
-  x11.c
+    pdcclip.c
+    pdcdisp.c
+    pdcgetsc.c
+    pdckbd.c
+    pdcscrn.c
+    pdcsetsc.c
+    pdcutil.c
+    pdcx11.h
+    sb.c
+    ScrollBox.c
+    ScrollBox.h
+    ScrollBoxP.h
+    x11.c
 '''.split())
 
 add_project_arguments ('-DDYNAMIC', language: 'c')

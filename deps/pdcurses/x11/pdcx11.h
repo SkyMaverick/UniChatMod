@@ -10,20 +10,15 @@
 # include <unistd.h>
 #endif
 
-#include <signal.h>
 #include <ctype.h>
-#include <pwd.h>
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
 # include <sys/select.h>   /* AIX needs this for FD_ZERO etc macros */
 #endif
-#include <sys/ipc.h>
-#include <sys/shm.h>
 
 #ifdef TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -103,7 +98,6 @@ typedef struct
     char *bitmap;
     char *pixmap;
     Cursor pointer;
-    int shmmin;
     int borderWidth;
     int borderColor;
     int clickPeriod;
@@ -116,26 +110,29 @@ typedef struct
 
 extern XCursesAppData xc_app_data;
 
-#define XCURSESSHMMIN xc_app_data.shmmin
-
-#define XCLOGMSG (XCursesProcess ? "     X" : "CURSES")
-
-void XC_get_line_lock(int);
-void XC_release_line_lock(int);
+#define XCLOGMSG ("")
 
 int PDC_display_cursor(int, int, int, int, int);
 
-void XCursesExitCursesProcess(int, char *);
-int XCursesInstruct(int);
-int XCursesInstructAndWait(int);
+void XCursesCursor(int, int, int, int);
+void XCursesDisplayCursor(void);
+void XCursesTitle(const char *);
+
+unsigned long XCursesKeyPress(XEvent *);
+unsigned long XCursesMouse(XEvent *);
+
 int XCursesInitscr(int, char **);
+int XCursesSetupX(int, char **);
+void XCursesExit(void);
 
-int XC_write_socket(int, const void *, int);
-int XC_read_socket(int, void *, int);
-int XC_write_display_socket_int(int);
-
-int XCursesSetupX(int argc, char *argv[]);
-void XCursesSigwinchHandler(int signo);
+void XC_resize(void);
+void XC_refresh_screen(void);
+void XC_refresh_scrollbar(void);
+void XC_set_blink(bool);
+XColor XC_get_color(short);
+void XC_set_color(short, XColor);
+void XC_get_selection(void);
+int XC_set_selection(const char *, long);
 
 #ifdef _HPUX_SOURCE
 # define FD_SET_CAST int *
@@ -143,22 +140,13 @@ void XCursesSigwinchHandler(int signo);
 # define FD_SET_CAST fd_set *
 #endif
 
+extern XtAppContext app_context;
+extern Widget topLevel;
 extern fd_set xc_readfds;
 
 extern unsigned char *Xcurscr;
-extern int XCursesProcess;
-extern int shmidSP;
-extern int shmid_Xcurscr;
-extern int shmkeySP;
-extern int shmkey_Xcurscr;
-extern int xc_otherpid;
 extern int XCursesLINES;
 extern int XCursesCOLS;
-extern int xc_display_sock;
-extern int xc_key_sock;
-extern int xc_display_sockets[2];
-extern int xc_key_sockets[2];
-extern int xc_exit_sock;
 
 typedef void (*signal_handler)();
 
@@ -177,15 +165,8 @@ void XC_say(const char *msg);
 # define MOUSE_LOG(x)
 #endif
 
-enum
-{
-    CURSES_CLEAR_SELECTION, CURSES_DISPLAY_CURSOR, CURSES_SET_SELECTION,
-    CURSES_GET_SELECTION, CURSES_TITLE, CURSES_REFRESH_SCROLLBAR,
-    CURSES_RESIZE, CURSES_BELL, CURSES_CONTINUE, CURSES_CURSOR,
-    CURSES_CHILD, CURSES_REFRESH, CURSES_GET_COLOR, CURSES_SET_COLOR,
-    CURSES_BLINK_ON, CURSES_BLINK_OFF, CURSES_DISPLAY_ALL, CURSES_EXIT
-};
-
 extern short *xc_atrtab;
 
-extern bool pdc_dirty;
+extern bool xc_resize_now;
+extern char *xc_selection;
+extern long xc_selection_len;

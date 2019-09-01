@@ -54,25 +54,11 @@ int PDC_resize_screen(int nlines, int ncols)
     if (nlines || ncols || !SP->resized)
         return ERR;
 
-    shmdt((char *)Xcurscr);
-    XCursesInstructAndWait(CURSES_RESIZE);
-
-    if ((shmid_Xcurscr = shmget(shmkey_Xcurscr,
-        SP->XcurscrSize + XCURSESSHMMIN, 0700)) < 0)
-    {
-        perror("Cannot allocate shared memory for curscr");
-        kill(xc_otherpid, SIGKILL);
-        return ERR;
-    }
+    XC_resize();
 
     XCursesLINES = SP->lines;
     XCursesCOLS = SP->cols;
 
-    PDC_LOG(("%s:shmid_Xcurscr %d shmkey_Xcurscr %d SP->lines %d "
-             "SP->cols %d\n", XCLOGMSG, shmid_Xcurscr,
-             shmkey_Xcurscr, SP->lines, SP->cols));
-
-    Xcurscr = (unsigned char*)shmat(shmid_Xcurscr, 0, 0);
     xc_atrtab = (short *)(Xcurscr + XCURSCR_ATRTAB_OFF);
 
     SP->resized = FALSE;
@@ -119,32 +105,24 @@ bool PDC_can_change_color(void)
 
 int PDC_color_content(short color, short *red, short *green, short *blue)
 {
-    XColor *tmp = (XColor *)(Xcurscr + XCURSCR_XCOLOR_OFF);
+    XColor tmp = XC_get_color(color);
 
-    tmp->pixel = color;
-
-    XCursesInstructAndWait(CURSES_GET_COLOR);
-
-    *red = ((double)(tmp->red) * 1000 / 65535) + 0.5;
-    *green = ((double)(tmp->green) * 1000 / 65535) + 0.5;
-    *blue = ((double)(tmp->blue) * 1000 / 65535) + 0.5;
+    *red = ((double)(tmp.red) * 1000 / 65535) + 0.5;
+    *green = ((double)(tmp.green) * 1000 / 65535) + 0.5;
+    *blue = ((double)(tmp.blue) * 1000 / 65535) + 0.5;
 
     return OK;
 }
 
 int PDC_init_color(short color, short red, short green, short blue)
 {
-    XColor *tmp = (XColor *)(Xcurscr + XCURSCR_XCOLOR_OFF);
+    XColor tmp;
 
-    tmp->pixel = color;
+    tmp.red = ((double)red * 65535 / 1000) + 0.5;
+    tmp.green = ((double)green * 65535 / 1000) + 0.5;
+    tmp.blue = ((double)blue * 65535 / 1000) + 0.5;
 
-    tmp->red = ((double)red * 65535 / 1000) + 0.5;
-    tmp->green = ((double)green * 65535 / 1000) + 0.5;
-    tmp->blue = ((double)blue * 65535 / 1000) + 0.5;
-
-    XCursesInstructAndWait(CURSES_SET_COLOR);
-
-    pdc_dirty = TRUE;
+    XC_set_color(color, tmp);
 
     return OK;
 }

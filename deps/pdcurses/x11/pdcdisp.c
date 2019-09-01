@@ -48,45 +48,13 @@ chtype acs_map[128] =
 int PDC_display_cursor(int oldrow, int oldcol, int newrow, int newcol,
                        int visibility)
 {
-    char buf[30];
-    int idx, pos;
-
     PDC_LOG(("%s:PDC_display_cursor() - called: NEW row %d col %d, vis %d\n",
              XCLOGMSG, newrow, newcol, visibility));
 
     if (visibility == -1)
-    {
-        /* Only send the CURSES_DISPLAY_CURSOR message, no data */
-
-        idx = CURSES_DISPLAY_CURSOR;
-        memcpy(buf, &idx, sizeof(int));
-        idx = sizeof(int);
-    }
+        XCursesDisplayCursor();
     else
-    {
-        if ((oldrow == newrow) && (oldcol == newcol))
-        {
-            /* Do not send a message because it will cause the blink state
-               to reset. */
-            return OK;
-        }
-
-        idx = CURSES_CURSOR;
-        memcpy(buf, &idx, sizeof(int));
-
-        idx = sizeof(int);
-        pos = oldrow + (oldcol << 8);
-        memcpy(buf + idx, &pos, sizeof(int));
-
-        idx += sizeof(int);
-        pos = newrow + (newcol << 8);
-        memcpy(buf + idx, &pos, sizeof(int));
-
-        idx += sizeof(int);
-    }
-
-    if (XC_write_socket(xc_display_sock, buf, idx) < 0)
-        XCursesExitCursesProcess(1, "exiting from PDC_display_cursor");
+        XCursesCursor(oldrow, oldcol, newrow, newcol);
 
     return OK;
 }
@@ -107,15 +75,11 @@ void PDC_transform_line(int lineno, int x, int len, const chtype *srcp)
 {
     PDC_LOG(("PDC_transform_line() - called: line %d\n", lineno));
 
-    XC_get_line_lock(lineno);
-
     memcpy(Xcurscr + XCURSCR_Y_OFF(lineno) + (x * sizeof(chtype)), srcp,
            len * sizeof(chtype));
 
     *(Xcurscr + XCURSCR_START_OFF + lineno) = x;
     *(Xcurscr + XCURSCR_LENGTH_OFF + lineno) = len;
 
-    XC_release_line_lock(lineno);
-
-    XCursesInstructAndWait(CURSES_REFRESH);
+    XC_refresh_screen();
 }
