@@ -1016,7 +1016,7 @@ typedef uint32_t u32char_t;
         {
             void (*wait_exit)(void);
             uintptr_t (*get_loop)(int loop);
-            int (*get_flag) (unsigned code);
+            int (*get_flag)(unsigned code);
 
             /*! low-level settings provider functions */
             int (*get_int)(ucm_object_t* obj, char* key, int def);

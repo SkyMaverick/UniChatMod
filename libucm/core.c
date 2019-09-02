@@ -51,7 +51,7 @@ loop_core(void* ctx)
 
             switch (id) {
             case UCM_EVENT_TERM:
-                set_system_flag (UCM_FLAG_TERMINATE);
+                set_system_flag(UCM_FLAG_TERMINATE);
                 ucm_dtrace("[EVENT] %s\n", "Catch TERM message. Core loop exit.");
                 break;
             case UCM_EVENT_PLUGS_SUCCESS:
@@ -80,7 +80,7 @@ loop_core(void* ctx)
                 UniAPI->app.mainloop_ev_free((ucm_ev_t**)(&lctx));
             }
         }
-        if (get_system_flag (UCM_FLAG_TERMINATE) ) {
+        if (get_system_flag(UCM_FLAG_TERMINATE)) {
             return NULL;
         }
         ucm_mloop_wait();

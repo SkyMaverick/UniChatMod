@@ -143,7 +143,8 @@ mdbx_core_load(void)
                 }
                 /* Create new header with new tables */
             } else {
-                if ((app->app.get_flag(UCM_FLAG_NEWPROF)) && (!(app->app.get_flag(UCM_FLAG_ROPROF)))) {
+                if ((app->app.get_flag(UCM_FLAG_NEWPROF)) &&
+                    (!(app->app.get_flag(UCM_FLAG_ROPROF)))) {
                     UniDB->header.signature = DBSYS_HEADER_SIGNATURE;
                     UniDB->header.version   = MakeLong(DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
                     data.iov_base = &(UniDB->header), data.iov_len = sizeof(db_header_t);

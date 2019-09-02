@@ -48,7 +48,7 @@ db_open(const char* aPath, uint32_t flags)
             if (get_system_flag(UCM_FLAG_NEWPROF))
                 return UCM_RET_BUSY;
 
-            set_system_flag (UCM_FLAG_NEWPROF);
+            set_system_flag(UCM_FLAG_NEWPROF);
             continue;
 
         } else
