@@ -10,6 +10,7 @@
 #include "logger.h"
 #include "mainloop.h"
 #include "plugmgr.h"
+#include "flags.h"
 #include "ucm.h"
 
 #include <wchar.h>
@@ -38,7 +39,6 @@ loop_core(void* ctx)
     uintptr_t lctx;
     uint32_t x1;
     uint32_t x2;
-    unsigned term = 0;
 
     UNUSED(ctx);
 
@@ -51,7 +51,7 @@ loop_core(void* ctx)
 
             switch (id) {
             case UCM_EVENT_TERM:
-                term = 1;
+                set_system_flag (UCM_FLAG_TERMINATE);
                 ucm_dtrace("[EVENT] %s\n", "Catch TERM message. Core loop exit.");
                 break;
             case UCM_EVENT_PLUGS_SUCCESS:
@@ -80,7 +80,7 @@ loop_core(void* ctx)
                 UniAPI->app.mainloop_ev_free((ucm_ev_t**)(&lctx));
             }
         }
-        if (term) {
+        if (get_system_flag (UCM_FLAG_TERMINATE) ) {
             return NULL;
         }
         ucm_mloop_wait();

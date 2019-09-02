@@ -1,6 +1,7 @@
 #include "api.h"
 #include "core.h"
 #include "defs.h"
+#include "flags.h"
 #include "ucm.h"
 
 typedef struct
@@ -33,21 +34,21 @@ db_open(const char* aPath, uint32_t flags)
     // Try file access
     int flag_exit = 0;
     do {
-        if (flags & UCM_FLAG_NEWPROF) {
+        if (get_system_flag(UCM_FLAG_NEWPROF)) {
             UniAPI->sys.fs_fcreate(aPath);
             flag_exit++;
         }
         int r = UniAPI->uv.fs_access(UCM_LOOP_SYSTEM(UniAPI), &ufs_req, aPath,
-                                     (flags & UCM_FLAG_ROPROF) ? R_OK : R_OK | W_OK, NULL);
+                                     (get_system_flag(UCM_FLAG_ROPROF)) ? R_OK : R_OK | W_OK, NULL);
 
         if (r < 0) {
             ucm_dtrace("%s: %s\n", aPath, "fail open");
-            if (flags & UCM_FLAG_ROPROF)
+            if (get_system_flag(UCM_FLAG_ROPROF))
                 return UCM_RET_SYSTEM_NOACCESS;
-            if (flags & UCM_FLAG_NEWPROF)
+            if (get_system_flag(UCM_FLAG_NEWPROF))
                 return UCM_RET_BUSY;
 
-            flags |= UCM_FLAG_NEWPROF;
+            set_system_flag (UCM_FLAG_NEWPROF);
             continue;
 
         } else

@@ -80,7 +80,7 @@ mdbx_core_map(void)
 
     unsigned int mode =
       MDBX_NOSUBDIR | MDBX_MAPASYNC | MDBX_WRITEMAP | MDBX_NOSYNC | MDBX_COALESCE | MDBX_EXCLUSIVE;
-    if (UniDB->flags & UCM_FLAG_ROPROF) {
+    if (app->app.get_flag(UCM_FLAG_ROPROF)) {
         trace_dbg("%s\n", "Set read-only database flag");
         mode |= MDBX_RDONLY;
     }
@@ -93,7 +93,7 @@ mdbx_core_map(void)
 static inline UCM_RET
 mdbx_core_load(void)
 {
-    unsigned flags    = (UniDB->flags & UCM_FLAG_ROPROF) ? 0 : MDBX_CREATE;
+    unsigned flags    = (app->app.get_flag(UCM_FLAG_ROPROF)) ? 0 : MDBX_CREATE;
     MDBX_txn* txn_tmp = StartTxn(UniDB);
     if (txn_tmp) {
         /* Open all tables */
@@ -143,7 +143,7 @@ mdbx_core_load(void)
                 }
                 /* Create new header with new tables */
             } else {
-                if ((UniDB->flags & UCM_FLAG_NEWPROF) && (!(UniDB->flags & UCM_FLAG_ROPROF))) {
+                if ((app->app.get_flag(UCM_FLAG_NEWPROF)) && (!(app->app.get_flag(UCM_FLAG_ROPROF)))) {
                     UniDB->header.signature = DBSYS_HEADER_SIGNATURE;
                     UniDB->header.version   = MakeLong(DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
                     data.iov_base = &(UniDB->header), data.iov_len = sizeof(db_header_t);
