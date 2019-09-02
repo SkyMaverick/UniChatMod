@@ -191,8 +191,9 @@ int main(int argc, char *argv[]) {
   while ((i = getopt(argc, argv, "af:lnps:V")) != EOF) {
     switch (i) {
     case 'V':
-      printf("%s (%s, build %s)\n", mdbx_version.git.describe,
-             mdbx_version.git.datetime, mdbx_build.datetime);
+      printf("%d.%d\n", MDBX_VERSION_MAJOR, MDBX_VERSION_MINOR);
+//      printf("%s (%s, build %s)\n", mdbx_version.git.describe,
+//             mdbx_version.git.datetime, mdbx_build.datetime);
       exit(EXIT_SUCCESS);
       break;
     case 'l':
