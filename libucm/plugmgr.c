@@ -12,14 +12,16 @@
 #include <string.h>
 #include <wchar.h>
 
-typedef struct ucm_module_s {
+typedef struct ucm_module_s
+{
     ucm_plugin_t* plugin; /* plugin handler */
     uintptr_t handle;     /* library descriptor */
 
     struct ucm_module_s* next; /* linked list element */
 } ucm_module_t;
 
-typedef struct {
+typedef struct
+{
     // modules chain. Base structure which contain all load modules
     ucm_module_t* m_list;
     size_t found;
@@ -28,7 +30,8 @@ typedef struct {
     // flags
     uint32_t flags;
 
-    struct {
+    struct
+    {
         // All plugins count
         size_t count;
         // index last element for each type array
@@ -56,7 +59,8 @@ static ucm_pmgr_t* UniPMgr = NULL;
     INTERNAL API
  ***************************************************/
 
-static UCM_RET plugin_verify(ucm_plugin_t* plugin)
+static UCM_RET
+plugin_verify(ucm_plugin_t* plugin)
 {
     if (plugin->oid != UCM_TYPE_OBJECT_PLUGIN) {
         return UCM_RET_PLUGIN_BADMODULE;
@@ -83,7 +87,8 @@ static UCM_RET plugin_verify(ucm_plugin_t* plugin)
     return UCM_RET_SUCCESS;
 }
 
-static ucm_module_t* plugin_load(char* filename)
+static ucm_module_t*
+plugin_load(char* filename)
 {
     ucm_module_t* module = NULL;
 
@@ -123,7 +128,8 @@ static ucm_module_t* plugin_load(char* filename)
     return module;
 }
 
-static void scan_result_process(uv_fs_t* req)
+static void
+scan_result_process(uv_fs_t* req)
 {
     uv_dirent_t dent;
     uv_fs_t close_req;
@@ -160,7 +166,8 @@ static void scan_result_process(uv_fs_t* req)
 /***************************************************
     EXTERNAL API
  ***************************************************/
-size_t pmgr_load(char* path, uint32_t flags)
+size_t
+pmgr_load(char* path, uint32_t flags)
 {
     if (UniPMgr != NULL)
         return UniPMgr->registry.count;
@@ -200,7 +207,8 @@ size_t pmgr_load(char* path, uint32_t flags)
     return 0;
 }
 
-size_t pmgr_group_run(uint8_t sys)
+size_t
+pmgr_group_run(uint8_t sys)
 {
     for (ucm_module_t* tmp = UniPMgr->m_list; tmp; tmp = tmp->next) {
         if (tmp->plugin->info.sys == sys) {
@@ -210,14 +218,16 @@ size_t pmgr_group_run(uint8_t sys)
                 U__REG(sys, idx) = tmp->plugin;
                 U__IDX(sys)++;
             } else {
-                ucm_etrace("%s - %s: %s\n", _("Broken"), tmp->plugin->info.pid, UniAPI->sys.strerr(err));
+                ucm_etrace("%s - %s: %s\n", _("Broken"), tmp->plugin->info.pid,
+                           UniAPI->sys.strerr(err));
             }
         }
     }
     return U__IDX(sys);
 }
 
-void pmgr_group_stop(uint8_t sys)
+void
+pmgr_group_stop(uint8_t sys)
 {
     for (size_t i = 0; U__REG(sys, i) != NULL; i++) {
         U__REG(sys, i)->stop();
@@ -227,7 +237,8 @@ void pmgr_group_stop(uint8_t sys)
     }
 }
 
-void pmgr_unload(void)
+void
+pmgr_unload(void)
 {
     UniAPI->sys.rwlock_wlock(UniPMgr->lock);
     while (UniPMgr->m_list) {
@@ -244,9 +255,15 @@ void pmgr_unload(void)
     ucm_free_null(UniPMgr);
 }
 
-const ucm_plugin_t** pmgr_get(unsigned type) { return (const ucm_plugin_t**)(UniPMgr->registry.items[type]); }
+const ucm_plugin_t**
+pmgr_get(unsigned type)
+{
+    return (const ucm_plugin_t**)(UniPMgr->registry.items[type]);
+}
 
-void pmgr_message_process(const uint32_t* id, const uintptr_t* ctx, const uint32_t* x1, const uint32_t* x2)
+void
+pmgr_message_process(const uint32_t* id, const uintptr_t* ctx, const uint32_t* x1,
+                     const uint32_t* x2)
 {
     UniAPI->sys.rwlock_rlock(UniPMgr->lock);
 

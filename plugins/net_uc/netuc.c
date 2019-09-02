@@ -8,15 +8,28 @@
 
 const ucm_functions_t* app;
 
-static const char* interface[] = {"proto_ucl", NULL};
+static const char* interface[] = { "proto_ucl", NULL };
 
-static const char** _get_proto_interface(void) { return interface; }
+static const char**
+_get_proto_interface(void)
+{
+    return interface;
+}
 
-static UCM_RET _run_proto(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_run_proto(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static UCM_RET _stop_proto(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_stop_proto(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static void _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
+static void
+_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 {
     // TODO
     UNUSED(id);
@@ -59,7 +72,8 @@ static const ucm_plugproto_t plugin = {.core.oid         = UCM_TYPE_OBJECT_PLUGI
 
 const ucm_plugproto_t* plucl = &plugin;
 
-LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api)
+LIBUCM_API ucm_plugin_t*
+_init_plugin(const ucm_functions_t* api)
 {
     app = api;
     return (ucm_plugin_t*)(&plugin);

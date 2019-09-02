@@ -12,9 +12,14 @@ init_ucm_entropy(void)
     return UCM_RET_SUCCESS;
 }
 
-int get_ucm_entropy(void) { return rand(); }
+int
+get_ucm_entropy(void)
+{
+    return rand();
+}
 
-void free_ucm_entropy(void)
+void
+free_ucm_entropy(void)
 {
     // TODO
 }

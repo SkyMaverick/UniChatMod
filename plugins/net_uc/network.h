@@ -7,13 +7,16 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-typedef struct {
-    struct {
+typedef struct
+{
+    struct
+    {
         int socket;
         struct sockaddr_in addr;
     } ip;
 
-    struct {
+    struct
+    {
         int is_server;
         int net_status;
         int lan_status;
@@ -23,8 +26,10 @@ typedef struct {
     uintptr_t mtx;
 } ucl_connection_t;
 
-ucm_conptr_t ucl_connect();
+ucm_conptr_t
+ucl_connect();
 
-int ucl_disconnect(ucm_conptr_t* cptr);
+int
+ucl_disconnect(ucm_conptr_t* cptr);
 
 #endif

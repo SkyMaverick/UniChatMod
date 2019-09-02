@@ -15,7 +15,8 @@
 // ==========================================
 
 // WARNING! without NULL-terminated symbol
-static inline size_t _intrnl_u32strlen(u32char_t* str)
+static inline size_t
+_intrnl_u32strlen(u32char_t* str)
 {
     size_t count = 0;
     if (str) {
@@ -25,7 +26,8 @@ static inline size_t _intrnl_u32strlen(u32char_t* str)
     return count;
 }
 
-static inline void _intrnl_u32strcpy(u32char_t* dest, u32char_t* src, u32char_t echr)
+static inline void
+_intrnl_u32strcpy(u32char_t* dest, u32char_t* src, u32char_t echr)
 {
     size_t i;
     if (dest && src) {
@@ -35,7 +37,8 @@ static inline void _intrnl_u32strcpy(u32char_t* dest, u32char_t* src, u32char_t 
     }
 }
 
-static inline void _intrnl_u32strncpy(u32char_t* dest, u32char_t* src, u32char_t echr, size_t num)
+static inline void
+_intrnl_u32strncpy(u32char_t* dest, u32char_t* src, u32char_t echr, size_t num)
 {
     size_t i;
     if (dest && src) {
@@ -54,7 +57,8 @@ static inline void _intrnl_u32strncpy(u32char_t* dest, u32char_t* src, u32char_t
     str_len - UTF8 string lenght (maybe 0 for NULLTERM string)
     ret - pointer for decoded USC4 buffer */
 
-int64_t u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
+int64_t
+u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
 {
     int64_t buf_len    = 0;
     const int infinite = (str_len > 0) ? 0 : UTF8PROC_NULLTERM;
@@ -72,8 +76,9 @@ int64_t u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
         if (*ret) {
             for (;;) {
                 int64_t dec_len = 0;
-                dec_len         = utf8proc_decompose((utf8proc_uint8_t*)str, str_len, (utf8proc_int32_t*)*ret, buf_len,
-                                             UTF8PROC_DECOMPOSE | UTF8PROC_STABLE | infinite);
+                dec_len =
+                  utf8proc_decompose((utf8proc_uint8_t*)str, str_len, (utf8proc_int32_t*)*ret,
+                                     buf_len, UTF8PROC_DECOMPOSE | UTF8PROC_STABLE | infinite);
                 if (dec_len < 0) {
                     ucm_free_null(*ret);
                     return dec_len;
@@ -100,7 +105,8 @@ int64_t u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
     return buf_len;
 }
 
-int64_t ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
+int64_t
+ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
 {
     int64_t enc_len = 0;
     if (str && *ret) {
@@ -111,9 +117,9 @@ int64_t ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
             while (*str)
                 str++, buf_size++;
         }
-        *ret = (u8char_t*)ucm_strdup2(str);
-        enc_len =
-            utf8proc_reencode((utf8proc_int32_t*)*ret, buf_size, UTF8PROC_STRIPCC | UTF8PROC_COMPOSE | UTF8PROC_STABLE);
+        *ret    = (u8char_t*)ucm_strdup2(str);
+        enc_len = utf8proc_reencode((utf8proc_int32_t*)*ret, buf_size,
+                                    UTF8PROC_STRIPCC | UTF8PROC_COMPOSE | UTF8PROC_STABLE);
         if (UniAPI->sys.realloc((void**)ret, (enc_len + 1) * U8CHAR_SIZE)) {
             ucm_free_null(*ret);
             return 0;
@@ -126,9 +132,14 @@ int64_t ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
 //     BASIC FUNCTIONS
 // ==========================================
 
-size_t ucm_strlen(u32char_t* str) { return _intrnl_u32strlen(str); }
+size_t
+ucm_strlen(u32char_t* str)
+{
+    return _intrnl_u32strlen(str);
+}
 
-u32char_t* ucm_strdup2(u32char_t* str)
+u32char_t*
+ucm_strdup2(u32char_t* str)
 {
     u32char_t* buf = NULL;
 
@@ -145,21 +156,24 @@ u32char_t* ucm_strdup2(u32char_t* str)
 //     COMPARE FUNCTIONS
 // ==========================================
 
-int ucm_strcmp(u32char_t* lstr, u32char_t* rstr)
+int
+ucm_strcmp(u32char_t* lstr, u32char_t* rstr)
 {
     while (*lstr && (*lstr == *rstr))
         lstr++, rstr++;
     return (*lstr > *rstr) - (*lstr < *rstr);
 }
 
-int ucm_strcasecmp(u32char_t* lstr, u32char_t* rstr)
+int
+ucm_strcasecmp(u32char_t* lstr, u32char_t* rstr)
 {
     while (*lstr && (utf8proc_tolower(*lstr) == utf8proc_tolower(*rstr)))
         lstr++, rstr++;
     return (*lstr > *rstr) - (*lstr < *rstr);
 }
 
-int ucm_strncmp(u32char_t* lstr, u32char_t* rstr, size_t num)
+int
+ucm_strncmp(u32char_t* lstr, u32char_t* rstr, size_t num)
 {
     if (num == 0)
         return 0;
@@ -168,7 +182,8 @@ int ucm_strncmp(u32char_t* lstr, u32char_t* rstr, size_t num)
     return (*lstr > *rstr) - (*lstr < *rstr);
 }
 
-int ucm_strncasecmp(u32char_t* lstr, u32char_t* rstr, size_t num)
+int
+ucm_strncasecmp(u32char_t* lstr, u32char_t* rstr, size_t num)
 {
     if (num == 0)
         return 0;
@@ -181,13 +196,15 @@ int ucm_strncasecmp(u32char_t* lstr, u32char_t* rstr, size_t num)
 //     CASEFOLD FUNCTIONS
 // ==========================================
 
-void ucm_strupcase(u32char_t* str)
+void
+ucm_strupcase(u32char_t* str)
 {
     while (*str)
         utf8proc_toupper(*str++);
 }
 
-void ucm_strlowcase(u32char_t* str)
+void
+ucm_strlowcase(u32char_t* str)
 {
     while (*str)
         utf8proc_tolower(*str++);
@@ -197,27 +214,38 @@ void ucm_strlowcase(u32char_t* str)
 //     STRING COPY FUNCTIONS
 // ==========================================
 
-void ucm_strcpy(u32char_t* dest, u32char_t* src) { _intrnl_u32strcpy(dest, src, 0); }
+void
+ucm_strcpy(u32char_t* dest, u32char_t* src)
+{
+    _intrnl_u32strcpy(dest, src, 0);
+}
 
-void ucm_strncpy(u32char_t* dest, u32char_t* src, size_t num) { _intrnl_u32strncpy(dest, src, 0, num); }
+void
+ucm_strncpy(u32char_t* dest, u32char_t* src, size_t num)
+{
+    _intrnl_u32strncpy(dest, src, 0, num);
+}
 
 // ==========================================
 //     STRING CONCAT FUNCTIONS
 // ==========================================
 
-void ucm_strcat(u32char_t* dest, u32char_t* src)
+void
+ucm_strcat(u32char_t* dest, u32char_t* src)
 {
     size_t dest_size = _intrnl_u32strlen(dest);
     _intrnl_u32strcpy(dest + dest_size, src, 0);
 }
 
-void ucm_strncat(u32char_t* dest, u32char_t* src, size_t num)
+void
+ucm_strncat(u32char_t* dest, u32char_t* src, size_t num)
 {
     size_t dest_size = _intrnl_u32strlen(dest);
     _intrnl_u32strncpy(dest + dest_size, src, 0, num);
 }
 
-void ucm_vstrcat(u32char_t* dest, unsigned num, va_list va)
+void
+ucm_vstrcat(u32char_t* dest, unsigned num, va_list va)
 {
     size_t i = _intrnl_u32strlen(dest) + 1;
     size_t j;
@@ -232,7 +260,8 @@ void ucm_vstrcat(u32char_t* dest, unsigned num, va_list va)
     }
 }
 
-void ucm_mstrcat(u32char_t* dest, unsigned num, ...)
+void
+ucm_mstrcat(u32char_t* dest, unsigned num, ...)
 {
     va_list strs;
     va_start(strs, num);
@@ -244,7 +273,8 @@ void ucm_mstrcat(u32char_t* dest, unsigned num, ...)
 //     STRING GET CHAR POSITION FUNCTIONS
 // ==========================================
 
-u32char_t* ucm_strchr(u32char_t* str, u32char_t chr)
+u32char_t*
+ucm_strchr(u32char_t* str, u32char_t chr)
 {
     if (!str)
         return NULL;
@@ -255,7 +285,8 @@ u32char_t* ucm_strchr(u32char_t* str, u32char_t chr)
     return &str[i];
 }
 
-u32char_t* ucm_strrchr(u32char_t* str, u32char_t chr)
+u32char_t*
+ucm_strrchr(u32char_t* str, u32char_t chr)
 {
     if (!str)
         return NULL;
@@ -271,7 +302,8 @@ u32char_t* ucm_strrchr(u32char_t* str, u32char_t chr)
 //     STRING JOIN FUNCTIONS
 // ==========================================
 
-u32char_t* ucm_strjoin(u32char_t* str1, u32char_t* str2)
+u32char_t*
+ucm_strjoin(u32char_t* str1, u32char_t* str2)
 {
     u32char_t* result = NULL;
     if (str1 && str2) {
@@ -288,7 +320,8 @@ u32char_t* ucm_strjoin(u32char_t* str1, u32char_t* str2)
     return result;
 }
 
-u32char_t* ucm_vstrjoin(size_t num, va_list va)
+u32char_t*
+ucm_vstrjoin(size_t num, va_list va)
 {
     u32char_t* buf = NULL;
     size_t buf_len = 0;
@@ -318,7 +351,8 @@ u32char_t* ucm_vstrjoin(size_t num, va_list va)
     return buf;
 }
 
-u32char_t* ucm_mstrjoin(size_t num, ...)
+u32char_t*
+ucm_mstrjoin(size_t num, ...)
 {
     u32char_t* ret = NULL;
 
@@ -335,7 +369,8 @@ u32char_t* ucm_mstrjoin(size_t num, ...)
 //     STRING JOIN WITH BROKEN CHAR FUNCTIONS
 // ==========================================
 
-u32char_t* ucm_strbrkjoin(u32char_t* str1, u32char_t* str2, u32char_t brk)
+u32char_t*
+ucm_strbrkjoin(u32char_t* str1, u32char_t* str2, u32char_t brk)
 {
     u32char_t* result = NULL;
     if (str1 && str2) {
@@ -351,7 +386,8 @@ u32char_t* ucm_strbrkjoin(u32char_t* str1, u32char_t* str2, u32char_t brk)
     return result;
 }
 
-u32char_t* ucm_vstrbrkjoin(size_t num, u32char_t brk, va_list va)
+u32char_t*
+ucm_vstrbrkjoin(size_t num, u32char_t brk, va_list va)
 {
     u32char_t* buf = NULL;
     size_t buf_len = 0;
@@ -381,7 +417,8 @@ u32char_t* ucm_vstrbrkjoin(size_t num, u32char_t brk, va_list va)
     return buf;
 }
 
-u32char_t* ucm_mstrbrkjoin(u32char_t brk, size_t num, ...)
+u32char_t*
+ucm_mstrbrkjoin(u32char_t brk, size_t num, ...)
 {
     u32char_t* ret = NULL;
 
@@ -398,7 +435,8 @@ u32char_t* ucm_mstrbrkjoin(u32char_t brk, size_t num, ...)
 //      SUBSTRING SEARCH FUNCTIONS
 // ==========================================
 
-int64_t ucm_strstr(u32char_t* str, u32char_t* sstr)
+int64_t
+ucm_strstr(u32char_t* str, u32char_t* sstr)
 {
     if (str && sstr) {
         int64_t i, j, N, M;
@@ -432,7 +470,8 @@ int64_t ucm_strstr(u32char_t* str, u32char_t* sstr)
     return -1;
 }
 
-int64_t ucm_strcasestr(u32char_t* str, u32char_t* sstr)
+int64_t
+ucm_strcasestr(u32char_t* str, u32char_t* sstr)
 {
 #define __U8LCASE(X) utf8proc_tolower(X)
     if (str && sstr) {

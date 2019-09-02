@@ -9,7 +9,8 @@
     #include "getopt_win.h"
 #endif
 
-static inline void _display_help(void)
+static inline void
+_display_help(void)
 {
     fprintf(stdout, "%s\n", "Usage UniChatMod tui mode: ucmc [options]");
     fprintf(stdout, "%s\n", "Options:");
@@ -20,9 +21,14 @@ static inline void _display_help(void)
     fprintf(stdout, "%s\n", "    -p <base path>  load or create external database file");
 }
 
-static inline void _display_version(void) { fprintf(stdout, "%s\n", UCM_VERSION); }
+static inline void
+_display_version(void)
+{
+    fprintf(stdout, "%s\n", UCM_VERSION);
+}
 
-void app_args_parse(int argc, char* argv[], ucm_cargs_t* args)
+void
+app_args_parse(int argc, char* argv[], ucm_cargs_t* args)
 {
     int opt = 0;
     while ((opt = getopt(argc, argv, "rs:p:vV?")) != -1) {

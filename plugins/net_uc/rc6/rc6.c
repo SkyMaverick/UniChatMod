@@ -55,7 +55,8 @@
 typedef uint8_t uint_t;
 ;
 
-int rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen)
+int
+rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen)
 {
     uint_t c;
     uint_t i;
@@ -119,7 +120,8 @@ int rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen)
  * @param[out] output Ciphertext block resulting from encryption
  **/
 
-void rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
+void
+rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
 {
     uint_t i;
     uint32_t t;
@@ -174,7 +176,8 @@ void rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
  * @param[out] output Plaintext block resulting from decryption
  **/
 
-void rc6DecryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
+void
+rc6DecryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
 {
     uint_t i;
     uint32_t t;

@@ -3,20 +3,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-void* osal_malloc(size_t size) { return malloc(size); }
+void*
+osal_malloc(size_t size)
+{
+    return malloc(size);
+}
 
-void* osal_calloc(size_t nmem, size_t size) { return (void*)calloc(nmem, size); }
+void*
+osal_calloc(size_t nmem, size_t size)
+{
+    return (void*)calloc(nmem, size);
+}
 
-void* osal_zmalloc(size_t size) { return osal_calloc(1, size); }
+void*
+osal_zmalloc(size_t size)
+{
+    return osal_calloc(1, size);
+}
 
-void* osal_realloc(void* mem, size_t size) { return realloc(mem, size); }
+void*
+osal_realloc(void* mem, size_t size)
+{
+    return realloc(mem, size);
+}
 
-void osal_free(void* mem)
+void
+osal_free(void* mem)
 {
     if (mem)
         free(mem);
 }
-void osal_zmemory(void* mem, size_t size)
+void
+osal_zmemory(void* mem, size_t size)
 {
     if (size) {
         if (__ulikely(size > 4096)) {
@@ -30,7 +48,8 @@ void osal_zmemory(void* mem, size_t size)
     }
 }
 
-int osal_realloc2(void** mem, size_t size)
+int
+osal_realloc2(void** mem, size_t size)
 {
     void* old_mem = *mem;
     *mem          = osal_realloc(*mem, size);
@@ -43,7 +62,8 @@ int osal_realloc2(void** mem, size_t size)
     return 0;
 }
 
-char* osal_strdup(const char* str)
+char*
+osal_strdup(const char* str)
 {
     size_t len   = strlen(str);
     char* buffer = osal_zmalloc(len + 1);
@@ -53,7 +73,8 @@ char* osal_strdup(const char* str)
     return buffer;
 }
 
-char* osal_strndup(const char* str, size_t num)
+char*
+osal_strndup(const char* str, size_t num)
 {
     size_t len = strlen(str);
     if (len < num)

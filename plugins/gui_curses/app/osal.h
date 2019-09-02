@@ -1,8 +1,10 @@
 #pragma once
 
-char* app_realpath(const char* path);
+char*
+app_realpath(const char* path);
 
-inline int app_realloc(void** mem, size_t size)
+inline int
+app_realloc(void** mem, size_t size)
 {
     void* old_mem = *mem;
     *mem          = realloc(*mem, size);
@@ -15,4 +17,5 @@ inline int app_realloc(void** mem, size_t size)
     return 0;
 }
 
-char* app_mypath(char* path);
+char*
+app_mypath(char* path);

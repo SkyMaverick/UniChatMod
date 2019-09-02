@@ -6,9 +6,14 @@
 #include <string.h>
 #include <unistd.h>
 
-void CUnitUInitialize(void) { CU_cleanup_registry(); }
+void
+CUnitUInitialize(void)
+{
+    CU_cleanup_registry();
+}
 
-void CUnitInitialize(void)
+void
+CUnitInitialize(void)
 {
     if (CU_initialize_registry() != CUE_SUCCESS) {
         fprintf(stderr, "Failed initialize CUnit registry: %d\n", CU_get_error());
@@ -16,11 +21,20 @@ void CUnitInitialize(void)
     }
 }
 
-static int initSuite(void) { return 0; }
+static int
+initSuite(void)
+{
+    return 0;
+}
 
-static int cleanSuite(void) { return 0; }
+static int
+cleanSuite(void)
+{
+    return 0;
+}
 
-CU_pSuite CUnitCreateSuite(const char* title)
+CU_pSuite
+CUnitCreateSuite(const char* title)
 {
     CU_pSuite suite = NULL;
     suite           = CU_add_suite(title, initSuite, cleanSuite);

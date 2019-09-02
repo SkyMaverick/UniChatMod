@@ -12,37 +12,57 @@
 
 static struct mq_block_s* messages;
 
-int ucm_mloop_init(int size)
+int
+ucm_mloop_init(int size)
 {
     if (size < UCM_DEF_MQ_LIMIT) {
-        ucm_etrace("%s %d. %s: %d. %s\n", _("Message queue size don't less minimal size"), UCM_DEF_MQ_LIMIT,
-                   _("Now define size"), size, _("Using default value"));
+        ucm_etrace("%s %d. %s: %d. %s\n", _("Message queue size don't less minimal size"),
+                   UCM_DEF_MQ_LIMIT, _("Now define size"), size, _("Using default value"));
         size = UCM_DEF_MQ_LIMIT;
     }
     messages = mq_create(size);
     return messages ? UCM_RET_SUCCESS : UCM_RET_NOOBJECT;
 }
 
-int ucm_mloop_push(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2) { return mq_push(messages, id, ctx, x1, x2); }
+int
+ucm_mloop_push(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
+{
+    return mq_push(messages, id, ctx, x1, x2);
+}
 
-int ucm_mloop_pop(uint32_t* id, uintptr_t* ctx, uint32_t* x1, uint32_t* x2)
+int
+ucm_mloop_pop(uint32_t* id, uintptr_t* ctx, uint32_t* x1, uint32_t* x2)
 {
     return mq_pop(messages, id, ctx, x1, x2);
 }
 
-void ucm_mloop_clear(void) { mq_clear(messages); }
+void
+ucm_mloop_clear(void)
+{
+    mq_clear(messages);
+}
 
-void ucm_mloop_wait(void) { mq_wait(messages); }
+void
+ucm_mloop_wait(void)
+{
+    mq_wait(messages);
+}
 
-int ucm_mloop_noempty(void) { return mq_noempty(messages); }
+int
+ucm_mloop_noempty(void)
+{
+    return mq_noempty(messages);
+}
 
-void ucm_mloop_free(void)
+void
+ucm_mloop_free(void)
 {
     if (messages)
         mq_free(messages);
 }
 
-static inline size_t event_size_get(uint32_t id)
+static inline size_t
+event_size_get(uint32_t id)
 {
     switch (id) {
     case UCM_EVENT_START_GUI:
@@ -53,7 +73,8 @@ static inline size_t event_size_get(uint32_t id)
     }
 }
 
-ucm_ev_t* ucm_event_alloc2(uint32_t id, void* ctx, size_t mem)
+ucm_ev_t*
+ucm_event_alloc2(uint32_t id, void* ctx, size_t mem)
 {
     ucm_ev_t* event = NULL;
 
@@ -78,9 +99,14 @@ ucm_ev_t* ucm_event_alloc2(uint32_t id, void* ctx, size_t mem)
     return event;
 }
 
-ucm_ev_t* ucm_event_alloc(uint32_t id) { return ucm_event_alloc2(id, NULL, 0); }
+ucm_ev_t*
+ucm_event_alloc(uint32_t id)
+{
+    return ucm_event_alloc2(id, NULL, 0);
+}
 
-void ucm_event_free(ucm_ev_t** event)
+void
+ucm_event_free(ucm_ev_t** event)
 {
     if (*event) {
         ucm_dtrace("Free event: %d\n", (*event)->ev);
@@ -91,7 +117,8 @@ void ucm_event_free(ucm_ev_t** event)
     }
 }
 
-int ucm_event_push(ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender)
+int
+ucm_event_push(ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender)
 {
     if (!event)
         return UCM_RET_NOOBJECT;

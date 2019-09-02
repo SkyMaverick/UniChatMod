@@ -4,7 +4,8 @@
 #include "config.h"
 #include "ucm.h"
 
-typedef struct _event_hook_s {
+typedef struct _event_hook_s
+{
     unsigned mask; // events selector mask
     void* ctx;     // callback context pointer
     cb_evhook hook;
@@ -15,7 +16,8 @@ typedef struct _event_hook_s {
 static ucm_evhook_t* _hooks;
 static uintptr_t _lock_hooks;
 
-static void _hooks_core(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2)
+static void
+_hooks_core(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2)
 {
     UniAPI->sys.rwlock_rlock(_lock_hooks);
     for (ucm_evhook_t* i = _hooks; i; i = i->next) {
@@ -26,7 +28,8 @@ static void _hooks_core(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2)
     UniAPI->sys.rwlock_unlock(_lock_hooks);
 }
 
-static void _hooks_flush(ucm_evhook_t** list)
+static void
+_hooks_flush(ucm_evhook_t** list)
 {
     ucm_evhook_t* tmp = NULL;
     while (*list) {
@@ -36,25 +39,29 @@ static void _hooks_flush(ucm_evhook_t** list)
     }
 }
 
-void hooks_event_init(void)
+void
+hooks_event_init(void)
 {
     _hooks      = NULL;
     _lock_hooks = UniAPI->sys.rwlock_create();
 }
 
-void hooks_event_release(void)
+void
+hooks_event_release(void)
 {
     _hooks_flush(&_hooks);
     UniAPI->sys.rwlock_free(_lock_hooks);
 }
 
-void hooks_event(const uint32_t eid, const uintptr_t ev, const uint32_t x1, const uint32_t x2)
+void
+hooks_event(const uint32_t eid, const uintptr_t ev, const uint32_t x1, const uint32_t x2)
 {
     // TODO block some events if it's need
     _hooks_core(eid, ev, x1, x2);
 }
 
-void hooks_event_attach(cb_evhook hook, void* ctx, uint32_t mask)
+void
+hooks_event_attach(cb_evhook hook, void* ctx, uint32_t mask)
 {
     ucm_evhook_t* eh = UniAPI->sys.zmalloc(sizeof(ucm_evhook_t));
     if (eh) {
@@ -69,7 +76,8 @@ void hooks_event_attach(cb_evhook hook, void* ctx, uint32_t mask)
     }
 }
 
-void hooks_event_detach(cb_evhook hook)
+void
+hooks_event_detach(cb_evhook hook)
 {
     ucm_evhook_t* prev = NULL;
 

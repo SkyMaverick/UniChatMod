@@ -60,9 +60,11 @@ static const char* errors[UCM_RET_UNKNOWERROR + 1] = {
     _("This plugin don't have core start/stop interfaces"),
 
     //   UCM_RET_UNKNOWERROR
-    _("Unknown error message")};
+    _("Unknown error message")
+};
 
-static const char* ucm_strerr_func(const unsigned err)
+static const char*
+ucm_strerr_func(const unsigned err)
 {
     fprintf(stdout, "%s: %d\n", "Catch number", err);
     return (err > UCM_RET_UNKNOWERROR) ? errors[UCM_RET_UNKNOWERROR] : errors[err];

@@ -36,8 +36,11 @@
 
 #define _MSGID_ON(id) _MSG_ON(_mfdout_##id, _mfderr_##id);
 
-CU_pSuite CUnitCreateSuite(const char* title);
-void CUnitInitialize(void);
-void CUnitUInitialize(void);
+CU_pSuite
+CUnitCreateSuite(const char* title);
+void
+CUnitInitialize(void);
+void
+CUnitUInitialize(void);
 
 #endif

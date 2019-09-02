@@ -3,7 +3,8 @@
 
 extern ucm_plugin_t* ucm_core;
 
-void wait_core_loop(void);
+void
+wait_core_loop(void);
 
 UCM_RET
 core_load(void);

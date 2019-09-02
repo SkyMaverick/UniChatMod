@@ -17,9 +17,15 @@ _TEST(strlen_lenght)
     CU_ASSERT_EQUAL(ucm_strlen(A), 10);
 }
 
-_TEST(strlen_null) { CU_ASSERT_EQUAL(ucm_strlen(NULL), 0); }
+_TEST(strlen_null)
+{
+    CU_ASSERT_EQUAL(ucm_strlen(NULL), 0);
+}
 
-_TEST(strlen_empty) { CU_ASSERT_EQUAL(ucm_strlen(U""), 0); }
+_TEST(strlen_empty)
+{
+    CU_ASSERT_EQUAL(ucm_strlen(U""), 0);
+}
 
 //  ************************************
 //     STRDUP TESTS
@@ -37,7 +43,10 @@ _TEST(strdup_normal)
     ucm_kfree(B);
 }
 
-_TEST(strdup_null) { CU_ASSERT_PTR_NULL(ucm_strdup(NULL)); }
+_TEST(strdup_null)
+{
+    CU_ASSERT_PTR_NULL(ucm_strdup(NULL));
+}
 
 _TEST(strdup_empty)
 {
@@ -208,7 +217,8 @@ _TEST(strstr_normal)
     CU_ASSERT_EQUAL(ucm_strcasestr(A, U"BBB"), 4);
 }
 
-LIBUCM_API void _run_suite(void)
+LIBUCM_API void
+_run_suite(void)
 {
     // ... all startup functionality
     CU_pSuite suite = CUnitCreateSuite("Unicode functions tests");

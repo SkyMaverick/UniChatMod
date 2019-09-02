@@ -3,10 +3,11 @@
 #include "ucm.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-extern ucm_functions_t* UniAPI;
+    extern ucm_functions_t* UniAPI;
 
 #if defined(DEBUG)
     #define ucm_dtrace(format, ...)                                            \

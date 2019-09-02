@@ -19,7 +19,8 @@ static mdbx_database_t dba;
 //      INTERNAL PLUGIN SERVICE FUNCTIONS
 // ######################################################################
 
-void _assert_func(const MDBX_env* env, const char* msg, const char* function, unsigned line)
+void
+_assert_func(const MDBX_env* env, const char* msg, const char* function, unsigned line)
 {
     UNUSED(env);
     trace_err(_("%s. Assert in %s (line: %d)\n"), msg, function, line);
@@ -28,11 +29,20 @@ void _assert_func(const MDBX_env* env, const char* msg, const char* function, un
 //      STANDART PLUGIN API IMPLEMENTATION
 // ######################################################################
 
-static UCM_RET _run_dbmdbx(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_run_dbmdbx(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static UCM_RET _stop_dbmdbx(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_stop_dbmdbx(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static void _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
+static void
+_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 {
     // TODO
     UNUSED(id);
@@ -82,7 +92,8 @@ static mdbx_database_t dba = {.plugin.core.oid         = UCM_TYPE_OBJECT_PLUGIN,
 
 mdbx_database_t* UniDB = &dba;
 
-LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api)
+LIBUCM_API ucm_plugin_t*
+_init_plugin(const ucm_functions_t* api)
 {
     app = api;
     return (ucm_plugin_t*)(&dba);

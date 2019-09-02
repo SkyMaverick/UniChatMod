@@ -16,7 +16,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static void* __select_func(void* ctx)
+static void*
+__select_func(void* ctx)
 {
 #ifdef __linux__
     trace_dbg("%s\n", "Use thread name");
@@ -52,7 +53,8 @@ static void* __select_func(void* ctx)
     return NULL;
 }
 
-static int _create_socket(ucl_connection_t* Con, uint32_t ip, uint16_t port)
+static int
+_create_socket(ucl_connection_t* Con, uint32_t ip, uint16_t port)
 {
     if ((Con->ip.socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         trace_err("%s - %d:%d. %s\n", "Don't create socket", ip, port, strerror(errno));
@@ -80,7 +82,8 @@ static int _create_socket(ucl_connection_t* Con, uint32_t ip, uint16_t port)
     return UCM_RET_SUCCESS;
 }
 
-ucm_conptr_t ucl_connect()
+ucm_conptr_t
+ucl_connect()
 {
     ucl_connection_t* con_s = app->sys.zmalloc(sizeof(ucl_connection_t));
     if (con_s) {
@@ -103,7 +106,8 @@ ucm_conptr_t ucl_connect()
     return (uintptr_t)con_s;
 }
 
-int ucl_disconnect(ucm_conptr_t* Con)
+int
+ucl_disconnect(ucm_conptr_t* Con)
 {
     if (Con && *Con > 0) {
         // TODO release connection

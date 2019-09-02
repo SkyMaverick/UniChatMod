@@ -16,7 +16,8 @@
 
 typedef void (*cb_suite)(void);
 
-typedef struct modules_list {
+typedef struct modules_list
+{
     void* handle;
     cb_suite start_func;
 
@@ -24,7 +25,8 @@ typedef struct modules_list {
     struct modules_list* next;
 } module_t;
 
-size_t lookup_suites(char* lookup_dir, module_t** found_suites)
+size_t
+lookup_suites(char* lookup_dir, module_t** found_suites)
 {
     size_t suites_count = 0;
     DIR* suites_path    = opendir(lookup_dir);
@@ -84,7 +86,8 @@ size_t lookup_suites(char* lookup_dir, module_t** found_suites)
     return suites_count;
 }
 
-int main(int argc, char* argv[])
+int
+main(int argc, char* argv[])
 {
     (void)argc;
 

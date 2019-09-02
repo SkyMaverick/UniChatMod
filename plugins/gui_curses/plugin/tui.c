@@ -9,12 +9,14 @@ const ucm_functions_t* app;
 
 static uintptr_t hwnd = 0;
 
-static void _curses_cleanup(void)
+static void
+_curses_cleanup(void)
 {
     //    endwin();
 }
 
-static void* _curses_loop(void* ctx)
+static void*
+_curses_loop(void* ctx)
 {
     ucm_cargs_t* args = (ucm_cargs_t*)ctx;
     fprintf(stdout, "%s\n", "Start curses APP");
@@ -63,7 +65,8 @@ start_curses_app(void* ctx)
     return UCM_RET_SUCCESS;
 }
 
-void finish_curses_app(int sig)
+void
+finish_curses_app(int sig)
 {
     UNUSED(sig);
     // TODO
@@ -73,11 +76,20 @@ void finish_curses_app(int sig)
 //      PLUGIN FUNCTIONS
 // *********************************************************
 
-static UCM_RET _run_plugin(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_run_plugin(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static UCM_RET _stop_plugin(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_stop_plugin(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static void _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
+static void
+_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 {
     switch (id) {
         // TODO
@@ -119,7 +131,8 @@ static ucm_plugui_t plugin = {
 
 const ucm_plugui_t* hplug = &plugin;
 
-LIBUCM_API ucm_plugin_t* _init_plugin(const ucm_functions_t* api)
+LIBUCM_API ucm_plugin_t*
+_init_plugin(const ucm_functions_t* api)
 {
     app = api;
     return (ucm_plugin_t*)(&plugin);

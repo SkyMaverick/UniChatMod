@@ -1,7 +1,8 @@
 #ifndef _UNICHAT_LEGACY_PROTOCOL_H_
 #define _UNICHAT_LEGACY_PROTOCOL_H_
 
-enum {
+enum
+{
     UCL_USERSTAT_ACTIVE   = 0,
     UCL_USERSTAT_BUSY     = 1,
     UCL_USERSTAT_GAME     = 2,

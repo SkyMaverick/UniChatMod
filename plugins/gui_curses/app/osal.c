@@ -1,14 +1,15 @@
 #include "ucm.h"
 #include "osal.h"
 
-char* app_realpath(const char* path)
+char*
+app_realpath(const char* path)
 {
 #if defined(UCM_OS_POSIX) || defined(UCM_OS_WINEMULATOR)
     return realpath(path, NULL);
 #else
     char* tmp_path = NULL;
-    HANDLE handle =
-        CreateFileA(path, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    HANDLE handle  = CreateFileA(path, 0, 0, NULL, OPEN_EXISTING,
+                                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if (handle = INVALID_HANDLE_VALUE)
         return NULL;
 
@@ -25,7 +26,8 @@ char* app_realpath(const char* path)
 #endif
 }
 
-char* app_mypath(char* path)
+char*
+app_mypath(char* path)
 {
 #if defined(UCM_OS_POSIX) || defined(UCM_OS_WINEMULATOR)
     return app_realpath(path);

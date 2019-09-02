@@ -13,9 +13,11 @@
 #define SHUFFLE_BUFFER_SIZE 12
 #define bswap(x) asm("bswap %1" : "=r"((x)) : "0"((x)))
 
-void _shuffle_key(uint32_t key, char* passkey, size_t pklen)
+void
+_shuffle_key(uint32_t key, char* passkey, size_t pklen)
 {
-    uint8_t skey[SHUFFLE_BUFFER_SIZE] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t skey[SHUFFLE_BUFFER_SIZE] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                          0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
     for (uint8_t i = 0; (i < pklen) && (i < SHUFFLE_BUFFER_SIZE); i++)
         skey[i] = passkey[i];
@@ -158,7 +160,8 @@ void _shuffle_key(uint32_t key, char* passkey, size_t pklen)
     *((uint32_t*)(skey + 8)) = ecx;
 }
 
-ssize_t send_data(void* buffer, size_t lenght)
+ssize_t
+send_data(void* buffer, size_t lenght)
 {
     uint32_t salt     = app->app.get_entropy();
     uint8_t long_flag = 0;

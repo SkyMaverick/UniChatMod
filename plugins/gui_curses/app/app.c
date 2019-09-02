@@ -40,12 +40,12 @@ static char pla_buf[UCM_PATH_MAX];
 static char ppa_buf[UCM_PATH_MAX];
 static char psa_buf[UCM_PATH_MAX];
 
-ucm_cargs_t args = {.path_abs       = pa_buf,
-                    .path_lib_abs   = pla_buf,
-                    .path_plug_abs  = ppa_buf,
-                    .path_store_abs = psa_buf,
+ucm_cargs_t args = { .path_abs       = pa_buf,
+                     .path_lib_abs   = pla_buf,
+                     .path_plug_abs  = ppa_buf,
+                     .path_store_abs = psa_buf,
 
-                    .options = 0};
+                     .options = 0 };
 
 ucm_cstart_func core_start = NULL;
 ucm_cstop_func core_stop   = NULL;
@@ -55,11 +55,24 @@ static ucm_plugin_info_t* info;
 
 static uint32_t global_flags = 0;
 
-const bool get_flag(const app_flag_t flag) { return (global_flags & flag); }
-void set_flag(const app_flag_t flag) { global_flags |= flag; }
-void unset_flag(const app_flag_t flag) { global_flags &= ~flag; }
+const bool
+get_flag(const app_flag_t flag)
+{
+    return (global_flags & flag);
+}
+void
+set_flag(const app_flag_t flag)
+{
+    global_flags |= flag;
+}
+void
+unset_flag(const app_flag_t flag)
+{
+    global_flags &= ~flag;
+}
 
-static void exit_func(int ret_status)
+static void
+exit_func(int ret_status)
 {
     if (info)
         free(info);
@@ -78,7 +91,8 @@ static void exit_func(int ret_status)
 }
 
 #if defined(UCM_OS_WINDOWS)
-BOOL TermHandler(DWORD fwdHandlerType)
+BOOL
+TermHandler(DWORD fwdHandlerType)
 {
     fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch signal ..."));
 
@@ -93,7 +107,8 @@ BOOL TermHandler(DWORD fwdHandlerType)
 }
 #else
     #ifdef DEBUG
-static void _stack_trace(int sig)
+static void
+_stack_trace(int sig)
 {
     fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch SEGV signal ..."));
     void* buf[STACK_TRACE_BUFFER];
@@ -113,7 +128,8 @@ static void _stack_trace(int sig)
 }
     #endif
 
-static void _crash_handler(int sig)
+static void
+_crash_handler(int sig)
 {
     #ifdef DEBUG
     _stack_trace(sig);
@@ -122,14 +138,16 @@ static void _crash_handler(int sig)
     exit(UCM_RET_EXCEPTION);
 }
 
-static void _term_handler(int sig)
+static void
+_term_handler(int sig)
 {
     fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch TERM signal ..."));
     exit_func(UCM_RET_SUCCESS);
 }
 #endif
 
-int main(int argc, char* argv[])
+int
+main(int argc, char* argv[])
 {
     set_flag(FLAG_APP_PORTABLE);
     int ret_status = UCM_RET_SUCCESS;
@@ -171,14 +189,17 @@ int main(int argc, char* argv[])
     }
 
     if (get_flag(FLAG_APP_PORTABLE)) {
-        snprintf(args.path_lib_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_DEPENDS);
-        snprintf(args.path_plug_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM, UCM_PATH_MODULES);
+        snprintf(args.path_lib_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM,
+                 UCM_PATH_DEPENDS);
+        snprintf(args.path_plug_abs, UCM_PATH_MAX, "%s%c%ls", args.path_abs, PATH_DELIM,
+                 UCM_PATH_MODULES);
     } else {
         // TODO
     }
 
     if (get_flag(FLAG_APP_PORTABLE_BASE)) {
-        snprintf(args.path_store_abs, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, UCM_DB_DEFAULT_NAME);
+        snprintf(args.path_store_abs, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM,
+                 UCM_DB_DEFAULT_NAME);
     } else {
         // TODO
     }
@@ -217,7 +238,8 @@ int main(int argc, char* argv[])
             info = malloc(sizeof(ucm_plugin_info_t));
             if (info) {
                 core_info(UCM_INFO_CORE, (void*)info, sizeof(ucm_plugin_info_t), &args);
-                if ((info->api.vmajor >= LIBCORE_API_MAJVER) && (info->api.vminor >= LIBCORE_API_MINVER)) {
+                if ((info->api.vmajor >= LIBCORE_API_MAJVER) &&
+                    (info->api.vminor >= LIBCORE_API_MINVER)) {
                     app_args_parse(argc, argv, &args);
 
                     if (get_flag(FLAG_APP_TERMINATED))

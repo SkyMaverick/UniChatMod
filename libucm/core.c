@@ -14,14 +14,16 @@
 
 #include <wchar.h>
 
-typedef struct {
+typedef struct
+{
     // base plugin functionality (start/stop/mq)
     ucm_plugin_t base;
 
     // message/event communication loop (custom implementation)
     uintptr_t loop_ucore;
     // osal system handle
-    struct {
+    struct
+    {
         uv_loop_t* loop_sys;
         uv_loop_t* loop_net;
     } uv;
@@ -29,7 +31,8 @@ typedef struct {
 // forward structure declaration
 static ucm_core_t kernel;
 
-static void* loop_core(void* ctx)
+static void*
+loop_core(void* ctx)
 {
     uint32_t id;
     uintptr_t lctx;
@@ -61,7 +64,8 @@ static void* loop_core(void* ctx)
                 break;
             case UCM_EVENT_DBLOAD_SUCCESS:
                 if (x1 == UCM_RET_SUCCESS) {
-                    ucm_dtrace("[EVENT] %s: %s\n", "Start database with plugin", U_PLUGIN(lctx)->info.pid);
+                    ucm_dtrace("[EVENT] %s: %s\n", "Start database with plugin",
+                               U_PLUGIN(lctx)->info.pid);
                     for (int i = UCM_TYPE_PLUG_DB + 1; i <= UCM_TYPE_PLUG_STUFF; i++)
                         pmgr_group_run(i);
                 }
@@ -84,15 +88,21 @@ static void* loop_core(void* ctx)
     return NULL;
 }
 
-static UCM_RET _stop_core(void) { return UCM_RET_SUCCESS; }
+static UCM_RET
+_stop_core(void)
+{
+    return UCM_RET_SUCCESS;
+}
 
-static UCM_RET _run_core(void)
+static UCM_RET
+_run_core(void)
 {
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
 
-static void _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
+static void
+_message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 
 {
     switch (id) {
@@ -105,34 +115,39 @@ static void _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
     UNUSED(x2);
 }
 
-void wait_core_loop(void) { UniAPI->sys.thread_join(kernel.loop_ucore); }
+void
+wait_core_loop(void)
+{
+    UniAPI->sys.thread_join(kernel.loop_ucore);
+}
 
-static inline UCM_RET uv_init (void)
+static inline UCM_RET
+uv_init(void)
 {
     kernel.uv.loop_sys = uv_default_loop();
     if (kernel.uv.loop_sys == NULL)
         return UCM_RET_NOOBJECT;
-    kernel.uv.loop_net = UniAPI->sys.zmalloc (sizeof(uv_loop_t));
+    kernel.uv.loop_net = UniAPI->sys.zmalloc(sizeof(uv_loop_t));
     if (kernel.uv.loop_net == NULL) {
         return UCM_RET_SYSTEM_NOMEMORY;
     }
     UniAPI->bind.loop_sys = kernel.uv.loop_sys;
     UniAPI->bind.loop_net = kernel.uv.loop_net;
 
-    uv_loop_init (kernel.uv.loop_net);
-    uv_run (kernel.uv.loop_sys, UV_RUN_DEFAULT);
-    uv_run (kernel.uv.loop_net, UV_RUN_DEFAULT);
+    uv_loop_init(kernel.uv.loop_net);
+    uv_run(kernel.uv.loop_sys, UV_RUN_DEFAULT);
+    uv_run(kernel.uv.loop_net, UV_RUN_DEFAULT);
 
     return UCM_RET_SUCCESS;
 }
-static inline void uv_destroy (void)
+static inline void
+uv_destroy(void)
 {
-    uv_loop_close (kernel.uv.loop_sys);
-    uv_loop_close (kernel.uv.loop_net);
+    uv_loop_close(kernel.uv.loop_sys);
+    uv_loop_close(kernel.uv.loop_net);
     if (kernel.uv.loop_net != NULL)
-        ucm_free_null (kernel.uv.loop_net);
+        ucm_free_null(kernel.uv.loop_net);
 }
-
 
 UCM_RET
 core_load(void)
