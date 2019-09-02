@@ -131,9 +131,6 @@ uv_init(void)
     if (kernel.uv.loop_net == NULL) {
         return UCM_RET_SYSTEM_NOMEMORY;
     }
-    UniAPI->bind.loop_sys = kernel.uv.loop_sys;
-    UniAPI->bind.loop_net = kernel.uv.loop_net;
-
     uv_loop_init(kernel.uv.loop_net);
     uv_run(kernel.uv.loop_sys, UV_RUN_DEFAULT);
     uv_run(kernel.uv.loop_net, UV_RUN_DEFAULT);
@@ -196,6 +193,21 @@ core_unload(void)
 /***************************************************
     EXTERANAL FUNCTIONS
  ***************************************************/
+
+const uintptr_t
+get_loop_handle(int loop)
+{
+    switch (loop) {
+    case CORE_LOOP_MAIN:
+        return kernel.loop_ucore;
+    case CORE_LOOP_SYSTEM:
+        return (uintptr_t)kernel.uv.loop_sys;
+    case CORE_LOOP_NETWORK:
+        return (uintptr_t)kernel.uv.loop_net;
+    default:
+        return 0;
+    }
+}
 
 static ucm_core_t kernel = {.base.oid             = UCM_TYPE_OBJECT_PLUGIN,
                             .base.info.api.vmajor = UCM_API_MAJOR_VER,

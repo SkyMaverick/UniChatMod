@@ -351,6 +351,13 @@ typedef uint32_t u32char_t;
         UCM_FLAG_CHECKPROF = 1 << 2
     };
 
+    enum
+    {
+        CORE_LOOP_MAIN    = 1,
+        CORE_LOOP_SYSTEM  = 2,
+        CORE_LOOP_NETWORK = 3
+    };
+
     // Messages and events ID  ---------------------
     enum
     {
@@ -1007,6 +1014,7 @@ typedef uint32_t u32char_t;
         struct
         {
             void (*wait_exit)(void);
+            uintptr_t (*get_loop)(int loop);
             /*! low-level settings provider functions */
             int (*get_int)(ucm_object_t* obj, char* key, int def);
             int64_t (*get_int64)(ucm_object_t* obj, char* key, int64_t def);
@@ -1064,15 +1072,10 @@ typedef uint32_t u32char_t;
             UCM_RET (*ucm_send_message)(void); // TODO
             UCM_RET (*ucm_recv_message)(void); // TODO
         } app;
-        struct
-        {
-            uv_loop_t* loop_sys;
-            uv_loop_t* loop_net;
-        } bind;
     } ucm_functions_t;
 
-#define UCM_LOOP_SYSTEM(X) (X)->bind.loop_sys
-#define UCM_LOOP_NETWORK(X) (X)->bind.loop_net
+#define UCM_LOOP_SYSTEM(X) (uv_loop_t*)((X)->app.get_loop(CORE_LOOP_SYSTEM))
+#define UCM_LOOP_NETWORK(X) (uv_loop_t*)((X)->app.get_loop(CORE_LOOP_NETWORK))
 
     typedef ucm_plugin_t* (*cb_init_plugin)(ucm_functions_t*);
     // *********************************************************

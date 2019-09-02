@@ -2,11 +2,6 @@
 
 #include "ucm.h"
 
-// enum {
-//     PMGR_FLAG_NORMAL     = 0,
-// //    PMGR_FLAG_ONLYINIT   = 1 << 0,
-// };
-//
 size_t
 pmgr_load(char* path, uint32_t flags);
 void

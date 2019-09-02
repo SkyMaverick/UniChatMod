@@ -332,6 +332,7 @@ static ucm_functions_t core_api = { .uv.version              = uv_version,
                                     .sys.ustrcasestr             = ucm_strcasestr,
                                     .sys.strerr                  = ucm_strerr_func,
                                     .app.wait_exit               = wait_core_loop,
+                                    .app.get_loop                = get_loop_handle,
                                     .app.get_int                 = NULL,
                                     .app.get_int64               = NULL,
                                     .app.get_float               = NULL,
@@ -363,8 +364,6 @@ static ucm_functions_t core_api = { .uv.version              = uv_version,
                                     .app.get_entropy             = get_ucm_entropy,
                                     .app.get_startup_path        = g_startup_path,
                                     .app.get_store_path          = g_store_path,
-                                    .app.get_plugins_path        = g_plugins_path,
-                                    .bind.loop_sys               = NULL,
-                                    .bind.loop_net               = NULL };
+                                    .app.get_plugins_path        = g_plugins_path };
 
 ucm_functions_t* UniAPI = &core_api;
