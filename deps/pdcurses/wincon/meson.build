@@ -3,7 +3,6 @@ pdc_lflags = []
 
 if get_option('buildtype').endswith('debug')
     pdc_cflags += '''
-        /Z7
         /DPDCDEBUG
     '''.split()
     pdc_lflags += '''
