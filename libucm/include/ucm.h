@@ -346,9 +346,10 @@ typedef uint32_t u32char_t;
     // Global flags ---------------
     enum
     {
-        UCM_FLAG_ROPROF    = 1 << 0,
-        UCM_FLAG_NEWPROF   = 1 << 1,
-        UCM_FLAG_CHECKPROF = 1 << 2
+        UCM_FLAG_TERMINATE = 0,
+        UCM_FLAG_ROPROF    = 60,
+        UCM_FLAG_NEWPROF   = 61,
+        UCM_FLAG_CHECKPROF = 62
     };
 
     enum
@@ -1015,6 +1016,8 @@ typedef uint32_t u32char_t;
         {
             void (*wait_exit)(void);
             uintptr_t (*get_loop)(int loop);
+            int (*get_flag) (unsigned code);
+
             /*! low-level settings provider functions */
             int (*get_int)(ucm_object_t* obj, char* key, int def);
             int64_t (*get_int64)(ucm_object_t* obj, char* key, int64_t def);

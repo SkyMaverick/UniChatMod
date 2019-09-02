@@ -4,6 +4,7 @@
 #include "cpentupd.h"
 #include "errors.h"
 #include "evhook.h"
+#include "flags.h"
 #include "logger.h"
 #include "mainloop.h"
 #include "osal/osal-intrnl.h"
@@ -333,6 +334,7 @@ static ucm_functions_t core_api = { .uv.version              = uv_version,
                                     .sys.strerr                  = ucm_strerr_func,
                                     .app.wait_exit               = wait_core_loop,
                                     .app.get_loop                = get_loop_handle,
+                                    .app.get_flag                = get_system_flag,
                                     .app.get_int                 = NULL,
                                     .app.get_int64               = NULL,
                                     .app.get_float               = NULL,

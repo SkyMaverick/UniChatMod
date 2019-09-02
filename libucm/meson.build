@@ -5,6 +5,7 @@ libucm_src = files('''
     db.c
     errors.h
     evhook.c
+    flags.c
     mainloop.c
     logger.c
     mqueue.c
