@@ -60,7 +60,7 @@ loop_core(void* ctx)
                 pmgr_group_run(0);
                 pmgr_group_run(UCM_TYPE_PLUG_DB);
 
-                db_open(UniAPI->app.get_store_path(), 0);
+                db_open(UniAPI->app.get_store_path());
                 break;
             case UCM_EVENT_DBLOAD_SUCCESS:
                 if (x1 == UCM_RET_SUCCESS) {

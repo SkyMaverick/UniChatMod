@@ -585,7 +585,7 @@ typedef uint32_t u32char_t;
         ucm_plugin_t core;
 
         // technical db functionality
-        UCM_RET (*db_open)(uint32_t flags);
+        UCM_RET (*db_open)(void);
         UCM_RET (*db_check)(void);
         void (*db_flush)(bool force);
         UCM_RET (*db_close)(void);
@@ -1087,8 +1087,10 @@ typedef uint32_t u32char_t;
 
     enum
     {
-        UCM_FLAG_CORE_DBNEW = 1 << 0,
-        UCM_FLAG_CORE_DBRO  = 1 << 1,
+        UCM_FLAG_MODE_NEWPROFILE = 1 << 0,
+        UCM_FLAG_MODE_READONLY   = 1 << 1,
+        UCM_FLAG_MODE_HEADLESS   = 1 << 2,
+        UCM_FLAG_MODE_DAEMON     = 1 << 3
     };
 
     // core start arguments

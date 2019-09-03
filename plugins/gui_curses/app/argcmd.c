@@ -46,7 +46,7 @@ app_args_parse(int argc, char* argv[], ucm_cargs_t* args)
         case 'V':
             set_flag(FLAG_APP_TERMINATED);
         case 'r':
-            args->options |= UCM_FLAG_CORE_DBRO;
+            args->options |= UCM_FLAG_MODE_READONLY;
             break;
         case 's':
             // TODO server for proto list

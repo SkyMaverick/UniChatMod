@@ -128,7 +128,7 @@ extern "C"
             uv_timer_t* tick;
         } sys;
 
-        uint32_t flags;
+        //        uint32_t flags;
     } mdbx_database_t;
 
     extern mdbx_database_t* UniDB;
@@ -143,8 +143,8 @@ extern "C"
     static inline MDBX_txn* StartTxn(mdbx_database_t* db)
     {
         MDBX_txn* res = 0;
-        int rc =
-          mdbx_txn_begin(db->mdbx.env, NULL, (db->flags & UCM_FLAG_ROPROF) ? MDBX_RDONLY : 0, &res);
+        int rc        = mdbx_txn_begin(db->mdbx.env, NULL,
+                                (app->app.get_flag(UCM_FLAG_ROPROF)) ? MDBX_RDONLY : 0, &res);
         // TODO exception
         UNUSED(rc);
         return res;

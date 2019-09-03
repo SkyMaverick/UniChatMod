@@ -216,10 +216,8 @@ dbi_core_init(void)
    ================================================== */
 
 UCM_RET
-mdbx_db_open(uint32_t flags)
+mdbx_db_open(void)
 {
-    UniDB->flags = flags;
-
     int ret_code = dbi_core_init();
     if (ret_code != UCM_RET_SUCCESS)
         return ret_code;

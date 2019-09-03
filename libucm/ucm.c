@@ -9,7 +9,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <flags.h>
 #include <wchar.h>
+
+static void
+_prepare_opts(const ucm_cargs_t* args)
+{
+    uint64_t opts = args->options;
+
+    if (opts & UCM_FLAG_MODE_READONLY)
+        set_system_flag(UCM_FLAG_ROPROF);
+
+    // TODO Translate application mode flags in UCM flags here
+
+    if (opts & UCM_FLAG_MODE_NEWPROFILE) {
+        set_system_flag(UCM_FLAG_NEWPROF);
+        unset_system_flag(UCM_FLAG_ROPROF);
+    };
+}
 
 static int
 _prepare_args(const ucm_cargs_t* args)
@@ -22,6 +39,8 @@ _prepare_args(const ucm_cargs_t* args)
         snprintf(ucm_path, UCM_PATH_MAX, "%s", args->path_abs);
         snprintf(ucm_path_store, UCM_PATH_MAX, "%s", args->path_store_abs);
         snprintf(ucm_path_plugs, UCM_PATH_MAX, "%s", args->path_plug_abs);
+
+        _prepare_opts(args);
     } else {
         return 0;
     }

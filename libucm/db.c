@@ -13,7 +13,7 @@ typedef struct
 static ucm_db_t db;
 
 UCM_RET
-db_open(const char* aPath, uint32_t flags)
+db_open(const char* aPath)
 {
     if (aPath == NULL)
         return UCM_RET_WRONGPARAM;
@@ -64,7 +64,7 @@ db_open(const char* aPath, uint32_t flags)
     UniAPI->sys.mutex_lock(db.mtx);
     while (*plugins) {
         if ((*plugins)->db_open != NULL) {
-            ret_code = (*plugins)->db_open(flags);
+            ret_code = (*plugins)->db_open();
             if (ret_code == UCM_RET_SUCCESS) {
                 db.worker = *plugins;
             } else {
