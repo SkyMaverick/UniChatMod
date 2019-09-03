@@ -13,67 +13,20 @@
 #include <ctype.h>
 
 #include <sys/types.h>
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-# include <sys/select.h>   /* AIX needs this for FD_ZERO etc macros */
-#endif
-
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
 
 #include <Intrinsic.h>
 #include <StringDefs.h>
 #include <Shell.h>
 
-#ifdef USE_XAW3D
-# include <Xaw3d/Box.h>
-# include <Xaw3d/Scrollbar.h>
-#elif defined(USE_NEXTAW)
-# include <neXtaw/Box.h>
-# include <neXtaw/Scrollbar.h>
-#else
-# include <Xaw/Box.h>
-# include <Xaw/Scrollbar.h>
-#endif
-#include "ScrollBox.h"
-
-#include "Xmu/StdSel.h"
-#include "Xmu/Atoms.h"
-
-#include <keysym.h>
 #include <Xatom.h>
 
-#define XCURSCR_Y_SIZE      (XCursesLINES * XCursesCOLS * sizeof(chtype))
-#define XCURSCR_FLAG_SIZE   (XCursesLINES * sizeof(int))
-#define XCURSCR_START_SIZE  (XCursesLINES * sizeof(int))
-#define XCURSCR_LENGTH_SIZE (XCursesLINES * sizeof(int))
-#define XCURSCR_ATRTAB_SIZE (PDC_COLOR_PAIRS * 2 * sizeof(short))
-#define XCURSCR_SIZE        (XCURSCR_FLAG_SIZE + XCURSCR_START_SIZE + \
-        XCURSCR_LENGTH_SIZE + XCURSCR_Y_SIZE + XCURSCR_ATRTAB_SIZE + \
-        sizeof(XColor))
-
-#define XCURSCR_Y_OFF(y)    ((y) * XCursesCOLS * sizeof(chtype))
-#define XCURSCR_FLAG_OFF    (XCURSCR_Y_OFF(0) + XCURSCR_Y_SIZE)
-#define XCURSCR_START_OFF   (XCURSCR_FLAG_OFF + XCURSCR_FLAG_SIZE)
-#define XCURSCR_LENGTH_OFF  (XCURSCR_START_OFF + XCURSCR_START_SIZE)
-#define XCURSCR_ATRTAB_OFF  (XCURSCR_LENGTH_OFF + XCURSCR_LENGTH_SIZE)
-#define XCURSCR_XCOLOR_OFF  (XCURSCR_ATRTAB_OFF + XCURSCR_ATRTAB_SIZE)
+#define XCURSESDISPLAY (XtDisplay(pdc_drawing))
+#define XCURSESWIN     (XtWindow(pdc_drawing))
 
 typedef struct
 {
     int lines;
     int cols;
-    Pixel cursorColor;
     Pixel colorBlack;
     Pixel colorRed;
     Pixel colorGreen;
@@ -98,8 +51,6 @@ typedef struct
     char *bitmap;
     char *pixmap;
     Cursor pointer;
-    int borderWidth;
-    int borderColor;
     int clickPeriod;
     int doubleClickPeriod;
     int scrollbarWidth;
@@ -108,65 +59,24 @@ typedef struct
     int textBlinkRate;
 } XCursesAppData;
 
-extern XCursesAppData xc_app_data;
+extern Pixel pdc_color[PDC_MAXCOL];
+extern XIC pdc_xic;
 
-#define XCLOGMSG ("")
+extern XCursesAppData pdc_app_data;
+extern XtAppContext pdc_app_context;
+extern Widget pdc_toplevel, pdc_drawing;
+
+extern GC pdc_normal_gc, pdc_cursor_gc, pdc_italic_gc, pdc_bold_gc;
+extern int pdc_fheight, pdc_fwidth, pdc_fascent, pdc_fdescent;
+extern int pdc_wwidth, pdc_wheight;
+
+extern bool pdc_blinked_off, pdc_window_entered, pdc_resize_now;
+extern bool pdc_vertical_cursor, pdc_visible_cursor;
 
 int PDC_display_cursor(int, int, int, int, int);
 
-void XCursesCursor(int, int, int, int);
-void XCursesDisplayCursor(void);
-void XCursesTitle(const char *);
-
-unsigned long XCursesKeyPress(XEvent *);
-unsigned long XCursesMouse(XEvent *);
-
-int XCursesInitscr(int, char **);
-int XCursesSetupX(int, char **);
-void XCursesExit(void);
-
-void XC_resize(void);
-void XC_refresh_screen(void);
-void XC_refresh_scrollbar(void);
-void XC_set_blink(bool);
-XColor XC_get_color(short);
-void XC_set_color(short, XColor);
-void XC_get_selection(void);
-int XC_set_selection(const char *, long);
-
-#ifdef _HPUX_SOURCE
-# define FD_SET_CAST int *
-#else
-# define FD_SET_CAST fd_set *
-#endif
-
-extern XtAppContext app_context;
-extern Widget topLevel;
-extern fd_set xc_readfds;
-
-extern unsigned char *Xcurscr;
-extern int XCursesLINES;
-extern int XCursesCOLS;
-
-typedef void (*signal_handler)();
-
-signal_handler XCursesSetSignal(int, signal_handler);
-
-#ifdef PDCDEBUG
-void XC_say(const char *msg);
-# define XC_LOG(x) XC_say x
-#else
-# define XC_LOG(x)
-#endif
-
-#ifdef MOUSE_DEBUG
-# define MOUSE_LOG(x) printf x
-#else
-# define MOUSE_LOG(x)
-#endif
-
-extern short *xc_atrtab;
-
-extern bool xc_resize_now;
-extern char *xc_selection;
-extern long xc_selection_len;
+void PDC_blink_cursor(XtPointer, XtIntervalId *);
+void PDC_blink_text(XtPointer, XtIntervalId *);
+int PDC_kb_setup(void);
+void PDC_redraw_cursor(void);
+bool PDC_scrollbar_init(const char *);

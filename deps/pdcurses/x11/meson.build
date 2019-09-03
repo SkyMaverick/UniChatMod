@@ -138,7 +138,6 @@ pdc_source = pdc_core + files ('''
     ScrollBox.c
     ScrollBox.h
     ScrollBoxP.h
-    x11.c
 '''.split())
 
 add_project_arguments ('-DDYNAMIC', language: 'c')

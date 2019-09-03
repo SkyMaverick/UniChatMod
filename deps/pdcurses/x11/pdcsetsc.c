@@ -58,7 +58,7 @@ void PDC_set_title(const char *title)
 {
     PDC_LOG(("PDC_set_title() - called:<%s>\n", title));
 
-    XCursesTitle(title);
+    XtVaSetValues(pdc_toplevel, XtNtitle, title, NULL);
 }
 
 int PDC_set_blink(bool blinkon)
@@ -69,7 +69,18 @@ int PDC_set_blink(bool blinkon)
     if (SP->color_started)
         COLORS = PDC_MAXCOL;
 
-    XC_set_blink(blinkon);
+    if (blinkon)
+    {
+        if (!(SP->termattrs & A_BLINK))
+        {
+            SP->termattrs |= A_BLINK;
+            pdc_blinked_off = FALSE;
+            XtAppAddTimeOut(pdc_app_context, pdc_app_data.textBlinkRate,
+                            PDC_blink_text, NULL);
+        }
+    }
+    else
+        SP->termattrs &= ~A_BLINK;
 
     return OK;
 }
