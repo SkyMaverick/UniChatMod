@@ -271,6 +271,8 @@ extern "C"
 
     typedef uint8_t ucm_object_t;
 
+#define OBJECT(X) ((ucm_object_t)(X))
+
 // TODO check uchar.h enabled
 #if 1
     #include <uchar.h>
@@ -576,7 +578,7 @@ typedef uint32_t u32char_t;
     typedef struct _dbkey_s
     {
         HCONTACT contact;
-        wchar_t* pid;
+        char* pid;
         char* setting;
     } ucm_dbkey_t;
 
@@ -593,11 +595,10 @@ typedef uint32_t u32char_t;
         UCM_RET (*db_backup)(char* path);
 
         // hight-level API. Use app structures config with one API function
-        ucm_dbval_t* (*get_setting)(HCONTACT contact, wchar_t* pid, const char* pName,
-                                    ucm_dbval_t defVal);
-
+        ucm_dbval_t* (*get_setting)(HCONTACT contact, ucm_object_t* object, const char* setting,
+                                    ucm_dbval_t* defVal);
         UCM_RET(*set_setting)
-        (HCONTACT contact, ucm_plugin_t* module, char* setting, ucm_dbval_t* value);
+        (HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* value);
         // TODO Events, contacts, logs iterators
     } ucm_plugdb_t;
 

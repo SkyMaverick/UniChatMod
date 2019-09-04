@@ -55,6 +55,63 @@ _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 //      DATABASE PLUGIN API IMPLEMENTATION
 // ######################################################################
 
+static ucm_dbval_t*
+get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* defVal)
+{
+    if (setting == NULL) {
+        trace_dbg("%s\n", "Settings name must not empty");
+        return NULL;
+    }
+    if (object) {
+        switch (*object) {
+        case UCM_TYPE_OBJECT_PLUGIN:
+            break;
+        case UCM_TYPE_OBJECT_EVENT:
+            break;
+        case UCM_TYPE_OBJECT_MESSAGE:
+            break;
+        case UCM_TYPE_OBJECT_CONNECT:
+            break;
+        case UCM_TYPE_OBJECT_CONTACT:
+        case UCM_TYPE_OBJECT_NULL:
+        default:
+            goto contact_settings;
+        }
+    } else {
+    contact_settings:
+        // TODO return contact setting
+        return defVal;
+    }
+    return NULL;
+}
+static UCM_RET
+set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* value)
+{
+    if (setting == NULL) {
+        return UCM_RET_UNKNOWERROR;
+    }
+    if (object) {
+        switch (*object) {
+        case UCM_TYPE_OBJECT_PLUGIN:
+            break;
+        case UCM_TYPE_OBJECT_EVENT:
+            break;
+        case UCM_TYPE_OBJECT_MESSAGE:
+            break;
+        case UCM_TYPE_OBJECT_CONNECT:
+            break;
+        case UCM_TYPE_OBJECT_CONTACT:
+        case UCM_TYPE_OBJECT_NULL:
+        default:
+            goto contact_settings;
+        }
+    } else {
+    contact_settings:
+        return UCM_RET_SUCCESS;
+    }
+    return UCM_RET_SUCCESS;
+}
+
 static mdbx_database_t dba = {.plugin.core.oid         = UCM_TYPE_OBJECT_PLUGIN,
                               .plugin.core.info.api    = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
                               .plugin.core.info.sys    = UCM_TYPE_PLUG_DB,
@@ -88,7 +145,9 @@ static mdbx_database_t dba = {.plugin.core.oid         = UCM_TYPE_OBJECT_PLUGIN,
                               .plugin.db_flush = mdbx_db_flush,
                               .plugin.db_close = mdbx_db_close,
 
-                              .plugin.db_backup = mdbx_db_backup};
+                              .plugin.db_backup = mdbx_db_backup,
+                              .plugin.get_setting = get_provider,
+                              .plugin.set_setting = set_provider};
 
 mdbx_database_t* UniDB = &dba;
 
