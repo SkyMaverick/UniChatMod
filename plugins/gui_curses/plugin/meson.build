@@ -23,7 +23,7 @@ tuilib_dep += pdc_dep
 
 tuilib = shared_library (tuilib_name,
              tuilib_src,
-             include_directories: libucm_inc,
+             include_directories: libs_inc,
              build_rpath: libs_rpath,
              install_rpath: libs_rpath,
              dependencies: tuilib_dep,

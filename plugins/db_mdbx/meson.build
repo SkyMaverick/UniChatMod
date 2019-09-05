@@ -14,52 +14,25 @@ db_mdbx_dep = [
 if not get_option('custom_libs')
     mdbx_dep = cc.find_library ('mdbx', required: false)
     if not mdbx_dep.found()
-        mdbx_lib = subproject('mdbx', default_options: [ '='.join ( ['path_install', install_path_libs] )] )
-        mdbx_dep = mdbx_lib.get_variable('libmdbx_dep')
+        cmake = import ('cmake')
+        mdbx_proj = cmake.subproject('mdbx')
+        mdbx_dep = mdbx_proj.dependency ('mdbx')
     endif
 else
-    mdbx_lib = subproject('mdbx', default_options: [ '='.join ( ['path_install', install_path_libs] )] )
-    mdbx_dep = mdbx_lib.get_variable('libmdbx_dep')
+        cmake = import ('cmake')
+        mdbx_proj = cmake.subproject('mdbx',
+                    cmake_options: [
+                        '='.join (['-DPROVIDE_VERSIONINFO','OFF'])
+                    ])
+        mdbx_dep = mdbx_proj.dependency ('mdbx')
 endif
 db_mdbx_dep += mdbx_dep
 
 lib_db_mdbx = shared_library(plug_name,
                              db_mdbx_src,
                              dependencies: db_mdbx_dep,
-                             include_directories: libucm_inc,
+                             include_directories: libs_inc,
                              build_rpath: libs_rpath,
                              install_rpath: libs_rpath,
                              install: true,
                              install_dir: install_path_mods)
-
-# ==================================================
-#   MDBX TOOLS
-# ==================================================
-
-check_src = '''
-    tools/mdbx_chk.c
-    tools/wingetopt.c
-    tools/wingetopt.h
-'''.split()
-
-check_app = executable('mdbx_check',
-                       check_src,
-                       dependencies: mdbx_dep,
-                       build_rpath: libs_rpath,
-                       install_rpath: libs_rpath,
-                       install: true,
-                       install_dir: install_path_root)
-
-dump_src = '''
-    tools/mdbx_dump.c
-    tools/wingetopt.c
-    tools/wingetopt.h
-'''.split()
-
-dump_app = executable('mdbx_dump',
-                       dump_src,
-                       dependencies: mdbx_dep,
-                       build_rpath: libs_rpath,
-                       install_rpath: libs_rpath,
-                       install: true,
-                       install_dir: install_path_root)

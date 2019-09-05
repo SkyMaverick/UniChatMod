@@ -15,6 +15,10 @@
 /* *INDENT-OFF* */
 /* clang-format off */
 
+#ifdef MDBX_CONFIG_H
+#include MDBX_CONFIG_H
+#endif
+
 /* In case the MDBX_DEBUG is undefined set it corresponding to NDEBUG */
 #ifndef MDBX_DEBUG
 #ifdef NDEBUG
@@ -34,6 +38,16 @@
 #ifndef MDBX_OSX_SPEED_INSTEADOF_DURABILITY
 #define MDBX_OSX_SPEED_INSTEADOF_DURABILITY MDBX_OSX_WANNA_DURABILITY
 #endif
+
+#ifdef MDBX_ALLOY
+/* Amalgamated build */
+#define MDBX_INTERNAL_FUNC static
+#define MDBX_INTERNAL_VAR static
+#else
+/* Non-amalgamated build */
+#define MDBX_INTERNAL_FUNC
+#define MDBX_INTERNAL_VAR extern
+#endif /* MDBX_ALLOY */
 
 /*----------------------------------------------------------------------------*/
 
@@ -72,7 +86,7 @@
 #pragma warning(disable : 4366) /* the result of the unary '&' operator may be unaligned */
 #endif                          /* _MSC_VER (warnings) */
 
-#include "../mdbx.h"
+#include "../../mdbx.h"
 #include "./defs.h"
 
 #if defined(__GNUC__) && !__GNUC_PREREQ(4,2)
@@ -326,37 +340,6 @@ typedef struct MDBX_page {
 /* Size of the page header, excluding dynamic data at the end */
 #define PAGEHDRSZ ((unsigned)offsetof(MDBX_page, mp_data))
 
-/* The maximum size of a database page.
- *
- * It is 64K, but value-PAGEHDRSZ must fit in MDBX_page.mp_upper.
- *
- * MDBX will use database pages < OS pages if needed.
- * That causes more I/O in write transactions: The OS must
- * know (read) the whole page before writing a partial page.
- *
- * Note that we don't currently support Huge pages. On Linux,
- * regular data files cannot use Huge pages, and in general
- * Huge pages aren't actually pageable. We rely on the OS
- * demand-pager to read our data and page it out when memory
- * pressure from other processes is high. So until OSs have
- * actual paging support for Huge pages, they're not viable. */
-#define MAX_PAGESIZE 0x10000u
-#define MIN_PAGESIZE 512u
-
-#define MIN_MAPSIZE (MIN_PAGESIZE * MIN_PAGENO)
-#if defined(_WIN32) || defined(_WIN64)
-#define MAX_MAPSIZE32 UINT32_C(0x38000000)
-#else
-#define MAX_MAPSIZE32 UINT32_C(0x7ff80000)
-#endif
-#define MAX_MAPSIZE64 (MAX_PAGENO * (uint64_t)MAX_PAGESIZE)
-
-#if MDBX_WORDBITS >= 64
-#define MAX_MAPSIZE MAX_MAPSIZE64
-#else
-#define MAX_MAPSIZE MAX_MAPSIZE32
-#endif /* MDBX_WORDBITS */
-
 #pragma pack(pop)
 
 /* Reader Lock Table
@@ -457,6 +440,12 @@ typedef struct MDBX_lockinfo {
    * Zero means timed auto-sync is disabled. */
   volatile uint64_t mti_autosync_period;
 
+  /* Marker to distinguish uniqueness of DB/CLK.*/
+  volatile uint64_t mti_bait_uniqueness;
+
+  /* /proc/sys/kernel/random/boot_id */
+  volatile uint64_t mti_boot_id;
+
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
 #ifdef MDBX_OSAL_LOCK
       /* Mutex protecting write-txn. */
@@ -474,6 +463,9 @@ typedef struct MDBX_lockinfo {
 
   /* Number un-synced-with-disk pages for auto-sync feature. */
   volatile pgno_t mti_unsynced_pages;
+
+  /* Number of page which was discarded last time by madvise(MADV_FREE). */
+  volatile pgno_t mti_discarded_tail;
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
 
@@ -507,6 +499,40 @@ typedef struct MDBX_lockinfo {
 #ifndef MDBX_ASSUME_MALLOC_OVERHEAD
 #define MDBX_ASSUME_MALLOC_OVERHEAD (sizeof(void *) * 2u)
 #endif /* MDBX_ASSUME_MALLOC_OVERHEAD */
+
+/* The maximum size of a database page.
+ *
+ * It is 64K, but value-PAGEHDRSZ must fit in MDBX_page.mp_upper.
+ *
+ * MDBX will use database pages < OS pages if needed.
+ * That causes more I/O in write transactions: The OS must
+ * know (read) the whole page before writing a partial page.
+ *
+ * Note that we don't currently support Huge pages. On Linux,
+ * regular data files cannot use Huge pages, and in general
+ * Huge pages aren't actually pageable. We rely on the OS
+ * demand-pager to read our data and page it out when memory
+ * pressure from other processes is high. So until OSs have
+ * actual paging support for Huge pages, they're not viable. */
+#define MAX_PAGESIZE 0x10000u
+#define MIN_PAGESIZE 512u
+
+#define MIN_MAPSIZE (MIN_PAGESIZE * MIN_PAGENO)
+#if defined(_WIN32) || defined(_WIN64)
+#define MAX_MAPSIZE32 UINT32_C(0x38000000)
+#else
+#define MAX_MAPSIZE32 UINT32_C(0x7ff80000)
+#endif
+#define MAX_MAPSIZE64 (MAX_PAGENO * (uint64_t)MAX_PAGESIZE)
+
+#if MDBX_WORDBITS >= 64
+#define MAX_MAPSIZE MAX_MAPSIZE64
+#define MDBX_READERS_LIMIT                                                     \
+  ((65536 - sizeof(MDBX_lockinfo)) / sizeof(MDBX_reader) + 1)
+#else
+#define MDBX_READERS_LIMIT 1024
+#define MAX_MAPSIZE MAX_MAPSIZE32
+#endif /* MDBX_WORDBITS */
 
 /*----------------------------------------------------------------------------*/
 /* Two kind lists of pages (aka PNL) */
@@ -820,6 +846,7 @@ struct MDBX_env {
   volatile uint64_t *me_autosync_period;
   volatile pgno_t *me_unsynced_pages;
   volatile pgno_t *me_autosync_threshold;
+  volatile pgno_t *me_discarded_tail;
   MDBX_oom_func *me_oom_func; /* Callback for kicking laggard readers */
   struct {
 #ifdef MDBX_OSAL_LOCK
@@ -830,6 +857,7 @@ struct MDBX_env {
     uint64_t autosync_period;
     pgno_t autosync_pending;
     pgno_t autosync_threshold;
+    pgno_t discarded_tail;
   } me_lckless_stub;
 #if MDBX_DEBUG
   MDBX_assert_func *me_assert_func; /*  Callback for assertion failures */
@@ -837,6 +865,7 @@ struct MDBX_env {
 #ifdef USE_VALGRIND
   int me_valgrind_handle;
 #endif
+  MDBX_env *me_lcklist_next;
 
   struct {
     size_t lower;  /* minimal size of datafile */
@@ -864,16 +893,21 @@ typedef struct MDBX_ntxn {
 /*----------------------------------------------------------------------------*/
 /* Debug and Logging stuff */
 
+#define MDBX_RUNTIME_FLAGS_INIT                                                \
+  (MDBX_DBG_PRINT | ((MDBX_DEBUG) > 0) * MDBX_DBG_ASSERT |                     \
+   ((MDBX_DEBUG) > 1) * MDBX_DBG_AUDIT | ((MDBX_DEBUG) > 2) * MDBX_DBG_TRACE | \
+   ((MDBX_DEBUG) > 3) * MDBX_DBG_EXTRA)
+
 #ifndef mdbx_runtime_flags /* avoid override from tools */
-extern int mdbx_runtime_flags;
+MDBX_INTERNAL_VAR int mdbx_runtime_flags;
 #endif
-extern MDBX_debug_func *mdbx_debug_logger;
-extern txnid_t mdbx_debug_edge;
+MDBX_INTERNAL_VAR MDBX_debug_func *mdbx_debug_logger;
 
-void mdbx_debug_log(int type, const char *function, int line, const char *fmt,
-                    ...) __printf_args(4, 5);
+MDBX_INTERNAL_FUNC void mdbx_debug_log(int type, const char *function, int line,
+                                       const char *fmt, ...)
+    __printf_args(4, 5);
 
-void mdbx_panic(const char *fmt, ...) __printf_args(1, 2);
+MDBX_INTERNAL_FUNC void mdbx_panic(const char *fmt, ...) __printf_args(1, 2);
 
 #if MDBX_DEBUG
 
@@ -894,8 +928,8 @@ void mdbx_panic(const char *fmt, ...) __printf_args(1, 2);
 #endif /* NDEBUG */
 #endif /* MDBX_DEBUG */
 
-LIBMDBX_API void mdbx_assert_fail(const MDBX_env *env, const char *msg,
-                                  const char *func, int line);
+MDBX_INTERNAL_FUNC void mdbx_assert_fail(const MDBX_env *env, const char *msg,
+                                         const char *func, int line);
 
 #define mdbx_print(fmt, ...)                                                   \
   mdbx_debug_log(MDBX_DBG_PRINT, NULL, 0, fmt, ##__VA_ARGS__)
@@ -996,20 +1030,23 @@ LIBMDBX_API void mdbx_assert_fail(const MDBX_env *env, const char *msg,
 /* assert(3) variant in transaction context */
 #define mdbx_tassert(txn, expr) mdbx_assert((txn)->mt_env, expr)
 
+#ifndef MDBX_TOOLS /* Avoid using internal mdbx_assert() */
 #undef assert
 #define assert(expr) mdbx_assert(NULL, expr)
+#endif
 
 /*----------------------------------------------------------------------------*/
 /* Internal prototypes */
 
-int mdbx_reader_check0(MDBX_env *env, int rlocked, int *dead);
-int mdbx_rthc_alloc(mdbx_thread_key_t *key, MDBX_reader *begin,
-                    MDBX_reader *end);
-void mdbx_rthc_remove(const mdbx_thread_key_t key);
+MDBX_INTERNAL_FUNC int mdbx_reader_check0(MDBX_env *env, int rlocked,
+                                          int *dead);
+MDBX_INTERNAL_FUNC int mdbx_rthc_alloc(mdbx_thread_key_t *key,
+                                       MDBX_reader *begin, MDBX_reader *end);
+MDBX_INTERNAL_FUNC void mdbx_rthc_remove(const mdbx_thread_key_t key);
 
-void mdbx_rthc_global_init(void);
-void mdbx_rthc_global_dtor(void);
-void mdbx_rthc_thread_dtor(void *ptr);
+MDBX_INTERNAL_FUNC void mdbx_rthc_global_init(void);
+MDBX_INTERNAL_FUNC void mdbx_rthc_global_dtor(void);
+MDBX_INTERNAL_FUNC void mdbx_rthc_thread_dtor(void *ptr);
 
 #define MDBX_IS_ERROR(rc)                                                      \
   ((rc) != MDBX_RESULT_TRUE && (rc) != MDBX_RESULT_FALSE)

@@ -25,7 +25,7 @@ endif
 
 tuiapp = executable (tuiapp_name,
              tuiapp_src,
-             include_directories: libucm_inc,
+             include_directories: libs_inc,
              dependencies: tuiapp_dep,
              build_rpath: '$ORIGIN/.',
              install_rpath: '$ORIGIN/.',

@@ -11,7 +11,7 @@ stdlog_dep = [
 lib_stdlog = shared_library(plug_name,
                              stdlog_src,
                              dependencies: stdlog_dep,
-                             include_directories: libucm_inc,
+                             include_directories: libs_inc,
                              build_rpath: libs_rpath,
                              install_rpath: libs_rpath,
                              install: true,

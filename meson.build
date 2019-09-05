@@ -4,7 +4,7 @@ project ('ucm', 'c',
          default_options:[
          ],
          subproject_dir: 'deps',
-         meson_version: '>=0.49')
+         meson_version: '>=0.51')
 
 message ('Build configuration - @0@'.format(get_option('buildtype')))
 
@@ -18,41 +18,23 @@ ucm_defs    = []
 
 # --- compiler preferences ----------
 if get_option('buildtype').startswith('debug')
-    if ccid == 'msvc'
-        ucm_defs += '/DDEBUG'
-    else
-        ucm_defs += '-DDEBUG'
-    endif
+    ucm_defs += 'DEBUG'
 endif
 if get_option('enable_traces')
-    if ccid == 'msvc'
-        ucm_defs += '/DENABLE_TRACE_MESSAGES'
-    else
-        ucm_defs += '-DENABLE_TRACE_MESSAGES'
-    endif
+    ucm_defs += 'ENABLE_TRACE_MESSAGES'
 endif
 if get_option('create_bundle')
-    if ccid == 'msvc'
-        ucm_defs += '/DENABLE_BUNDLE'
-    else
-        ucm_defs += '-DENABLE_BUNDLE'
-    endif
+    ucm_defs += 'ENABLE_BUNDLE'
 endif
 if get_option('create_with_hidden_api')
-    if ccid == 'msvc'
-        ucm_defs += '/DLIBUCM_EXPORTS'
-    else
-        ucm_defs += '-DLIBUCM_EXPORTS'
-    endif
+    ucm_defs += 'LIBUCM_EXPORTS'
 endif
 if get_option('valgrind_support')
-    if not (ccid == 'msvc')
-        ucm_defs += '-DENABLE_VALGRIND'
-    endif
+    ucm_defs += 'ENABLE_VALGRIND'
 endif
 
 if (ccid == 'gcc') or (ccid == 'clang')
-    ucm_defs += '-D_XOPEN_SOURCE=700'
+    ucm_defs += '_XOPEN_SOURCE=700'
     # --- compiler arguments ----------
     ucm_cflags += '''
         -std=gnu11
@@ -90,11 +72,11 @@ else
     error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
 endif
 # --- Add all switches in project command line -----------
-lib_inc = [
-    '.',
-    '.'/'libucm',
-    '.'/'libucm'/'include',
-    '.'/'libucm'/'osal'
+libs_inc = [
+    include_directories('.'),
+    include_directories('.'/'libucm'),
+    include_directories('.'/'libucm'/'include'),
+    include_directories('.'/'libucm'/'osal')
 ]
 
 libs_rpath = ':'.join ([
@@ -128,33 +110,26 @@ shared_headers = []
 if not get_option('custom_libs')
     system_library_uv = cc.find_library('uv', required: false)
     if not system_library_uv.found()
-        uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
-        system_library_uv = uv_lib.get_variable('uv_dep')
+        cmake = import ('cmake')
+        uv_lib = cmake.subproject('uv',
+                 cmake_options: [
+                     '='.join (['-DBUILD_TESTING','OFF'])
+                 ])
+        libs_inc += uv_lib.include_directories('uv')
+        system_library_uv = uv_lib.dependency('uv')
 
-        shared_headers += uv_lib.get_variable('uv_header')
-        system_dependencies += system_library_uv.partial_dependency(
-                    includes: true
-                )
-        if ccid == 'msvc'
-            ucm_defs += '/DENABLE_CUSTOM_LIBS'
-        else
-            ucm_defs += '-DENABLE_CUSTOM_LIBS'
-        endif
+        ucm_defs += 'ENABLE_CUSTOM_LIBS'
     endif
 else
-    uv_lib = subproject('uv', default_options: ['='.join (['path_install', install_path_libs])])
-    system_library_uv = uv_lib.get_variable('uv_dep')
+        cmake = import ('cmake')
+        uv_lib = cmake.subproject('uv',
+                 cmake_options: [
+                     '='.join (['-DBUILD_TESTING','OFF'])
+                 ])
+        libs_inc += uv_lib.include_directories('uv')
+        system_library_uv = uv_lib.dependency('uv')
 
-    shared_headers += uv_lib.get_variable('uv_header')
-    system_dependencies += system_library_uv.partial_dependency(
-                    includes: true
-                )
-
-    if ccid == 'msvc'
-        ucm_defs += '/DENABLE_CUSTOM_LIBS'
-    else
-        ucm_defs += '-DENABLE_CUSTOM_LIBS'
-    endif
+        ucm_defs += 'ENABLE_CUSTOM_LIBS'
 endif
 
 foreach item : ucm_cflags
@@ -168,11 +143,13 @@ foreach item : ucm_ldflags
     endif
 endforeach
 foreach item : ucm_defs
+    if ccid == 'msvc'
+        item = '/D'+item
+    else
+        item = '-D'+item
+    endif
     add_project_arguments (item, language: 'c')
 endforeach
-
-# --- include headers paths ----------
-libucm_inc = include_directories (lib_inc)
 
 # --- walk in subdirs ----------
 subdir('libucm')

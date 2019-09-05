@@ -40,12 +40,20 @@ libucm_deps = [
 if not get_option('custom_libs')
     u8dep = cc.find_library('utf8proc', required: false)
     if not u8dep.found()
-        u8proc_lib = subproject('utf8proc', default_options: ['='.join (['path_install', install_path_libs])])
-        u8dep = u8proc_lib.get_variable('u8proc_dep')
+        cmake = import ('cmake')
+        u8proc_lib = cmake.subproject('utf8proc',
+                 cmake_options: [
+                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
+                 ])
+        u8dep = u8proc_lib.dependency('utf8proc')
     endif
 else
-    u8proc_lib = subproject('utf8proc', default_options: ['='.join (['path_install', install_path_libs])])
-    u8dep = u8proc_lib.get_variable('u8proc_dep')
+        cmake = import ('cmake')
+        u8proc_lib = cmake.subproject('utf8proc',
+                 cmake_options: [
+                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
+                 ])
+        u8dep = u8proc_lib.dependency('utf8proc')
 endif
 libucm_deps += u8dep
 
@@ -124,7 +132,7 @@ shared_headers += [
 libucm = shared_library (meson.project_name(),
                           libucm_src,
                           dependencies: libucm_deps,
-                          include_directories: libucm_inc,
+                          include_directories: libs_inc,
                           build_rpath: libs_rpath,
                           install_rpath: libs_rpath,
                           install: true,

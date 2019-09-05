@@ -12,7 +12,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 
-#include "./bits.h"
+#include "./internals.h"
 
 /* PREAMBLE FOR WINDOWS:
  *
@@ -183,7 +183,7 @@ void mdbx_txn_unlock(MDBX_env *env) {
 #define LCK_LOWER LCK_LO_OFFSET, LCK_LO_LEN
 #define LCK_UPPER LCK_UP_OFFSET, LCK_UP_LEN
 
-int mdbx_rdt_lock(MDBX_env *env) {
+MDBX_INTERNAL_FUNC int mdbx_rdt_lock(MDBX_env *env) {
   mdbx_srwlock_AcquireShared(&env->me_remap_guard);
   if (env->me_lfd == INVALID_HANDLE_VALUE)
     return MDBX_SUCCESS; /* readonly database in readonly filesystem */
@@ -198,7 +198,7 @@ int mdbx_rdt_lock(MDBX_env *env) {
   return rc;
 }
 
-void mdbx_rdt_unlock(MDBX_env *env) {
+MDBX_INTERNAL_FUNC void mdbx_rdt_unlock(MDBX_env *env) {
   if (env->me_lfd != INVALID_HANDLE_VALUE) {
     /* transite from S-E (locked) to S-? (used), e.g. unlock upper-part */
     if ((env->me_flags & MDBX_EXCLUSIVE) == 0 &&
@@ -245,8 +245,8 @@ static int suspend_and_append(mdbx_handle_array_t **array,
   return MDBX_SUCCESS;
 }
 
-int mdbx_suspend_threads_before_remap(MDBX_env *env,
-                                      mdbx_handle_array_t **array) {
+MDBX_INTERNAL_FUNC int
+mdbx_suspend_threads_before_remap(MDBX_env *env, mdbx_handle_array_t **array) {
   const mdbx_pid_t CurrentTid = GetCurrentThreadId();
   int rc;
   if (env->me_lck) {
@@ -320,7 +320,8 @@ int mdbx_suspend_threads_before_remap(MDBX_env *env,
   return MDBX_SUCCESS;
 }
 
-int mdbx_resume_threads_after_remap(mdbx_handle_array_t *array) {
+MDBX_INTERNAL_FUNC int
+mdbx_resume_threads_after_remap(mdbx_handle_array_t *array) {
   int rc = MDBX_SUCCESS;
   for (unsigned i = 0; i < array->count; ++i) {
     const HANDLE hThread = array->handles[i];
@@ -340,26 +341,98 @@ int mdbx_resume_threads_after_remap(mdbx_handle_array_t *array) {
 /* global `initial` lock for lockfile initialization,
  * exclusive/shared locking first cacheline */
 
-/* FIXME: locking schema/algo descritpion.
- ?-?  = free
- S-?  = used
- E-?  = exclusive-read
- ?-S
- ?-E  = middle
- S-S
- S-E  = locked
- E-S
- E-E  = exclusive-write
-*/
+/* Briefly descritpion of locking schema/algorithm:
+ *  - Windows does not support upgrading or downgrading for file locking.
+ *  - Therefore upgrading/downgrading is emulated by shared and exclusive
+ *    locking of upper and lower halves.
+ *  - In other words, we have FSM with possible 9 states,
+ *    i.e. free/shared/exclusive x free/shared/exclusive == 9.
+ *    Only 6 states of FSM are used, which 2 of ones are transitive.
+ *
+ *  The mdbx_lck_seize() moves the locking-FSM from the initial free/unlocked
+ *  state to the "exclusive write" (and returns MDBX_RESULT_TRUE) if possible,
+ *  or to the "used" (and returns MDBX_RESULT_FALSE).
+ *
+ *  The mdbx_lck_downgrade() moves the locking-FSM from "exclusive write"
+ *  state to the "used" (i.e. shared) state.
+ *
+ * States:
+ *   ?-?  = free, i.e. unlocked
+ *   S-?  = used, i.e. shared lock
+ *   E-?  = exclusive-read, i.e. operational exclusive
+ *   ?-S
+ *   ?-E  = middle (transitive state)
+ *   S-S
+ *   S-E  = locked (transitive state)
+ *   E-S
+ *   E-E  = exclusive-write, i.e. exclusive due (re)initialization
+ */
 
-int mdbx_lck_init(MDBX_env *env) {
+static void lck_unlock(MDBX_env *env) {
+  int rc;
+
+  if (env->me_lfd != INVALID_HANDLE_VALUE) {
+    /* double `unlock` for robustly remove overlapped shared/exclusive locks */
+    while (funlock(env->me_lfd, LCK_LOWER))
+      ;
+    rc = GetLastError();
+    assert(rc == ERROR_NOT_LOCKED);
+    (void)rc;
+    SetLastError(ERROR_SUCCESS);
+
+    while (funlock(env->me_lfd, LCK_UPPER))
+      ;
+    rc = GetLastError();
+    assert(rc == ERROR_NOT_LOCKED);
+    (void)rc;
+    SetLastError(ERROR_SUCCESS);
+  }
+
+  if (env->me_fd != INVALID_HANDLE_VALUE) {
+    /* explicitly unlock to avoid latency for other processes (windows kernel
+     * releases such locks via deferred queues) */
+    while (funlock(env->me_fd, LCK_BODY))
+      ;
+    rc = GetLastError();
+    assert(rc == ERROR_NOT_LOCKED);
+    (void)rc;
+    SetLastError(ERROR_SUCCESS);
+
+    while (funlock(env->me_fd, LCK_META))
+      ;
+    rc = GetLastError();
+    assert(rc == ERROR_NOT_LOCKED);
+    (void)rc;
+    SetLastError(ERROR_SUCCESS);
+
+    while (funlock(env->me_fd, LCK_WHOLE))
+      ;
+    rc = GetLastError();
+    assert(rc == ERROR_NOT_LOCKED);
+    (void)rc;
+    SetLastError(ERROR_SUCCESS);
+  }
+}
+
+MDBX_INTERNAL_FUNC int mdbx_lck_init(MDBX_env *env,
+                                     MDBX_env *inprocess_neighbor,
+                                     int global_uniqueness_flag) {
   (void)env;
+  (void)inprocess_neighbor;
+  (void)global_uniqueness_flag;
+  return MDBX_SUCCESS;
+}
+
+MDBX_INTERNAL_FUNC int mdbx_lck_destroy(MDBX_env *env,
+                                        MDBX_env *inprocess_neighbor) {
+  (void)inprocess_neighbor;
+  lck_unlock(env);
   return MDBX_SUCCESS;
 }
 
 /* Seize state as 'exclusive-write' (E-E and returns MDBX_RESULT_TRUE)
- * or as 'used' (S-? and returns MDBX_RESULT_FALSE), otherwise returns an error
- */
+ * or as 'used' (S-? and returns MDBX_RESULT_FALSE).
+ * Oherwise returns an error. */
 static int internal_seize_lck(HANDLE lfd) {
   int rc;
   assert(lfd != INVALID_HANDLE_VALUE);
@@ -409,7 +482,7 @@ static int internal_seize_lck(HANDLE lfd) {
   return rc;
 }
 
-int mdbx_lck_seize(MDBX_env *env) {
+MDBX_INTERNAL_FUNC int mdbx_lck_seize(MDBX_env *env) {
   int rc;
 
   assert(env->me_fd != INVALID_HANDLE_VALUE);
@@ -443,7 +516,7 @@ int mdbx_lck_seize(MDBX_env *env) {
       mdbx_error("%s(%s) failed: errcode %u", mdbx_func_,
                  "lock-against-without-lck", rc);
       mdbx_jitter4testing(false);
-      mdbx_lck_destroy(env);
+      lck_unlock(env);
     } else {
       mdbx_jitter4testing(false);
       if (!funlock(env->me_fd, LCK_BODY))
@@ -455,23 +528,25 @@ int mdbx_lck_seize(MDBX_env *env) {
   return rc;
 }
 
-int mdbx_lck_downgrade(MDBX_env *env, bool complete) {
+MDBX_INTERNAL_FUNC int mdbx_lck_downgrade(MDBX_env *env) {
   /* Transite from exclusive state (E-?) to used (S-?) */
   assert(env->me_fd != INVALID_HANDLE_VALUE);
   assert(env->me_lfd != INVALID_HANDLE_VALUE);
 
+#if 1
   if (env->me_flags & MDBX_EXCLUSIVE)
     return MDBX_SUCCESS /* nope since files were must be opened non-shareable */
         ;
-
+#else
   /* 1) must be at E-E (exclusive-write) */
-  if (!complete) {
+  if (env->me_flags & MDBX_EXCLUSIVE) {
     /* transite from E-E to E_? (exclusive-read) */
     if (!funlock(env->me_lfd, LCK_UPPER))
       mdbx_panic("%s(%s) failed: errcode %u", mdbx_func_,
                  "E-E(exclusive-write) >> E-?(exclusive-read)", GetLastError());
     return MDBX_SUCCESS /* 2) now at E-? (exclusive-read), done */;
   }
+#endif
 
   /* 3) now at E-E (exclusive-write), transite to ?_E (middle) */
   if (!funlock(env->me_lfd, LCK_LOWER))
@@ -494,61 +569,15 @@ int mdbx_lck_downgrade(MDBX_env *env, bool complete) {
   return MDBX_SUCCESS /* 7) now at S-? (used), done */;
 }
 
-void mdbx_lck_destroy(MDBX_env *env) {
-  int rc;
-
-  if (env->me_lfd != INVALID_HANDLE_VALUE) {
-    /* double `unlock` for robustly remove overlapped shared/exclusive locks */
-    while (funlock(env->me_lfd, LCK_LOWER))
-      ;
-    rc = GetLastError();
-    assert(rc == ERROR_NOT_LOCKED);
-    (void)rc;
-    SetLastError(ERROR_SUCCESS);
-
-    while (funlock(env->me_lfd, LCK_UPPER))
-      ;
-    rc = GetLastError();
-    assert(rc == ERROR_NOT_LOCKED);
-    (void)rc;
-    SetLastError(ERROR_SUCCESS);
-  }
-
-  if (env->me_fd != INVALID_HANDLE_VALUE) {
-    /* explicitly unlock to avoid latency for other processes (windows kernel
-     * releases such locks via deferred queues) */
-    while (funlock(env->me_fd, LCK_BODY))
-      ;
-    rc = GetLastError();
-    assert(rc == ERROR_NOT_LOCKED);
-    (void)rc;
-    SetLastError(ERROR_SUCCESS);
-
-    while (funlock(env->me_fd, LCK_META))
-      ;
-    rc = GetLastError();
-    assert(rc == ERROR_NOT_LOCKED);
-    (void)rc;
-    SetLastError(ERROR_SUCCESS);
-
-    while (funlock(env->me_fd, LCK_WHOLE))
-      ;
-    rc = GetLastError();
-    assert(rc == ERROR_NOT_LOCKED);
-    (void)rc;
-    SetLastError(ERROR_SUCCESS);
-  }
-}
-
 /*----------------------------------------------------------------------------*/
 /* reader checking (by pid) */
 
-int mdbx_rpid_set(MDBX_env *env) {
+MDBX_INTERNAL_FUNC int mdbx_rpid_set(MDBX_env *env) {
   (void)env;
   return MDBX_SUCCESS;
 }
 
-int mdbx_rpid_clear(MDBX_env *env) {
+MDBX_INTERNAL_FUNC int mdbx_rpid_clear(MDBX_env *env) {
   (void)env;
   return MDBX_SUCCESS;
 }
@@ -559,7 +588,7 @@ int mdbx_rpid_clear(MDBX_env *env) {
  *   MDBX_RESULT_TRUE, if pid is live (unable to acquire lock)
  *   MDBX_RESULT_FALSE, if pid is dead (lock acquired)
  *   or otherwise the errcode. */
-int mdbx_rpid_check(MDBX_env *env, mdbx_pid_t pid) {
+MDBX_INTERNAL_FUNC int mdbx_rpid_check(MDBX_env *env, mdbx_pid_t pid) {
   (void)env;
   HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, pid);
   int rc;
@@ -574,7 +603,7 @@ int mdbx_rpid_check(MDBX_env *env, mdbx_pid_t pid) {
 
   switch (rc) {
   case ERROR_INVALID_PARAMETER:
-    /* pid seem invalid */
+    /* pid seems invalid */
     return MDBX_RESULT_FALSE;
   case WAIT_OBJECT_0:
     /* process just exited */
@@ -663,12 +692,23 @@ MDBX_srwlock_function mdbx_srwlock_Init, mdbx_srwlock_AcquireShared,
 
 /*----------------------------------------------------------------------------*/
 
+static DWORD WINAPI stub_DiscardVirtualMemory(PVOID VirtualAddress,
+                                              SIZE_T Size) {
+  return VirtualAlloc(VirtualAddress, Size, MEM_RESET, PAGE_NOACCESS)
+             ? ERROR_SUCCESS
+             : GetLastError();
+}
+
+/*----------------------------------------------------------------------------*/
+#ifndef MDBX_ALLOY
 MDBX_GetFileInformationByHandleEx mdbx_GetFileInformationByHandleEx;
 MDBX_GetVolumeInformationByHandleW mdbx_GetVolumeInformationByHandleW;
 MDBX_GetFinalPathNameByHandleW mdbx_GetFinalPathNameByHandleW;
 MDBX_SetFileInformationByHandle mdbx_SetFileInformationByHandle;
 MDBX_PrefetchVirtualMemory mdbx_PrefetchVirtualMemory;
+MDBX_DiscardVirtualMemory mdbx_DiscardVirtualMemory;
 MDBX_NtFsControlFile mdbx_NtFsControlFile;
+#endif /* MDBX_ALLOY */
 
 static void mdbx_winnt_import(void) {
   const HINSTANCE hKernel32dll = GetModuleHandleA("kernel32.dll");
@@ -700,6 +740,9 @@ static void mdbx_winnt_import(void) {
   GET_KERNEL32_PROC(GetFinalPathNameByHandleW);
   GET_KERNEL32_PROC(SetFileInformationByHandle);
   GET_KERNEL32_PROC(PrefetchVirtualMemory);
+  GET_KERNEL32_PROC(DiscardVirtualMemory);
+  if (!mdbx_DiscardVirtualMemory)
+    mdbx_DiscardVirtualMemory = stub_DiscardVirtualMemory;
 
   const HINSTANCE hNtdll = GetModuleHandleA("ntdll.dll");
   mdbx_NtFsControlFile =

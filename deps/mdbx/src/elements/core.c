@@ -35,7 +35,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include "./bits.h"
+#include "./internals.h"
 
 /*----------------------------------------------------------------------------*/
 /* Internal inlines */
@@ -278,7 +278,8 @@ size_t __hot mdbx_e2k_strnlen_bug_workaround(const char *s, size_t maxlen) {
 typedef struct rthc_entry_t {
   MDBX_reader *begin;
   MDBX_reader *end;
-  mdbx_thread_key_t key;
+  mdbx_thread_key_t thr_tls_key;
+  bool key_valid;
 } rthc_entry_t;
 
 #if MDBX_DEBUG
@@ -289,6 +290,7 @@ typedef struct rthc_entry_t {
 
 #if defined(_WIN32) || defined(_WIN64)
 static CRITICAL_SECTION rthc_critical_section;
+static CRITICAL_SECTION lcklist_critical_section;
 #else
 int __cxa_thread_atexit_impl(void (*dtor)(void *), void *obj, void *dso_symbol)
     __attribute__((__weak__));
@@ -302,12 +304,13 @@ int __cxa_thread_atexit_impl(void (*dtor)(void *), void *obj,
 }
 #endif           /* __APPLE__ */
 
-static pthread_mutex_t mdbx_rthc_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t mdbx_rthc_cond = PTHREAD_COND_INITIALIZER;
-static mdbx_thread_key_t mdbx_rthc_key;
-static volatile uint32_t mdbx_rthc_pending;
+static pthread_mutex_t lcklist_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t rthc_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t rthc_cond = PTHREAD_COND_INITIALIZER;
+static mdbx_thread_key_t rthc_key;
+static volatile uint32_t rthc_pending;
 
-static void __cold mdbx_workaround_glibc_bug21031(void) {
+static void __cold workaround_glibc_bug21031(void) {
   /* Workaround for https://sourceware.org/bugzilla/show_bug.cgi?id=21031
    *
    * Due race between pthread_key_delete() and __nptl_deallocate_tsd()
@@ -327,23 +330,23 @@ static unsigned rthc_count, rthc_limit;
 static rthc_entry_t *rthc_table;
 static rthc_entry_t rthc_table_static[RTHC_INITIAL_LIMIT];
 
-static __cold void mdbx_rthc_lock(void) {
+static __inline void rthc_lock(void) {
 #if defined(_WIN32) || defined(_WIN64)
   EnterCriticalSection(&rthc_critical_section);
 #else
-  mdbx_ensure(nullptr, pthread_mutex_lock(&mdbx_rthc_mutex) == 0);
+  mdbx_ensure(nullptr, pthread_mutex_lock(&rthc_mutex) == 0);
 #endif
 }
 
-static __cold void mdbx_rthc_unlock(void) {
+static __inline void rthc_unlock(void) {
 #if defined(_WIN32) || defined(_WIN64)
   LeaveCriticalSection(&rthc_critical_section);
 #else
-  mdbx_ensure(nullptr, pthread_mutex_unlock(&mdbx_rthc_mutex) == 0);
+  mdbx_ensure(nullptr, pthread_mutex_unlock(&rthc_mutex) == 0);
 #endif
 }
 
-static __inline int mdbx_thread_key_create(mdbx_thread_key_t *key) {
+static __inline int thread_key_create(mdbx_thread_key_t *key) {
   int rc;
 #if defined(_WIN32) || defined(_WIN64)
   *key = TlsAlloc();
@@ -355,17 +358,17 @@ static __inline int mdbx_thread_key_create(mdbx_thread_key_t *key) {
   return rc;
 }
 
-static __inline void mdbx_thread_key_delete(mdbx_thread_key_t key) {
+static __inline void thread_key_delete(mdbx_thread_key_t key) {
   mdbx_trace("key = 0x%x", (unsigned)key);
 #if defined(_WIN32) || defined(_WIN64)
   mdbx_ensure(nullptr, TlsFree(key));
 #else
   mdbx_ensure(nullptr, pthread_key_delete(key) == 0);
-  mdbx_workaround_glibc_bug21031();
+  workaround_glibc_bug21031();
 #endif
 }
 
-static __inline void *mdbx_thread_rthc_get(mdbx_thread_key_t key) {
+static __inline void *thread_rthc_get(mdbx_thread_key_t key) {
 #if defined(_WIN32) || defined(_WIN64)
   return TlsGetValue(key);
 #else
@@ -373,7 +376,7 @@ static __inline void *mdbx_thread_rthc_get(mdbx_thread_key_t key) {
 #endif
 }
 
-static void mdbx_thread_rthc_set(mdbx_thread_key_t key, const void *value) {
+static void thread_rthc_set(mdbx_thread_key_t key, const void *value) {
 #if defined(_WIN32) || defined(_WIN64)
   mdbx_ensure(nullptr, TlsSetValue(key, (void *)value));
 #else
@@ -389,12 +392,12 @@ static void mdbx_thread_rthc_set(mdbx_thread_key_t key, const void *value) {
                                  &thread_registration_state,
                                  (void *)&mdbx_version /* dso_anchor */)) {
       mdbx_ensure(nullptr, pthread_setspecific(
-                               mdbx_rthc_key, &thread_registration_state) == 0);
+                               rthc_key, &thread_registration_state) == 0);
       thread_registration_state = MDBX_THREAD_RTHC_COUNTED;
-      const unsigned count_before = mdbx_atomic_add32(&mdbx_rthc_pending, 1);
+      const unsigned count_before = mdbx_atomic_add32(&rthc_pending, 1);
       mdbx_ensure(nullptr, count_before < INT_MAX);
       mdbx_trace("fallback to pthreads' tsd, key 0x%x, count %u",
-                 (unsigned)mdbx_rthc_key, count_before);
+                 (unsigned)rthc_key, count_before);
       (void)count_before;
     }
   }
@@ -407,24 +410,27 @@ __cold void mdbx_rthc_global_init(void) {
   rthc_table = rthc_table_static;
 #if defined(_WIN32) || defined(_WIN64)
   InitializeCriticalSection(&rthc_critical_section);
+  InitializeCriticalSection(&lcklist_critical_section);
 #else
   mdbx_ensure(nullptr,
-              pthread_key_create(&mdbx_rthc_key, mdbx_rthc_thread_dtor) == 0);
+              pthread_key_create(&rthc_key, mdbx_rthc_thread_dtor) == 0);
   mdbx_trace("pid %d, &mdbx_rthc_key = %p, value 0x%x", mdbx_getpid(),
-             &mdbx_rthc_key, (unsigned)mdbx_rthc_key);
+             &rthc_key, (unsigned)rthc_key);
 #endif
 }
 
 /* dtor called for thread, i.e. for all mdbx's environment objects */
 __cold void mdbx_rthc_thread_dtor(void *ptr) {
-  mdbx_rthc_lock();
+  rthc_lock();
   mdbx_trace(">> pid %d, thread 0x%" PRIxPTR ", rthc %p", mdbx_getpid(),
              (uintptr_t)mdbx_thread_self(), ptr);
 
   const mdbx_pid_t self_pid = mdbx_getpid();
   for (unsigned i = 0; i < rthc_count; ++i) {
-    const mdbx_thread_key_t key = rthc_table[i].key;
-    MDBX_reader *const rthc = mdbx_thread_rthc_get(key);
+    if (!rthc_table[i].key_valid)
+      continue;
+    const mdbx_thread_key_t key = rthc_table[i].thr_tls_key;
+    MDBX_reader *const rthc = thread_rthc_get(key);
     if (rthc < rthc_table[i].begin || rthc >= rthc_table[i].end)
       continue;
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -452,7 +458,7 @@ __cold void mdbx_rthc_thread_dtor(void *ptr) {
 #if defined(_WIN32) || defined(_WIN64)
   mdbx_trace("<< thread 0x%" PRIxPTR ", rthc %p", (uintptr_t)mdbx_thread_self(),
              ptr);
-  mdbx_rthc_unlock();
+  rthc_unlock();
 #else
   const char self_registration = *(char *)ptr;
   *(char *)ptr = MDBX_THREAD_RTHC_ZERO;
@@ -460,12 +466,12 @@ __cold void mdbx_rthc_thread_dtor(void *ptr) {
              (uintptr_t)mdbx_thread_self(), ptr, mdbx_getpid(),
              self_registration);
   if (self_registration == MDBX_THREAD_RTHC_COUNTED)
-    mdbx_ensure(nullptr, mdbx_atomic_sub32(&mdbx_rthc_pending, 1) > 0);
+    mdbx_ensure(nullptr, mdbx_atomic_sub32(&rthc_pending, 1) > 0);
 
-  if (mdbx_rthc_pending == 0) {
+  if (rthc_pending == 0) {
     mdbx_trace("== thread 0x%" PRIxPTR ", rthc %p, pid %d, wake",
                (uintptr_t)mdbx_thread_self(), ptr, mdbx_getpid());
-    mdbx_ensure(nullptr, pthread_cond_broadcast(&mdbx_rthc_cond) == 0);
+    mdbx_ensure(nullptr, pthread_cond_broadcast(&rthc_cond) == 0);
   }
 
   mdbx_trace("<< thread 0x%" PRIxPTR ", rthc %p", (uintptr_t)mdbx_thread_self(),
@@ -474,7 +480,7 @@ __cold void mdbx_rthc_thread_dtor(void *ptr) {
    * instead of a call for pthread_mutex_unlock() and therefore CPU could not
    * return to current DSO's code section, which may be unloaded immediately
    * after the mutex got released. */
-  pthread_mutex_unlock(&mdbx_rthc_mutex);
+  pthread_mutex_unlock(&rthc_mutex);
 #endif
 }
 
@@ -485,9 +491,9 @@ __cold void mdbx_rthc_global_dtor(void) {
       mdbx_getpid(), &mdbx_rthc_global_dtor, &mdbx_rthc_thread_dtor,
       &mdbx_rthc_remove);
 
-  mdbx_rthc_lock();
+  rthc_lock();
 #if !defined(_WIN32) && !defined(_WIN64)
-  char *rthc = (char *)pthread_getspecific(mdbx_rthc_key);
+  char *rthc = (char *)pthread_getspecific(rthc_key);
   mdbx_trace("== thread 0x%" PRIxPTR ", rthc %p, pid %d, self-status %d",
              (uintptr_t)mdbx_thread_self(), rthc, mdbx_getpid(),
              rthc ? *rthc : -1);
@@ -495,7 +501,7 @@ __cold void mdbx_rthc_global_dtor(void) {
     const char self_registration = *(char *)rthc;
     *rthc = MDBX_THREAD_RTHC_ZERO;
     if (self_registration == MDBX_THREAD_RTHC_COUNTED)
-      mdbx_ensure(nullptr, mdbx_atomic_sub32(&mdbx_rthc_pending, 1) > 0);
+      mdbx_ensure(nullptr, mdbx_atomic_sub32(&rthc_pending, 1) > 0);
   }
 
   struct timespec abstime;
@@ -509,20 +515,21 @@ __cold void mdbx_rthc_global_dtor(void) {
   abstime.tv_sec += 600;
 #endif
 
-  for (unsigned left; (left = mdbx_rthc_pending) > 0;) {
+  for (unsigned left; (left = rthc_pending) > 0;) {
     mdbx_trace("pid %d, pending %u, wait for...", mdbx_getpid(), left);
-    const int rc =
-        pthread_cond_timedwait(&mdbx_rthc_cond, &mdbx_rthc_mutex, &abstime);
+    const int rc = pthread_cond_timedwait(&rthc_cond, &rthc_mutex, &abstime);
     if (rc && rc != EINTR)
       break;
   }
-  mdbx_thread_key_delete(mdbx_rthc_key);
+  thread_key_delete(rthc_key);
 #endif
 
   const mdbx_pid_t self_pid = mdbx_getpid();
   for (unsigned i = 0; i < rthc_count; ++i) {
-    const mdbx_thread_key_t key = rthc_table[i].key;
-    mdbx_thread_key_delete(key);
+    if (!rthc_table[i].key_valid)
+      continue;
+    const mdbx_thread_key_t key = rthc_table[i].thr_tls_key;
+    thread_key_delete(key);
     for (MDBX_reader *rthc = rthc_table[i].begin; rthc < rthc_table[i].end;
          ++rthc) {
       mdbx_trace("== [%i] = key %zu, %p ... %p, rthc %p (%+i), "
@@ -540,14 +547,15 @@ __cold void mdbx_rthc_global_dtor(void) {
   if (rthc_table != rthc_table_static)
     mdbx_free(rthc_table);
   rthc_table = nullptr;
-  mdbx_rthc_unlock();
+  rthc_unlock();
 
 #if defined(_WIN32) || defined(_WIN64)
+  DeleteCriticalSection(&lcklist_critical_section);
   DeleteCriticalSection(&rthc_critical_section);
 #else
   /* LY: yielding a few timeslices to give a more chance
    * to racing destructor(s) for completion. */
-  mdbx_workaround_glibc_bug21031();
+  workaround_glibc_bug21031();
 #endif
 
   mdbx_trace("<< pid %d\n", mdbx_getpid());
@@ -555,15 +563,19 @@ __cold void mdbx_rthc_global_dtor(void) {
 
 __cold int mdbx_rthc_alloc(mdbx_thread_key_t *key, MDBX_reader *begin,
                            MDBX_reader *end) {
+  int rc;
+  if (key) {
 #ifndef NDEBUG
-  *key = (mdbx_thread_key_t)0xBADBADBAD;
+    *key = (mdbx_thread_key_t)0xBADBADBAD;
 #endif /* NDEBUG */
-  int rc = mdbx_thread_key_create(key);
-  if (rc != MDBX_SUCCESS)
-    return rc;
+    rc = thread_key_create(key);
+    if (rc != MDBX_SUCCESS)
+      return rc;
+  }
 
-  mdbx_rthc_lock();
-  mdbx_trace(">> key %zu, rthc_count %u, rthc_limit %u", (size_t)*key,
+  rthc_lock();
+  const mdbx_thread_key_t new_key = key ? *key : 0;
+  mdbx_trace(">> key %zu, rthc_count %u, rthc_limit %u", (size_t)new_key,
              rthc_count, rthc_limit);
   if (rthc_count == rthc_limit) {
     rthc_entry_t *new_table =
@@ -578,31 +590,33 @@ __cold int mdbx_rthc_alloc(mdbx_thread_key_t *key, MDBX_reader *begin,
     rthc_table = new_table;
     rthc_limit *= 2;
   }
-  mdbx_trace("== [%i] = key %zu, %p ... %p", rthc_count, (size_t)*key, begin,
+  mdbx_trace("== [%i] = key %zu, %p ... %p", rthc_count, (size_t)new_key, begin,
              end);
-  rthc_table[rthc_count].key = *key;
+  rthc_table[rthc_count].key_valid = key ? true : false;
+  rthc_table[rthc_count].thr_tls_key = key ? new_key : 0;
   rthc_table[rthc_count].begin = begin;
   rthc_table[rthc_count].end = end;
   ++rthc_count;
-  mdbx_trace("<< key %zu, rthc_count %u, rthc_limit %u", (size_t)*key,
+  mdbx_trace("<< key %zu, rthc_count %u, rthc_limit %u", (size_t)new_key,
              rthc_count, rthc_limit);
-  mdbx_rthc_unlock();
+  rthc_unlock();
   return MDBX_SUCCESS;
 
 bailout:
-  mdbx_thread_key_delete(*key);
-  mdbx_rthc_unlock();
+  if (key)
+    thread_key_delete(*key);
+  rthc_unlock();
   return rc;
 }
 
 __cold void mdbx_rthc_remove(const mdbx_thread_key_t key) {
-  mdbx_thread_key_delete(key);
-  mdbx_rthc_lock();
+  thread_key_delete(key);
+  rthc_lock();
   mdbx_trace(">> key %zu, rthc_count %u, rthc_limit %u", (size_t)key,
              rthc_count, rthc_limit);
 
   for (unsigned i = 0; i < rthc_count; ++i) {
-    if (key == rthc_table[i].key) {
+    if (rthc_table[i].key_valid && key == rthc_table[i].thr_tls_key) {
       const mdbx_pid_t self_pid = mdbx_getpid();
       mdbx_trace("== [%i], %p ...%p, current-pid %d", i, rthc_table[i].begin,
                  rthc_table[i].end, self_pid);
@@ -627,7 +641,134 @@ __cold void mdbx_rthc_remove(const mdbx_thread_key_t key) {
 
   mdbx_trace("<< key %zu, rthc_count %u, rthc_limit %u", (size_t)key,
              rthc_count, rthc_limit);
-  mdbx_rthc_unlock();
+  rthc_unlock();
+}
+
+//------------------------------------------------------------------------------
+
+#define RTHC_ENVLIST_END ((MDBX_env *)((size_t)50459))
+static MDBX_env *inprocess_lcklist_head = RTHC_ENVLIST_END;
+
+static __inline void lcklist_lock(void) {
+#if defined(_WIN32) || defined(_WIN64)
+  EnterCriticalSection(&lcklist_critical_section);
+#else
+  mdbx_ensure(nullptr, pthread_mutex_lock(&lcklist_mutex) == 0);
+#endif
+}
+
+static __inline void lcklist_unlock(void) {
+#if defined(_WIN32) || defined(_WIN64)
+  LeaveCriticalSection(&lcklist_critical_section);
+#else
+  mdbx_ensure(nullptr, pthread_mutex_unlock(&lcklist_mutex) == 0);
+#endif
+}
+
+static uint64_t rrxmrrxmsx_0(uint64_t v) {
+  /* Pelle Evensen's mixer, https://bit.ly/2HOfynt */
+  v ^= (v << 39 | v >> 25) ^ (v << 14 | v >> 50);
+  v *= UINT64_C(0xA24BAED4963EE407);
+  v ^= (v << 40 | v >> 24) ^ (v << 15 | v >> 49);
+  v *= UINT64_C(0x9FB21C651E98DF25);
+  return v ^ v >> 28;
+}
+
+static int uniq_peek(const mdbx_mmap_t *pending, mdbx_mmap_t *scan) {
+  int rc;
+  uint64_t bait;
+  if (pending->address) {
+    bait = pending->lck->mti_bait_uniqueness;
+    rc = MDBX_SUCCESS;
+  } else {
+    bait = 0 /* hush MSVC warning */;
+    rc = mdbx_msync(scan, 0, sizeof(MDBX_lockinfo), true);
+    if (rc == MDBX_SUCCESS)
+      rc =
+          mdbx_pread(pending->fd, &bait, sizeof(scan->lck->mti_bait_uniqueness),
+                     offsetof(MDBX_lockinfo, mti_bait_uniqueness));
+  }
+  if (likely(rc == MDBX_SUCCESS) && bait == scan->lck->mti_bait_uniqueness)
+    rc = MDBX_RESULT_TRUE;
+
+  mdbx_trace("uniq-peek: %s, bait 0x%016" PRIx64 ",%s rc %d",
+             pending->lck ? "mem" : "file", bait,
+             (rc == MDBX_RESULT_TRUE) ? " found," : (rc ? " FAILED," : ""), rc);
+  return rc;
+}
+
+static int uniq_poke(const mdbx_mmap_t *pending, mdbx_mmap_t *scan,
+                     uint64_t *abra) {
+  if (*abra == 0) {
+    const mdbx_tid_t tid = mdbx_thread_self();
+    size_t uit = 0;
+    memcpy(&uit, &tid, (sizeof(tid) < sizeof(uit)) ? sizeof(tid) : sizeof(uit));
+    *abra =
+        rrxmrrxmsx_0(mdbx_osal_monotime() + UINT64_C(5873865991930747) * uit);
+  }
+  const uint64_t cadabra =
+      rrxmrrxmsx_0(*abra + UINT64_C(7680760450171793) * (unsigned)mdbx_getpid())
+          << 24 |
+      *abra >> 40;
+  scan->lck->mti_bait_uniqueness = cadabra;
+  mdbx_flush_noncoherent_cpu_writeback();
+  *abra = *abra * UINT64_C(6364136223846793005) + 1;
+  return uniq_peek(pending, scan);
+}
+
+__cold static int uniq_check(const mdbx_mmap_t *pending, MDBX_env **found) {
+  *found = nullptr;
+  uint64_t salt = 0;
+  for (MDBX_env *scan = inprocess_lcklist_head; scan != RTHC_ENVLIST_END;
+       scan = scan->me_lcklist_next) {
+    int err = scan->me_lck_mmap.lck->mti_bait_uniqueness
+                  ? uniq_peek(pending, &scan->me_lck_mmap)
+                  : uniq_poke(pending, &scan->me_lck_mmap, &salt);
+    if (err == MDBX_RESULT_TRUE)
+      err = uniq_poke(pending, &scan->me_lck_mmap, &salt);
+    if (err == MDBX_RESULT_TRUE) {
+      (void)mdbx_msync(&scan->me_lck_mmap, 0, sizeof(MDBX_lockinfo), false);
+      err = uniq_poke(pending, &scan->me_lck_mmap, &salt);
+    }
+    if (err == MDBX_RESULT_TRUE) {
+      err = uniq_poke(pending, &scan->me_lck_mmap, &salt);
+      *found = scan;
+      mdbx_info("<< uniq-probe: found %p", *found);
+      return MDBX_RESULT_FALSE;
+    }
+    if (unlikely(err != MDBX_SUCCESS)) {
+      mdbx_verbose("<< uniq-probe: failed rc %d", err);
+      return err;
+    }
+  }
+
+  mdbx_info("<< uniq-probe: unique");
+  return MDBX_RESULT_TRUE;
+}
+
+static int lcklist_detach_locked(MDBX_env *env) {
+  MDBX_env *inprocess_neighbor = nullptr;
+  int rc = MDBX_SUCCESS;
+  if (env->me_lcklist_next != nullptr) {
+    mdbx_ensure(env, env->me_lcklist_next != nullptr);
+    mdbx_ensure(env, inprocess_lcklist_head != RTHC_ENVLIST_END);
+    for (MDBX_env **ptr = &inprocess_lcklist_head; *ptr != RTHC_ENVLIST_END;
+         ptr = &(*ptr)->me_lcklist_next) {
+      if (*ptr == env) {
+        *ptr = env->me_lcklist_next;
+        env->me_lcklist_next = nullptr;
+        break;
+      }
+    }
+    mdbx_ensure(env, env->me_lcklist_next == nullptr);
+  }
+
+  rc = uniq_check(&env->me_lck_mmap, &inprocess_neighbor);
+  if (!inprocess_neighbor && env->me_live_reader)
+    (void)mdbx_rpid_clear(env);
+  if (!MDBX_IS_ERROR(rc))
+    rc = mdbx_lck_destroy(env, inprocess_neighbor);
+  return rc;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1134,22 +1275,10 @@ static int __must_check_result mdbx_dpl_append(MDBX_DPL dl, pgno_t pgno,
 
 /*----------------------------------------------------------------------------*/
 
-int mdbx_runtime_flags = MDBX_DBG_PRINT
-#if MDBX_DEBUG
-                         | MDBX_DBG_ASSERT
-#endif
-#if MDBX_DEBUG > 1
-                         | MDBX_DBG_TRACE
-#endif
-#if MDBX_DEBUG > 2
-                         | MDBX_DBG_AUDIT
-#endif
-#if MDBX_DEBUG > 3
-                         | MDBX_DBG_EXTRA
-#endif
-    ;
-
+#ifndef MDBX_ALLOY
+int mdbx_runtime_flags = MDBX_RUNTIME_FLAGS_INIT;
 MDBX_debug_func *mdbx_debug_logger;
+#endif /* MDBX_ALLOY */
 
 static int mdbx_page_alloc(MDBX_cursor *mc, unsigned num, MDBX_page **mp,
                            int flags);
@@ -1204,7 +1333,7 @@ static int __must_check_result mdbx_read_header(MDBX_env *env, MDBX_meta *meta,
                                                 uint64_t *filesize);
 static int __must_check_result mdbx_sync_locked(MDBX_env *env, unsigned flags,
                                                 MDBX_meta *const pending);
-static void mdbx_env_close0(MDBX_env *env);
+static int mdbx_env_close0(MDBX_env *env);
 
 static MDBX_node *mdbx_node_search(MDBX_cursor *mc, MDBX_val *key, int *exactp);
 
@@ -1333,59 +1462,77 @@ static const char *__mdbx_strerr(int errnum) {
 
 const char *__cold mdbx_strerror_r(int errnum, char *buf, size_t buflen) {
   const char *msg = __mdbx_strerr(errnum);
-  if (!msg) {
-    if (!buflen || buflen > INT_MAX)
-      return NULL;
+  if (!msg && buflen > 0 && buflen < INT_MAX) {
 #if defined(_WIN32) || defined(_WIN64)
-    size_t size = FormatMessageA(
+    const DWORD size = FormatMessageA(
         FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
         errnum, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, (DWORD)buflen,
         NULL);
     return size ? buf : NULL;
 #elif defined(_GNU_SOURCE) && defined(__GLIBC__)
     /* GNU-specific */
-    msg = strerror_r(errnum, buf, buflen);
+    if (errnum > 0)
+      msg = strerror_r(errnum, buf, buflen);
 #elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
     /* XSI-compliant */
-    int rc = strerror_r(errnum, buf, buflen);
-    if (rc) {
-      rc = snprintf(buf, buflen, "error %d", errnum);
-      assert(rc > 0);
-    }
-    return buf;
+    if (errnum > 0 && strerror_r(errnum, buf, buflen) == 0)
+      msg = buf;
 #else
-    strncpy(buf, strerror(errnum), buflen);
-    buf[buflen - 1] = '\0';
-    return buf;
+    if (errnum > 0) {
+      msg = strerror(errnum);
+      if (msg) {
+        strncpy(buf, msg, buflen);
+        msg = buf;
+      }
+    }
 #endif
+    if (!msg) {
+      (void)snprintf(buf, buflen, "error %d", errnum);
+      msg = buf;
+    }
+    buf[buflen - 1] = '\0';
   }
   return msg;
 }
 
 const char *__cold mdbx_strerror(int errnum) {
+#if defined(_WIN32) || defined(_WIN64)
+  static char buf[1024];
+  return mdbx_strerror_r(errnum, buf, sizeof(buf));
+#else
   const char *msg = __mdbx_strerr(errnum);
   if (!msg) {
-#if defined(_WIN32) || defined(_WIN64)
-    static char buffer[1024];
-    size_t size = FormatMessageA(
-        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
-        errnum, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer,
-        sizeof(buffer), NULL);
-    if (size)
-      msg = buffer;
-#else
-    if (errnum < 0) {
-      static char buffer[32];
-      int rc = snprintf(buffer, sizeof(buffer) - 1, "unknown error %d", errnum);
-      assert(rc > 0);
-      (void)rc;
-      return buffer;
+    if (errnum > 0)
+      msg = strerror(errnum);
+    if (!msg) {
+      static char buf[32];
+      (void)snprintf(buf, sizeof(buf) - 1, "error %d", errnum);
+      msg = buf;
     }
-    msg = strerror(errnum);
+  }
+  return msg;
 #endif
+}
+
+#if defined(_WIN32) || defined(_WIN64) /* Bit of madness for Windows */
+const char *mdbx_strerror_r_ANSI2OEM(int errnum, char *buf, size_t buflen) {
+  const char *msg = __mdbx_strerr(errnum);
+  if (!msg && buflen > 0 && buflen < INT_MAX) {
+    const DWORD size = FormatMessageA(
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
+        errnum, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, (DWORD)buflen,
+        NULL);
+    if (size && CharToOemBuffA(buf, buf, size))
+      msg = buf;
   }
   return msg;
 }
+
+const char *mdbx_strerror_ANSI2OEM(int errnum) {
+  static char buf[1024];
+  return mdbx_strerror_r_ANSI2OEM(errnum, buf, sizeof(buf));
+}
+#endif /* Bit of madness for Windows */
 
 static txnid_t mdbx_oomkick(MDBX_env *env, const txnid_t laggard);
 
@@ -3198,7 +3345,7 @@ static int mdbx_txn_renew0(MDBX_txn *txn, unsigned flags) {
     MDBX_reader *r = txn->mt_ro_reader;
     if (likely(env->me_flags & MDBX_ENV_TXKEY)) {
       mdbx_assert(env, !(env->me_flags & MDBX_NOTLS));
-      r = mdbx_thread_rthc_get(env->me_txkey);
+      r = thread_rthc_get(env->me_txkey);
       if (likely(r)) {
         mdbx_assert(env, r->mr_pid == env->me_pid);
         mdbx_assert(env, r->mr_tid == mdbx_thread_self());
@@ -3273,7 +3420,7 @@ static int mdbx_txn_renew0(MDBX_txn *txn, unsigned flags) {
 
       if (likely(env->me_flags & MDBX_ENV_TXKEY)) {
         mdbx_assert(env, env->me_live_reader == env->me_pid);
-        mdbx_thread_rthc_set(env->me_txkey, r);
+        thread_rthc_set(env->me_txkey, r);
       }
     }
 
@@ -5400,31 +5547,51 @@ static int mdbx_sync_locked(MDBX_env *env, unsigned flags,
       flags &= MDBX_WRITEMAP | MDBX_SHRINK_ALLOWED; /* force steady */
   }
 
-  /* LY: check conditions to shrink datafile */
-  const pgno_t backlog_gap =
-      pending->mm_dbs[FREE_DBI].md_depth + mdbx_backlog_extragap(env);
   pgno_t shrink = 0;
-  if ((flags & MDBX_SHRINK_ALLOWED) && pending->mm_geo.shrink &&
-      pending->mm_geo.now - pending->mm_geo.next >
-          pending->mm_geo.shrink + backlog_gap) {
-    const pgno_t largest = mdbx_find_largest(
+  if (flags & MDBX_SHRINK_ALLOWED) {
+    /* LY: check conditions to discard unused pages */
+    const pgno_t largest_pgno = mdbx_find_largest(
         env, (head->mm_geo.next > pending->mm_geo.next) ? head->mm_geo.next
                                                         : pending->mm_geo.next);
-    if (pending->mm_geo.now > largest &&
-        pending->mm_geo.now - largest > pending->mm_geo.shrink + backlog_gap) {
-      const pgno_t aligner =
-          pending->mm_geo.grow ? pending->mm_geo.grow : pending->mm_geo.shrink;
-      const pgno_t with_backlog_gap = largest + backlog_gap;
-      const pgno_t aligned = pgno_align2os_pgno(
-          env, with_backlog_gap + aligner - with_backlog_gap % aligner);
-      const pgno_t bottom =
-          (aligned > pending->mm_geo.lower) ? aligned : pending->mm_geo.lower;
-      if (pending->mm_geo.now > bottom) {
-        flags &= MDBX_WRITEMAP | MDBX_SHRINK_ALLOWED; /* force steady */
-        shrink = pending->mm_geo.now - bottom;
-        pending->mm_geo.now = bottom;
-        if (mdbx_meta_txnid_stable(env, head) == pending->mm_txnid_a)
-          mdbx_meta_set_txnid(env, pending, pending->mm_txnid_a + 1);
+    const size_t largest_aligned2os_bytes =
+        pgno_align2os_bytes(env, largest_pgno);
+    const pgno_t largest_aligned2os_pgno =
+        bytes2pgno(env, largest_aligned2os_bytes);
+    const pgno_t prev_discarded_pgno = *env->me_discarded_tail;
+    *env->me_discarded_tail = largest_aligned2os_pgno;
+    if (prev_discarded_pgno > largest_aligned2os_pgno) {
+      const size_t prev_discarded_bytes =
+          pgno_align2os_bytes(env, prev_discarded_pgno);
+      mdbx_ensure(env, prev_discarded_bytes > largest_aligned2os_bytes);
+#if defined(MADV_REMOVE_OR_FREE_OR_DONTNEED)
+      (void)madvise(env->me_map + largest_aligned2os_bytes,
+                    prev_discarded_bytes - largest_aligned2os_bytes,
+                    MADV_REMOVE_OR_FREE_OR_DONTNEED);
+#endif /* MADV_REMOVE_OR_FREE_OR_DONTNEED */
+    }
+
+    /* LY: check conditions to shrink datafile */
+    const pgno_t backlog_gap =
+        pending->mm_dbs[FREE_DBI].md_depth + mdbx_backlog_extragap(env);
+    if (pending->mm_geo.shrink && pending->mm_geo.now - pending->mm_geo.next >
+                                      pending->mm_geo.shrink + backlog_gap) {
+      if (pending->mm_geo.now > largest_pgno &&
+          pending->mm_geo.now - largest_pgno >
+              pending->mm_geo.shrink + backlog_gap) {
+        const pgno_t aligner = pending->mm_geo.grow ? pending->mm_geo.grow
+                                                    : pending->mm_geo.shrink;
+        const pgno_t with_backlog_gap = largest_pgno + backlog_gap;
+        const pgno_t aligned = pgno_align2os_pgno(
+            env, with_backlog_gap + aligner - with_backlog_gap % aligner);
+        const pgno_t bottom =
+            (aligned > pending->mm_geo.lower) ? aligned : pending->mm_geo.lower;
+        if (pending->mm_geo.now > bottom) {
+          flags &= MDBX_WRITEMAP | MDBX_SHRINK_ALLOWED; /* force steady */
+          shrink = pending->mm_geo.now - bottom;
+          pending->mm_geo.now = bottom;
+          if (mdbx_meta_txnid_stable(env, head) == pending->mm_txnid_a)
+            mdbx_meta_set_txnid(env, pending, pending->mm_txnid_a + 1);
+        }
       }
     }
   }
@@ -5755,14 +5922,16 @@ static int __cold mdbx_env_map(MDBX_env *env, const int is_exclusive,
 #endif
 
   if (is_exclusive && (env->me_flags & MDBX_WRITEMAP) != 0) {
-#ifdef MADV_REMOVE_OR_FREE
-    const size_t used_alined2os = mdbx_roundup2(usedsize, env->me_os_psize);
-    if (used_alined2os < env->me_mapsize)
-      (void)madvise(env->me_map + used_alined2os,
-                    env->me_mapsize - used_alined2os, MADV_REMOVE_OR_FREE);
-#else
-    (void)usedsize;
-#endif
+    const size_t used_aligned2os_bytes =
+        mdbx_roundup2(usedsize, env->me_os_psize);
+    *env->me_discarded_tail = bytes2pgno(env, used_aligned2os_bytes);
+    if (used_aligned2os_bytes < env->me_mapsize) {
+#if defined(MADV_REMOVE_OR_FREE_OR_DONTNEED)
+      (void)madvise(env->me_map + used_aligned2os_bytes,
+                    env->me_mapsize - used_aligned2os_bytes,
+                    MADV_REMOVE_OR_FREE_OR_DONTNEED);
+#endif /* MADV_REMOVE_OR_FREE_OR_DONTNEED */
+    }
   }
 
 #ifdef POSIX_FADV_RANDOM
@@ -5808,8 +5977,8 @@ static int __cold mdbx_env_map(MDBX_env *env, const int is_exclusive,
     struct radvisory hint;
     hint.ra_offset = 0;
     hint.ra_count = usedsize;
-    if (unlikely(fcntl(env->me_fd, F_RDADVISE, &hint) == -1))
-      return errno;
+    (void)/* Ignore ENOTTY for DB on the ram-disk and so on */ fcntl(
+        env->me_fd, F_RDADVISE, &hint);
 #endif
 #if defined(MADV_WILLNEED)
     if (unlikely(madvise(env->me_map, usedsize, MADV_WILLNEED) != 0))
@@ -6141,7 +6310,7 @@ int __cold mdbx_env_set_maxdbs(MDBX_env *env, MDBX_dbi dbs) {
 }
 
 int __cold mdbx_env_set_maxreaders(MDBX_env *env, unsigned readers) {
-  if (unlikely(readers < 1 || readers > INT16_MAX))
+  if (unlikely(readers < 1 || readers > MDBX_READERS_LIMIT))
     return MDBX_EINVAL;
 
   if (unlikely(!env))
@@ -6501,16 +6670,29 @@ static int __cold mdbx_setup_lck(MDBX_env *env, char *lck_pathname,
       return err;
 
     /* LY: without-lck mode (e.g. exclusive or on read-only filesystem) */
+    /* beginning of a locked section ---------------------------------------- */
+    lcklist_lock();
+    mdbx_assert(env, env->me_lcklist_next == nullptr);
     env->me_lfd = INVALID_HANDLE_VALUE;
     const int rc = mdbx_lck_seize(env);
-    if (MDBX_IS_ERROR(rc))
+    if (MDBX_IS_ERROR(rc)) {
+      /* Calling lcklist_detach_locked() is required to restore POSIX-filelock
+       * and this job will be done by mdbx_env_close0(). */
+      lcklist_unlock();
       return rc;
+    }
+    /* insert into inprocess lck-list */
+    env->me_lcklist_next = inprocess_lcklist_head;
+    inprocess_lcklist_head = env;
+    lcklist_unlock();
+    /* end of a locked section ---------------------------------------------- */
 
     env->me_oldest = &env->me_lckless_stub.oldest;
     env->me_unsynced_timeout = &env->me_lckless_stub.unsynced_timeout;
     env->me_autosync_period = &env->me_lckless_stub.autosync_period;
     env->me_unsynced_pages = &env->me_lckless_stub.autosync_pending;
     env->me_autosync_threshold = &env->me_lckless_stub.autosync_threshold;
+    env->me_discarded_tail = &env->me_lckless_stub.discarded_tail;
     env->me_maxreaders = UINT_MAX;
 #ifdef MDBX_OSAL_LOCK
     env->me_wmutex = &env->me_lckless_stub.wmutex;
@@ -6521,59 +6703,85 @@ static int __cold mdbx_setup_lck(MDBX_env *env, char *lck_pathname,
     return rc;
   }
 
+  /* beginning of a locked section ------------------------------------------ */
+  lcklist_lock();
+  mdbx_assert(env, env->me_lcklist_next == nullptr);
+
   /* Try to get exclusive lock. If we succeed, then
    * nobody is using the lock region and we should initialize it. */
-  const int rc = mdbx_lck_seize(env);
-  if (MDBX_IS_ERROR(rc))
-    return rc;
+  err = mdbx_lck_seize(env);
+  if (MDBX_IS_ERROR(err)) {
+  bailout:
+    /* Calling lcklist_detach_locked() is required to restore POSIX-filelock
+     * and this job will be done by mdbx_env_close0(). */
+    lcklist_unlock();
+    return err;
+  }
+
+  MDBX_env *inprocess_neighbor = nullptr;
+  if (err == MDBX_RESULT_TRUE) {
+    err = uniq_check(&env->me_lck_mmap, &inprocess_neighbor);
+    if (MDBX_IS_ERROR(err))
+      goto bailout;
+    if (inprocess_neighbor && (inprocess_neighbor->me_flags & MDBX_EXCLUSIVE)) {
+      err = MDBX_BUSY;
+      goto bailout;
+    }
+  }
+  const int lck_seize_rc = err;
 
   mdbx_debug("lck-setup:%s%s%s", " with-lck",
              (env->me_flags & MDBX_RDONLY) ? " readonly" : "",
-             (rc == MDBX_RESULT_TRUE) ? " exclusive" : " cooperative");
+             (lck_seize_rc == MDBX_RESULT_TRUE) ? " exclusive"
+                                                : " cooperative");
 
   uint64_t size;
   err = mdbx_filesize(env->me_lfd, &size);
   if (unlikely(err != MDBX_SUCCESS))
-    return err;
+    goto bailout;
 
-  if (rc == MDBX_RESULT_TRUE) {
+  if (lck_seize_rc == MDBX_RESULT_TRUE) {
     uint64_t wanna = mdbx_roundup2(
         (env->me_maxreaders - 1) * sizeof(MDBX_reader) + sizeof(MDBX_lockinfo),
         env->me_os_psize);
 #ifndef NDEBUG
     err = mdbx_ftruncate(env->me_lfd, size = 0);
     if (unlikely(err != MDBX_SUCCESS))
-      return err;
+      goto bailout;
 #endif
     mdbx_jitter4testing(false);
 
     if (size != wanna) {
       err = mdbx_ftruncate(env->me_lfd, wanna);
       if (unlikely(err != MDBX_SUCCESS))
-        return err;
+        goto bailout;
       size = wanna;
     }
   } else {
-    if (env->me_flags & MDBX_EXCLUSIVE)
-      return MDBX_BUSY;
+    if (env->me_flags & MDBX_EXCLUSIVE) {
+      err = MDBX_BUSY;
+      goto bailout;
+    }
     if (size > PTRDIFF_MAX || (size & (env->me_os_psize - 1)) ||
         size < env->me_os_psize) {
       mdbx_notice("lck-file has invalid size %" PRIu64 " bytes", size);
-      return MDBX_PROBLEM;
+      err = MDBX_PROBLEM;
+      goto bailout;
     }
   }
 
   const size_t maxreaders =
       ((size_t)size - sizeof(MDBX_lockinfo)) / sizeof(MDBX_reader) + 1;
-  if (maxreaders > UINT16_MAX) {
+  if (maxreaders < 2 || maxreaders > MDBX_READERS_LIMIT) {
     mdbx_error("lck-size too big (up to %" PRIuPTR " readers)", maxreaders);
-    return MDBX_PROBLEM;
+    err = MDBX_PROBLEM;
+    goto bailout;
   }
   env->me_maxreaders = (unsigned)maxreaders;
 
   err = mdbx_mmap(MDBX_WRITEMAP, &env->me_lck_mmap, (size_t)size, (size_t)size);
   if (unlikely(err != MDBX_SUCCESS))
-    return err;
+    goto bailout;
 
 #ifdef MADV_DODUMP
   (void)madvise(env->me_lck, size, MADV_DODUMP);
@@ -6581,52 +6789,63 @@ static int __cold mdbx_setup_lck(MDBX_env *env, char *lck_pathname,
 
 #ifdef MADV_DONTFORK
   if (madvise(env->me_lck, size, MADV_DONTFORK) < 0)
-    return errno;
+    goto bailout;
 #endif
 
 #ifdef MADV_WILLNEED
   if (madvise(env->me_lck, size, MADV_WILLNEED) < 0)
-    return errno;
+    goto bailout;
 #endif
 
 #ifdef MADV_RANDOM
   if (madvise(env->me_lck, size, MADV_RANDOM) < 0)
-    return errno;
+    goto bailout;
 #endif
 
-  if (rc == MDBX_RESULT_TRUE) {
-    /* LY: exlcusive mode, init lck */
+  if (lck_seize_rc == MDBX_RESULT_TRUE) {
+    /* LY: exlcusive mode, reset lck */
     memset(env->me_lck, 0, (size_t)size);
-    err = mdbx_lck_init(env);
-    if (err)
-      return err;
-
+    mdbx_jitter4testing(false);
     env->me_lck->mti_magic_and_version = MDBX_LOCK_MAGIC;
     env->me_lck->mti_os_and_format = MDBX_LOCK_FORMAT;
   } else {
     if (env->me_lck->mti_magic_and_version != MDBX_LOCK_MAGIC) {
       mdbx_error("lock region has invalid magic/version");
-      return ((env->me_lck->mti_magic_and_version >> 8) != MDBX_MAGIC)
-                 ? MDBX_INVALID
-                 : MDBX_VERSION_MISMATCH;
+      err = ((env->me_lck->mti_magic_and_version >> 8) != MDBX_MAGIC)
+                ? MDBX_INVALID
+                : MDBX_VERSION_MISMATCH;
+      goto bailout;
     }
     if (env->me_lck->mti_os_and_format != MDBX_LOCK_FORMAT) {
       mdbx_error("lock region has os/format 0x%" PRIx32 ", expected 0x%" PRIx32,
                  env->me_lck->mti_os_and_format, MDBX_LOCK_FORMAT);
-      return MDBX_VERSION_MISMATCH;
+      err = MDBX_VERSION_MISMATCH;
+      goto bailout;
     }
   }
 
-  mdbx_assert(env, !MDBX_IS_ERROR(rc));
+  err = mdbx_lck_init(env, inprocess_neighbor, lck_seize_rc);
+  if (MDBX_IS_ERROR(err))
+    goto bailout;
+
+  mdbx_ensure(env, env->me_lcklist_next == nullptr);
+  /* insert into inprocess lck-list */
+  env->me_lcklist_next = inprocess_lcklist_head;
+  inprocess_lcklist_head = env;
+  lcklist_unlock();
+  /* end of a locked section ------------------------------------------------ */
+
+  mdbx_assert(env, !MDBX_IS_ERROR(lck_seize_rc));
   env->me_oldest = &env->me_lck->mti_oldest_reader;
   env->me_unsynced_timeout = &env->me_lck->mti_unsynced_timeout;
   env->me_autosync_period = &env->me_lck->mti_autosync_period;
   env->me_unsynced_pages = &env->me_lck->mti_unsynced_pages;
   env->me_autosync_threshold = &env->me_lck->mti_autosync_threshold;
+  env->me_discarded_tail = &env->me_lck->mti_discarded_tail;
 #ifdef MDBX_OSAL_LOCK
   env->me_wmutex = &env->me_lck->mti_wmutex;
 #endif
-  return rc;
+  return lck_seize_rc;
 }
 
 /* Only a subset of the mdbx_env flags can be changed
@@ -6739,15 +6958,9 @@ int __cold mdbx_env_open(MDBX_env *env, const char *path, unsigned flags,
         MDBX_WRITEMAP | MDBX_NOSYNC | MDBX_NOMETASYNC | MDBX_MAPASYNC;
     if (lck_rc == MDBX_RESULT_TRUE) {
       env->me_lck->mti_envmode = env->me_flags & (mode_flags | MDBX_RDONLY);
-      if ((env->me_flags & MDBX_EXCLUSIVE) == 0) {
-        /* LY: downgrade lock only if exclusive access not requested.
-         *     in case exclusive==1, just leave value as is. */
-        rc = mdbx_lck_downgrade(env, true);
-        mdbx_debug("lck-downgrade-full: rc %i ", rc);
-      } else {
-        rc = mdbx_lck_downgrade(env, false);
-        mdbx_debug("lck-downgrade-partial: rc %i ", rc);
-      }
+      rc = mdbx_lck_downgrade(env);
+      mdbx_debug("lck-downgrade-%s: rc %i",
+                 (env->me_flags & MDBX_EXCLUSIVE) ? "partial" : "full", rc);
       if (rc != MDBX_SUCCESS)
         goto bailout;
     } else {
@@ -6818,7 +7031,7 @@ int __cold mdbx_env_open(MDBX_env *env, const char *path, unsigned flags,
 
 bailout:
   if (rc) {
-    mdbx_env_close0(env);
+    rc = mdbx_env_close0(env) ? MDBX_PANIC : rc;
     env->me_flags = saved_me_flags | MDBX_FATAL_ERROR;
   }
   mdbx_free(lck_pathname);
@@ -6826,10 +7039,15 @@ bailout:
 }
 
 /* Destroy resources from mdbx_env_open(), clear our readers & DBIs */
-static void __cold mdbx_env_close0(MDBX_env *env) {
-  if (!(env->me_flags & MDBX_ENV_ACTIVE))
-    return;
+static int __cold mdbx_env_close0(MDBX_env *env) {
+  if (!(env->me_flags & MDBX_ENV_ACTIVE)) {
+    mdbx_ensure(env, env->me_lcklist_next == nullptr);
+    return MDBX_SUCCESS;
+  }
   env->me_flags &= ~MDBX_ENV_ACTIVE;
+  lcklist_lock();
+  const int rc = lcklist_detach_locked(env);
+  lcklist_unlock();
 
   /* Doing this here since me_dbxs may not exist during mdbx_env_close */
   if (env->me_dbxs) {
@@ -6851,8 +7069,6 @@ static void __cold mdbx_env_close0(MDBX_env *env) {
 
   if (env->me_flags & MDBX_ENV_TXKEY)
     mdbx_rthc_remove(env->me_txkey);
-  if (env->me_live_reader)
-    (void)mdbx_rpid_clear(env);
 
   if (env->me_map) {
     mdbx_munmap(&env->me_dxb_mmap);
@@ -6874,12 +7090,12 @@ static void __cold mdbx_env_close0(MDBX_env *env) {
   env->me_unsynced_pages = nullptr;
   env->me_autosync_threshold = nullptr;
 
-  mdbx_lck_destroy(env);
   if (env->me_lfd != INVALID_HANDLE_VALUE) {
     (void)mdbx_closefile(env->me_lfd);
     env->me_lfd = INVALID_HANDLE_VALUE;
   }
   env->me_flags = 0;
+  return rc;
 }
 
 int __cold mdbx_env_close_ex(MDBX_env *env, int dont_sync) {
@@ -6921,7 +7137,7 @@ int __cold mdbx_env_close_ex(MDBX_env *env, int dont_sync) {
     mdbx_free(dp);
   }
 
-  mdbx_env_close0(env);
+  rc = mdbx_env_close0(env) ? MDBX_PANIC : rc;
   mdbx_ensure(env, mdbx_fastmutex_destroy(&env->me_dbi_lock) == MDBX_SUCCESS);
 #if defined(_WIN32) || defined(_WIN64)
   /* me_remap_guard don't have destructor (Slim Reader/Writer Lock) */
@@ -6936,6 +7152,7 @@ int __cold mdbx_env_close_ex(MDBX_env *env, int dont_sync) {
                        MDBX_SUCCESS);
 #endif
 
+  mdbx_ensure(env, env->me_lcklist_next == nullptr);
   env->me_pid = 0;
   env->me_signature = 0;
   mdbx_free(env);
