@@ -25,7 +25,7 @@ addons:
 # for meson support
     - python3 python3-setuptools python3-pip
 # need utilites
-    - tar unzip xz-utils fakeroot
+    - tar unzip xz-utils fakeroot cmake
 # headers and dependencies
     - libcunit1-dev libucl-dev libncurses5-dev libncursesw5-dev
       libx11-dev libxaw7-dev libxmu-dev libxt-dev libsm-dev
