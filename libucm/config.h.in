@@ -8,7 +8,7 @@
 #define UCM_VERSION_PATCH       @version_patch@
 #define UCM_VERSION_FULL        @version_full@
 
-#define UCM_PATH_MODULES        L@path_modules@
+#define UCM_PATH_MODULES        L@path_plugins@
 #define UCM_PATH_DEPENDS        L@path_libs@
 #define UCM_PATH_DOCS           L@path_docs@
 

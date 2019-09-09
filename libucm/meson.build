@@ -103,14 +103,14 @@ libucm_conf.set        ('version_major'   , libucm_version[0])
 libucm_conf.set        ('version_minor'   , libucm_version[1])
 libucm_conf.set        ('version_patch'   , libucm_version[2])
 libucm_conf.set_quoted ('version_full'    , libucm_version_full)
-libucm_conf.set_quoted ('path_modules'    , get_option ('path_modules_lookup'))
-libucm_conf.set_quoted ('path_libs'       , get_option ('path_libs_lookup'))
-libucm_conf.set_quoted ('path_docs'       , get_option ('path_docs_lookup'))
+libucm_conf.set_quoted ('path_plugins'    , install_path_plugin)
+libucm_conf.set_quoted ('path_libs'       , get_option ('libdir'))
+libucm_conf.set_quoted ('path_docs'       , '')
 libucm_conf.set_quoted ('build_commit'    , libucm_commit)
 libucm_conf.set_quoted ('build_time'      , libucm_time)
 libucm_conf.set_quoted ('build_target'    , '@0@_@1@'.format(target_machine.cpu(), target_machine.system()))
 libucm_conf.set_quoted ('build_cc'        , '@0@_@1@'.format(cc.get_id(), cc.version()))
-libucm_conf.set_quoted ('build_opts'      , '') #TODO compiler options
+libucm_conf.set_quoted ('build_opts'      , '')#TODO compiler options
 libucm_conf.set_quoted ('build_flags'     , '') #TODO compiler flags
 libucm_conf.set        ('mq_size'         , get_option('message_queue_size'))
 libucm_conf.set        ('session_count'   , get_option('session_count'))
@@ -135,5 +135,6 @@ libucm = shared_library (meson.project_name(),
                           include_directories: libs_inc,
                           build_rpath: libs_rpath,
                           install_rpath: libs_rpath,
-                          install: true,
-                          install_dir: install_path_root)
+#                          install_dir: install_path_root,
+                          install: true
+                          )

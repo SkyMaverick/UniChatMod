@@ -27,8 +27,7 @@ tuiapp = executable (tuiapp_name,
              tuiapp_src,
              include_directories: libs_inc,
              dependencies: tuiapp_dep,
-             build_rpath: '$ORIGIN/.',
-             install_rpath: '$ORIGIN/.',
-             install: true,
-             install_dir: install_path_root
+             build_rpath: libs_rpath,
+             install_rpath: libs_rpath,
+             install: true
          )

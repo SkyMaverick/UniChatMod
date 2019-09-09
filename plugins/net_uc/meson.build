@@ -32,4 +32,4 @@ netuc_lib = shared_library(plug_name,
                            dependencies: netuc_dep,
                            include_directories: libucm_inc,
                            install: true,
-                           install_dir: install_path_mods)
+                           install_dir: install_path_plugin)

@@ -32,7 +32,8 @@ lib_db_mdbx = shared_library(plug_name,
                              db_mdbx_src,
                              dependencies: db_mdbx_dep,
                              include_directories: libs_inc,
-                             build_rpath: libs_rpath,
-                             install_rpath: libs_rpath,
-                             install: true,
-                             install_dir: install_path_mods)
+                             build_rpath: libs_rpath_plugin,
+                             install_rpath: libs_rpath_plugin,
+                             install_dir: install_path_plugin,
+                             install: true
+                             )

@@ -377,7 +377,7 @@ try:
         args = {
             'target'        : argv[2],
             'path_build'    : os.path.join (path_build_root, argv[2]),
-            'path_bundle'   : os.path.join (path_build_root, argv[2], 'bundle'),
+            'path_bundle'   : os.path.join (path_build_root, argv[2], 'bundle', project_name),
 
             'path_script'   : path_current,
             'path_make'     : path_build_root,
@@ -390,7 +390,7 @@ try:
         args = {
             'target'        : os.name,
             'path_build'    : os.path.join (path_build_root, os.name),
-            'path_bundle'   : os.path.join (path_build_root, os.name, 'bundle'),
+            'path_bundle'   : os.path.join (path_build_root, os.name, 'bundle', project_name),
 
             'path_script'   : path_current,
             'path_make'     : path_build_root,

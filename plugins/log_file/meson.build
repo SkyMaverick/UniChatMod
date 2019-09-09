@@ -9,10 +9,11 @@ stdlog_dep = [
 ]
 
 lib_stdlog = shared_library(plug_name,
-                             stdlog_src,
-                             dependencies: stdlog_dep,
-                             include_directories: libs_inc,
-                             build_rpath: libs_rpath,
-                             install_rpath: libs_rpath,
-                             install: true,
-                             install_dir: install_path_mods)
+             stdlog_src,
+             dependencies: stdlog_dep,
+             include_directories: libs_inc,
+             build_rpath: libs_rpath_plugin,
+             install_rpath: libs_rpath_plugin,
+             install_dir: install_path_plugin,
+             install: true
+        )

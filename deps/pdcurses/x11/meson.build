@@ -147,8 +147,7 @@ if meson.is_subproject()
                                     pdc_source,
                                     include_directories: [pdc_includes, pdc_x11includes],
                                     dependencies: pdc_deps,
-                                    install: true,
-                                    install_dir: get_option('path_install'))
+                                    install: true)
     pdcurses_dep = declare_dependency (
                     include_directories: pdc_includes,
                     link_with: pdc_lib_shared

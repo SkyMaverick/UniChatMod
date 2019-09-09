@@ -12,4 +12,3 @@ option ('no_infoex', type: 'boolean', value: 'false')
 
 # == subproject install hack ===
 option ('create_bundle', type: 'boolean', value: 'false')
-option ('path_install', type: 'string', value: '')

@@ -81,19 +81,16 @@ libs_inc = [
 
 libs_rpath = ':'.join ([
     '$ORIGIN'/'.',
-    '$ORIGIN'/'libs', '.',
-    '$ORIGIN'/'mods', '.',
-    '$ORIGIN'/'..'/'libs', '.',
-    '$ORIGIN'/'..'/'mods', '.'
+    '$ORIGIN'/'lib', '.',
+])
+
+libs_rpath_plugin = ':'.join ([
+    '$ORIGIN'/'.',
+    '$ORIGIN'/'..'
 ])
 
 # --- install paths resolve ----------
-install_path_root = get_option('prefix') / meson.project_name ()
-
-install_path_mods = install_path_root / get_option ('path_modules_lookup')
-install_path_libs = install_path_root / get_option ('path_libs_lookup')
-install_path_docs = install_path_root / get_option ('path_docs_lookup')
-install_path_devs = install_path_root / get_option ('path_devels_lookup')
+install_path_plugin = get_option('libdir') / 'plugins'
 
 # --- resolve some popularity dependencies ----------
 
@@ -163,6 +160,7 @@ if get_option('create_with_tests')
 endif
 
 # -- post-targets install ------
-install_headers (shared_headers,
-                 install_dir: install_path_devs)
+install_headers (shared_headers
+#                 install_dir: install_path_devs
+                 )
 
