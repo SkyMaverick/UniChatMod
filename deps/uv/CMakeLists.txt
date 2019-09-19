@@ -1,5 +1,5 @@
 # TODO: determine CMAKE_SYSTEM_NAME on OS/390.  Currently assumes "OS/390".
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.12)
 project(libuv)
 
 if(MSVC)
@@ -14,6 +14,7 @@ set(uv_sources
     src/fs-poll.c
     src/idna.c
     src/inet.c
+    src/random.c
     src/strscpy.c
     src/threadpool.c
     src/timer.c
@@ -108,6 +109,7 @@ set(uv_test_sources
     test/test-process-title-threadsafe.c
     test/test-process-title.c
     test/test-queue-foreach-delete.c
+    test/test-random.c
     test/test-ref.c
     test/test-run-nowait.c
     test/test-run-once.c
@@ -236,6 +238,7 @@ else()
        src/unix/pipe.c
        src/unix/poll.c
        src/unix/process.c
+       src/unix/random-devurandom.c
        src/unix/signal.c
        src/unix/stream.c
        src/unix/tcp.c
@@ -284,6 +287,14 @@ if(APPLE OR CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|NetBSD|OpenBSD")
   list(APPEND uv_sources src/unix/bsd-ifaddrs.c src/unix/kqueue.c)
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  list(APPEND uv_sources src/unix/random-getrandom.c)
+endif()
+
+if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+  list(APPEND uv_sources src/unix/random-getentropy.c)
+endif()
+
 if(APPLE)
   list(APPEND uv_defines _DARWIN_UNLIMITED_SELECT=1 _DARWIN_USE_64_BIT_INODE=1)
   list(APPEND uv_sources
@@ -300,6 +311,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
        src/unix/linux-inotify.c
        src/unix/linux-syscalls.c
        src/unix/procfs-exepath.c
+       src/unix/random-getrandom.c
+       src/unix/random-sysctl.c
        src/unix/sysinfo-loadavg.c)
 endif()
 
@@ -343,18 +356,12 @@ if(APPLE OR CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|Linux|NetBSD|OpenBSD")
 endif()
 
 add_library(uv SHARED ${uv_sources})
-target_compile_definitions(uv PRIVATE ${uv_defines} BUILDING_UV_SHARED=1)
+target_compile_definitions(uv
+                           INTERFACE USING_UV_SHARED=1
+                           PRIVATE ${uv_defines} BUILDING_UV_SHARED=1)
 target_compile_options(uv PRIVATE ${uv_cflags})
-target_include_directories(uv PRIVATE include src)
+target_include_directories(uv PUBLIC include PRIVATE src)
 target_link_libraries(uv ${uv_libraries})
-
-# add_library(uv_a STATIC ${uv_sources})
-# target_compile_definitions(uv_a PRIVATE ${uv_defines})
-# target_compile_options(uv_a PRIVATE ${uv_cflags})
-# target_include_directories(uv_a PRIVATE include src)
-# target_link_libraries(uv_a ${uv_libraries})
-# 
-option(libuv_buildtests "Build the unit tests when BUILD_TESTING is enabled." ON)
 
 include(CTest)
 if(BUILD_TESTING AND libuv_buildtests)
@@ -363,7 +370,6 @@ if(BUILD_TESTING AND libuv_buildtests)
   target_compile_definitions(uv_run_tests
                              PRIVATE ${uv_defines} USING_UV_SHARED=1)
   target_compile_options(uv_run_tests PRIVATE ${uv_cflags})
-  target_include_directories(uv_run_tests PRIVATE include)
   target_link_libraries(uv_run_tests uv ${uv_test_libraries})
   add_test(NAME uv_test
            COMMAND uv_run_tests
@@ -371,7 +377,6 @@ if(BUILD_TESTING AND libuv_buildtests)
   add_executable(uv_run_tests_a ${uv_test_sources})
   target_compile_definitions(uv_run_tests_a PRIVATE ${uv_defines})
   target_compile_options(uv_run_tests_a PRIVATE ${uv_cflags})
-  target_include_directories(uv_run_tests_a PRIVATE include)
   target_link_libraries(uv_run_tests_a uv_a ${uv_test_libraries})
   add_test(NAME uv_test_a
            COMMAND uv_run_tests_a
@@ -379,22 +384,8 @@ if(BUILD_TESTING AND libuv_buildtests)
 endif()
 
 if(UNIX)
-  # Now for some gibbering horrors from beyond the stars...
   include(GNUInstallDirs)
-#  foreach(x ${uv_libraries})
-#    set(LIBS "${LIBS} -l${x}")
-#  endforeach(x)
-#  file(STRINGS configure.ac configure_ac REGEX ^AC_INIT)
-#  string(REGEX MATCH [0-9]+[.][0-9]+[.][0-9]+ PACKAGE_VERSION "${configure_ac}")
-#  set(includedir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
-#  set(libdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
-#  set(prefix ${CMAKE_INSTALL_PREFIX})
-#  configure_file(libuv.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc @ONLY)
-#
-  install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-#  install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR})
-#  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc
-#          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-  install(TARGETS uv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-#  install(TARGETS uv_a ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS uv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

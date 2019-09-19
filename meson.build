@@ -112,7 +112,9 @@ if not get_option('custom_libs')
         cmake = import ('cmake')
         uv_lib = cmake.subproject('uv',
                  cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF'])
+                     '='.join (['-DBUILD_TESTING','OFF']),
+                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR',get_option('includedir')]),
+                     '='.join (['-D CMAKE_INSTALL_LIBDIR',get_option('libdir')])
                  ])
         libs_inc += uv_lib.include_directories('uv')
         system_library_uv = uv_lib.dependency('uv')
@@ -123,7 +125,9 @@ else
         cmake = import ('cmake')
         uv_lib = cmake.subproject('uv',
                  cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF'])
+                     '='.join (['-DBUILD_TESTING','OFF']),
+                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR',get_option('includedir')]),
+                     '='.join (['-D CMAKE_INSTALL_LIBDIR',get_option('libdir')])
                  ])
         libs_inc += uv_lib.include_directories('uv')
         system_library_uv = uv_lib.dependency('uv')
