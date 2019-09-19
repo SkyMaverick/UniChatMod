@@ -6,15 +6,16 @@ cfgver.set ('MDBX_VERSION_RELEASE',meson.project_version().split('.')[2])
 cfgver.set ('MDBX_VERSION_REVISION',meson.project_version().split('.')[3])
 
 if (get_option('MDBX_USE_GIT'))
-    cfgver.set ('MDBX_GIT_TIMESTAMP','')
-    cfgver.set ('MDBX_GIT_TREE','')
-    cfgver.set ('MDBX_GIT_COMMIT','')
-    cfgver.set ('MDBX_GIT_DESCRIBE','')
+    cfgver.set ('MDBX_GIT_TIMESTAMP',   run_command(app_git,'describe --tags --long --dirty=-dirty'.split()).stdout().strip())
+    cfgver.set ('MDBX_GIT_TREE',        run_command(app_git,'show --no-patch --format=%cI HEAD'.split()).stdout().strip())
+    cfgver.set ('MDBX_GIT_COMMIT',      run_command(app_git,'show --no-patch --format=%T HEAD'.split()).stdout().strip())
+    cfgver.set ('MDBX_GIT_DESCRIBE',    run_command(app_git,'show --no-patch --format=%H HEAD'.split()).stdout().strip())
+    cfgver.set ('MDBX_GIT_REVISION',    run_command(app_git,'rev-list --count --no-merges HEAD'.split()).stdout().strip())
 else
-    cfgver.set ('MDBX_GIT_TIMESTAMP','')
-    cfgver.set ('MDBX_GIT_TREE','')
-    cfgver.set ('MDBX_GIT_COMMIT','')
-    cfgver.set ('MDBX_GIT_DESCRIBE','')
+    cfgver.set ('MDBX_GIT_TIMESTAMP',   'undefined')
+    cfgver.set ('MDBX_GIT_TREE',        'undefined')
+    cfgver.set ('MDBX_GIT_COMMIT',      'undefined')
+    cfgver.set ('MDBX_GIT_DESCRIBE',    'undefined')
 endif
 
 configure_file (
