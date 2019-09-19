@@ -77,7 +77,7 @@ struct {
   short *pagemap;
   uint64_t total_payload_bytes;
   uint64_t pgcount;
-  walk_dbi_t dbi[MAX_DBI];
+  walk_dbi_t dbi[MAX_DBI + CORE_DBS + /* account pseudo-entry for meta */ 1];
 } walk;
 
 #define dbi_free walk.dbi[FREE_DBI]
@@ -94,7 +94,7 @@ MDBX_stat envstat;
 size_t maxkeysize, userdb_count, skipped_subdb;
 uint64_t reclaimable_pages, gc_pages, alloc_pages, unused_pages, backed_pages;
 unsigned verbose;
-char ignore_wrong_order, quiet;
+bool ignore_wrong_order, quiet;
 const char *only_subdb;
 
 struct problem {
@@ -133,7 +133,8 @@ static void __printf_args(1, 2) error(const char *msg, ...) {
 }
 
 static void pagemap_cleanup(void) {
-  for (int i = CORE_DBS; ++i < MAX_DBI;) {
+  for (size_t i = CORE_DBS + /* account pseudo-entry for meta */ 1;
+       i < ARRAY_LENGTH(walk.dbi); ++i) {
     if (walk.dbi[i].name) {
       mdbx_free((void *)walk.dbi[i].name);
       walk.dbi[i].name = NULL;
@@ -157,20 +158,21 @@ static walk_dbi_t *pagemap_lookup_dbi(const char *dbi_name, bool silent) {
   if (last && strcmp(last->name, dbi_name) == 0)
     return last;
 
-  walk_dbi_t *dbi = walk.dbi + CORE_DBS;
-  for (dbi = walk.dbi + CORE_DBS; (++dbi)->name;) {
+  walk_dbi_t *dbi = walk.dbi + CORE_DBS + /* account pseudo-entry for meta */ 1;
+  for (; dbi < ARRAY_END(walk.dbi) && dbi->name; ++dbi) {
     if (strcmp(dbi->name, dbi_name) == 0)
       return last = dbi;
-    if (dbi == walk.dbi + MAX_DBI)
-      return NULL;
   }
 
-  dbi->name = mdbx_strdup(dbi_name);
   if (verbose > 0 && !silent) {
     print(" - found '%s' area\n", dbi_name);
     fflush(NULL);
   }
 
+  if (dbi == ARRAY_END(walk.dbi))
+    return NULL;
+
+  dbi->name = mdbx_strdup(dbi_name);
   return last = dbi;
 }
 
@@ -554,7 +556,7 @@ static int process_db(MDBX_dbi dbi_handle, char *dbi_name, visitor *handler,
   }
 
   if (dbi_handle >= CORE_DBS && dbi_name && only_subdb &&
-      strcmp(only_subdb, dbi_name)) {
+      strcmp(only_subdb, dbi_name) != 0) {
     if (verbose) {
       print("Skip processing '%s'...\n", dbi_name);
       fflush(NULL);
@@ -747,7 +749,7 @@ static void usage(char *prog) {
           "  -n\t\tNOSUBDIR mode for open\n"
           "  -q\t\tbe quiet\n"
           "  -w\t\tlock DB for writing while checking\n"
-          "  -d\t\tdisable page-by-page traversal of b-tree\n"
+          "  -d\t\tdisable page-by-page traversal of B-tree\n"
           "  -s subdb\tprocess a specific subdatabase only\n"
           "  -c\t\tforce cooperative mode (don't try exclusive)\n"
           "  -i\t\tignore wrong order errors (for custom comparators case)\n",
@@ -909,7 +911,7 @@ int main(int argc, char *argv[]) {
   char *prog = argv[0];
   char *envname;
   int problems_maindb = 0, problems_freedb = 0, problems_meta = 0;
-  int dont_traversal = 0;
+  bool dont_traversal = false;
   bool locked = false;
 
   double elapsed;
@@ -938,20 +940,22 @@ int main(int argc, char *argv[]) {
     case 'V':
       printf("mdbx_chk version %d.%d.%d.%d\n"
              " - source: %s %s, commit %s, tree %s\n"
+             " - anchor: %s\n"
              " - build: %s for %s by %s\n"
              " - flags: %s\n"
              " - options: %s\n",
              mdbx_version.major, mdbx_version.minor, mdbx_version.release,
              mdbx_version.revision, mdbx_version.git.describe,
              mdbx_version.git.datetime, mdbx_version.git.commit,
-             mdbx_version.git.tree, mdbx_build.datetime, mdbx_build.target,
-             mdbx_build.compiler, mdbx_build.flags, mdbx_build.options);
+             mdbx_version.git.tree, mdbx_sourcery_anchor, mdbx_build.datetime,
+             mdbx_build.target, mdbx_build.compiler, mdbx_build.flags,
+             mdbx_build.options);
       return EXIT_SUCCESS;
     case 'v':
       verbose++;
       break;
     case 'q':
-      quiet = 1;
+      quiet = true;
       break;
     case 'n':
       envflags |= MDBX_NOSUBDIR;
@@ -963,7 +967,7 @@ int main(int argc, char *argv[]) {
       envflags &= ~MDBX_EXCLUSIVE;
       break;
     case 'd':
-      dont_traversal = 1;
+      dont_traversal = true;
       break;
     case 's':
       if (only_subdb && strcmp(only_subdb, optarg))
@@ -971,7 +975,7 @@ int main(int argc, char *argv[]) {
       only_subdb = optarg;
       break;
     case 'i':
-      ignore_wrong_order = 1;
+      ignore_wrong_order = true;
       break;
     default:
       usage(prog);
@@ -1251,7 +1255,7 @@ int main(int argc, char *argv[]) {
         unused_pages += 1;
 
     empty_pages = lost_bytes = 0;
-    for (walk_dbi_t *dbi = &dbi_main; dbi < walk.dbi + MAX_DBI && dbi->name;
+    for (walk_dbi_t *dbi = &dbi_main; dbi < ARRAY_END(walk.dbi) && dbi->name;
          ++dbi) {
       empty_pages += dbi->pages.empty;
       lost_bytes += dbi->lost_bytes;
@@ -1262,7 +1266,7 @@ int main(int argc, char *argv[]) {
       print(" - pages: total %" PRIu64 ", unused %" PRIu64 "\n", walk.pgcount,
             unused_pages);
       if (verbose > 1) {
-        for (walk_dbi_t *dbi = walk.dbi; dbi < walk.dbi + MAX_DBI && dbi->name;
+        for (walk_dbi_t *dbi = walk.dbi; dbi < ARRAY_END(walk.dbi) && dbi->name;
              ++dbi) {
           print("     %s: subtotal %" PRIu64, dbi->name, dbi->pages.total);
           if (dbi->pages.other && dbi->pages.other != dbi->pages.total)
@@ -1296,7 +1300,7 @@ int main(int argc, char *argv[]) {
               (total_page_bytes - walk.total_payload_bytes) * 100.0 /
                   total_page_bytes);
       if (verbose > 2) {
-        for (walk_dbi_t *dbi = walk.dbi; dbi < walk.dbi + MAX_DBI && dbi->name;
+        for (walk_dbi_t *dbi = walk.dbi; dbi < ARRAY_END(walk.dbi) && dbi->name;
              ++dbi)
           if (dbi->pages.total) {
             uint64_t dbi_bytes = dbi->pages.total * envstat.ms_psize;

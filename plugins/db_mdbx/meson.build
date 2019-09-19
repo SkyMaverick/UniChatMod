@@ -12,19 +12,14 @@ db_mdbx_dep = [
 ]
 
 if not get_option('custom_libs')
-    mdbx_dep = cc.find_library ('mdbx', required: false)
+    mdbx_dep = cc.find_library('mdbx', required: false)
     if not mdbx_dep.found()
-        cmake = import ('cmake')
-        mdbx_proj = cmake.subproject('mdbx')
-        mdbx_dep = mdbx_proj.dependency ('mdbx')
+        libmdbx = subproject('mdbx')
+        mdbx_dep = libmdbx.get_variable('libmdbx')
     endif
 else
-        cmake = import ('cmake')
-        mdbx_proj = cmake.subproject('mdbx',
-                    cmake_options: [
-                        '='.join (['-DPROVIDE_VERSIONINFO','OFF'])
-                    ])
-        mdbx_dep = mdbx_proj.dependency ('mdbx')
+    libmdbx = subproject('mdbx')
+    mdbx_dep = libmdbx.get_variable('libmdbx')
 endif
 db_mdbx_dep += mdbx_dep
 

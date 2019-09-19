@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2015-2019 Leonid Yuriev <leo@yuriev.ru>
  * and other libmdbx authors: please see AUTHORS file.
  * All rights reserved.
@@ -12,7 +12,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 
-#include "./internals.h"
+#include "internals.h"
 
 /* PREAMBLE FOR WINDOWS:
  *
@@ -26,17 +26,14 @@
 
 static void mdbx_winnt_import(void);
 
-#ifdef MDBX_BUILD_DLL
+#ifdef MDBX_BUILD_SHARED_LIBRARY
+#if MDBX_AVOID_CRT && defined(NDEBUG)
 /* DEBUG/CHECKED builds still require MSVC's CRT for runtime checks.
  *
- * Therefore we don't define dll's entry point for debug/checked builds by MSVC.
- * In this case MSVC's will automatically use DllMainCRTStartup() from CRT
- * library, which also automatically call DllMain() from our mdbx.dll
- *
- * On the other side, for RELEASE builds
- * we explicitly define DllMain() as the entry point and don't linking with
- * any CRT libraries (IgnoreAllDefaultLibraries = Yes). */
-#if !defined(_MSC_VER) || defined(NDEBUG)
+ * Define dll's entry point only for Release build when NDEBUG is defined and
+ * MDBX_AVOID_CRT=ON. if the entry point isn't defined then MSVC's will
+ * automatically use DllMainCRTStartup() from CRT library, which also
+ * automatically call DllMain() from our mdbx.dll */
 #pragma comment(linker, "/ENTRY:DllMain")
 #endif
 
@@ -47,7 +44,7 @@ static
 #endif /* !MDBX_CONFIG_MANUAL_TLS_CALLBACK */
     void NTAPI
     mdbx_dll_callback(PVOID module, DWORD reason, PVOID reserved)
-#endif /* MDBX_BUILD_DLL */
+#endif /* MDBX_BUILD_SHARED_LIBRARY */
 {
   (void)reserved;
   switch (reason) {
@@ -65,12 +62,12 @@ static
     mdbx_rthc_thread_dtor(module);
     break;
   }
-#ifdef MDBX_BUILD_DLL
+#if MDBX_BUILD_SHARED_LIBRARY
   return TRUE;
 #endif
 }
 
-#if !defined(MDBX_BUILD_DLL) && !MDBX_CONFIG_MANUAL_TLS_CALLBACK
+#if !MDBX_BUILD_SHARED_LIBRARY && !MDBX_CONFIG_MANUAL_TLS_CALLBACK
 /* *INDENT-OFF* */
 /* clang-format off */
 #if defined(_MSC_VER)
@@ -108,7 +105,7 @@ static
 #endif
 /* *INDENT-ON* */
 /* clang-format on */
-#endif /* !defined(MDBX_BUILD_DLL) && !MDBX_CONFIG_MANUAL_TLS_CALLBACK */
+#endif /* !MDBX_BUILD_SHARED_LIBRARY && !MDBX_CONFIG_MANUAL_TLS_CALLBACK */
 
 /*----------------------------------------------------------------------------*/
 
@@ -734,7 +731,6 @@ static void mdbx_winnt_import(void) {
 
 #define GET_KERNEL32_PROC(ENTRY)                                               \
   mdbx_##ENTRY = (MDBX_##ENTRY)GetProcAddress(hKernel32dll, #ENTRY)
-
   GET_KERNEL32_PROC(GetFileInformationByHandleEx);
   GET_KERNEL32_PROC(GetVolumeInformationByHandleW);
   GET_KERNEL32_PROC(GetFinalPathNameByHandleW);
@@ -743,6 +739,7 @@ static void mdbx_winnt_import(void) {
   GET_KERNEL32_PROC(DiscardVirtualMemory);
   if (!mdbx_DiscardVirtualMemory)
     mdbx_DiscardVirtualMemory = stub_DiscardVirtualMemory;
+#undef GET_KERNEL32_PROC
 
   const HINSTANCE hNtdll = GetModuleHandleA("ntdll.dll");
   mdbx_NtFsControlFile =

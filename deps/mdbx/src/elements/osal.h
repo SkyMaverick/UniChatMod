@@ -1,4 +1,4 @@
-﻿/* https://en.wikipedia.org/wiki/Operating_system_abstraction_layer */
+/* https://en.wikipedia.org/wiki/Operating_system_abstraction_layer */
 
 /*
  * Copyright 2015-2019 Leonid Yuriev <leo@yuriev.ru>
@@ -34,7 +34,8 @@
 #if !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-#if !defined(_NO_CRT_STDIO_INLINE) && defined(MDBX_BUILD_DLL)
+#if !defined(_NO_CRT_STDIO_INLINE) && MDBX_BUILD_SHARED_LIBRARY &&             \
+    !defined(MDBX_TOOLS)
 #define _NO_CRT_STDIO_INLINE
 #endif
 #endif /* Windows */
@@ -84,6 +85,10 @@
 #endif
 #endif /* !xBSD */
 
+#if defined(__linux__) || defined(__gnu_linux__)
+#include <sys/sendfile.h>
+#endif /* Linux */
+
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 0
 #endif
@@ -109,7 +114,7 @@ typedef struct {
 } mdbx_condmutex_t;
 typedef CRITICAL_SECTION mdbx_fastmutex_t;
 
-#ifdef MDBX_AVOID_CRT
+#if MDBX_AVOID_CRT
 #ifndef mdbx_malloc
 static inline void *mdbx_malloc(size_t bytes) {
   return LocalAlloc(LMEM_FIXED, bytes);
@@ -493,7 +498,11 @@ MDBX_INTERNAL_FUNC int mdbx_vasprintf(char **strp, const char *fmt, va_list ap);
 /* OS abstraction layer stuff */
 
 /* max bytes to write in one call */
+#if defined(_WIN32) || defined(_WIN64)
+#define MAX_WRITE UINT32_C(0x01000000)
+#else
 #define MAX_WRITE UINT32_C(0x3fff0000)
+#endif
 
 #if defined(__linux__) || defined(__gnu_linux__)
 MDBX_INTERNAL_VAR uint32_t mdbx_linux_kernel_version;
@@ -552,6 +561,8 @@ MDBX_INTERNAL_FUNC int mdbx_pread(mdbx_filehandle_t fd, void *buf, size_t count,
                                   uint64_t offset);
 MDBX_INTERNAL_FUNC int mdbx_pwrite(mdbx_filehandle_t fd, const void *buf,
                                    size_t count, uint64_t offset);
+MDBX_INTERNAL_FUNC int mdbx_write(mdbx_filehandle_t fd, const void *buf,
+                                  size_t count);
 
 MDBX_INTERNAL_FUNC int
 mdbx_thread_create(mdbx_thread_t *thread,
@@ -575,6 +586,7 @@ MDBX_INTERNAL_FUNC int mdbx_openfile(const char *pathname, int flags,
                                      bool exclusive);
 MDBX_INTERNAL_FUNC int mdbx_closefile(mdbx_filehandle_t fd);
 MDBX_INTERNAL_FUNC int mdbx_removefile(const char *pathname);
+MDBX_INTERNAL_FUNC int mdbx_is_pipe(mdbx_filehandle_t fd);
 
 typedef struct mdbx_mmap_param {
   union {

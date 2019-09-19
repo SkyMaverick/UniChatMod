@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2015-2019 Leonid Yuriev <leo@yuriev.ru>
  * and other libmdbx authors: please see AUTHORS file.
  * All rights reserved.
@@ -12,20 +12,20 @@
  * <http://www.OpenLDAP.org/license.html>. */
 
 #pragma once
-/* *INDENT-OFF* */
-/* clang-format off */
-
 #ifdef MDBX_CONFIG_H
 #include MDBX_CONFIG_H
 #endif
 
+/* *INDENT-OFF* */
+/* clang-format off */
+
 /* In case the MDBX_DEBUG is undefined set it corresponding to NDEBUG */
 #ifndef MDBX_DEBUG
-#ifdef NDEBUG
-#   define MDBX_DEBUG 0
-#else
-#   define MDBX_DEBUG 1
-#endif
+#   ifdef NDEBUG
+#       define MDBX_DEBUG 0
+#   else
+#       define MDBX_DEBUG 1
+#   endif
 #endif
 
 /* Undefine the NDEBUG if debugging is enforced by MDBX_DEBUG */
@@ -36,17 +36,17 @@
 #define MDBX_OSX_WANNA_DURABILITY 0 /* using fcntl(F_FULLFSYNC) with 5-10 times slowdown */
 #define MDBX_OSX_WANNA_SPEED 1      /* using fsync() with chance of data lost on power failure */
 #ifndef MDBX_OSX_SPEED_INSTEADOF_DURABILITY
-#define MDBX_OSX_SPEED_INSTEADOF_DURABILITY MDBX_OSX_WANNA_DURABILITY
+#   define MDBX_OSX_SPEED_INSTEADOF_DURABILITY MDBX_OSX_WANNA_DURABILITY
 #endif
 
 #ifdef MDBX_ALLOY
 /* Amalgamated build */
-#define MDBX_INTERNAL_FUNC static
-#define MDBX_INTERNAL_VAR static
+#   define MDBX_INTERNAL_FUNC static
+#   define MDBX_INTERNAL_VAR static
 #else
 /* Non-amalgamated build */
-#define MDBX_INTERNAL_FUNC
-#define MDBX_INTERNAL_VAR extern
+#   define MDBX_INTERNAL_FUNC
+#   define MDBX_INTERNAL_VAR extern
 #endif /* MDBX_ALLOY */
 
 /*----------------------------------------------------------------------------*/
@@ -87,7 +87,7 @@
 #endif                          /* _MSC_VER (warnings) */
 
 #include "../../mdbx.h"
-#include "./defs.h"
+#include "defs.h"
 
 #if defined(__GNUC__) && !__GNUC_PREREQ(4,2)
     /* Actualy libmdbx was not tested with compilers older than GCC from RHEL6.
@@ -142,7 +142,7 @@
 #   endif
 #endif /* -Walignment-reduction-ignored */
 
-#include "./osal.h"
+#include "osal.h"
 
 /* *INDENT-ON* */
 /* clang-format on */
@@ -152,6 +152,58 @@
 #else
 #define MDBX_WORDBITS 32
 #endif /* MDBX_WORDBITS */
+
+/* Some platforms define the EOWNERDEAD error code even though they
+ *  don't support Robust Mutexes. Compile with -DMDBX_USE_ROBUST=0. */
+#ifndef MDBX_USE_ROBUST
+#define MDBX_USE_ROBUST_CONFIG AUTO
+/* Howard Chu: Android currently lacks Robust Mutex support */
+#if defined(EOWNERDEAD) && !defined(__ANDROID__) && !defined(__APPLE__) &&     \
+    (!defined(__GLIBC__) ||                                                    \
+     __GLIBC_PREREQ(                                                           \
+         2,                                                                    \
+         10) /* LY: glibc before 2.10 has a troubles with Robust Mutex too. */ \
+     || _POSIX_C_SOURCE >= 200809L)
+#define MDBX_USE_ROBUST 1
+#else
+#define MDBX_USE_ROBUST 0
+#endif
+#else
+#define MDBX_USE_ROBUST_CONFIG MDBX_USE_ROBUST
+#endif /* MDBX_USE_ROBUST */
+
+#ifndef MDBX_USE_OFDLOCKS
+#define MDBX_USE_OFDLOCKS_CONFIG AUTO
+#if defined(F_OFD_SETLK) && defined(F_OFD_SETLKW) && defined(F_OFD_GETLK) &&   \
+    !defined(MDBX_SAFE4QEMU)
+#define MDBX_USE_OFDLOCKS 1
+#else
+#define MDBX_USE_OFDLOCKS 0
+#endif
+#else
+#define MDBX_USE_OFDLOCKS_CONFIG MDBX_USE_OFDLOCKS
+#endif /* MDBX_USE_OFDLOCKS */
+
+/* Controls checking PID against reuse DB environment after the fork() */
+#ifndef MDBX_TXN_CHECKPID
+#define MDBX_TXN_CHECKPID_CONFIG AUTO
+#if defined(MADV_DONTFORK) || defined(_WIN32) || defined(_WIN64)
+/* PID check could be ommited:
+ *  - on Linux when madvise(MADV_DONTFORK) is available. i.e. after the fork()
+ *    mapped pages will not be available for child process.
+ *  - in Windows where fork() not available. */
+#define MDBX_TXN_CHECKPID 0
+#else
+#define MDBX_TXN_CHECKPID 1
+#endif
+#else
+#define MDBX_TXN_CHECKPID_CONFIG MDBX_TXN_CHECKPID
+#endif /* MDBX_TXN_CHECKPID */
+
+#define mdbx_sourcery_anchor XCONCAT(mdbx_sourcery_, MDBX_BUILD_SOURCERY)
+#if defined(MDBX_TOOLS)
+extern LIBMDBX_API const char *const mdbx_sourcery_anchor;
+#endif
 
 /*----------------------------------------------------------------------------*/
 /* Basic constants and types */
@@ -186,6 +238,9 @@
 /* Number of DBs in metapage (free and main) - also hardcoded elsewhere */
 #define CORE_DBS 2
 #define MAX_DBI (INT16_MAX - CORE_DBS)
+#if MAX_DBI != MDBX_MAX_DBI
+#error "Opps, MAX_DBI != MDBX_MAX_DBI"
+#endif
 
 /* Number of meta pages - also hardcoded elsewhere */
 #define NUM_METAS 3
@@ -202,11 +257,7 @@ typedef uint32_t pgno_t;
 /* A transaction ID. */
 typedef uint64_t txnid_t;
 #define PRIaTXN PRIi64
-#if MDBX_DEBUG
-#define MIN_TXNID UINT64_C(0x100000000)
-#else
 #define MIN_TXNID UINT64_C(1)
-#endif /* MIN_TXNID */
 
 /* Used for offsets within a single page.
  * Since memory pages are typically 4 or 8KB in size, 12-13 bits,
@@ -233,6 +284,17 @@ typedef struct MDBX_db {
   uint64_t md_merkle;       /* Merkle tree checksum */
 } MDBX_db;
 
+/* database size-related parameters */
+typedef struct mdbx_geo_t {
+  uint16_t grow;   /* datafile growth step in pages */
+  uint16_t shrink; /* datafile shrink threshold in pages */
+  pgno_t lower;    /* minimal size of datafile in pages */
+  pgno_t upper;    /* maximal size of datafile in pages */
+  pgno_t now;      /* current size of datafile in pages */
+  pgno_t next;     /* first unused page in the datafile,
+                    * but actually the file may be shorter. */
+} mdbx_geo_t;
+
 /* Meta page content.
  * A meta page is the start point for accessing a database snapshot.
  * Pages 0-1 are meta pages. Transaction N writes meta page (N % 2). */
@@ -250,15 +312,7 @@ typedef struct MDBX_meta {
   uint8_t mm_extra_pagehdr; /* extra bytes in the page header,
                              * zero (nothing) for now */
 
-  struct {
-    uint16_t grow;   /* datafile growth step in pages */
-    uint16_t shrink; /* datafile shrink threshold in pages */
-    pgno_t lower;    /* minimal size of datafile in pages */
-    pgno_t upper;    /* maximal size of datafile in pages */
-    pgno_t now;      /* current size of datafile in pages */
-    pgno_t next;     /* first unused page in the datafile,
-                      * but actually the file may be shorter. */
-  } mm_geo;
+  mdbx_geo_t mm_geo; /* database size-related parameters */
 
   MDBX_db mm_dbs[CORE_DBS]; /* first is free space, 2nd is main db */
                             /* The size of pages used in this DB */
@@ -433,6 +487,9 @@ typedef struct MDBX_lockinfo {
   /* Threshold of un-synced-with-disk pages for auto-sync feature,
    * zero means no-threshold, i.e. auto-sync is disabled. */
   volatile pgno_t mti_autosync_threshold;
+
+  uint32_t reserved_pad;
+
   /* Period for timed auto-sync feature, i.e. at the every steady checkpoint
    * the mti_unsynced_timeout sets to the current_time + mti_autosync_period.
    * The time value is represented in a suitable system-dependent form, for
@@ -443,7 +500,7 @@ typedef struct MDBX_lockinfo {
   /* Marker to distinguish uniqueness of DB/CLK.*/
   volatile uint64_t mti_bait_uniqueness;
 
-  /* /proc/sys/kernel/random/boot_id */
+  /* the hash of /proc/sys/kernel/random/boot_id or analogue */
   volatile uint64_t mti_boot_id;
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
@@ -466,6 +523,9 @@ typedef struct MDBX_lockinfo {
 
   /* Number of page which was discarded last time by madvise(MADV_FREE). */
   volatile pgno_t mti_discarded_tail;
+
+  /* Timestamp of the last readers check. */
+  volatile uint64_t mti_reader_check_timestamp;
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
 
@@ -616,8 +676,26 @@ struct MDBX_txn {
   MDBX_txn *mt_parent; /* parent of a nested txn */
   /* Nested txn under this txn, set together with flag MDBX_TXN_HAS_CHILD */
   MDBX_txn *mt_child;
-  pgno_t mt_next_pgno; /* next unallocated page */
-  pgno_t mt_end_pgno;  /* corresponding to the current size of datafile */
+  mdbx_geo_t mt_geo;
+  /* next unallocated page */
+#define mt_next_pgno mt_geo.next
+  /* corresponding to the current size of datafile */
+#define mt_end_pgno mt_geo.now
+
+  /* Transaction Flags */
+/* mdbx_txn_begin() flags */
+#define MDBX_TXN_BEGIN_FLAGS                                                   \
+  (MDBX_NOMETASYNC | MDBX_NOSYNC | MDBX_MAPASYNC | MDBX_RDONLY | MDBX_TRYTXN)
+  /* internal txn flags */
+#define MDBX_TXN_FINISHED 0x01  /* txn is finished or never began */
+#define MDBX_TXN_ERROR 0x02     /* txn is unusable after an error */
+#define MDBX_TXN_DIRTY 0x04     /* must write, even if dirty list is empty */
+#define MDBX_TXN_SPILLS 0x08    /* txn or a parent has spilled pages */
+#define MDBX_TXN_HAS_CHILD 0x10 /* txn has an MDBX_txn.mt_child */
+/* most operations on the txn are currently illegal */
+#define MDBX_TXN_BLOCKED                                                       \
+  (MDBX_TXN_FINISHED | MDBX_TXN_ERROR | MDBX_TXN_HAS_CHILD)
+  unsigned mt_flags;
   /* The ID of this transaction. IDs are integers incrementing from 1.
    * Only committed write transactions increment the ID. If a transaction
    * aborts, the ID may be re-used by the next writer. */
@@ -665,26 +743,6 @@ struct MDBX_txn {
    * This number only ever increments until the txn finishes; we
    * don't decrement it when individual DB handles are closed. */
   MDBX_dbi mt_numdbs;
-
-/* Transaction Flags */
-/* mdbx_txn_begin() flags */
-#define MDBX_TXN_BEGIN_FLAGS                                                   \
-  (MDBX_NOMETASYNC | MDBX_NOSYNC | MDBX_RDONLY | MDBX_TRYTXN)
-#define MDBX_TXN_NOMETASYNC                                                    \
-  MDBX_NOMETASYNC                   /* don't sync meta for this txn on commit */
-#define MDBX_TXN_NOSYNC MDBX_NOSYNC /* don't sync this txn on commit */
-#define MDBX_TXN_RDONLY MDBX_RDONLY /* read-only transaction */
-                                    /* internal txn flags */
-#define MDBX_TXN_WRITEMAP MDBX_WRITEMAP /* copy of MDBX_env flag in writers */
-#define MDBX_TXN_FINISHED 0x01          /* txn is finished or never began */
-#define MDBX_TXN_ERROR 0x02             /* txn is unusable after an error */
-#define MDBX_TXN_DIRTY 0x04     /* must write, even if dirty list is empty */
-#define MDBX_TXN_SPILLS 0x08    /* txn or a parent has spilled pages */
-#define MDBX_TXN_HAS_CHILD 0x10 /* txn has an MDBX_txn.mt_child */
-/* most operations on the txn are currently illegal */
-#define MDBX_TXN_BLOCKED                                                       \
-  (MDBX_TXN_FINISHED | MDBX_TXN_ERROR | MDBX_TXN_HAS_CHILD)
-  unsigned mt_flags;
   /* dirtylist room: Array size - dirty pages visible to this txn.
    * Includes ancestor txns' dirty pages not hidden by other txns'
    * dirty/spilled pages. Thus commit(nested txn) has room to merge
@@ -1274,16 +1332,3 @@ static __inline void mdbx_jitter4testing(bool tiny) {
   (void)tiny;
 #endif
 }
-
-/* Controls checking PID against reuse DB environment after the fork() */
-#ifndef MDBX_TXN_CHECKPID
-#if defined(MADV_DONTFORK) || defined(_WIN32) || defined(_WIN64)
-/* PID check could be ommited:
- *  - on Linux when madvise(MADV_DONTFORK) is available. i.e. after the fork()
- *    mapped pages will not be available for child process.
- *  - in Windows where fork() not available. */
-#define MDBX_TXN_CHECKPID 0
-#else
-#define MDBX_TXN_CHECKPID 1
-#endif
-#endif /* MDBX_TXN_CHECKPID */

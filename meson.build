@@ -2,6 +2,8 @@ project ('ucm', 'c',
          version: '0.1.2',
          license: 'Zlib',
          default_options:[
+            'b_lto = true',
+            'b_colorout = always'
          ],
          subproject_dir: 'deps',
          meson_version: '>=0.51')

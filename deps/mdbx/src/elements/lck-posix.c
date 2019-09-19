@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2015-2019 Leonid Yuriev <leo@yuriev.ru>
  * and other libmdbx authors: please see AUTHORS file.
  * All rights reserved.
@@ -12,31 +12,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 
-#include "./internals.h"
-
-/* Some platforms define the EOWNERDEAD error code even though they
- *  don't support Robust Mutexes. Compile with -DMDBX_USE_ROBUST=0. */
-#ifndef MDBX_USE_ROBUST
-/* Howard Chu: Android currently lacks Robust Mutex support */
-#if defined(EOWNERDEAD) && !defined(__ANDROID__) && !defined(__APPLE__) &&     \
-    (!defined(__GLIBC__) ||                                                    \
-     __GLIBC_PREREQ(                                                           \
-         2,                                                                    \
-         10) /* LY: glibc before 2.10 has a troubles with Robust Mutex too. */ \
-     || _POSIX_C_SOURCE >= 200809L)
-#define MDBX_USE_ROBUST 1
-#else
-#define MDBX_USE_ROBUST 0
-#endif
-#endif /* MDBX_USE_ROBUST */
-
-#ifndef MDBX_USE_OFDLOCKS
-#if defined(F_OFD_SETLK) && defined(F_OFD_SETLKW) && defined(F_OFD_GETLK)
-#define MDBX_USE_OFDLOCKS 1
-#else
-#define MDBX_USE_OFDLOCKS 0
-#endif
-#endif /* MDBX_USE_OFDLOCKS */
+#include "internals.h"
 
 /*----------------------------------------------------------------------------*/
 /* global constructor/destructor */
@@ -200,6 +176,8 @@ static int lck_op(mdbx_filehandle_t fd, int cmd, int lck, off_t offset,
 MDBX_INTERNAL_FUNC int mdbx_rpid_set(MDBX_env *env) {
   assert(env->me_lfd != INVALID_HANDLE_VALUE);
   assert(env->me_pid > 0);
+  if (unlikely(mdbx_getpid() != env->me_pid))
+    return MDBX_PANIC;
   return lck_op(env->me_lfd, op_setlk, F_WRLCK, env->me_pid, 1);
 }
 
@@ -219,6 +197,8 @@ MDBX_INTERNAL_FUNC int mdbx_rpid_check(MDBX_env *env, mdbx_pid_t pid) {
 
 MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
   assert(env->me_fd != INVALID_HANDLE_VALUE);
+  if (unlikely(mdbx_getpid() != env->me_pid))
+    return MDBX_PANIC;
 #if MDBX_USE_OFDLOCKS
   if (unlikely(op_setlk == 0))
     choice_fcntl();
@@ -307,6 +287,9 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
 
 MDBX_INTERNAL_FUNC int mdbx_lck_downgrade(MDBX_env *env) {
   assert(env->me_lfd != INVALID_HANDLE_VALUE);
+  if (unlikely(mdbx_getpid() != env->me_pid))
+    return MDBX_PANIC;
+
   int rc = MDBX_SUCCESS;
   if ((env->me_flags & MDBX_EXCLUSIVE) == 0) {
     rc = lck_op(env->me_fd, op_setlk, F_UNLCK, 0, env->me_pid);
@@ -325,6 +308,9 @@ MDBX_INTERNAL_FUNC int mdbx_lck_downgrade(MDBX_env *env) {
 
 MDBX_INTERNAL_FUNC int __cold mdbx_lck_destroy(MDBX_env *env,
                                                MDBX_env *inprocess_neighbor) {
+  if (unlikely(mdbx_getpid() != env->me_pid))
+    return MDBX_PANIC;
+
   int rc = MDBX_SUCCESS;
   if (env->me_lfd != INVALID_HANDLE_VALUE && !inprocess_neighbor &&
       env->me_lck &&
@@ -481,7 +467,7 @@ static int mdbx_robust_unlock(MDBX_env *env, pthread_mutex_t *mutex) {
   int rc = pthread_mutex_unlock(mutex);
   mdbx_jitter4testing(true);
   if (unlikely(rc != 0))
-    rc = mdbx_mutex_failed(env, mutex, rc);
+    env->me_flags |= MDBX_FATAL_ERROR;
   return rc;
 }
 

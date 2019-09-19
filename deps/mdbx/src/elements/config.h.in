@@ -1,36 +1,47 @@
-﻿#cmakedefine HAVE_VALGRIND_MEMCHECK_H
-#cmakedefine HAS_RELAXED_CONSTEXPR
+/* This is meson-template for libmdbx's config.h
+ ******************************************************************************/
 
-#cmakedefine LTO_ENABLED
-#cmakedefine ENABLE_VALGRIND
-#cmakedefine ENABLE_GPROF
-#cmakedefine ENABLE_GCOV
-#cmakedefine ENABLE_ASAN
+/* *INDENT-OFF* */
+/* clang-format off */
 
-#cmakedefine01 HAVE_MDBX_VERSIONINFO
+#mesondefine HAVE_VALGRIND_MEMCHECK_H
+#mesondefine HAS_RELAXED_CONSTEXPR
+
+#mesondefine LTO_ENABLED
+#mesondefine ENABLE_VALGRIND
+#mesondefine ENABLE_GPROF
+#mesondefine ENABLE_GCOV
+#mesondefine ENABLE_ASAN
 
 /* Common */
-#cmakedefine01 MDBX_TXN_CHECKPID
-#cmakedefine01 MDBX_TXN_CHECKOWNER
+#mesondefine01 MDBX_TXN_CHECKPID
+#mesondefine01 MDBX_TXN_CHECKOWNER
+#mesondefine01 MDBX_BUILD_SHARED_LIBRARY
 
 /* Windows */
-#cmakedefine MDBX_BUILD_DLL
-#cmakedefine01 MDBX_CONFIG_MANUAL_TLS_CALLBACK
-#cmakedefine MDBX_AVOID_CRT
+#mesondefine01 MDBX_CONFIG_MANUAL_TLS_CALLBACK
+#mesondefine01 MDBX_AVOID_CRT
 
 /* MacOS */
-#cmakedefine01 MDBX_OSX_SPEED_INSTEADOF_DURABILITY
+#mesondefine01 MDBX_OSX_SPEED_INSTEADOF_DURABILITY
 
 /* POSIX */
-#cmakedefine01 MDBX_USE_ROBUST
-#cmakedefine01 MDBX_USE_OFDLOCKS
+#mesondefine01 MDBX_USE_ROBUST
+#mesondefine01 MDBX_USE_OFDLOCKS
 
 /* Simulate "AUTO" values of tristate options */
-#cmakedefine MDBX_USE_ROBUST_AUTO
-#ifdef MDBX_USE_ROBUST_AUTO
-#undef MDBX_USE_ROBUST
-#endif
-#cmakedefine MDBX_USE_OFDLOCKS_AUTO
-#ifdef MDBX_USE_OFDLOCKS_AUTO
-#undef MDBX_USE_OFDLOCKS
-#endif
+#mesondefine MDBX_TXN_CHECKPID_AUTO
+#mesondefine MDBX_USE_ROBUST_AUTO
+#mesondefine MDBX_USE_OFDLOCKS_AUTO
+
+/* Build Info */
+#mesondefine MDBX_BUILD_TIMESTAMP
+#mesondefine MDBX_BUILD_TARGET
+#mesondefine MDBX_BUILD_CONFIG
+#mesondefine MDBX_BUILD_OPTIONS_STRING
+#mesondefine MDBX_BUILD_COMPILER
+#mesondefine MDBX_BUILD_FLAGS
+#mesondefine MDBX_BUILD_SOURCERY
+
+/* *INDENT-ON* */
+/* clang-format on */
