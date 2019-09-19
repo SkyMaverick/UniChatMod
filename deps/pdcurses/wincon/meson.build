@@ -49,21 +49,14 @@ pdc_source = files ('''
 '''.split()) + pdc_core
 
 add_project_arguments ('/DPDC_DLL_BUILD', language: 'c')
+pdc_lib_shared = shared_library (meson.project_name(),
+                                pdc_source,
+                                include_directories: pdc_includes,
+                                dependencies: pdc_deps,
+                                install: true)
 if meson.is_subproject()
-    pdc_lib_shared = shared_library (meson.project_name(),
-                                    pdc_source,
-                                    include_directories: pdc_includes,
-                                    dependencies: pdc_deps,
-                                    install: true,
-                                    install_dir: get_option('path_install'))
     pdcurses_dep = declare_dependency (
                     include_directories: pdc_includes,
                     link_with: pdc_lib_shared
                     )
-else
-    pdc_lib_shared = shared_library (meson.project_name(),
-                                    pdc_source,
-                                    include_directories: pdc_includes,
-                                    dependencies: pdc_deps,
-                                    install: true)
 endif

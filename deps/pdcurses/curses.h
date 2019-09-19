@@ -28,10 +28,10 @@ Defined by this header:
 **man-end****************************************************************/
 
 #define PDCURSES        1
-#define PDC_BUILD    3813
+#define PDC_BUILD    3904
 #define PDC_VER_MAJOR   3
-#define PDC_VER_MINOR   8
-#define PDC_VERDOT   "3.8"
+#define PDC_VER_MINOR   9
+#define PDC_VERDOT   "3.9"
 
 #define CHTYPE_LONG     1      /* chtype >= 32 bits */
 
@@ -347,16 +347,6 @@ typedef struct
     bool  key_code;                /* TRUE if last key is a special key;
                                       used internally by get_wch() */
     MOUSE_STATUS mouse_status;     /* last returned mouse status */
-#ifdef XCURSES
-    int   XcurscrSize;    /* size of Xcurscr shared memory block */
-    bool  sb_on;
-    int   sb_viewport_y;
-    int   sb_viewport_x;
-    int   sb_total_y;
-    int   sb_total_x;
-    int   sb_cur_y;
-    int   sb_cur_x;
-#endif
     short line_color;     /* color of line attributes - default -1 */
     attr_t termattrs;     /* attribute capabilities */
     WINDOW *lastscr;      /* the last screen image */
@@ -365,6 +355,12 @@ typedef struct
     bool  dirty;          /* redraw on napms() after init_color() */
     int   sel_start;      /* start of selection (y * COLS + x) */
     int   sel_end;        /* end of selection */
+    int  *c_buffer;       /* character buffer */
+    int   c_pindex;       /* putter index */
+    int   c_gindex;       /* getter index */
+    int  *c_ungch;        /* array of ungotten chars */
+    int   c_ungind;       /* ungetch() push index */
+    int   c_ungmax;       /* allocated size of ungetch() buffer */
 } SCREEN;
 
 /*----------------------------------------------------------------------
@@ -1332,7 +1328,6 @@ PDCEX  int     PDC_freeclipboard(char *);
 PDCEX  int     PDC_getclipboard(char **, long *);
 PDCEX  int     PDC_setclipboard(const char *, long);
 
-PDCEX  unsigned long PDC_get_input_fd(void);
 PDCEX  unsigned long PDC_get_key_modifiers(void);
 PDCEX  int     PDC_return_key_modifiers(bool);
 
@@ -1382,6 +1377,7 @@ PDCEX  int     wunderscore(WINDOW *);
 /* Deprecated */
 
 #define PDC_save_key_modifiers(x)  (OK)
+#define PDC_get_input_fd()         0
 
 /* return codes from PDC_getclipboard() and PDC_setclipboard() calls */
 

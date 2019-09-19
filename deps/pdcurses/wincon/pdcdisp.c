@@ -153,7 +153,7 @@ void _new_packet(attr_t attr, int lineno, int x, int len, const chtype *srcp)
         return;
     }
 
-    PDC_pair_content(PAIR_NUMBER(attr), &fore, &back);
+    pair_content(PAIR_NUMBER(attr), &fore, &back);
     ansi = pdc_ansi || (fore >= 16 || back >= 16);
     blink = (SP->termattrs & A_BLINK) && (attr & A_BLINK);
 
@@ -300,4 +300,8 @@ void PDC_blink_text(void)
 
     PDC_gotoyx(SP->cursrow, SP->curscol);
     pdc_last_blink = GetTickCount();
+}
+
+void PDC_doupdate(void)
+{
 }

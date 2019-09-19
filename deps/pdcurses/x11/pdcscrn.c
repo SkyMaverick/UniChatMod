@@ -66,8 +66,8 @@
 
 static XtResource app_resources[] =
 {
-    RINT(lines, Lines, 24),
-    RINT(cols, Cols, 80),
+    RINT(lines, Lines, -1),
+    RINT(cols, Cols, -1),
 
     RCOLOR(Black, Black),
     RCOLOR(Red, red3),
@@ -159,11 +159,11 @@ static int resize_window_width = 0, resize_window_height = 0;
 static int received_map_notify = 0;
 static bool exposed = FALSE;
 
-/* COLOR_PAIR to attribute encoding table. */
-
-static struct {short f, b;} atrtab[PDC_COLOR_PAIRS];
-
 static Pixmap icon_pixmap, icon_pixmap_mask;
+
+static char *prog_name[] = {"PDCurses", NULL};
+static char **argv = prog_name;
+static int argc = 1;
 
 /* close the physical screen */
 
@@ -174,12 +174,6 @@ void PDC_scr_close(void)
 
 void PDC_scr_free(void)
 {
-    if (!SP)
-        return;
-
-    free(SP);
-    SP = NULL;
-
     if (icon_pixmap)
         XFreePixmap(XCURSESDISPLAY, icon_pixmap);
     if (icon_pixmap_mask)
@@ -470,23 +464,20 @@ static void _pointer_setup(void)
                    &pointerforecolor, &pointerbackcolor);
 }
 
-/* open the physical screen -- allocate SP, miscellaneous intialization */
-
-int PDC_scr_open(int argc, char **argv)
+void PDC_set_args(int c, char **v)
 {
-    char *myargv[] = {"PDCurses", NULL};
-    extern bool sb_started;
+    argc = c;
+    argv = v;
+}
 
+/* open the physical screen -- miscellaneous initialization */
+
+int PDC_scr_open(void)
+{
     bool italic_font_valid, bold_font_valid;
     int minwidth, minheight;
 
     PDC_LOG(("PDC_scr_open() - called\n"));
-
-    if (!argv)
-    {
-        argv = myargv;
-        argc = 1;
-    }
 
     /* Start defining X Toolkit things */
 
@@ -534,6 +525,26 @@ int PDC_scr_open(int argc, char **argv)
     COLS = pdc_app_data.cols;
     LINES = pdc_app_data.lines;
 
+    if (-1 == COLS)
+    {
+        const char *env = getenv("PDC_COLS");
+        if (env)
+            COLS = atoi(env);
+
+        if (COLS <= 0)
+            COLS = 80;
+    }
+
+    if (-1 == LINES)
+    {
+        const char *env = getenv("PDC_LINES");
+        if (env)
+            LINES = atoi(env);
+
+        if (LINES <= 0)
+            LINES = 24;
+    }
+
     pdc_wwidth = pdc_fwidth * COLS;
     pdc_wheight = pdc_fheight * LINES;
 
@@ -565,8 +576,6 @@ int PDC_scr_open(int argc, char **argv)
 
     if (!strcmp(pdc_app_data.textCursor, "vertical"))
         pdc_vertical_cursor = TRUE;
-
-    SP = calloc(1, sizeof(SCREEN));
 
     SP->lines = LINES;
     SP->cols = COLS;
@@ -636,21 +645,14 @@ int PDC_scr_open(int argc, char **argv)
         XtDispatchEvent(&event);
     }
 
-    LINES = LINES - SP->linesrippedoff - SP->slklines;
-
     _initialize_colors();
 
-    SP->cursrow = SP->curscol = 0;
     SP->orig_attr = FALSE;
-    SP->sb_on = sb_started;
-    SP->sb_total_y = 0;
-    SP->sb_viewport_y = 0;
-    SP->sb_cur_y = 0;
-    SP->sb_total_x = 0;
-    SP->sb_viewport_x = 0;
-    SP->sb_cur_x = 0;
 
     atexit(PDC_scr_free);
+
+    XSync(XtDisplay(pdc_toplevel), True);
+    SP->resized = pdc_resize_now = FALSE;
 
     return OK;
 }
@@ -665,17 +667,9 @@ int PDC_resize_screen(int nlines, int ncols)
     if (nlines || ncols || !SP->resized)
         return ERR;
 
-    SP->lines = resize_window_height / pdc_fheight;
-
-    LINES = SP->lines - SP->linesrippedoff - SP->slklines;
-
-    SP->cols = COLS = resize_window_width / pdc_fwidth;
-
     pdc_wwidth = resize_window_width;
     pdc_wheight = resize_window_height;
     pdc_visible_cursor = TRUE;
-
-    SP->resized = FALSE;
 
     return OK;
 }
@@ -696,20 +690,6 @@ void PDC_restore_screen_mode(int i)
 
 void PDC_save_screen_mode(int i)
 {
-}
-
-void PDC_init_pair(short pair, short fg, short bg)
-{
-    atrtab[pair].f = fg;
-    atrtab[pair].b = bg;
-}
-
-int PDC_pair_content(short pair, short *fg, short *bg)
-{
-    *fg = atrtab[pair].f;
-    *bg = atrtab[pair].b;
-
-    return OK;
 }
 
 bool PDC_can_change_color(void)

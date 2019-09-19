@@ -141,21 +141,14 @@ pdc_source = pdc_core + files ('''
 '''.split())
 
 add_project_arguments ('-DDYNAMIC', language: 'c')
-
+pdc_lib_shared = shared_library (meson.project_name(),
+                                pdc_source,
+                                include_directories: [pdc_includes, pdc_x11includes],
+                                dependencies: pdc_deps,
+                                install: true)
 if meson.is_subproject()
-    pdc_lib_shared = shared_library (meson.project_name(),
-                                    pdc_source,
-                                    include_directories: [pdc_includes, pdc_x11includes],
-                                    dependencies: pdc_deps,
-                                    install: true)
     pdcurses_dep = declare_dependency (
                     include_directories: pdc_includes,
                     link_with: pdc_lib_shared
-                    )
-else
-    pdc_lib_shared = shared_library (meson.project_name(),
-                                    pdc_source,
-                                    include_directories: [pdc_includes, pdc_x11includes],
-                                    dependencies: pdc_deps,
-                                    install: true)
+                )
 endif
