@@ -99,6 +99,9 @@ foreach item : ld_args
         add_project_link_arguments (item, language: 'c')
     endif
 endforeach
+foreach item : c_defs
+    add_project_arguments (item, language: 'c')
+endforeach
 
 foreach item : ld_deps
     syslib = cc.find_library (item, required: false)
@@ -109,35 +112,28 @@ endforeach
 
 cfg = configuration_data()
 
-#cfg.set   ('HAVE_VALGRIND_MEMCHECK_H', '')
-#cfg.set   ('ENABLE_VALGRIND', '')
 cfg.set   ('LTO_ENABLED', get_option('b_lto'))
 cfg.set   ('ENABLE_GPROF', not ( get_option('b_pgo') == 'off') )
 cfg.set   ('ENABLE_GCOV', get_option('b_coverage'))
 cfg.set   ('ENABLE_ASAN', not ( get_option('b_sanitize') == 'none') )
-cfg.set10 ('MDBX_TXN_CHECKPID', true)
-cfg.set10 ('MDBX_TXN_CHECKOWNER', true)
-cfg.set10 ('MDBX_BUILD_SHARED_LIBRARY', true)
-cfg.set10 ('MDBX_AVOID_CRT', (osid == 'windows') and (not meson.is_subproject()))
-cfg.set10 ('MDBX_CONFIG_MANUAL_TLS_CALLBACK', get_option ('MDBX_BUILD_SHARED_LIBRARY'))
-cfg.set10 ('MDBX_USE_ROBUST', not (osid == 'windows'))
-cfg.set10 ('MDBX_USE_OFDLOCKS', not (osid == 'windows') and false)
+cfg.set10 ('MDBX_TXN_CHECKPID', get_option ('MDBX_TXN_CHECKPID'))
+cfg.set10 ('MDBX_TXN_CHECKOWNER', get_option ('MDBX_TXN_CHECKOWNER'))
+cfg.set10 ('MDBX_BUILD_SHARED_LIBRARY', get_option ('MDBX_BUILD_SHARED_LIBRARY'))
+cfg.set10 ('MDBX_AVOID_CRT', (osid == 'windows')
+                             and (not meson.is_subproject())
+                             and get_option('MDBX_AVOID_CRT'))
+cfg.set10 ('MDBX_CONFIG_MANUAL_TLS_CALLBACK', (osid == 'windows')
+                                              and get_option ('MDBX_BUILD_SHARED_LIBRARY')
+                                              and get_option ('MDBX_CONFIG_MANUAL_TLS_CALLBACK'))
+cfg.set10 ('MDBX_USE_ROBUST', not (osid == 'windows')
+                              and get_option('MDBX_USE_ROBUST'))
+cfg.set10 ('MDBX_USE_OFDLOCKS', not (osid == 'windows')
+                                and get_option('MDBX_USE_OFDLOCKS'))
 
 cfg.set10 ('MDBX_OSX_SPEED_INSTEADOF_DURABILITY', (osid == 'darwin'))
-#if osid == 'windows'
-#else
-#    app_date = find_program ('date', required: true)
-#    date = run_command (app_date, '+%H:%M %d-%m-%Y').stdout()
-#    cfg.set_quoted   ('MDBX_BUILD_TIMESTAMP',date)
-#endif
 cfg.set_quoted   ('MDBX_BUILD_TARGET',osid)
-#cfg.set_quoted   ('MDBX_BUILD_CONFIG','')
 cfg.set_quoted   ('MDBX_BUILD_OPTIONS_STRING','undefined')
 cfg.set_quoted   ('MDBX_BUILD_COMPILER', ccid)
 cfg.set_quoted   ('MDBX_BUILD_FLAGS','undefined')
-
-
-
-# OPTIONS
 
 subdir ('src')

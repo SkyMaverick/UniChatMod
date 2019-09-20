@@ -34,6 +34,9 @@ with open("@0@","rb") as f:
         hash.update(byte_block);
 print(hash.hexdigest())'''.format(meson.current_build_dir()/'version.c')).stdout().strip()
 
+if get_option('MDBX_USE_GIT')
+    sha256_py += '_' + get_option('MDBX_GIT_COMMIT')
+endif
 
 message ('SHA256 for sourcery: @0@'.format(sha256_py))
 cfg.set ('MDBX_BUILD_SOURCERY', sha256_py)
@@ -66,7 +69,7 @@ if osid == 'windows'
                         input: ntdll_def,
                         output: ntdll_ipmlib,
                         command: [ app_lib,
-                            '/VERBOSE',
+                            '/NOLOGO',
                             ':'.join(['/def','@INPUT@']),
                             ':'.join(['/out','@OUTPUT@'])
                         ])
@@ -82,8 +85,8 @@ if osid == 'windows'
                         input: ntdll_def,
                         output: ntdll_ipmlib,
                         command: [ app_dtool,
-#                            ':'.join(['/def:','@INPUT@']),
-#                            ':'.join(['/out:','@OUTPUT@']),
+                            '-d', '"@INPUT@"',
+                            '-l', '"@OUTPUT@"'
                         ])
         else
             error ('dlltool not found')
