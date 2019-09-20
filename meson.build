@@ -18,6 +18,10 @@ ucm_cflags  = []
 ucm_ldflags = []
 ucm_defs    = []
 
+message ('Install PREFIX direcetory: @0@'.format(get_option('prefix')))
+message ('Install BIN direcetory: @0@'.format(get_option('prefix')/get_option('bindir')))
+message ('Install LIB direcetory: @0@'.format(get_option('prefix')/get_option('libdir')))
+
 # --- compiler preferences ----------
 if get_option('buildtype').startswith('debug')
     ucm_defs += 'DEBUG'
@@ -112,9 +116,7 @@ if not get_option('custom_libs')
         cmake = import ('cmake')
         uv_lib = cmake.subproject('uv',
                  cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF']),
-                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR',get_option('includedir')]),
-                     '='.join (['-D CMAKE_INSTALL_LIBDIR',get_option('libdir')])
+                     '='.join (['-DBUILD_TESTING','OFF'])
                  ])
         libs_inc += uv_lib.include_directories('uv')
         system_library_uv = uv_lib.dependency('uv')
@@ -125,9 +127,7 @@ else
         cmake = import ('cmake')
         uv_lib = cmake.subproject('uv',
                  cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF']),
-                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR',get_option('includedir')]),
-                     '='.join (['-D CMAKE_INSTALL_LIBDIR',get_option('libdir')])
+                     '='.join (['-DBUILD_TESTING','OFF'])
                  ])
         libs_inc += uv_lib.include_directories('uv')
         system_library_uv = uv_lib.dependency('uv')
@@ -166,7 +166,4 @@ if get_option('create_with_tests')
 endif
 
 # -- post-targets install ------
-install_headers (shared_headers
-#                 install_dir: install_path_devs
-                 )
-
+install_headers (shared_headers)
