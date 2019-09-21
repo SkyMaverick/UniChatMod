@@ -18,10 +18,6 @@ ucm_cflags  = []
 ucm_ldflags = []
 ucm_defs    = []
 
-message ('Install PREFIX direcetory: @0@'.format(get_option('prefix')))
-message ('Install BIN direcetory: @0@'.format(get_option('prefix')/get_option('bindir')))
-message ('Install LIB direcetory: @0@'.format(get_option('prefix')/get_option('libdir')))
-
 # --- compiler preferences ----------
 if get_option('buildtype').startswith('debug')
     ucm_defs += 'DEBUG'
@@ -96,7 +92,19 @@ libs_rpath_plugin = ':'.join ([
 ])
 
 # --- install paths resolve ----------
-install_path_plugin = get_option('libdir') / 'plugins'
+is_portable = meson.get_cross_property ('portable')
+if is_portable
+    install_path_app = get_option('prefix')
+else
+    install_path_app = get_option('bindir')
+endif
+
+if osid == 'windows'
+    install_path_libs = get_option('bindir')
+else
+    install_path_libs = get_option('libdir')
+endif
+install_path_plugin = install_path_libs / 'plugs'
 
 # --- resolve some popularity dependencies ----------
 
@@ -116,7 +124,8 @@ if not get_option('custom_libs')
         cmake = import ('cmake')
         uv_lib = cmake.subproject('uv',
                  cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF'])
+                     '='.join (['-DBUILD_TESTING','OFF']),
+                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
                  ])
         libs_inc += uv_lib.include_directories('uv')
         system_library_uv = uv_lib.dependency('uv')
@@ -127,7 +136,8 @@ else
         cmake = import ('cmake')
         uv_lib = cmake.subproject('uv',
                  cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF'])
+                     '='.join (['-DBUILD_TESTING','OFF']),
+                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
                  ])
         libs_inc += uv_lib.include_directories('uv')
         system_library_uv = uv_lib.dependency('uv')

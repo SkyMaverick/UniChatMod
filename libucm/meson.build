@@ -104,7 +104,7 @@ libucm_conf.set        ('version_minor'   , libucm_version[1])
 libucm_conf.set        ('version_patch'   , libucm_version[2])
 libucm_conf.set_quoted ('version_full'    , libucm_version_full)
 libucm_conf.set_quoted ('path_plugins'    , install_path_plugin)
-libucm_conf.set_quoted ('path_libs'       , get_option ('libdir'))
+libucm_conf.set_quoted ('path_libs'       , install_path_libs)
 libucm_conf.set_quoted ('path_docs'       , '')
 libucm_conf.set_quoted ('build_commit'    , libucm_commit)
 libucm_conf.set_quoted ('build_time'      , libucm_time)
@@ -135,6 +135,4 @@ libucm = shared_library (meson.project_name(),
                           include_directories: libs_inc,
                           build_rpath: libs_rpath,
                           install_rpath: libs_rpath,
-#                          install_dir: install_path_root,
-                          install: true
-                          )
+                          install: true)

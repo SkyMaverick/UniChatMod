@@ -29,5 +29,6 @@ tuiapp = executable (tuiapp_name,
              dependencies: tuiapp_dep,
              build_rpath: libs_rpath,
              install_rpath: libs_rpath,
-             install: true
+             install: true,
+             install_dir: install_path_app
          )

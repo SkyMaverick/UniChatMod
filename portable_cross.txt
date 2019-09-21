@@ -1,5 +1,0 @@
-[paths]
-bindir=''
-datadir='data'
-libdir='lib'
-localedir='locale'

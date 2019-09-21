@@ -1,0 +1,10 @@
+[paths]
+bindir='bin'
+datadir='data'
+localedir='locale'
+
+[properties]
+name = 'Windows build'
+description = 'Portable windows build'
+
+portable = true

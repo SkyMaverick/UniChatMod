@@ -106,13 +106,13 @@ if (get_option('MDBX_BUILD_SHARED_LIBRARY'))
     mdbx = shared_library (meson.project_name(),
                 libmdbx_src,
                 dependencies: mdbx_deps,
-                install: true
+                install: true,
             )
 else
     mdbx = static_library (meson.project_name(),
                 libmdbx_src,
                 dependencies: mdbx_deps,
-                install: true
+                install: true,
             )
 endif
 if meson.is_subproject()
