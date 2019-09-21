@@ -29,11 +29,6 @@
 #mesondefine01 MDBX_USE_ROBUST
 #mesondefine01 MDBX_USE_OFDLOCKS
 
-/* Simulate "AUTO" values of tristate options */
-#mesondefine MDBX_TXN_CHECKPID_AUTO
-#mesondefine MDBX_USE_ROBUST_AUTO
-#mesondefine MDBX_USE_OFDLOCKS_AUTO
-
 /* Build Info */
 #mesondefine MDBX_BUILD_TIMESTAMP
 #mesondefine MDBX_BUILD_TARGET

@@ -1,7 +1,7 @@
 /* This is CMake-template for libmdbx's version.c
  ******************************************************************************/
 
-// #include <internals.h>
+//#include "internals.h"
 
 #if defined(_MSC_VER) && defined(MDBX_BUILD_TARGET)
 #pragma message("Configuration-depended MDBX_BUILD_TARGET: " MDBX_BUILD_TARGET)
