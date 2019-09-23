@@ -263,6 +263,7 @@ typedef uint32_t pgno_t;
 typedef uint64_t txnid_t;
 #define PRIaTXN PRIi64
 #define MIN_TXNID UINT64_C(1)
+#define BAD_TXNID UINT64_C(0xffffFFFF00000000)
 
 /* Used for offsets within a single page.
  * Since memory pages are typically 4 or 8KB in size, 12-13 bits,
@@ -709,7 +710,7 @@ struct MDBX_txn {
                     /* The list of reclaimed txns from freeDB */
   MDBX_TXL mt_lifo_reclaimed;
   /* The list of pages that became unused during this transaction. */
-  MDBX_PNL mt_befree_pages;
+  MDBX_PNL mt_retired_pages;
   /* The list of loose pages that became unused and may be reused
    * in this transaction, linked through NEXT_LOOSE_PAGE(page). */
   MDBX_page *mt_loose_pages;
@@ -895,7 +896,7 @@ struct MDBX_env {
 #define me_reclaimed_pglist me_pgstate.mf_reclaimed_pglist
   MDBX_page *me_dpages; /* list of malloc'd blocks for re-use */
                         /* PNL of pages that became unused in a write txn */
-  MDBX_PNL me_free_pgs;
+  MDBX_PNL me_retired_pages;
   /* MDBX_DP of pages written during a write txn. Length MDBX_DPL_TXNFULL. */
   MDBX_DPL me_dirtylist;
   /* Number of freelist items that can fit in a single overflow page */
