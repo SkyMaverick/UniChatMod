@@ -108,16 +108,37 @@ if (get_option('MDBX_BUILD_SHARED_LIBRARY'))
                 dependencies: mdbx_deps,
                 install: true,
             )
-else
-    mdbx = static_library (meson.project_name(),
-                libmdbx_src,
-                dependencies: mdbx_deps,
-                install: true,
-            )
 endif
+mdbx_stat = static_library (meson.project_name(),
+            libmdbx_src,
+            dependencies: mdbx_deps)
+
+apps_src = '''
+    tools/mdbx_chk.c
+    tools/mdbx_copy.c
+    tools/mdbx_dump.c
+    tools/mdbx_load.c
+    tools/mdbx_stat.c
+'''.split()
+getopt_win = files('''
+    tools/wingetopt.c
+    tools/wingetopt.h
+'''.split())
+apps_mdbx = []
+
+foreach item : apps_src
+    app_src  = files (item) + getopt_win
+    app_name = item.split('/')[-1].split('.')[0]
+    apps_mdbx += executable (app_name, app_src,
+                    link_with: mdbx_stat,
+                    install: true
+                )
+endforeach
+
 if meson.is_subproject()
     libmdbx = declare_dependency (
                 include_directories: '..',
                 link_with: mdbx
+#                dependencies: apps_mdbx
             )
 endif
