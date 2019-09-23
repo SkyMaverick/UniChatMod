@@ -1,3 +1,5 @@
+image:
+  - Visual Studio 2019
 environment:
   PACMAN_OPTIONS: "--needed --noconfirm --noprogressbar --overwrite"
   PACMAN_INSTALL: "openssh rsync"
@@ -25,7 +27,7 @@ install:
   - cmd: echo Using Python at %PYTHON_ROOT%
   - cmd: set PATH=%cd%;C:\ninja-build;%PYTHON_ROOT%;%PYTHON_ROOT%\Scripts;%PATH%
   - cmd: pip install meson
-  - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
+  - cmd: if %compiler%==msvc2019 ( call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat" %arch% )
   - cmd: echo %APPVEYOR_BUILD_FOLDER%
   
   - ps: $fileContent = "-----BEGIN RSA PRIVATE KEY-----`n"

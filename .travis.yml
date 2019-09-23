@@ -34,7 +34,7 @@ addons:
   coverity_scan:
     project:
       name: SkyMaverick/UniChatMod 
-      version: 0.1
+      version: 0.1.3
 
     notification_email: skymaverickas@gmail.com
     build_command_prepend: meson ${TRAVIS_BUILD_DIR} ${COVERITY_BUILD_PATH}

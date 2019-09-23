@@ -281,7 +281,7 @@ def action_shell (**defs):
             path_tmpsh = os.path.join (path_temp, 'shell')
             remove_dir (path_tmpsh)
             copytree2 (path_shconf, path_tmpsh)
-            copytree2 (path_bundle, path_tmpsh)
+            copytree2 (path_bundle, os.path.join(path_tmpsh, project_name))
             os.chdir (path_tmpsh)
             if (shell_cmd (os.path.join(path_tmpsh,'build.sh'),     \
                         path_packages,                              \
@@ -309,8 +309,11 @@ def action_7z (**defs):
                 os.makedirs (path_packages)
             path_tmpsfx = os.path.join (path_temp, '7z')
             remove_dir (path_tmpsfx)
+
+            print (path_bundle)
+            print (path_tmpsfx)
             copytree2 (path_bat, path_tmpsfx)
-            copytree2 (path_bundle, path_tmpsfx)
+            copytree2 (path_bundle, os.path.join(path_tmpsfx, project_name))
             os.chdir (path_tmpsfx)
             if (shell_cmd (os.path.join(path_tmpsfx,'build.bat'),   \
                         path_packages,                              \
