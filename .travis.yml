@@ -53,15 +53,15 @@ before_install:
 script:
 - case "${TRAVIS_BRANCH}" in
       master)
-          ${PROJECT_SCRIPT} debug
+          ${PROJECT_SCRIPT} debug posix
       ;;
       release)
-          ${PROJECT_SCRIPT} release
+          ${PROJECT_SCRIPT} release posix
       ;; esac
 after_success:
 # create packages
--  ${PROJECT_SCRIPT} pack_arc
--  ${PROJECT_SCRIPT} pack_deb
--  ${PROJECT_SCRIPT} pack_sh
+-  ${PROJECT_SCRIPT} pack_arc posix 
+-  ${PROJECT_SCRIPT} pack_deb posix
+-  ${PROJECT_SCRIPT} pack_sh posix
 
 -  ${CI_TOOLS}/sfupload.sh ${TRAVIS_BUILD_DIR}

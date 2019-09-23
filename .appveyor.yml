@@ -3,10 +3,10 @@ environment:
   PACMAN_INSTALL: "openssh rsync"
   matrix:
     - arch: x86
-      compiler: msvc2017
+      compiler: msvc2019
       ARCHID: x86
     - arch: x64
-      compiler: msvc2017
+      compiler: msvc2019
       ARCHID: x64
 
 branches:
@@ -40,14 +40,14 @@ for:
       - release
 
   build_script:
-    - run.py release
-    - run.py pack_7z
+    - run.py release win
+    - run.py pack_7z win
     - C:\msys64\usr\bin\pacman -Sy %PACMAN_OPTIONS% %PACMAN_INSTALL%  
     - C:\msys64\usr\bin\bash --login -c "$(cygpath ${APPVEYOR_BUILD_FOLDER})/tools/appveyor/sfupload.sh $(cygpath ${APPVEYOR_BUILD_FOLDER})"
 
 
 build_script:
-  - run.py debug
-  - run.py pack_7z
+  - run.py debug win
+  - run.py pack_7z win
   - C:\msys64\usr\bin\pacman -Sy %PACMAN_OPTIONS% %PACMAN_INSTALL%  
   - C:\msys64\usr\bin\bash --login -c "$(cygpath ${APPVEYOR_BUILD_FOLDER})/tools/appveyor/sfupload.sh $(cygpath ${APPVEYOR_BUILD_FOLDER})"
