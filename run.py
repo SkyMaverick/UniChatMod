@@ -223,11 +223,11 @@ def action_arcxz (**defs):
         if platform.system().lower() == 'windows':
             return shell_cmd ('7z', 'a', '-tzip', '-mx9',
                         os.path.join (path_packages, package_name+'.zip'),
-                        os.path.join (path_bundle, project_name), '.')
+                        path_bundle, '.')
         else:
             return shell_cmd ('tar', 'cvfJ',
                         os.path.join (path_packages, package_name+'.tar.xz'),
-                        '-C', os.path.join (path_bundle, project_name), '.')
+                        '-C', path_bundle, '.')
 
 def action_deb (**defs):
     if (action_bundle (**defs) != 0):
