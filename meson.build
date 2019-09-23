@@ -1,5 +1,5 @@
 project ('ucm', 'c',
-         version: '0.1.2',
+         version: '0.1.3',
          license: 'Zlib',
          default_options:[
             'b_lto=true',
