@@ -139,6 +139,5 @@ if meson.is_subproject()
     libmdbx = declare_dependency (
                 include_directories: '..',
                 link_with: mdbx
-#                dependencies: apps_mdbx
             )
 endif

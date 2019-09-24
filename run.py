@@ -76,9 +76,8 @@ def shell_cmd_out (app, *args):
     for i in args:
        cmd += [i]
 
-    shell=subprocess.Popen (cmd, stdout=subprocess.PIPE)
-    data=shell.communicate()
-    return (data)[0].decode()
+    data=subprocess.check_output (cmd, universal_newlines=True)
+    return data
 
 def meson_cmd (type, cross, path, prefix):
     args = ['--buildtype='+type, '-Dprefix='+prefix]
@@ -120,6 +119,14 @@ def copytree2 (src, dst):
             shutil.copytree(s, d, False, None)
         else:
             shutil.copy(s, d)
+
+def format_file (src):
+    for ext in format_exts:
+        if fnmatch.fnmatch(os.path.basename(src), ext):
+            if shell_cmd ('clang-format', '-i', src) == 0:
+                print ('Format file > {0}'.format(src))
+            else:
+                error ('Error formating file: {0}'.format(src))
 
 package_name = project_name +'-' \
                 + platform.system().lower() + '_'\
@@ -327,17 +334,11 @@ def action_7z (**defs):
 
 def action_format (**defs):
     path = defs ['path_script']
-    for root, dirs, files in os.walk (path):
-        for item in dirs:
-            if item in ignore_format_paths:
-                dirs.remove(item)
-        for item in files:
-            absName = os.path.join(root, item)
-            for ext in format_exts:
-                if fnmatch.fnmatch(os.path.basename(absName), ext):
-                    print ('Format file > {0}'.format(os.path.join(root,item)))
-                    if shell_cmd ('clang-format', '-i', absName) != 0:
-                        error ('Error formating file: {0}'.format(item))
+    
+    changed = shell_cmd_out ('git', 'status', '-s').strip().split('\n')
+    for i in changed:
+        file = os.path.join(path, i.split(' ')[-1])
+        format_file(file)
 
 def action_dummy (**defs):
     info ("Run dummy function for test")

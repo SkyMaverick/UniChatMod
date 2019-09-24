@@ -666,7 +666,6 @@ typedef uint32_t u32char_t;
     /*! API structure. Provide for all plugins */
     typedef struct _ucm_functions_s
     {
-
         // LibUV API provided for all subsystem and plugins in UniAPI-functions
         struct
         {
