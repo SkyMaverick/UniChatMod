@@ -19,7 +19,7 @@ static void*
 _curses_loop(void* ctx)
 {
     UNUSED(ctx);
-//    ucm_cargs_t* args = (ucm_cargs_t*)ctx;
+    //    ucm_cargs_t* args = (ucm_cargs_t*)ctx;
     fprintf(stdout, "%s\n", "Start curses APP");
 
     //    initscr();

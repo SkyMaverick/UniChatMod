@@ -666,11 +666,14 @@ typedef uint32_t u32char_t;
     /*! API structure. Provide for all plugins */
     typedef struct _ucm_functions_s
     {
+
         // LibUV API provided for all subsystem and plugins in UniAPI-functions
         struct
         {
             unsigned int (*version)(void);
             const char* (*version_string)(void);
+            int (*replace_allocator)(uv_malloc_func malloc_func, uv_realloc_func realloc_func,
+                                     uv_calloc_func calloc_func, uv_free_func free_func);
             uv_loop_t* (*default_loop)(void);
             int (*loop_init)(uv_loop_t* loop);
             int (*loop_close)(uv_loop_t* loop);
@@ -691,21 +694,10 @@ typedef uint32_t u32char_t;
             int (*backend_timeout)(const uv_loop_t*);
             int (*translate_sys_error)(int sys_errno);
             const char* (*strerror)(int err);
-            char* (*strerror_r)(int err, char* buf, size_t buflen);
             const char* (*err_name)(int err);
-            char* (*err_name_r)(int err, char* buf, size_t buflen);
             int (*shutdown)(uv_shutdown_t* req, uv_stream_t* handle, uv_shutdown_cb cb);
             size_t (*handle_size)(uv_handle_type type);
-            uv_handle_type (*handle_get_type)(const uv_handle_t* handle);
-            const char* (*handle_type_name)(uv_handle_type type);
-            void* (*handle_get_data)(const uv_handle_t* handle);
-            uv_loop_t* (*handle_get_loop)(const uv_handle_t* handle);
-            void (*handle_set_data)(uv_handle_t* handle, void* data);
             size_t (*req_size)(uv_req_type type);
-            void* (*req_get_data)(const uv_req_t* req);
-            void (*req_set_data)(uv_req_t* req, void* data);
-            uv_req_type (*req_get_type)(const uv_req_t* req);
-            const char* (*req_type_name)(uv_req_type type);
             int (*is_active)(const uv_handle_t* handle);
             void (*walk)(uv_loop_t* loop, uv_walk_cb walk_cb, void* arg);
             void (*print_all_handles)(uv_loop_t* loop, FILE* stream);
@@ -715,7 +707,6 @@ typedef uint32_t u32char_t;
             int (*recv_buffer_size)(uv_handle_t* handle, int* value);
             int (*fileno)(const uv_handle_t* handle, uv_os_fd_t* fd);
             uv_buf_t (*buf_init)(char* base, unsigned int len);
-            size_t (*stream_get_write_queue_size)(const uv_stream_t* stream);
             int (*listen)(uv_stream_t* stream, int backlog, uv_connection_cb cb);
             int (*accept)(uv_stream_t* server, uv_stream_t* client);
             int (*read_start)(uv_stream_t*, uv_alloc_cb alloc_cb, uv_read_cb read_cb);
@@ -738,21 +729,15 @@ typedef uint32_t u32char_t;
             int (*tcp_bind)(uv_tcp_t* handle, const struct sockaddr* addr, unsigned int flags);
             int (*tcp_getsockname)(const uv_tcp_t* handle, struct sockaddr* name, int* namelen);
             int (*tcp_getpeername)(const uv_tcp_t* handle, struct sockaddr* name, int* namelen);
-            int (*tcp_close_reset)(uv_tcp_t* handle, uv_close_cb close_cb);
             int (*tcp_connect)(uv_connect_t* req, uv_tcp_t* handle, const struct sockaddr* addr,
                                uv_connect_cb cb);
             int (*udp_init)(uv_loop_t*, uv_udp_t* handle);
             int (*udp_init_ex)(uv_loop_t*, uv_udp_t* handle, unsigned int flags);
             int (*udp_open)(uv_udp_t* handle, uv_os_sock_t sock);
             int (*udp_bind)(uv_udp_t* handle, const struct sockaddr* addr, unsigned int flags);
-            int (*udp_connect)(uv_udp_t* handle, const struct sockaddr* addr);
-            int (*udp_getpeername)(const uv_udp_t* handle, struct sockaddr* name, int* namelen);
             int (*udp_getsockname)(const uv_udp_t* handle, struct sockaddr* name, int* namelen);
             int (*udp_set_membership)(uv_udp_t* handle, const char* multicast_addr,
                                       const char* interface_addr, uv_membership membership);
-            int (*udp_set_source_membership)(uv_udp_t* handle, const char* multicast_addr,
-                                             const char* interface_addr, const char* source_addr,
-                                             uv_membership membership);
             int (*udp_set_multicast_loop)(uv_udp_t* handle, int on);
             int (*udp_set_multicast_ttl)(uv_udp_t* handle, int ttl);
             int (*udp_set_multicast_interface)(uv_udp_t* handle, const char* interface_addr);
@@ -765,8 +750,10 @@ typedef uint32_t u32char_t;
                                 const struct sockaddr* addr);
             int (*udp_recv_start)(uv_udp_t* handle, uv_alloc_cb alloc_cb, uv_udp_recv_cb recv_cb);
             int (*udp_recv_stop)(uv_udp_t* handle);
-            size_t (*udp_get_send_queue_size)(const uv_udp_t* handle);
-            size_t (*udp_get_send_queue_count)(const uv_udp_t* handle);
+            int (*tty_init)(uv_loop_t*, uv_tty_t*, uv_file fd, int readable);
+            int (*tty_set_mode)(uv_tty_t*, uv_tty_mode_t mode);
+            int (*tty_reset_mode)(void);
+            int (*tty_get_winsize)(uv_tty_t*, int* width, int* height);
             uv_handle_type (*guess_handle)(uv_file file);
             int (*pipe_init)(uv_loop_t*, uv_pipe_t* handle, int ipc);
             int (*pipe_open)(uv_pipe_t*, uv_file file);
@@ -812,7 +799,6 @@ typedef uint32_t u32char_t;
                          const uv_process_options_t* options);
             int (*process_kill)(uv_process_t*, int signum);
             int (*kill)(int pid, int signum);
-            uv_pid_t (*process_get_pid)(const uv_process_t*);
             int (*queue_work)(uv_loop_t* loop, uv_work_t* req, uv_work_cb work_cb,
                               uv_after_work_cb after_work_cb);
             int (*cancel)(uv_req_t* req);
@@ -822,7 +808,6 @@ typedef uint32_t u32char_t;
             int (*resident_set_memory)(size_t* rss);
             int (*uptime)(double* uptime);
             uv_os_fd_t (*get_osfhandle)(int fd);
-            int (*open_osfhandle)(uv_os_fd_t os_fd);
             int (*getrusage)(uv_rusage_t* rusage);
             int (*os_homedir)(char* buffer, size_t* size);
             int (*os_tmpdir)(char* buffer, size_t* size);
@@ -830,24 +815,14 @@ typedef uint32_t u32char_t;
             void (*os_free_passwd)(uv_passwd_t* pwd);
             uv_pid_t (*os_getpid)(void);
             uv_pid_t (*os_getppid)(void);
-            int (*os_getpriority)(uv_pid_t pid, int* priority);
-            int (*os_setpriority)(uv_pid_t pid, int priority);
             int (*cpu_info)(uv_cpu_info_t** cpu_infos, int* count);
             void (*free_cpu_info)(uv_cpu_info_t* cpu_infos, int count);
             int (*interface_addresses)(uv_interface_address_t** addresses, int* count);
             void (*free_interface_addresses)(uv_interface_address_t* addresses, int count);
-            int (*os_environ)(uv_env_item_t** envitems, int* count);
-            void (*os_free_environ)(uv_env_item_t* envitems, int count);
             int (*os_getenv)(const char* name, char* buffer, size_t* size);
             int (*os_setenv)(const char* name, const char* value);
             int (*os_unsetenv)(const char* name);
             int (*os_gethostname)(char* buffer, size_t* size);
-            int (*os_uname)(uv_utsname_t* buffer);
-            uv_fs_type (*fs_get_type)(const uv_fs_t*);
-            ssize_t (*fs_get_result)(const uv_fs_t*);
-            void* (*fs_get_ptr)(const uv_fs_t*);
-            const char* (*fs_get_path)(const uv_fs_t*);
-            uv_stat_t* (*fs_get_statbuf)(uv_fs_t*);
             void (*fs_req_cleanup)(uv_fs_t* req);
             int (*fs_close)(uv_loop_t* loop, uv_fs_t* req, uv_file file, uv_fs_cb cb);
             int (*fs_open)(uv_loop_t* loop, uv_fs_t* req, const char* path, int flags, int mode,
@@ -865,9 +840,6 @@ typedef uint32_t u32char_t;
             int (*fs_scandir)(uv_loop_t* loop, uv_fs_t* req, const char* path, int flags,
                               uv_fs_cb cb);
             int (*fs_scandir_next)(uv_fs_t* req, uv_dirent_t* ent);
-            int (*fs_opendir)(uv_loop_t* loop, uv_fs_t* req, const char* path, uv_fs_cb cb);
-            int (*fs_readdir)(uv_loop_t* loop, uv_fs_t* req, uv_dir_t* dir, uv_fs_cb cb);
-            int (*fs_closedir)(uv_loop_t* loop, uv_fs_t* req, uv_dir_t* dir, uv_fs_cb cb);
             int (*fs_stat)(uv_loop_t* loop, uv_fs_t* req, const char* path, uv_fs_cb cb);
             int (*fs_fstat)(uv_loop_t* loop, uv_fs_t* req, uv_file file, uv_fs_cb cb);
             int (*fs_rename)(uv_loop_t* loop, uv_fs_t* req, const char* path, const char* new_path,
@@ -897,9 +869,6 @@ typedef uint32_t u32char_t;
                             uv_gid_t gid, uv_fs_cb cb);
             int (*fs_fchown)(uv_loop_t* loop, uv_fs_t* req, uv_file file, uv_uid_t uid,
                              uv_gid_t gid, uv_fs_cb cb);
-            int (*fs_lchown)(uv_loop_t* loop, uv_fs_t* req, const char* path, uv_uid_t uid,
-                             uv_gid_t gid, uv_fs_cb cb);
-            int (*fs_statfs)(uv_loop_t* loop, uv_fs_t* req, const char* path, uv_fs_cb cb);
             int (*fs_poll_init)(uv_loop_t* loop, uv_fs_poll_t* handle);
             int (*fs_poll_start)(uv_fs_poll_t* handle, uv_fs_poll_cb poll_cb, const char* path,
                                  unsigned int interval);
@@ -928,16 +897,16 @@ typedef uint32_t u32char_t;
             int (*chdir)(const char* dir);
             uint64_t (*get_free_memory)(void);
             uint64_t (*get_total_memory)(void);
-            uint64_t (*get_constrained_memory)(void);
             uint64_t (*hrtime)(void);
-            void (*once)(uv_once_t* guard, void (*callback)(void));
+            void (*disable_stdio_inheritance)(void);
             int (*key_create)(uv_key_t* key);
             void (*key_delete)(uv_key_t* key);
             void* (*key_get)(uv_key_t* key);
             void (*key_set)(uv_key_t* key, void* value);
-            int (*gettimeofday)(uv_timeval64_t* tv);
-            void* (*loop_get_data)(const uv_loop_t*);
-            void (*loop_set_data)(uv_loop_t*, void* data);
+            int (*thread_create)(uv_thread_t* tid, uv_thread_cb entry, void* arg);
+            uv_thread_t (*thread_self)(void);
+            int (*thread_join)(uv_thread_t* tid);
+            int (*thread_equal)(const uv_thread_t* t1, const uv_thread_t* t2);
         } uv;
         /*! CORE infrastructure API */
         struct
