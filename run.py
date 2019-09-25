@@ -176,7 +176,7 @@ def action_release (**defs):
     return action_ninja (**defs)
 
 def action_test(**defs):
-    info ('Start test framework in: {path}'.format(path=path_build))
+    info ('Start test framework in: {path}'.format(path=defs['path_build']))
     return ninja_cmd(defs['path_build'], 'test_bot')
 
 def action_log(**defs):

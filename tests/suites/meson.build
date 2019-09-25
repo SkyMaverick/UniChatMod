@@ -7,8 +7,9 @@ suites_simple = run_command( glob_cmd + ['*.c']).stdout().strip().split(';')
 
 foreach suite : suites_simple
     lib_name = suite.split('.')[0]
-    lib_suite = shared_library (lib_name, [test_app_utils, suite, libcore_src],
-                                dependencies: [test_app_deps, libcore_deps],
-                                include_directories: lib_core_inc,
+    lib_suite = shared_library (lib_name, [test_app_utils, suite],
+                                dependencies: test_app_deps,
+                                include_directories: libs_inc,
+                                link_with: libucma,
                                 install: false)
 endforeach

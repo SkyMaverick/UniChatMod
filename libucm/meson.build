@@ -16,16 +16,16 @@ libucm_src = files('''
 
 osal_src = []
 foreach src : '''
-                osal-dynlib.c
-                osal-dynlib.h
-                osal-fs.c
-                osal-fs.h
-                osal-intrnl.h
-                osal-memory.c
-                osal-memory.h
-                osal-threading.c
-                osal-threading.h
-              '''.split()
+        osal-dynlib.c
+        osal-dynlib.h
+        osal-fs.c
+        osal-fs.h
+        osal-intrnl.h
+        osal-memory.c
+        osal-memory.h
+        osal-threading.c
+        osal-threading.h
+      '''.split()
     osal_src += 'osal' / src
 endforeach
 
@@ -136,3 +136,10 @@ libucm = shared_library (meson.project_name(),
                           build_rpath: libs_rpath,
                           install_rpath: libs_rpath,
                           install: true)
+libucma = static_library (meson.project_name(),
+                          libucm_src,
+                          dependencies: libucm_deps,
+                          include_directories: libs_inc,
+                          build_rpath: libs_rpath,
+                          install: false)
+

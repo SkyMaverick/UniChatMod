@@ -273,20 +273,13 @@ extern "C"
 
 #define OBJECT(X) ((ucm_object_t)(X))
 
-// TODO check uchar.h enabled
-#if 1
-    #include <uchar.h>
-    typedef char u8char_t;
-    typedef char16_t u16char_t;
-    typedef char32_t u32char_t;
-#else
-typedef uint8_t u8char_t;
-typedef uint16_t u16char_t;
-typedef uint32_t u32char_t;
-#endif
-#define U8CHAR_SIZE sizeof(u8char_t)
-#define U16CHAR_SIZE sizeof(u16char_t)
-#define U32CHAR_SIZE sizeof(u32char_t)
+    typedef char ucm_chr_t;
+    typedef ucm_chr_t* ucm_str_t;
+    typedef uint32_t ucm_wchr_t;
+    typedef ucm_wchr_t* ucm_wstr_t;
+
+#define UCMSZ_CHR sizeof(ucm_chr_t)
+#define UCMSZ_WCHR sizeof(ucm_wchr_t)
 
     /*! Core return status */
     typedef enum _ucm_status_return_e
@@ -559,12 +552,7 @@ typedef uint32_t u32char_t;
 
             struct
             {
-                union
-                {
-                    char* szaVal;
-                    wchar_t* szwVal;
-                    u8char_t* sz8Val;
-                };
+                ucm_str_t sz8Val;
                 size_t szSize;
             };
             struct
@@ -917,6 +905,7 @@ typedef uint32_t u32char_t;
             void (*free)(void* obj);
             void (*zmemory)(void* mem, size_t size);
             int (*realloc)(void** mem, size_t size);
+            void* (*memcpy)(void* mem, size_t size);
             char* (*strdup)(const char* str);
             char* (*strndup)(const char* str, size_t num);
 
@@ -954,29 +943,29 @@ typedef uint32_t u32char_t;
 
             int (*fs_fcreate)(const char* path);
             /* Unicode operations. USC4 and convertors */
-            int64_t (*U8toU32)(u8char_t* str, const int64_t str_len, u32char_t** ret);
-            int64_t (*U32toU8)(u32char_t* str, const int64_t str_len, u8char_t** ret);
-            size_t (*ustrlen)(u32char_t* str);
-            u32char_t* (*ustrdup)(u32char_t* str);
-            int (*ustrcmp)(u32char_t* lstr, u32char_t* rstr);
-            int (*ustrcasecmp)(u32char_t* lstr, u32char_t* rstr);
-            int (*ustrncmp)(u32char_t* lstr, u32char_t* rst, size_t num);
-            int (*ustrncasecmp)(u32char_t* lstr, u32char_t* rstr, size_t num);
-            void (*ustrupcase)(u32char_t* str);
-            void (*ustrlowcase)(u32char_t* str);
-            void (*ustrcpy)(u32char_t* dest, u32char_t* src);
-            void (*ustrncpy)(u32char_t* dest, u32char_t* src, size_t num);
-            void (*ustrcat)(u32char_t* dest, u32char_t* src);
-            void (*ustrncat)(u32char_t* dest, u32char_t* src, size_t num);
-            void (*umstrcat)(u32char_t* dest, unsigned num, ...);
-            u32char_t* (*ustrchr)(u32char_t* str, u32char_t chr);
-            u32char_t* (*ustrrchr)(u32char_t* str, u32char_t chr);
-            u32char_t* (*ustrjoin)(u32char_t* str1, u32char_t* str2);
-            u32char_t* (*umstrjoin)(size_t num, ...);
-            u32char_t* (*ustrbrkjoin)(u32char_t* str1, u32char_t* str2, u32char_t brk);
-            u32char_t* (*umstrbrkjoin)(u32char_t brk, size_t num, ...);
-            int64_t (*ustrstr)(u32char_t* str, u32char_t* sstr);
-            int64_t (*ustrcasestr)(u32char_t* str, u32char_t* sstr);
+            int64_t (*str2wstr)(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret);
+            int64_t (*wstr2str)(ucm_wstr_t str, const int64_t str_len, ucm_str_t* ret);
+            size_t (*ustrlen)(ucm_wstr_t str);
+            ucm_wstr_t (*ustrdup)(ucm_wstr_t str);
+            int (*ustrcmp)(ucm_wstr_t lstr, ucm_wstr_t rstr);
+            int (*ustrcasecmp)(ucm_wstr_t lstr, ucm_wstr_t rstr);
+            int (*ustrncmp)(ucm_wstr_t lstr, ucm_wstr_t rst, size_t num);
+            int (*ustrncasecmp)(ucm_wstr_t lstr, ucm_wstr_t rstr, size_t num);
+            void (*ustrupcase)(ucm_wstr_t str);
+            void (*ustrlowcase)(ucm_wstr_t str);
+            void (*ustrcpy)(ucm_wstr_t dest, ucm_wstr_t src);
+            void (*ustrncpy)(ucm_wstr_t dest, ucm_wstr_t src, size_t num);
+            void (*ustrcat)(ucm_wstr_t dest, ucm_wstr_t src);
+            void (*ustrncat)(ucm_wstr_t dest, ucm_wstr_t src, size_t num);
+            void (*umstrcat)(ucm_wstr_t dest, unsigned num, ...);
+            ucm_wstr_t (*ustrchr)(ucm_wstr_t str, ucm_wchr_t chr);
+            ucm_wstr_t (*ustrrchr)(ucm_wstr_t str, ucm_wchr_t chr);
+            ucm_wstr_t (*ustrjoin)(ucm_wstr_t str1, ucm_wstr_t str2);
+            ucm_wstr_t (*umstrjoin)(size_t num, ...);
+            ucm_wstr_t (*ustrbrkjoin)(ucm_wstr_t str1, ucm_wstr_t str2, ucm_wchr_t brk);
+            ucm_wstr_t (*umstrbrkjoin)(ucm_wchr_t brk, size_t num, ...);
+            int64_t (*ustrstr)(ucm_wstr_t str, ucm_wstr_t sstr);
+            int64_t (*ustrcasestr)(ucm_wstr_t str, ucm_wstr_t sstr);
 
             const char* (*strerr)(const unsigned errcode);
         } sys;

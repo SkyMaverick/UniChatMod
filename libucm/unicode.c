@@ -16,7 +16,7 @@
 
 // WARNING! without NULL-terminated symbol
 static inline size_t
-_intrnl_u32strlen(u32char_t* str)
+_intrnl_u32strlen(ucm_wstr_t str)
 {
     size_t count = 0;
     if (str) {
@@ -27,7 +27,7 @@ _intrnl_u32strlen(u32char_t* str)
 }
 
 static inline void
-_intrnl_u32strcpy(u32char_t* dest, u32char_t* src, u32char_t echr)
+_intrnl_u32strcpy(ucm_wstr_t dest, ucm_wstr_t src, ucm_wchr_t echr)
 {
     size_t i;
     if (dest && src) {
@@ -38,7 +38,7 @@ _intrnl_u32strcpy(u32char_t* dest, u32char_t* src, u32char_t echr)
 }
 
 static inline void
-_intrnl_u32strncpy(u32char_t* dest, u32char_t* src, u32char_t echr, size_t num)
+_intrnl_u32strncpy(ucm_wstr_t dest, ucm_wstr_t src, ucm_wchr_t echr, size_t num)
 {
     size_t i;
     if (dest && src) {
@@ -58,7 +58,7 @@ _intrnl_u32strncpy(u32char_t* dest, u32char_t* src, u32char_t echr, size_t num)
     ret - pointer for decoded USC4 buffer */
 
 int64_t
-u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
+u8_decode_ucs4(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret)
 {
     int64_t buf_len    = 0;
     const int infinite = (str_len > 0) ? 0 : UTF8PROC_NULLTERM;
@@ -66,13 +66,13 @@ u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
     if (str) {
         if (str_len <= 0) {
             // calculate assumed buffer size
-            u8char_t* tmp = str;
-            while (*tmp)
+            ucm_str_t tmp = str;
+            while (tmp)
                 tmp++, buf_len++; // bytes in string
             buf_len /= 2;
         } else
             buf_len = str_len;
-        *ret = UniAPI->sys.zmalloc((buf_len + 1) * U32CHAR_SIZE);
+        *ret = UniAPI->sys.zmalloc((buf_len + 1) * UCMSZ_WCHR);
         if (*ret) {
             for (;;) {
                 int64_t dec_len = 0;
@@ -88,14 +88,14 @@ u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
                     return dec_len;
 
                 if (dec_len < buf_len) {
-                    if (UniAPI->sys.realloc((void**)ret, (dec_len + 1) * U32CHAR_SIZE)) {
+                    if (UniAPI->sys.realloc((void**)ret, (dec_len + 1) * UCMSZ_WCHR)) {
                         ucm_free_null(*ret);
                         return 0;
                     } else
                         return dec_len;
                 }
 
-                if (UniAPI->sys.realloc((void**)ret, (dec_len + 1) * U32CHAR_SIZE)) {
+                if (UniAPI->sys.realloc((void**)ret, (dec_len + 1) * UCMSZ_WCHR)) {
                     ucm_free_null(*ret);
                     return 0;
                 }
@@ -106,7 +106,7 @@ u8_decode_ucs4(u8char_t* str, const int64_t str_len, u32char_t** ret)
 }
 
 int64_t
-ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
+ucs4_encode_u8(ucm_wstr_t str, const int64_t str_len, ucm_str_t* ret)
 {
     int64_t enc_len = 0;
     if (str && *ret) {
@@ -117,10 +117,10 @@ ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
             while (*str)
                 str++, buf_size++;
         }
-        *ret    = (u8char_t*)ucm_strdup2(str);
+        *ret    = (ucm_str_t)ucm_strdup2(str);
         enc_len = utf8proc_reencode((utf8proc_int32_t*)*ret, buf_size,
                                     UTF8PROC_STRIPCC | UTF8PROC_COMPOSE | UTF8PROC_STABLE);
-        if (UniAPI->sys.realloc((void**)ret, (enc_len + 1) * U8CHAR_SIZE)) {
+        if (UniAPI->sys.realloc((void**)ret, (enc_len + 1) * UCMSZ_CHR)) {
             ucm_free_null(*ret);
             return 0;
         }
@@ -133,19 +133,19 @@ ucs4_encode_u8(u32char_t* str, const int64_t str_len, u8char_t** ret)
 // ==========================================
 
 size_t
-ucm_strlen(u32char_t* str)
+ucm_strlen(ucm_wstr_t str)
 {
     return _intrnl_u32strlen(str);
 }
 
-u32char_t*
-ucm_strdup2(u32char_t* str)
+ucm_wstr_t
+ucm_strdup2(ucm_wstr_t str)
 {
-    u32char_t* buf = NULL;
+    ucm_wstr_t buf = NULL;
 
     if (str) {
-        size_t buf_size = (ucm_strlen(str) + 1) * U32CHAR_SIZE;
-        buf             = UniAPI->sys.malloc(buf_size);
+        size_t buf_size = (ucm_strlen(str) + 1) * UCMSZ_WCHR;
+        buf             = UniAPI->sys.zmalloc(buf_size);
         if (buf)
             memcpy(buf, str, buf_size);
     }
@@ -157,7 +157,7 @@ ucm_strdup2(u32char_t* str)
 // ==========================================
 
 int
-ucm_strcmp(u32char_t* lstr, u32char_t* rstr)
+ucm_strcmp(ucm_wstr_t lstr, ucm_wstr_t rstr)
 {
     while (*lstr && (*lstr == *rstr))
         lstr++, rstr++;
@@ -165,7 +165,7 @@ ucm_strcmp(u32char_t* lstr, u32char_t* rstr)
 }
 
 int
-ucm_strcasecmp(u32char_t* lstr, u32char_t* rstr)
+ucm_strcasecmp(ucm_wstr_t lstr, ucm_wstr_t rstr)
 {
     while (*lstr && (utf8proc_tolower(*lstr) == utf8proc_tolower(*rstr)))
         lstr++, rstr++;
@@ -173,7 +173,7 @@ ucm_strcasecmp(u32char_t* lstr, u32char_t* rstr)
 }
 
 int
-ucm_strncmp(u32char_t* lstr, u32char_t* rstr, size_t num)
+ucm_strncmp(ucm_wstr_t lstr, ucm_wstr_t rstr, size_t num)
 {
     if (num == 0)
         return 0;
@@ -183,7 +183,7 @@ ucm_strncmp(u32char_t* lstr, u32char_t* rstr, size_t num)
 }
 
 int
-ucm_strncasecmp(u32char_t* lstr, u32char_t* rstr, size_t num)
+ucm_strncasecmp(ucm_wstr_t lstr, ucm_wstr_t rstr, size_t num)
 {
     if (num == 0)
         return 0;
@@ -197,14 +197,14 @@ ucm_strncasecmp(u32char_t* lstr, u32char_t* rstr, size_t num)
 // ==========================================
 
 void
-ucm_strupcase(u32char_t* str)
+ucm_strupcase(ucm_wstr_t str)
 {
     while (*str)
         utf8proc_toupper(*str++);
 }
 
 void
-ucm_strlowcase(u32char_t* str)
+ucm_strlowcase(ucm_wstr_t str)
 {
     while (*str)
         utf8proc_tolower(*str++);
@@ -215,13 +215,13 @@ ucm_strlowcase(u32char_t* str)
 // ==========================================
 
 void
-ucm_strcpy(u32char_t* dest, u32char_t* src)
+ucm_strcpy(ucm_wstr_t dest, ucm_wstr_t src)
 {
     _intrnl_u32strcpy(dest, src, 0);
 }
 
 void
-ucm_strncpy(u32char_t* dest, u32char_t* src, size_t num)
+ucm_strncpy(ucm_wstr_t dest, ucm_wstr_t src, size_t num)
 {
     _intrnl_u32strncpy(dest, src, 0, num);
 }
@@ -231,27 +231,27 @@ ucm_strncpy(u32char_t* dest, u32char_t* src, size_t num)
 // ==========================================
 
 void
-ucm_strcat(u32char_t* dest, u32char_t* src)
+ucm_strcat(ucm_wstr_t dest, ucm_wstr_t src)
 {
     size_t dest_size = _intrnl_u32strlen(dest);
     _intrnl_u32strcpy(dest + dest_size, src, 0);
 }
 
 void
-ucm_strncat(u32char_t* dest, u32char_t* src, size_t num)
+ucm_strncat(ucm_wstr_t dest, ucm_wstr_t src, size_t num)
 {
     size_t dest_size = _intrnl_u32strlen(dest);
     _intrnl_u32strncpy(dest + dest_size, src, 0, num);
 }
 
 void
-ucm_vstrcat(u32char_t* dest, unsigned num, va_list va)
+ucm_vstrcat(ucm_wstr_t dest, unsigned num, va_list va)
 {
     size_t i = _intrnl_u32strlen(dest) + 1;
     size_t j;
 
     while (num--) {
-        u32char_t* tmp_str = va_arg(va, u32char_t*);
+        ucm_wstr_t tmp_str = va_arg(va, ucm_wstr_t);
         if (tmp_str) {
             for (j = 0; tmp_str[j] != 0; i++, j++)
                 dest[i] = tmp_str[j];
@@ -261,7 +261,7 @@ ucm_vstrcat(u32char_t* dest, unsigned num, va_list va)
 }
 
 void
-ucm_mstrcat(u32char_t* dest, unsigned num, ...)
+ucm_mstrcat(ucm_wstr_t dest, unsigned num, ...)
 {
     va_list strs;
     va_start(strs, num);
@@ -273,8 +273,8 @@ ucm_mstrcat(u32char_t* dest, unsigned num, ...)
 //     STRING GET CHAR POSITION FUNCTIONS
 // ==========================================
 
-u32char_t*
-ucm_strchr(u32char_t* str, u32char_t chr)
+ucm_wstr_t
+ucm_strchr(ucm_wstr_t str, ucm_wchr_t chr)
 {
     if (!str)
         return NULL;
@@ -285,8 +285,8 @@ ucm_strchr(u32char_t* str, u32char_t chr)
     return &str[i];
 }
 
-u32char_t*
-ucm_strrchr(u32char_t* str, u32char_t chr)
+ucm_wstr_t
+ucm_strrchr(ucm_wstr_t str, ucm_wchr_t chr)
 {
     if (!str)
         return NULL;
@@ -302,15 +302,15 @@ ucm_strrchr(u32char_t* str, u32char_t chr)
 //     STRING JOIN FUNCTIONS
 // ==========================================
 
-u32char_t*
-ucm_strjoin(u32char_t* str1, u32char_t* str2)
+ucm_wstr_t
+ucm_strjoin(ucm_wstr_t str1, ucm_wstr_t str2)
 {
-    u32char_t* result = NULL;
+    ucm_wstr_t result = NULL;
     if (str1 && str2) {
         size_t str1_len = _intrnl_u32strlen(str1);
         size_t str2_len = _intrnl_u32strlen(str2);
 
-        result = UniAPI->sys.zmalloc((str1_len + str2_len + 1) * U32CHAR_SIZE);
+        result = UniAPI->sys.zmalloc((str1_len + str2_len + 1) * UCMSZ_WCHR);
 
         if (result) {
             _intrnl_u32strcpy(result, str1, 0);
@@ -320,28 +320,28 @@ ucm_strjoin(u32char_t* str1, u32char_t* str2)
     return result;
 }
 
-u32char_t*
+ucm_wstr_t
 ucm_vstrjoin(size_t num, va_list va)
 {
-    u32char_t* buf = NULL;
+    ucm_wstr_t buf = NULL;
     size_t buf_len = 0;
     va_list tmp_va;
 
     // calculate buffer size
     va_copy(tmp_va, va);
     for (size_t i = 0; i < num; i++) {
-        u32char_t* tmp_buf = va_arg(tmp_va, u32char_t*);
+        ucm_wstr_t tmp_buf = va_arg(tmp_va, ucm_wstr_t);
         if (tmp_buf && *tmp_buf)
             buf_len += _intrnl_u32strlen(tmp_buf);
     }
     va_end(tmp_va);
 
     // copy to buffer
-    buf = UniAPI->sys.zmalloc((buf_len + 1) * U32CHAR_SIZE);
+    buf = UniAPI->sys.zmalloc((buf_len + 1) * UCMSZ_WCHR);
     if (buf) {
-        u32char_t* p = buf;
+        ucm_wstr_t p = buf;
         for (size_t i = 0; i < num; i++) {
-            u32char_t* tmp_buf = va_arg(va, u32char_t*);
+            ucm_wstr_t tmp_buf = va_arg(va, ucm_wstr_t);
             if (tmp_buf && *tmp_buf) {
                 _intrnl_u32strcpy(p, tmp_buf, 0);
                 p += _intrnl_u32strlen(tmp_buf);
@@ -351,10 +351,10 @@ ucm_vstrjoin(size_t num, va_list va)
     return buf;
 }
 
-u32char_t*
+ucm_wstr_t
 ucm_mstrjoin(size_t num, ...)
 {
-    u32char_t* ret = NULL;
+    ucm_wstr_t ret = NULL;
 
     va_list strs;
     va_start(strs, num);
@@ -369,15 +369,15 @@ ucm_mstrjoin(size_t num, ...)
 //     STRING JOIN WITH BROKEN CHAR FUNCTIONS
 // ==========================================
 
-u32char_t*
-ucm_strbrkjoin(u32char_t* str1, u32char_t* str2, u32char_t brk)
+ucm_wstr_t
+ucm_strbrkjoin(ucm_wstr_t str1, ucm_wstr_t str2, ucm_wchr_t brk)
 {
-    u32char_t* result = NULL;
+    ucm_wstr_t result = NULL;
     if (str1 && str2) {
         size_t str1_len = _intrnl_u32strlen(str1);
         size_t str2_len = _intrnl_u32strlen(str2);
 
-        result = UniAPI->sys.zmalloc((str1_len + str2_len + 1) * U32CHAR_SIZE);
+        result = UniAPI->sys.zmalloc((str1_len + str2_len + 1) * UCMSZ_WCHR);
         if (result) {
             _intrnl_u32strcpy(result, str1, brk);
             _intrnl_u32strcpy(result + str1_len + 1, str2, 0);
@@ -386,28 +386,28 @@ ucm_strbrkjoin(u32char_t* str1, u32char_t* str2, u32char_t brk)
     return result;
 }
 
-u32char_t*
-ucm_vstrbrkjoin(size_t num, u32char_t brk, va_list va)
+ucm_wstr_t
+ucm_vstrbrkjoin(size_t num, ucm_wchr_t brk, va_list va)
 {
-    u32char_t* buf = NULL;
+    ucm_wstr_t buf = NULL;
     size_t buf_len = 0;
     va_list tmp_va;
 
     // calculate buffer size
     va_copy(tmp_va, va);
     for (size_t i = 0; i < num; i++) {
-        u32char_t* tmp_buf = va_arg(tmp_va, u32char_t*);
+        ucm_wstr_t tmp_buf = va_arg(tmp_va, ucm_wstr_t);
         if (tmp_buf && *tmp_buf)
             buf_len += _intrnl_u32strlen(tmp_buf) + 1;
     }
     va_end(tmp_va);
 
     // copy to buffer
-    buf = UniAPI->sys.zmalloc(buf_len * U32CHAR_SIZE);
+    buf = UniAPI->sys.zmalloc(buf_len * UCMSZ_WCHR);
     if (buf) {
-        u32char_t* p = buf;
+        ucm_wstr_t p = buf;
         for (size_t i = 0; i < num; i++) {
-            u32char_t* tmp_buf = va_arg(va, u32char_t*);
+            ucm_wstr_t tmp_buf = va_arg(va, ucm_wstr_t);
             if (tmp_buf && *tmp_buf) {
                 _intrnl_u32strcpy(p, tmp_buf, brk);
                 p += _intrnl_u32strlen(tmp_buf) + 1;
@@ -417,10 +417,10 @@ ucm_vstrbrkjoin(size_t num, u32char_t brk, va_list va)
     return buf;
 }
 
-u32char_t*
-ucm_mstrbrkjoin(u32char_t brk, size_t num, ...)
+ucm_wstr_t
+ucm_mstrbrkjoin(ucm_wchr_t brk, size_t num, ...)
 {
-    u32char_t* ret = NULL;
+    ucm_wstr_t ret = NULL;
 
     va_list strs;
     va_start(strs, num);
@@ -436,7 +436,7 @@ ucm_mstrbrkjoin(u32char_t brk, size_t num, ...)
 // ==========================================
 
 int64_t
-ucm_strstr(u32char_t* str, u32char_t* sstr)
+ucm_strstr(ucm_wstr_t str, ucm_wstr_t sstr)
 {
     if (str && sstr) {
         int64_t i, j, N, M;
@@ -471,7 +471,7 @@ ucm_strstr(u32char_t* str, u32char_t* sstr)
 }
 
 int64_t
-ucm_strcasestr(u32char_t* str, u32char_t* sstr)
+ucm_strcasestr(ucm_wstr_t str, ucm_wstr_t sstr)
 {
 #define __U8LCASE(X) utf8proc_tolower(X)
     if (str && sstr) {
