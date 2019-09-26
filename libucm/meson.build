@@ -128,6 +128,24 @@ shared_headers += [
     core_header_c,
     core_config_c,
 ]
+libucm_part_headers = []
+
+foreach item : '''
+        ucontacts.h
+        udatabase.h
+        udefs.h
+        uevents.h
+        ugui.h
+        umacro.h
+        umain.h
+        umsgs.h
+        uplugin.h
+        uprotocols.h
+    '''.split()
+    libucm_part_headers += files('.'/'include'/'uni'/ item)
+endforeach
+install_headers (libucm_part_headers,
+                 subdir: 'uni')
 
 libucm = shared_library (meson.project_name(),
                           libucm_src,

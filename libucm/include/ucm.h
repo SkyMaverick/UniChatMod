@@ -26,21 +26,21 @@ extern "C"
     //      CORE STRUCTURES
     // *********************************************************
 
-#include "ucm/udefs.h" // preprocessor defines and includes. MUST BE FIRST !!!
-#include "ucm/umain.h" // base enums, structures and constants
+#include "uni/udefs.h" // preprocessor defines and includes. MUST BE FIRST !!!
+#include "uni/umain.h" // base enums, structures and constants
 
-#include "ucm/uevents.h"   // events
-#include "ucm/umsgs.h"     // messages
-#include "ucm/ucontacts.h" // contacts
+#include "uni/uevents.h"   // events
+#include "uni/umsgs.h"     // messages
+#include "uni/ucontacts.h" // contacts
 
     // *********************************************************
     //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
     // *********************************************************
 
-#include "ucm/uplugin.h"    // plugins base
-#include "ucm/udatabase.h"  // database plugins functionality
-#include "ucm/uprotocols.h" // protocol plugins functionality
-#include "ucm/ugui.h"       // GUI plugin functionality
+#include "uni/uplugin.h"    // plugins base
+#include "uni/udatabase.h"  // database plugins functionality
+#include "uni/uprotocols.h" // protocol plugins functionality
+#include "uni/ugui.h"       // GUI plugin functionality
 
     // *********************************************************
     //      MAIN APPLICATION API STRUCTURE
