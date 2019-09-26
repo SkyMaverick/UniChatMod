@@ -87,7 +87,7 @@ db_open(const char* aPath)
     if (db.worker == NULL) {
         ret_code = UCM_RET_DATABASE_BADFORMAT;
     } else {
-        UniAPI->app.mainloop_msg_send(UCM_EVENT_DBLOAD_SUCCESS, (uintptr_t)db.worker, ret_code, 0);
+        UniAPI->app.mainloop_msg_send(UCM_SIG_DBLOAD_SUCCESS, (uintptr_t)db.worker, ret_code, 0);
     }
 
     return ret_code;

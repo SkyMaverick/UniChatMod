@@ -29,8 +29,8 @@ extern "C"
 #include "uni/udefs.h" // preprocessor defines and includes. MUST BE FIRST !!!
 #include "uni/umain.h" // base enums, structures and constants
 
+#include "uni/usignals.h"  // signals
 #include "uni/uevents.h"   // events
-#include "uni/umsgs.h"     // messages
 #include "uni/ucontacts.h" // contacts
 
     // *********************************************************
@@ -389,10 +389,10 @@ extern "C"
 
             /*! general queue access */
             int (*mainloop_msg_send)(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2);
-            ucm_ev_t* (*mainloop_ev_alloc)(uint32_t id);
-            ucm_ev_t* (*mainloop_ev_alloc2)(uint32_t id, void* ctx, size_t mem);
-            int (*mainloop_ev_push)(ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
-            void (*mainloop_ev_free)(ucm_ev_t** event);
+            ucm_signal_t* (*mainloop_sig_alloc)(uint32_t id);
+            ucm_signal_t* (*mainloop_sig_alloc2)(uint32_t id, void* ctx, size_t mem);
+            int (*mainloop_sig_push)(ucm_signal_t* signal, uint32_t x1, uint32_t x2, void* sender);
+            void (*mainloop_sig_free)(ucm_signal_t** signal);
             void (*mainloop_flush)(void);
 
             void (*mainloop_hook_attach)(void (*callback)(uint32_t id, uintptr_t ev_ctx,

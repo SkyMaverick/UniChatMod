@@ -68,8 +68,6 @@ get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_db
             break;
         case UCM_TYPE_OBJECT_EVENT:
             break;
-        case UCM_TYPE_OBJECT_MESSAGE:
-            break;
         case UCM_TYPE_OBJECT_CONNECT:
             break;
         case UCM_TYPE_OBJECT_CONTACT:
@@ -95,8 +93,6 @@ set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_db
         case UCM_TYPE_OBJECT_PLUGIN:
             break;
         case UCM_TYPE_OBJECT_EVENT:
-            break;
-        case UCM_TYPE_OBJECT_MESSAGE:
             break;
         case UCM_TYPE_OBJECT_CONNECT:
             break;

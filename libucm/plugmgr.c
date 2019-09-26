@@ -191,7 +191,7 @@ pmgr_load(char* path, uint32_t flags)
                     scan_result_process(&req);
                     UniAPI->uv.fs_req_cleanup(&req);
 
-                    UniAPI->app.mainloop_msg_send(UCM_EVENT_PLUGS_SUCCESS, 0, UniPMgr->found, 0);
+                    UniAPI->app.mainloop_msg_send(UCM_SIG_PLUGS_SUCCESS, 0, UniPMgr->found, 0);
 
                     return UniPMgr->found;
                 }

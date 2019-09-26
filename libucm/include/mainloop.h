@@ -18,11 +18,11 @@ ucm_mloop_noempty(void);
 void
 ucm_mloop_free(void);
 
-ucm_ev_t*
-ucm_event_alloc(uint32_t id);
-ucm_ev_t*
-ucm_event_alloc2(uint32_t id, void* ctx, size_t mem);
+ucm_signal_t*
+ucm_signal_alloc(uint32_t id);
+ucm_signal_t*
+ucm_signal_alloc2(uint32_t id, void* ctx, size_t mem);
 int
-ucm_event_push(ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender);
+ucm_signal_push(ucm_signal_t* signal, uint32_t x1, uint32_t x2, void* sender);
 void
-ucm_event_free(ucm_ev_t** event);
+ucm_signal_free(ucm_signal_t** signal);

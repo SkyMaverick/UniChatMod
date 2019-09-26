@@ -62,67 +62,66 @@ ucm_mloop_free(void)
 }
 
 static inline size_t
-event_size_get(uint32_t id)
+signal_size_get(uint32_t id)
 {
     switch (id) {
-    case UCM_EVENT_START_GUI:
-    case UCM_EVENT_START_GUI2:
-        return sizeof(ucm_evgui_t);
+    case UCM_SIG_START_GUI:
+    case UCM_SIG_START_GUI2:
+        return sizeof(ucm_sigui_t);
     default:
         return 0;
     }
 }
 
-ucm_ev_t*
-ucm_event_alloc2(uint32_t id, void* ctx, size_t mem)
+ucm_signal_t*
+ucm_signal_alloc2(uint32_t id, void* ctx, size_t mem)
 {
-    ucm_ev_t* event = NULL;
+    ucm_signal_t* sig = NULL;
 
-    size_t size = event_size_get(id);
+    size_t size = signal_size_get(id);
     if (size) {
-        ucm_dtrace("%s: %zu. %s: %d\n", "Event alloc", id, "Allocated", size);
-        event = UniAPI->sys.zmalloc(size + mem);
-        if (event) {
-            // Define EVENT arguments
-            event->oid    = UCM_TYPE_OBJECT_EVENT;
-            event->ev     = id;
-            event->size   = size + mem;
-            event->sender = NULL;
+        ucm_dtrace("%s: %zu. %s: %d\n", "signal alloc", id, "Allocated", size);
+        sig = UniAPI->sys.zmalloc(size + mem);
+        if (sig) {
+            // Define signal arguments
+            sig->sig    = id;
+            sig->size   = size + mem;
+            sig->sender = NULL;
 
             // copy context
             if (ctx) {
-                event->ctx = event + size;
-                memcpy(event->ctx, ctx, mem);
+                sig->ctx = sig+ size;
+                memcpy(sig->ctx, ctx, mem);
             }
         }
     }
-    return event;
+    return sig;
 }
 
-ucm_ev_t*
-ucm_event_alloc(uint32_t id)
+ucm_signal_t*
+ucm_signal_alloc(uint32_t id)
 {
-    return ucm_event_alloc2(id, NULL, 0);
+    return ucm_signal_alloc2(id, NULL, 0);
 }
 
 void
-ucm_event_free(ucm_ev_t** event)
+ucm_signal_free(ucm_signal_t** signal)
 {
-    if (*event) {
-        ucm_dtrace("Free event: %d\n", (*event)->ev);
-        switch ((*event)->ev) {
+    if (*signal) {
+        ucm_dtrace("Free signal: %d\n", (*signal)->sig);
+        switch ((*signal)->sig) {
             // TODO
         }
-        ucm_free_null(*event);
+        ucm_free_null(*signal);
     }
 }
 
 int
-ucm_event_push(ucm_ev_t* event, uint32_t x1, uint32_t x2, void* sender)
+ucm_signal_push(ucm_signal_t* signal, uint32_t x1, uint32_t x2, void* sender)
 {
-    if (!event)
+    if (!signal)
         return UCM_RET_NOOBJECT;
 
-    event->sender = sender;
-    return mq_push(messages, event->ev, (uintptr_t)event, x1, x2);
+    signal->sender = sender;
+    return mq_push(messages, signal->sig, (uintptr_t)signal, x1, x2);
 }

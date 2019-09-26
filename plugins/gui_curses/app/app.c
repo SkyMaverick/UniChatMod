@@ -247,10 +247,10 @@ main(int argc, char* argv[])
 
                     core = core_start(&args);
                     if (core) {
-                        ucm_ev_t* ev = core->app.mainloop_ev_alloc(UCM_EVENT_START_GUI);
-                        if (ev) {
-                            snprintf(U_EVENT_GUI(ev)->pid, UCM_PID_MAX, "%s", "uincurses");
-                            core->app.mainloop_ev_push(ev, 0, 0, NULL);
+                        ucm_signal_t* sig = core->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
+                        if (sig) {
+                            snprintf(U_SIGNAL_GUI(sig)->pid, UCM_PID_MAX, "%s", "uincurses");
+                            core->app.mainloop_sig_push(sig, 0, 0, NULL);
                         }
                         core->app.wait_exit();
                         exit_func(UCM_RET_SUCCESS);

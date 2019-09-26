@@ -131,16 +131,16 @@ shared_headers += [
 libucm_part_headers = []
 
 foreach item : '''
-        ucontacts.h
-        udatabase.h
-        udefs.h
-        uevents.h
-        ugui.h
-        umacro.h
-        umain.h
-        umsgs.h
-        uplugin.h
-        uprotocols.h
+      ucontacts.h
+      udatabase.h
+      udefs.h
+      uevents.h
+      ugui.h
+      umacro.h
+      umain.h
+      uplugin.h
+      uprotocols.h
+      usignals.h
     '''.split()
     libucm_part_headers += files('.'/'include'/'uni'/ item)
 endforeach

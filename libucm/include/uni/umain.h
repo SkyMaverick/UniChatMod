@@ -25,8 +25,7 @@ enum
     UCM_TYPE_OBJECT_PLUGIN  = 1 << 0,
     UCM_TYPE_OBJECT_EVENT   = 1 << 1,
     UCM_TYPE_OBJECT_CONTACT = 1 << 2,
-    UCM_TYPE_OBJECT_MESSAGE = 1 << 3,
-    UCM_TYPE_OBJECT_CONNECT = 1 << 4
+    UCM_TYPE_OBJECT_CONNECT = 1 << 3
 };
 
 // Global flags ---------------

@@ -50,11 +50,11 @@ loop_core(void* ctx)
             pmgr_message_process(&id, &lctx, &x1, &x2);
 
             switch (id) {
-            case UCM_EVENT_TERM:
+            case UCM_SIG_TERM:
                 set_system_flag(UCM_FLAG_TERMINATE);
                 ucm_dtrace("[EVENT] %s\n", "Catch TERM message. Core loop exit.");
                 break;
-            case UCM_EVENT_PLUGS_SUCCESS:
+            case UCM_SIG_PLUGS_SUCCESS:
                 ucm_dtrace("[EVENT] %s: %d\n", "Found plugins", x1);
 
                 pmgr_group_run(0);
@@ -62,7 +62,7 @@ loop_core(void* ctx)
 
                 db_open(UniAPI->app.get_store_path());
                 break;
-            case UCM_EVENT_DBLOAD_SUCCESS:
+            case UCM_SIG_DBLOAD_SUCCESS:
                 if (x1 == UCM_RET_SUCCESS) {
                     ucm_dtrace("[EVENT] %s: %s\n", "Start database with plugin",
                                U_PLUGIN(lctx)->info.pid);
@@ -70,14 +70,14 @@ loop_core(void* ctx)
                         pmgr_group_run(i);
                 }
                 break;
-            case UCM_EVENT_START_GUI:
-                ucm_dtrace("[EVENT] %s: %s\n", "Catch start GUI signal", U_EVENT_GUI(lctx)->pid);
+            case UCM_SIG_START_GUI:
+                ucm_dtrace("[EVENT] %s: %s\n", "Catch start GUI signal", U_SIGNAL_GUI(lctx)->pid);
                 break;
             }
             // free events context memory
-            if (EVENT_ALLOCATED(id)) {
+            if (SIGNAL_ALLOCATED(id)) {
                 ucm_dtrace("%s: %d\n", "Event destroy", id);
-                UniAPI->app.mainloop_ev_free((ucm_ev_t**)(&lctx));
+                UniAPI->app.mainloop_sig_free((ucm_signal_t**)(&lctx));
             }
         }
         if (get_system_flag(UCM_FLAG_TERMINATE)) {
@@ -106,7 +106,7 @@ _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 
 {
     switch (id) {
-    case UCM_EVENT_TERM:
+    case UCM_SIG_TERM:
         ucm_dtrace("[EVENT CORE] %s\n", "Catch TERM message");
         break;
     };
@@ -175,7 +175,7 @@ UCM_RET
 core_unload(void)
 {
     if (kernel.loop_ucore) {
-        UniAPI->app.mainloop_msg_send(UCM_EVENT_TERM, (uintptr_t)ucm_core, 0, 0);
+        UniAPI->app.mainloop_msg_send(UCM_SIG_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->sys.thread_join(kernel.loop_ucore);
         UniAPI->sys.thread_cleanup(&kernel.loop_ucore);
     }
