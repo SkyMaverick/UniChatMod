@@ -18,15 +18,24 @@ enum
 
 typedef struct
 {
-    ucm_object_t oid;
+    ucm_object_t oid; /// internal object ID
 
-    uint8_t type;
-    // TODO sender info
-    time_t time;
+    uint8_t type;  /// message type
+    uint64_t size; ///
     uint32_t flags;
+
     struct
     {
-        size_t size;
-        uint8_t blob[1];
-    } data;
+        HCONTACT contact;
+        // TODO protocol
+
+        uint64_t time;
+    } info;
+
 } ucm_event_t;
+
+typedef struct
+{
+    ucm_event_t header;
+    ucm_str_t data;
+} ucm_message_t;
