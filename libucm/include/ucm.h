@@ -30,8 +30,8 @@ extern "C"
 #include "uni/umain.h" // base enums, structures and constants
 
 #include "uni/usignals.h"  // signals
-#include "uni/uevents.h"   // events
 #include "uni/ucontacts.h" // contacts
+#include "uni/uevents.h"   // events
 
     // *********************************************************
     //      PLUGINS FUNCTIONALITY API IMPLEMENTATION
