@@ -33,7 +33,6 @@
 #mesondefine MDBX_BUILD_TIMESTAMP
 #mesondefine MDBX_BUILD_TARGET
 #mesondefine MDBX_BUILD_CONFIG
-#mesondefine MDBX_BUILD_OPTIONS_STRING
 #mesondefine MDBX_BUILD_COMPILER
 #mesondefine MDBX_BUILD_FLAGS
 #mesondefine MDBX_BUILD_SOURCERY
