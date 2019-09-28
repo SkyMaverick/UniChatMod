@@ -90,7 +90,7 @@ ucm_signal_alloc2(uint32_t id, void* ctx, size_t mem)
 
             // copy context
             if (ctx) {
-                sig->ctx = sig+ size;
+                sig->ctx = sig + size;
                 memcpy(sig->ctx, ctx, mem);
             }
         }

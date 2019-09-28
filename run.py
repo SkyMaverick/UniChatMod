@@ -340,6 +340,16 @@ def action_format (**defs):
         file = os.path.join(path, i.split(' ')[-1])
         format_file(file)
 
+def action_format_all (**defs):
+    path = defs ['path_script']
+    for root, dirs, files in os.walk (path):
+        for item in dirs:
+            if item in ignore_format_paths:
+                dirs.remove(item)
+        for item in files:
+            file = os.path.join(root, item)
+            format_file(file)
+
 def action_dummy (**defs):
     info ("Run dummy function for test")
     return
@@ -353,6 +363,7 @@ actions = {
         'debug'             : action_debug,
         'release'           : action_release,
         'format'            : action_format,
+        'format_all'        : action_format_all,
         'clean'             : action_clean,
         'clean_all'         : action_clean_all,
         'test'              : action_test,

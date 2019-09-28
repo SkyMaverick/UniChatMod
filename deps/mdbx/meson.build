@@ -132,7 +132,6 @@ cfg.set10 ('MDBX_USE_OFDLOCKS', not (osid == 'windows')
 
 cfg.set10 ('MDBX_OSX_SPEED_INSTEADOF_DURABILITY', (osid == 'darwin'))
 cfg.set_quoted   ('MDBX_BUILD_TARGET',osid)
-cfg.set_quoted   ('MDBX_BUILD_OPTIONS_STRING','undefined')
 cfg.set_quoted   ('MDBX_BUILD_COMPILER', ccid)
 cfg.set_quoted   ('MDBX_BUILD_FLAGS','undefined')
 
