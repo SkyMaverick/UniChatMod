@@ -55,3 +55,22 @@
 #define UCM_CONTACT_NAME_MAX 1024
 
 #define UCM_DB_DEFAULT_NAME "ucmdb"
+
+typedef unsigned char ucm_uuid_t[16];
+
+#ifdef UCM_OS_WINDOWS
+    /* Allow UUID constants to be defined */
+    #ifdef __GNUC__
+        #define UCM_UUID_DEFINE(name, u0, u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, \
+                                u14, u15)                                                         \
+            static const uuid_t name __attribute__(                                               \
+              (unused)) = { u0, u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15 }
+    #else
+        #define UCM_UUID_DEFINE(name, u0, u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, \
+                                u14, u15)                                                         \
+            static const uuid_t name = { u0, u1, u2,  u3,  u4,  u5,  u6,  u7,                     \
+                                         u8, u9, u10, u11, u12, u13, u14, u15 }
+    #endif
+#else
+    #define UCM_UUID_DEFINE UUID_DEFINE
+#endif

@@ -25,6 +25,8 @@ foreach src : '''
         osal-memory.h
         osal-threading.c
         osal-threading.h
+        osal-uuid.c
+        osal-uuid.h
       '''.split()
     osal_src += 'osal' / src
 endforeach
@@ -56,6 +58,22 @@ else
         u8dep = u8proc_lib.dependency('utf8proc')
 endif
 libucm_deps += u8dep
+
+# add utf8proc dependency
+if not (ccid == 'msvc')
+    if not get_option('custom_libs')
+        uuid_dep = cc.find_library('uuid', required: false)
+        if not uuid_dep.found()
+            uuid_sp = subproject('uuid')
+            uuid_dep = uuid_sp.get_variable('libuuid')
+        endif
+    else
+            uuid_sp = subproject('uuid')
+            uuid_dep = uuid_sp.get_variable('libuuid')
+    endif
+    libucm_deps += uuid_dep
+endif
+
 
 # split project version for move to config.h
 libucm_version = meson.project_version().split('.')

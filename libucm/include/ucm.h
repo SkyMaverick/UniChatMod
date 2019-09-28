@@ -363,6 +363,12 @@ extern "C"
             int64_t (*ustrcasestr)(ucm_wstr_t str, ucm_wstr_t sstr);
 
             const char* (*strerr)(const unsigned errcode);
+
+            void (*uuid_create)(ucm_uuid_t uuid);
+            int (*uuid_parse)(const char* in, ucm_uuid_t uu);
+            char* (*uuid_unparse)(const ucm_uuid_t uu);
+            char* (*uuid_unparse_lower)(const ucm_uuid_t uu);
+            char* (*uuid_unparse_upper)(const ucm_uuid_t uu);
         } sys;
 
         struct
