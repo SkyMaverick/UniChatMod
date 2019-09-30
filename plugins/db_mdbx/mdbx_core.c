@@ -249,7 +249,7 @@ mdbx_db_close(void)
 void
 mdbx_db_flush(bool force)
 {
-    mdbx_env_sync(UniDB->mdbx.env, true);
+    mdbx_env_sync(UniDB->mdbx.env);
     if (force) {
         // TODO
     }
