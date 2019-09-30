@@ -62,17 +62,6 @@ loop_core(void* ctx)
 
                 db_open(UniAPI->app.get_store_path());
                 break;
-            case UCM_SIG_DBLOAD_SUCCESS:
-                if (x1 == UCM_RET_SUCCESS) {
-                    ucm_dtrace("[EVENT] %s: %s\n", "Start database with plugin",
-                               U_PLUGIN(lctx)->info.pid);
-                    for (int i = UCM_TYPE_PLUG_DB + 1; i <= UCM_TYPE_PLUG_STUFF; i++)
-                        pmgr_group_run(i);
-                }
-                break;
-            case UCM_SIG_START_GUI:
-                ucm_dtrace("[EVENT] %s: %s\n", "Catch start GUI signal", U_SIGNAL_GUI(lctx)->pid);
-                break;
             }
             // free events context memory
             if (SIGNAL_ALLOCATED(id)) {
@@ -106,8 +95,13 @@ _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 
 {
     switch (id) {
-    case UCM_SIG_TERM:
-        ucm_dtrace("[EVENT CORE] %s\n", "Catch TERM message");
+    case UCM_SIG_DBLOAD_SUCCESS:
+        if (x1 == UCM_RET_SUCCESS) {
+            ucm_dtrace("[EVENT] %s: %s\n", "Start database with plugin", U_PLUGIN(ctx)->info.pid);
+            for (int i = UCM_TYPE_PLUG_DB + 1; i <= UCM_TYPE_PLUG_STUFF; i++)
+                pmgr_group_run(i);
+            UniAPI->app.mainloop_msg_send(UCM_SIG_LOAD_SUCCESS, 0, 0, 0);
+        }
         break;
     };
     UNUSED(ctx);

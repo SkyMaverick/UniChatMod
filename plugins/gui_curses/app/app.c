@@ -71,6 +71,19 @@ unset_flag(const app_flag_t flag)
     global_flags &= ~flag;
 }
 
+void
+event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
+{
+    fprintf(stdout, "[%s] %s\n", TUI_APP_NAME, _("Working hook LOAD_SUCCESS"));
+
+    ucm_signal_t* sig = core->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
+    if (sig) {
+        snprintf(U_SIGNAL_GUI(sig)->pid, UCM_PID_MAX, "%s", "uicurses");
+        core->app.mainloop_sig_push(sig, 0, 0, NULL);
+    }
+    // TODO remove hook
+}
+
 static void
 exit_func(int ret_status)
 {
@@ -247,12 +260,10 @@ main(int argc, char* argv[])
 
                     core = core_start(&args);
                     if (core) {
-                        ucm_signal_t* sig = core->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
-                        if (sig) {
-                            snprintf(U_SIGNAL_GUI(sig)->pid, UCM_PID_MAX, "%s", "uincurses");
-                            core->app.mainloop_sig_push(sig, 0, 0, NULL);
-                        }
+                        core->app.mainloop_hook_attach(event_load_hook, NULL, UCM_SIG_LOAD_SUCCESS);
                         core->app.wait_exit();
+
+                        core->app.mainloop_hook_detach(event_load_hook);
                         exit_func(UCM_RET_SUCCESS);
                     } else {
                         fprintf(stderr, "%s\n", "Core API load FAIL");

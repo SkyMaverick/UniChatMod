@@ -8,18 +8,22 @@ tuilib_dep = [
     system_dependencies
 ]
 
-if not get_option('custom_libs')
-    pdc_dep = cc.find_library('pdcurses', required: false)
-    if not pdc_dep.found()
+if (osid == 'windows')
+    if not get_option('custom_libs')
+        pdc_dep = cc.find_library('pdcurses', required: false)
+        if not pdc_dep.found()
+            pdcdep_lib = subproject('pdcurses')
+            pdc_dep = pdcdep_lib.get_variable('pdcurses_dep')
+        endif
+    else
         pdcdep_lib = subproject('pdcurses')
         pdc_dep = pdcdep_lib.get_variable('pdcurses_dep')
     endif
-else
-    pdcdep_lib = subproject('pdcurses')
-    pdc_dep = pdcdep_lib.get_variable('pdcurses_dep')
-endif
 
-tuilib_dep += pdc_dep
+    tuilib_dep += pdc_dep
+else
+    tuilib_dep += cc.find_library ('ncurses', required: true)
+endif
 
 tuilib = shared_library (tuilib_name,
              tuilib_src,

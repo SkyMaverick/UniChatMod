@@ -373,6 +373,7 @@ extern "C"
 
         struct
         {
+            void (*terminate)(uintptr_t ctx, uint32_t x1, uint32_t x2);
             void (*wait_exit)(void);
             uintptr_t (*get_loop)(int loop);
             int (*get_flag)(unsigned code);

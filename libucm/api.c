@@ -37,6 +37,12 @@ g_plugins_path(void)
     return ucm_path_plugs;
 }
 
+static void
+handle_terminate(uintptr_t ctx, uint32_t x1, uint32_t x2)
+{
+    UniAPI->app.mainloop_msg_send(UCM_SIG_TERM, ctx, x1, x2);
+}
+
 static ucm_functions_t core_api = { .uv.version                  = uv_version,
                                     .uv.version_string           = uv_version_string,
                                     .uv.replace_allocator        = uv_replace_allocator,
@@ -307,6 +313,7 @@ static ucm_functions_t core_api = { .uv.version                  = uv_version,
                                     .sys.uuid_unparse             = osal_uuid_unparse,
                                     .sys.uuid_unparse_lower       = osal_uuid_unparse_lower,
                                     .sys.uuid_unparse_upper       = osal_uuid_unparse_upper,
+                                    .app.terminate                = handle_terminate,
                                     .app.wait_exit                = wait_core_loop,
                                     .app.get_loop                 = get_loop_handle,
                                     .app.get_flag                 = get_system_flag,

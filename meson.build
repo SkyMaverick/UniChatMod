@@ -2,7 +2,7 @@ project ('ucm', 'c',
          version: '0.1.3',
          license: 'Zlib',
          default_options:[
-            'b_lto=true',
+#            'b_lto=true',
             'b_colorout=always'
          ],
          subproject_dir: 'deps',
@@ -63,7 +63,6 @@ if (ccid == 'gcc') or (ccid == 'clang')
 elif ccid == 'msvc'
     if get_option('buildtype').startswith('debug')
         cc_args = '''
-            /Zi
             /Ob0
             /Oy-
             /DEBUG

@@ -4,52 +4,95 @@
 #include "ucm.h"
 
 #include <curses.h>
+#include <string.h>
+
+#ifdef UCM_OS_POSIX
+    #include <sys/time.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+#endif
 
 const ucm_functions_t* app;
 
 static uintptr_t hwnd = 0;
+static int term       = 1;
+
+static char
+_curses_mtgetch()
+{
+
+    char input = '\0';
+
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds);
+
+    struct timeval tv;
+    tv.tv_sec  = 5;
+    tv.tv_usec = 0;
+
+    int status = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+    if (status == -1) {
+        if (errno != EINTR) {
+            // TODO return error
+            return '\0';
+        }
+    } else if (FD_ISSET(STDIN_FILENO, &fds)) {
+        if ((input = getch()) == ERR) {
+            // TODO return error
+            return '\0';
+        }
+    }
+    return input;
+}
+
+static void
+_curses_start(void)
+{
+    initscr();
+    keypad(stdscr, TRUE);
+    (void)nonl();
+    (void)cbreak();
+    (void)noecho();
+
+    if (has_colors()) {
+        start_color();
+
+        init_pair(COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
+        init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+        init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
+        init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+        init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+        init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+    }
+    refresh();
+}
 
 static void
 _curses_cleanup(void)
 {
-    //    endwin();
+    endwin();
 }
 
 static void*
 _curses_loop(void* ctx)
 {
     UNUSED(ctx);
-    //    ucm_cargs_t* args = (ucm_cargs_t*)ctx;
     fprintf(stdout, "%s\n", "Start curses APP");
+    //    _curses_start();
 
-    //    initscr();
-    //    keypad(stdscr, TRUE);
-    //    (void) nonl();
-    //    (void) cbreak();
-    //    (void) noecho();
-    //
-    //    if (has_colors())
-    //    {
-    //        start_color();
-    //
-    //        init_pair (COLOR_BLACK,   COLOR_BLACK,   COLOR_BLACK);
-    //        init_pair (COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
-    //        init_pair (COLOR_RED,     COLOR_RED,     COLOR_BLACK);
-    //        init_pair (COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
-    //        init_pair (COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
-    //        init_pair (COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-    //        init_pair (COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
-    //        init_pair (COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
-    //    }
-    //
-    //    for (;;)
-    //    {
-    //        int c = getch();
-    //        if (c == 'q')
-    //            break;
-    //    }
-    //
-    _curses_cleanup();
+    while (term) {
+        char c = _curses_mtgetch();
+        if (c == 'q') {
+            app->app.terminate(0, 0, 0);
+            break;
+        }
+    }
+
+    //    _curses_cleanup();
+    app->sys.thread_exit();
     return NULL;
 }
 
@@ -61,8 +104,7 @@ UCM_RET
 start_curses_app(void* ctx)
 {
     hwnd = app->sys.thread_create(_curses_loop, ctx);
-    app->sys.thread_join(hwnd);
-
+    //    app->sys.thread_join(hwnd);
     return UCM_RET_SUCCESS;
 }
 
@@ -93,9 +135,18 @@ static void
 _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 {
     switch (id) {
-        // TODO
+    case UCM_SIG_START_GUI: {
+        if (strcmp(plug->core.info.pid, (char*)ctx)) {
+            start_curses_app((void*)ctx);
+        }
+        break;
+    }
+
+    case UCM_SIG_TERM: {
+        term = 0;
+        break;
+    }
     };
-    UNUSED(ctx);
     UNUSED(x1);
     UNUSED(x2);
 }
@@ -130,7 +181,7 @@ static ucm_plugui_t plugin = {
     .core.message = _message,
 };
 
-const ucm_plugui_t* hplug = &plugin;
+const ucm_plugui_t* plug = &plugin;
 
 LIBUCM_API ucm_plugin_t*
 _init_plugin(const ucm_functions_t* api)

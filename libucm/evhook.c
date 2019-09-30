@@ -21,7 +21,7 @@ _hooks_core(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2)
 {
     UniAPI->sys.rwlock_rlock(_lock_hooks);
     for (ucm_evhook_t* i = _hooks; i; i = i->next) {
-        if (i->mask | eid) {
+        if (i->mask == eid) {
             i->hook(eid, ev, x1, x2, i->ctx);
         }
     }
