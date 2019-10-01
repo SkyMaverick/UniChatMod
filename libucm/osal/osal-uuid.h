@@ -22,3 +22,7 @@ char*
 osal_uuid_unparse_lower(const ucm_uuid_t uu);
 char*
 osal_uuid_unparse_upper(const ucm_uuid_t uu);
+int
+osal_uuid_is_null(const ucm_uuid_t uu);
+int
+osal_uuid_compare(const ucm_uuid_t uu1, const ucm_uuid_t uu2);

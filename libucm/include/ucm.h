@@ -369,6 +369,8 @@ extern "C"
             char* (*uuid_unparse)(const ucm_uuid_t uu);
             char* (*uuid_unparse_lower)(const ucm_uuid_t uu);
             char* (*uuid_unparse_upper)(const ucm_uuid_t uu);
+            int (*uuid_is_null)(const ucm_uuid_t uu);
+            int (*uuid_compare)(const ucm_uuid_t uu1, const ucm_uuid_t uu2);
         } sys;
 
         struct
