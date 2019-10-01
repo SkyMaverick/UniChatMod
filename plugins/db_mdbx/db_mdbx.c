@@ -108,8 +108,7 @@ set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_db
     return UCM_RET_SUCCESS;
 }
 
-static mdbx_database_t dba = {.plugin.core.oid         = UCM_TYPE_OBJECT_PLUGIN,
-                              .plugin.core.info.api    = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
+static mdbx_database_t dba = {.plugin.core.info.api    = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
                               .plugin.core.info.sys    = UCM_TYPE_PLUG_DB,
                               .plugin.core.info.vmajor = UCM_VERSION_MAJOR,
                               .plugin.core.info.vminor = UCM_VERSION_MINOR,
@@ -124,8 +123,8 @@ static mdbx_database_t dba = {.plugin.core.oid         = UCM_TYPE_OBJECT_PLUGIN,
                                       .options  = UCM_BUILD_OPTS,
                                       .flags    = UCM_BUILD_FLAGS,
                                   },
-                              .plugin.core.info.pid         = "dbmdbx",
-                              .plugin.core.info.name        = L"Storage mdbx plugin",
+                              .plugin.core.info.pid         = "f00e9e3d-0d5c-46e7-88b2-7d554ed2cb49",
+                              .plugin.core.info.name        = L"std_dbmdbx",
                               .plugin.core.info.developer   = L"SkyMaverick",
                               .plugin.core.info.description = L"System standart storage plugin (based on libmdbx).",
                               .plugin.core.info.copyright   = L"Zlib + ReOpenLDAP",

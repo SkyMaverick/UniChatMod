@@ -22,7 +22,7 @@ _curses_mtgetch()
 {
 
     char input = '\0';
-
+#ifdef UCM_OS_POSIX
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(STDIN_FILENO, &fds);
@@ -43,6 +43,7 @@ _curses_mtgetch()
             return '\0';
         }
     }
+#endif
     return input;
 }
 
@@ -168,10 +169,10 @@ static ucm_plugui_t plugin = {
             .options  = UCM_BUILD_OPTS,
             .flags    = UCM_BUILD_FLAGS,
         },
-    .core.info.pid         = "uicurses",
-    .core.info.name        = L"Ncurses TUI plugin",
+    .core.info.pid         = "c609b9d1-2965-4e1e-8639-91d5556115d9",
+    .core.info.name        = L"std_uicurses",
     .core.info.developer   = L"SkyMaverick",
-    .core.info.description = L"Console interface TUI plugin based on ncurses library",
+    .core.info.description = L"Console interface TUI plugin based on ncurses/pdcurses library",
     .core.info.copyright   = L"Zlib",
     .core.info.email       = L"mail@mail.ru",
     .core.info.website     = L"http://null.org",

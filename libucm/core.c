@@ -97,7 +97,7 @@ _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
     switch (id) {
     case UCM_SIG_DBLOAD_SUCCESS:
         if (x1 == UCM_RET_SUCCESS) {
-            ucm_dtrace("[EVENT] %s: %s\n", "Start database with plugin", U_PLUGIN(ctx)->info.pid);
+            ucm_dtrace("[EVENT] %s: %S\n", "Start database with plugin", U_PLUGIN(ctx)->info.name);
             for (int i = UCM_TYPE_PLUG_DB + 1; i <= UCM_TYPE_PLUG_STUFF; i++)
                 pmgr_group_run(i);
             UniAPI->app.mainloop_msg_send(UCM_SIG_LOAD_SUCCESS, 0, 0, 0);
@@ -221,8 +221,8 @@ static ucm_core_t kernel = {.base.oid             = UCM_TYPE_OBJECT_PLUGIN,
                                 },
                             .base.info.flags = UCM_FLAG_PLUG_LOGGED,
 
-                            .base.info.pid         = "ucm_core",
-                            .base.info.name        = L"UniChatMod core plugin",
+                            .base.info.pid         = "00000000-0000-0000-0000-000000000000",
+                            .base.info.name        = L"std_core",
                             .base.info.developer   = L"SkyMaverick",
                             .base.info.description = L"UniChatMod core library plugin",
                             .base.info.copyright   = L"Zlib",

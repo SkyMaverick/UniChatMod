@@ -1,6 +1,6 @@
 [paths]
 bindir='bin'
-libdir='bin'
+libdir='lib'
 datadir='data'
 localedir='locale'
 

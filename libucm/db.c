@@ -78,7 +78,7 @@ db_open(const char* aPath)
                 }
             }
         } else {
-            ucm_dtrace("%s: %s\n", (*plugins)->core.info.pid, "method db_open() not implemented");
+            ucm_dtrace("%s: %s\n", (*plugins)->core.info.name, "method db_open() not implemented");
         }
         plugins++;
     }

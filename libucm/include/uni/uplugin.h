@@ -54,9 +54,11 @@ typedef struct
 /*! Structure what defines base plugin interface*/
 typedef struct _ucm_plugin_s
 {
-    ucm_object_t oid; /// ucm system object identificator
+    ucm_object_t oid; /// ucm system class object identificator
 
-    ucm_plugin_info_t info;
+    ucm_plugin_info_t info; /// plugins description
+    ucm_uuid_t uuid;        /// plugins unique ID (UUID)
+
     UCM_RET(*run)
     (void);                /// activate plugin (with context for hot-plug) (required)
     UCM_RET (*stop)(void); /// deactivate plugin (required)

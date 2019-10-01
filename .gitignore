@@ -34,6 +34,7 @@ Makefile
 /Dockerfile
 stamp-h1
 libtool
+find.sh
 /cov-build/
 *.pyc
 *.CRD

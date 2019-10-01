@@ -62,10 +62,6 @@ static ucm_pmgr_t* UniPMgr = NULL;
 static UCM_RET
 plugin_verify(ucm_plugin_t* plugin)
 {
-    if (plugin->oid != UCM_TYPE_OBJECT_PLUGIN) {
-        return UCM_RET_PLUGIN_BADMODULE;
-    }
-
     if (plugin->info.api.vmajor != UCM_API_MAJOR_VER) {
         return UCM_RET_PLUGIN_BADVERSION;
     }
@@ -84,6 +80,17 @@ plugin_verify(ucm_plugin_t* plugin)
     if ((plugin->run == NULL) || (plugin->stop == NULL)) {
         return UCM_RET_PLUGIN_BADIFACE;
     }
+    return UCM_RET_SUCCESS;
+}
+
+static UCM_RET
+plugin_preload(ucm_plugin_t* plugin)
+{
+    plugin->oid = UCM_TYPE_OBJECT_PLUGIN;
+
+    if (UniAPI->sys.uuid_parse(plugin->info.pid, plugin->uuid) < 0)
+        return UCM_RET_PLUGIN_BADPID;
+
     return UCM_RET_SUCCESS;
 }
 
@@ -107,12 +114,18 @@ plugin_load(char* filename)
             // 3. Verfify plugin handle (check needed function)
             int ret_code = plugin_verify(plug);
             if (ret_code == UCM_RET_SUCCESS) {
-                // 4. Create module object
-                module = UniAPI->sys.zmalloc(sizeof(ucm_module_t));
-                if (module) {
-                    module->plugin = plug;
-                    module->handle = handle;
-                    return module;
+                // 4. Preload plugin operation
+                ret_code = plugin_preload(plug);
+                if (ret_code == UCM_RET_SUCCESS) {
+                    // 5. Create module object
+                    module = UniAPI->sys.zmalloc(sizeof(ucm_module_t));
+                    if (module) {
+                        module->plugin = plug;
+                        module->handle = handle;
+                        return module;
+                    }
+                } else {
+                    ucm_etrace("%s. %s\n", filename, UniAPI->sys.strerr(ret_code));
                 }
             } else {
                 ucm_etrace("%s. %s\n", filename, UniAPI->sys.strerr(ret_code));
@@ -218,7 +231,7 @@ pmgr_group_run(uint8_t sys)
                 U__REG(sys, idx) = tmp->plugin;
                 U__IDX(sys)++;
             } else {
-                ucm_etrace("%s - %s: %s\n", _("Broken"), tmp->plugin->info.pid,
+                ucm_etrace("%s - %s: %s\n", _("Broken"), tmp->plugin->info.name,
                            UniAPI->sys.strerr(err));
             }
         }

@@ -9,7 +9,7 @@
 
 const ucm_functions_t* app;
 
-static const ucm_plugin_t plugin;
+static ucm_plugin_t plugin;
 
 typedef struct
 {
@@ -78,8 +78,7 @@ _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
     UNUSED(x2);
 }
 
-static const ucm_plugin_t plugin = {
-    .oid         = UCM_TYPE_OBJECT_PLUGIN,
+static ucm_plugin_t plugin = {
     .info.api    = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
     .info.sys    = UCM_TYPE_PLUG_STUFF,
     .info.vmajor = UCM_VERSION_MAJOR,
@@ -95,8 +94,8 @@ static const ucm_plugin_t plugin = {
             .options  = UCM_BUILD_OPTS,
             .flags    = UCM_BUILD_FLAGS,
         },
-    .info.pid         = "txt_log",
-    .info.name        = L"Text logger",
+    .info.pid         = "3c123c1a-3fd2-4336-b947-452b511afcf7",
+    .info.name        = L"std_logtxt",
     .info.developer   = L"SkyMaverick",
     .info.description = L"Simple text file output logger",
     .info.copyright   = L"Zlib",
