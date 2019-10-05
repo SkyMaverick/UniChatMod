@@ -535,8 +535,12 @@ typedef struct MDBX_lockinfo {
   /* Marker to distinguish uniqueness of DB/CLK.*/
   volatile uint64_t mti_bait_uniqueness;
 
-  /* the hash of /proc/sys/kernel/random/boot_id or analogue */
-  volatile uint64_t mti_boot_id;
+  /* The analogue /proc/sys/kernel/random/boot_id or similar to determine
+   * whether the system was rebooted after the last use of the database files.
+   * If there was no reboot, but there is no need to rollback to the last
+   * steady sync point. Zeros mean that no relevant information is available
+   * from the system. */
+  volatile uint64_t mti_bootid[2];
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
 #ifdef MDBX_OSAL_LOCK
@@ -546,12 +550,10 @@ typedef struct MDBX_lockinfo {
 
   volatile txnid_t mti_oldest_reader;
 
-  /* Timestamp for auto-sync feature, i.e. the steady checkpoint should be
-   * created at the first commit that will be not early this timestamp.
-   * The time value is represented in a suitable system-dependent form, for
-   * example clock_gettime(CLOCK_BOOTTIME) or clock_gettime(CLOCK_MONOTONIC).
-   * Zero means timed auto-sync is not pending. */
-  volatile uint64_t mti_unsynced_timeout;
+  /* Timestamp of the last steady sync. Value is represented in a suitable
+   * system-dependent form, for example clock_gettime(CLOCK_BOOTTIME) or
+   * clock_gettime(CLOCK_MONOTONIC). */
+  volatile uint64_t mti_sync_timestamp;
 
   /* Number un-synced-with-disk pages for auto-sync feature. */
   volatile pgno_t mti_unsynced_pages;
@@ -935,7 +937,7 @@ struct MDBX_env {
   unsigned me_maxkey_limit; /* max size of a key */
   uint32_t me_live_reader;  /* have liveness lock in reader table */
   void *me_userctx;         /* User-settable context */
-  volatile uint64_t *me_unsynced_timeout;
+  volatile uint64_t *me_sync_timestamp;
   volatile uint64_t *me_autosync_period;
   volatile pgno_t *me_unsynced_pages;
   volatile pgno_t *me_autosync_threshold;
@@ -947,7 +949,7 @@ struct MDBX_env {
     MDBX_OSAL_LOCK wmutex;
 #endif
     txnid_t oldest;
-    uint64_t unsynced_timeout;
+    uint64_t sync_timestamp;
     uint64_t autosync_period;
     pgno_t autosync_pending;
     pgno_t autosync_threshold;
@@ -1241,30 +1243,26 @@ MDBX_INTERNAL_FUNC void mdbx_rthc_thread_dtor(void *ptr);
  * F_DUPDATA and F_SUBDATA can be combined giving duplicate data in
  * a sub-page/sub-database, and named databases (just F_SUBDATA). */
 typedef struct MDBX_node {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   union {
     struct {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-      union {
-        struct {
-          uint16_t mn_lo, mn_hi; /* part of data size or pgno */
-        };
-        uint32_t mn_dsize;
-      };
-      uint16_t mn_flags; /* see mdbx_node */
-      uint16_t mn_ksize; /* key size */
-#else
-      uint16_t mn_ksize; /* key size */
-      uint16_t mn_flags; /* see mdbx_node */
-      union {
-        struct {
-          uint16_t mn_hi, mn_lo; /* part of data size or pgno */
-        };
-        uint32_t mn_dsize;
-      };
-#endif
+      uint16_t mn_lo, mn_hi; /* part of data size or pgno */
     };
-    pgno_t mn_ksize_and_pgno;
+    uint32_t mn_dsize;
+    uint32_t mn_pgno32;
   };
+  uint16_t mn_flags; /* see mdbx_node */
+  uint16_t mn_ksize; /* key size */
+#else
+  uint16_t mn_ksize; /* key size */
+  uint16_t mn_flags; /* see mdbx_node */
+  union {
+    struct {
+      uint16_t mn_hi, mn_lo; /* part of data size or pgno */
+    };
+    uint32_t mn_dsize;
+  };
+#endif
 
 /* mdbx_node Flags */
 #define F_BIGDATA 0x01 /* data put on overflow page */

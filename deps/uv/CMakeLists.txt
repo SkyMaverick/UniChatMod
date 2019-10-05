@@ -1,6 +1,15 @@
 # TODO: determine CMAKE_SYSTEM_NAME on OS/390.  Currently assumes "OS/390".
-cmake_minimum_required(VERSION 2.8.12)
-project(libuv)
+cmake_minimum_required(VERSION 3.4)
+project(libuv LANGUAGES C)
+
+include(CMakePackageConfigHelpers)
+include(CMakeDependentOption)
+include(GNUInstallDirs)
+include(CTest)
+
+cmake_dependent_option(LIBUV_BUILD_TESTS
+  "Build the unit tests when BUILD_TESTING is enabled and we are the root project" ON
+  "BUILD_TESTING;CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF)
 
 if(MSVC)
   list(APPEND uv_cflags /W4)
@@ -363,9 +372,13 @@ target_compile_options(uv PRIVATE ${uv_cflags})
 target_include_directories(uv PUBLIC include PRIVATE src)
 target_link_libraries(uv ${uv_libraries})
 
-include(CTest)
-if(BUILD_TESTING AND libuv_buildtests)
-  enable_testing()
+add_library(uv_a STATIC ${uv_sources})
+target_compile_definitions(uv_a PRIVATE ${uv_defines})
+target_compile_options(uv_a PRIVATE ${uv_cflags})
+target_include_directories(uv_a PUBLIC include PRIVATE src)
+target_link_libraries(uv_a ${uv_libraries})
+
+if(LIBUV_BUILD_TESTS)
   add_executable(uv_run_tests ${uv_test_sources})
   target_compile_definitions(uv_run_tests
                              PRIVATE ${uv_defines} USING_UV_SHARED=1)
@@ -384,8 +397,25 @@ if(BUILD_TESTING AND libuv_buildtests)
 endif()
 
 if(UNIX)
-  include(GNUInstallDirs)
-endif()
+  # Now for some gibbering horrors from beyond the stars...
+  foreach(x ${uv_libraries})
+    set(LIBS "${LIBS} -l${x}")
+  endforeach(x)
+  file(STRINGS configure.ac configure_ac REGEX ^AC_INIT)
+  string(REGEX MATCH [0-9]+[.][0-9]+[.][0-9]+ PACKAGE_VERSION "${configure_ac}")
+  string(REGEX MATCH ^[0-9]+ UV_VERSION_MAJOR "${PACKAGE_VERSION}")
+  # The version in the filename is mirroring the behaviour of autotools.
+  set_target_properties(uv PROPERTIES VERSION ${UV_VERSION_MAJOR}.0.0
+				      SOVERSION ${UV_VERSION_MAJOR})
+  set(includedir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
+  set(libdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+  set(prefix ${CMAKE_INSTALL_PREFIX})
+  configure_file(libuv.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc @ONLY)
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(TARGETS uv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc
+          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+  install(TARGETS uv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS uv_a ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
