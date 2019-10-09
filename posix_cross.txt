@@ -4,6 +4,9 @@ datadir='data'
 libdir='lib'
 localedir='locale'
 
+[binaries]
+strip='/usr/bin/strip'
+
 [properties]
 name = 'Posix portable'
 description = 'Portable static build for POSIX-based system (Linux etc.)'

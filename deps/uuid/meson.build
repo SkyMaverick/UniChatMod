@@ -1,7 +1,10 @@
 project ('uuid', 'c',
          version: '1.0.3',
          license: 'BSD',
-         default_options:[
+         default_options : [
+            'c_std=gnu11',
+            'warning_level=2',
+            'b_lto=true',
          ],
          meson_version: '>=0.51')
 

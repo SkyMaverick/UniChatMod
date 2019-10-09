@@ -2,6 +2,9 @@ project ('ucl', 'c',
          version: '2.2.0',
          license: 'MIT',
          default_options:[
+            'c_std=gnu89',
+            'warning_level=2',
+            'b_lto=true',
          ],
          meson_version: '>=0.46')
 
@@ -40,8 +43,6 @@ cc_name = cc.get_id()
 if (cc_name == 'gcc') or (cc_name == 'clang')
     # Build on linux (or difffernt *nix) system
     cc_args = '''
-        -std=gnu89
-        -O2
         -Wno-unused-local-typedefs
     '''.split()
 

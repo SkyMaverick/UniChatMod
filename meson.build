@@ -2,8 +2,10 @@ project ('ucm', 'c',
          version: '0.1.3',
          license: 'Zlib',
          default_options:[
-#            'b_lto=true',
-            'b_colorout=always'
+            'c_std=gnu11',
+            'warning_level=2',
+            'b_lto=true',
+            'b_colorout=always',
          ],
          subproject_dir: 'deps',
          meson_version: '>=0.51')
@@ -37,24 +39,6 @@ endif
 
 if (ccid == 'gcc') or (ccid == 'clang')
     ucm_defs += '_XOPEN_SOURCE=700'
-    # --- compiler arguments ----------
-    ucm_cflags += '''
-        -std=gnu11
-        -Wall
-    '''.split()
-
-    if get_option('buildtype').startswith('debug')
-        ucm_cflags += '''
-                    -O0
-                    -g
-                  '''.split()
-    elif get_option('buildtype').startswith('release')
-        ucm_cflags += '''
-                    -O3
-                    -s
-                '''.split()
-    endif
-
     if get_option('create_with_hidden_api')
         ucm_cflags += '''
             -fvisibility=hidden
@@ -91,16 +75,21 @@ libs_rpath_plugin = ':'.join ([
 ])
 
 # --- install paths resolve ----------
-is_portable = meson.get_cross_property ('portable')
-if is_portable
-    install_path_app = get_option('prefix')
+if meson.is_cross_build()
+    is_portable = meson.get_cross_property ('portable')
+    if is_portable
+        install_path_app = get_option('prefix')
+    else
+        install_path_app = get_option('bindir')
+    endif
+
+    if osid == 'windows'
+        install_path_libs = get_option('bindir')
+    else
+        install_path_libs = get_option('libdir')
+    endif
 else
     install_path_app = get_option('bindir')
-endif
-
-if osid == 'windows'
-    install_path_libs = get_option('bindir')
-else
     install_path_libs = get_option('libdir')
 endif
 install_path_plugin = install_path_libs / 'plugs'

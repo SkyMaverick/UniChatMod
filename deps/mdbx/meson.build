@@ -2,6 +2,8 @@ project ('mdbx', 'c',
          version: '0.3.1.0',
          license: 'ReOpenLDAP',
          default_options:[
+            'c_std=gnu11',
+            'warning_level=2',
             'b_lto=true',
             'b_colorout=always'
          ],
@@ -72,7 +74,6 @@ if (ccid == 'msvc')
 else
     c_args += '''
         -Wno-unknown-pragmas
-        -Wextra
         -fexceptions
         -funwind-tables
         -fno-omit-frame-pointer
@@ -81,7 +82,6 @@ else
         -fvisibility=hidden
         -march=native
         -Og
-        -Wall
         -Ominimal
         -ffunction-sections -fdata-sections
         -ffast-math
