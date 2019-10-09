@@ -45,6 +45,7 @@ app_args_parse(int argc, char* argv[], ucm_cargs_t* args)
             break;
         case 'V':
             set_flag(FLAG_APP_TERMINATED);
+            break;
         case 'r':
             args->options |= UCM_FLAG_MODE_READONLY;
             break;

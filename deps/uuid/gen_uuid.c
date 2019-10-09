@@ -252,6 +252,9 @@ static int get_node_id(unsigned char *node_id)
 	}
 	close(sd);
 #endif
+
+    (void) node_id; // unused variable (-Wextra)
+
 	return 0;
 }
 
@@ -438,6 +441,10 @@ fail:
 #else /* !defined(HAVE_UUIDD) && defined(HAVE_SYS_UN_H) */
 static int get_uuid_via_daemon(int op, uuid_t out, int *num)
 {
+    (void) op; // unused variable (-Wextra)
+    (void) out; // unused variable (-Wextra)
+    (void) num; // unused variable (-Wextra)
+
 	return -1;
 }
 #endif

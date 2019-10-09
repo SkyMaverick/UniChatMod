@@ -31,6 +31,7 @@ int
 osal_thread_detach(uintptr_t tid)
 {
     // TODO
+    UNUSED(tid);
     return 0;
 }
 

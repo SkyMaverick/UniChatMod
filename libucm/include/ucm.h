@@ -234,23 +234,21 @@ extern "C"
 
     // ******* LOAD FUNCTIONS ************
 
-    LIBUCM_API const ucm_functions_t* ucm_core_start(ucm_cargs_t* args);
+    LIBUCM_API ucm_functions_t* ucm_core_start(ucm_cargs_t* args);
 
     LIBUCM_API UCM_RET ucm_core_stop(void);
 
-    LIBUCM_API const size_t ucm_core_info(uint8_t mode, void* mem, size_t mem_size,
-                                          ucm_cargs_t* args);
+    LIBUCM_API size_t ucm_core_info(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args);
 
     // ******* DYNAMIC LOAD FUNCTIONS ***********
 
-    typedef const ucm_functions_t* (*ucm_cstart_func)(ucm_cargs_t* args);
+    typedef ucm_functions_t* (*ucm_cstart_func)(ucm_cargs_t* args);
 #define UCM_START_FUNC "ucm_core_start"
 
     typedef UCM_RET (*ucm_cstop_func)(void);
 #define UCM_STOP_FUNC "ucm_core_stop"
 
-    typedef const size_t (*ucm_cinfo_func)(uint8_t mode, void* mem, size_t mem_size,
-                                           ucm_cargs_t* args);
+    typedef size_t (*ucm_cinfo_func)(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args);
 #define UCM_INFO_FUNC "ucm_core_info"
 
 #undef UCM_DEPRECATED

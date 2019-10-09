@@ -20,7 +20,7 @@ extern ucm_cstart_func core_start;
 extern ucm_cstop_func core_stop;
 extern ucm_cinfo_func core_info;
 
-const bool
+bool
 get_flag(const app_flag_t flag);
 void
 set_flag(const app_flag_t flag);

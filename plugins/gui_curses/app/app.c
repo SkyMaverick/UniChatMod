@@ -55,7 +55,7 @@ static ucm_plugin_info_t* info;
 
 static uint32_t global_flags = 0;
 
-const bool
+bool
 get_flag(const app_flag_t flag)
 {
     return (global_flags & flag);
@@ -74,6 +74,12 @@ unset_flag(const app_flag_t flag)
 void
 event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 {
+    UNUSED(eid);
+    UNUSED(ev);
+    UNUSED(x1);
+    UNUSED(x2);
+    UNUSED(ctx);
+    
     fprintf(stdout, "[%s] %s\n", TUI_APP_NAME, _("Working hook LOAD_SUCCESS"));
 
     ucm_signal_t* sig = core->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
@@ -123,6 +129,8 @@ TermHandler(DWORD fwdHandlerType)
 static void
 _stack_trace(int sig)
 {
+    UNUSED (sig);
+
     fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch SEGV signal ..."));
     void* buf[STACK_TRACE_BUFFER];
     char** strs;
@@ -154,6 +162,8 @@ _crash_handler(int sig)
 static void
 _term_handler(int sig)
 {
+    UNUSED (sig);
+    
     fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch TERM signal ..."));
     exit_func(UCM_RET_SUCCESS);
 }

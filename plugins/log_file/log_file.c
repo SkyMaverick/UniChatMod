@@ -24,6 +24,10 @@ static logfile_t flog;
 static void
 cb_logger_function(ucm_plugin_t* plugin, uint32_t type, const char* txt, void* ctx)
 {
+    UNUSED (plugin);
+    UNUSED (type);
+    UNUSED (ctx);
+
     size_t len = strlen(txt);
 
     uv_buf_t buffer = app->uv.buf_init((char*)txt, len);

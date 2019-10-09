@@ -188,7 +188,7 @@ core_unload(void)
     EXTERANAL FUNCTIONS
  ***************************************************/
 
-const uintptr_t
+uintptr_t
 get_loop_handle(int loop)
 {
     switch (loop) {

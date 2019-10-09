@@ -25,6 +25,7 @@ __log_cmp_helper(const MDBX_val* a, const MDBX_val* b)
 static void
 cb_mdbx_timer(uv_timer_t* timer)
 {
+    UNUSED (timer);
     mdbx_db_flush(true);
 }
 

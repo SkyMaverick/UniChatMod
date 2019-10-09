@@ -47,7 +47,7 @@ _prepare_args(const ucm_cargs_t* args)
     return 1;
 }
 
-LIBUCM_API const ucm_functions_t*
+LIBUCM_API ucm_functions_t*
 ucm_core_start(ucm_cargs_t* args)
 {
     if (!_prepare_args(args))
@@ -74,6 +74,7 @@ ucm_core_stop(void)
 static size_t
 handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args)
 {
+    UNUSED (args);
     size_t needed = sizeof(ucm_plugin_info_t);
     if (mem) {
         if (mem_size < needed)
@@ -86,6 +87,9 @@ handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args)
 static size_t
 handle_info_plug(void* mem, size_t mem_size, ucm_cargs_t* args)
 {
+    UNUSED(mem);
+    UNUSED(mem_size);
+    UNUSED(args);
     //    compat_layer_init ();
     //    size_t count = plugins_load_registry (UniAPI->app.get_plugins_path());
     //
@@ -111,7 +115,7 @@ handle_info_plug(void* mem, size_t mem_size, ucm_cargs_t* args)
     return 0;
 }
 
-LIBUCM_API const size_t
+LIBUCM_API size_t
 ucm_core_info(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args)
 {
     if (!_prepare_args(args))

@@ -12,5 +12,5 @@ core_load(void);
 UCM_RET
 core_unload(void);
 
-const uintptr_t
+uintptr_t
 get_loop_handle(int loop);
