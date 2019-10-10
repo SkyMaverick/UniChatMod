@@ -12,7 +12,7 @@ cmake_dependent_option(LIBUV_BUILD_TESTS
   "BUILD_TESTING;CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF)
 
 if(MSVC)
-  list(APPEND uv_cflags /W4)
+  list(APPEND uv_cflags /W4 /wd4996)
 elseif(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang|GNU")
   list(APPEND uv_cflags -fvisibility=hidden --std=gnu89)
   list(APPEND uv_cflags -Wall -Wextra -Wstrict-prototypes)
