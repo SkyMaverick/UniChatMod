@@ -56,7 +56,6 @@ if (ccid == 'msvc')
         /WX
     '''.split()
     ld_args += '''
-        /INCREMENTAL
     '''.split()
     ld_deps += '''
         ntdll

@@ -58,9 +58,9 @@ _intrnl_u32strncpy(ucm_wstr_t dest, ucm_wstr_t src, ucm_wchr_t echr, size_t num)
     ret - pointer for decoded USC4 buffer */
 
 int64_t
-u8_decode_ucs4(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret)
+u8_decode_ucs4(ucm_str_t str, const size_t str_len, ucm_wstr_t* ret)
 {
-    int64_t buf_len    = 0;
+    ssize_t buf_len    = 0;
     const int infinite = (str_len > 0) ? 0 : UTF8PROC_NULLTERM;
 
     if (str) {
@@ -75,7 +75,7 @@ u8_decode_ucs4(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret)
         *ret = UniAPI->sys.zmalloc((buf_len + 1) * UCMSZ_WCHR);
         if (*ret) {
             for (;;) {
-                int64_t dec_len = 0;
+                ssize_t dec_len = 0;
                 dec_len =
                   utf8proc_decompose((utf8proc_uint8_t*)str, str_len, (utf8proc_int32_t*)*ret,
                                      buf_len, UTF8PROC_DECOMPOSE | UTF8PROC_STABLE | infinite);
@@ -106,11 +106,11 @@ u8_decode_ucs4(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret)
 }
 
 int64_t
-ucs4_encode_u8(ucm_wstr_t str, const int64_t str_len, ucm_str_t* ret)
+ucs4_encode_u8(ucm_wstr_t str, const size_t str_len, ucm_str_t* ret)
 {
-    int64_t enc_len = 0;
+    size_t enc_len = 0;
     if (str && *ret) {
-        int64_t buf_size = 0;
+        size_t buf_size = 0;
         if (str_len > 0) {
             buf_size = str_len;
         } else {
@@ -439,11 +439,11 @@ int64_t
 ucm_strstr(ucm_wstr_t str, ucm_wstr_t sstr)
 {
     if (str && sstr) {
-        int64_t i, j, N, M;
+        size_t i, j, N, M;
         N = _intrnl_u32strlen(str);
         M = _intrnl_u32strlen(sstr);
 
-        int64_t* d = UniAPI->sys.zmalloc(M * sizeof(int64_t));
+        size_t* d = UniAPI->sys.zmalloc(M * sizeof(int64_t));
 
         // prefix function
         for (i = 1, j = 0; i < M; i++) {
@@ -475,11 +475,11 @@ ucm_strcasestr(ucm_wstr_t str, ucm_wstr_t sstr)
 {
 #define __U8LCASE(X) utf8proc_tolower(X)
     if (str && sstr) {
-        int64_t i, j, N, M;
+        size_t i, j, N, M;
         N = _intrnl_u32strlen(str);
         M = _intrnl_u32strlen(sstr);
 
-        int64_t* d = UniAPI->sys.zmalloc(M * sizeof(int64_t));
+        size_t* d = UniAPI->sys.zmalloc(M * sizeof(int64_t));
 
         // prefix function
         for (i = 1, j = 0; i < M; i++) {

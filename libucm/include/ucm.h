@@ -103,8 +103,8 @@ extern "C"
 
             int (*fs_fcreate)(const char* path);
             /* Unicode operations. USC4 and convertors */
-            int64_t (*str2wstr)(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret);
-            int64_t (*wstr2str)(ucm_wstr_t str, const int64_t str_len, ucm_str_t* ret);
+            int64_t (*str2wstr)(ucm_str_t str, const size_t str_len, ucm_wstr_t* ret);
+            int64_t (*wstr2str)(ucm_wstr_t str, const size_t str_len, ucm_str_t* ret);
             size_t (*ustrlen)(ucm_wstr_t str);
             ucm_wstr_t (*ustrdup)(ucm_wstr_t str);
             int (*ustrcmp)(ucm_wstr_t lstr, ucm_wstr_t rstr);
@@ -143,7 +143,7 @@ extern "C"
             void (*terminate)(uintptr_t ctx, uint32_t x1, uint32_t x2);
             void (*wait_exit)(void);
             uintptr_t (*get_loop)(int loop);
-            int (*get_flag)(unsigned code);
+            int (*get_flag)(uint64_t code);
 
             /*! low-level settings provider functions */
             int (*get_int)(ucm_object_t* obj, char* key, int def);

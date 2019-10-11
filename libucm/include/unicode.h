@@ -7,10 +7,10 @@
 #include <stdarg.h>
 
 int64_t
-u8_decode_ucs4(ucm_str_t str, const int64_t str_len, ucm_wstr_t* ret);
+u8_decode_ucs4(ucm_str_t str, const size_t str_len, ucm_wstr_t* ret);
 
 int64_t
-ucs4_encode_u8(ucm_wstr_t str, const int64_t str_len, ucm_str_t* ret);
+ucs4_encode_u8(ucm_wstr_t str, const size_t str_len, ucm_str_t* ret);
 
 size_t
 ucm_strlen(ucm_wstr_t str);
