@@ -74,7 +74,7 @@ ucm_core_stop(void)
 static size_t
 handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args)
 {
-    UNUSED (args);
+    UNUSED(args);
     size_t needed = sizeof(ucm_plugin_info_t);
     if (mem) {
         if (mem_size < needed)

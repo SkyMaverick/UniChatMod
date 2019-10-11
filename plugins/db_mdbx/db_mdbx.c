@@ -58,7 +58,7 @@ _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 static ucm_dbval_t*
 get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* defVal)
 {
-    UNUSED (contact);
+    UNUSED(contact);
     if (setting == NULL) {
         trace_dbg("%s\n", "Settings name must not empty");
         return NULL;
@@ -86,9 +86,9 @@ get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_db
 static UCM_RET
 set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* value)
 {
-    UNUSED (contact);
-    UNUSED (value);
-    
+    UNUSED(contact);
+    UNUSED(value);
+
     if (setting == NULL) {
         return UCM_RET_UNKNOWERROR;
     }
