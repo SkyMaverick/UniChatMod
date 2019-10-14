@@ -49,6 +49,15 @@
 #   define MDBX_INTERNAL_VAR extern
 #endif /* MDBX_ALLOY */
 
+#ifndef MDBX_DISABLE_GNU_SOURCE
+#define MDBX_DISABLE_GNU_SOURCE 0
+#endif
+#if MDBX_DISABLE_GNU_SOURCE
+#undef _GNU_SOURCE
+#elif defined(__linux__) || defined(__gnu_linux__)
+#define _GNU_SOURCE
+#endif
+
 /*----------------------------------------------------------------------------*/
 
 /* Should be defined before any includes */
@@ -390,8 +399,7 @@ typedef struct MDBX_meta {
  * in the snapshot: Either used by a database or listed in a freeDB record. */
 typedef struct MDBX_page {
   union {
-    struct MDBX_page *mp_next; /* for in-memory list of freed pages,
-                                * must be first field, see NEXT_LOOSE_PAGE */
+    struct MDBX_page *mp_next; /* for in-memory list of freed pages */
     uint64_t mp_validator;     /* checksum of page content or a txnid during
                                 * which the page has been updated */
   };
@@ -612,7 +620,7 @@ typedef struct MDBX_lockinfo {
  * pressure from other processes is high. So until OSs have
  * actual paging support for Huge pages, they're not viable. */
 #define MAX_PAGESIZE 0x10000u
-#define MIN_PAGESIZE 512u
+#define MIN_PAGESIZE 256u
 
 #define MIN_MAPSIZE (MIN_PAGESIZE * MIN_PAGENO)
 #if defined(_WIN32) || defined(_WIN64)
@@ -649,7 +657,7 @@ typedef pgno_t *MDBX_PNL;
 #define MDBX_PNL_DISORDERED(first, last) ((first) <= (last))
 #endif
 
-/* List of txnid, only for MDBX_env.mt_lifo_reclaimed */
+/* List of txnid, only for MDBX_txn.tw.lifo_reclaimed */
 typedef txnid_t *MDBX_TXL;
 
 /* An Dirty-Page list item is an pgno/pointer pair. */
@@ -738,31 +746,42 @@ struct MDBX_txn {
    * aborts, the ID may be re-used by the next writer. */
   txnid_t mt_txnid;
   MDBX_env *mt_env; /* the DB environment */
-                    /* The list of reclaimed txns from freeDB */
-  MDBX_TXL mt_lifo_reclaimed;
-  /* The list of pages that became unused during this transaction. */
-  MDBX_PNL mt_retired_pages;
-  /* The list of loose pages that became unused and may be reused
-   * in this transaction, linked through NEXT_LOOSE_PAGE(page). */
-  MDBX_page *mt_loose_pages;
-  /* Number of loose pages (mt_loose_pages) */
-  unsigned mt_loose_count;
-  /* The sorted list of dirty pages we temporarily wrote to disk
-   * because the dirty list was full. page numbers in here are
-   * shifted left by 1, deleted slots have the LSB set. */
-  MDBX_PNL mt_spill_pages;
-  union {
-    /* For write txns: Modified pages. Sorted when not MDBX_WRITEMAP. */
-    MDBX_DPL mt_rw_dirtylist;
-    /* For read txns: This thread/txn's reader table slot, or NULL. */
-    MDBX_reader *mt_ro_reader;
-  };
   /* Array of records for each DB known in the environment. */
   MDBX_dbx *mt_dbxs;
   /* Array of MDBX_db records for each known DB */
   MDBX_db *mt_dbs;
   /* Array of sequence numbers for each DB handle */
   unsigned *mt_dbiseqs;
+  union {
+    struct {
+      /* For read txns: This thread/txn's reader table slot, or NULL. */
+      MDBX_reader *reader;
+    } to;
+    struct {
+      /* The list of reclaimed txns from GC */
+      MDBX_TXL lifo_reclaimed;
+      /* The list of pages that became unused during this transaction. */
+      MDBX_PNL retired_pages;
+      /* The list of loose pages that became unused and may be reused
+       * in this transaction, linked through NEXT_LOOSE_PAGE(page). */
+      MDBX_page *loose_pages;
+      /* Number of loose pages (tw.loose_pages) */
+      unsigned loose_count;
+      /* The sorted list of dirty pages we temporarily wrote to disk
+       * because the dirty list was full. page numbers in here are
+       * shifted left by 1, deleted slots have the LSB set. */
+      MDBX_PNL spill_pages;
+      /* dirtylist room: Array size - dirty pages visible to this txn.
+       * Includes ancestor txns' dirty pages not hidden by other txns'
+       * dirty/spilled pages. Thus commit(nested txn) has room to merge
+       * dirtylist into mt_parent after freeing hidden mt_parent pages. */
+      unsigned dirtyroom;
+      /* For write txns: Modified pages. Sorted when not MDBX_WRITEMAP. */
+      MDBX_DPL dirtylist;
+      pgno_t *reclaimed_pglist; /* Reclaimed freeDB pages */
+      txnid_t last_reclaimed;   /* ID of last used record */
+    } tw;
+  };
 
 /* Transaction DB Flags */
 #define DB_DIRTY MDBX_TBL_DIRTY /* DB was written in this txn */
@@ -772,6 +791,7 @@ struct MDBX_txn {
 #define DB_VALID 0x10           /* DB handle is valid, see also MDBX_VALID */
 #define DB_USRVALID 0x20        /* As DB_VALID, but not set for FREE_DBI */
 #define DB_DUPDATA 0x40         /* DB is MDBX_DUPSORT data */
+#define DB_AUDITED 0x80         /* Internal flag for accounting during audit */
   /* In write txns, array of cursors for each DB */
   MDBX_cursor **mt_cursors;
   /* Array of flags for each DB */
@@ -780,11 +800,6 @@ struct MDBX_txn {
    * This number only ever increments until the txn finishes; we
    * don't decrement it when individual DB handles are closed. */
   MDBX_dbi mt_numdbs;
-  /* dirtylist room: Array size - dirty pages visible to this txn.
-   * Includes ancestor txns' dirty pages not hidden by other txns'
-   * dirty/spilled pages. Thus commit(nested txn) has room to merge
-   * dirtylist into mt_parent after freeing hidden mt_parent pages. */
-  unsigned mt_dirtyroom;
   size_t mt_owner; /* thread ID that owns this transaction */
   mdbx_canary mt_canary;
 };
@@ -833,7 +848,7 @@ struct MDBX_cursor {
 #define C_DEL 0x08                /* last op was a cursor_del */
 #define C_UNTRACK 0x10            /* Un-track cursor when closing */
 #define C_RECLAIMING 0x20         /* FreeDB lookup is prohibited */
-#define C_GCFREEZE 0x40           /* me_reclaimed_pglist must not be updated */
+#define C_GCFREEZE 0x40           /* reclaimed_pglist must not be updated */
   unsigned mc_flags;              /* see mdbx_cursor */
   MDBX_page *mc_pg[CURSOR_STACK]; /* stack of pushed pages */
   indx_t mc_ki[CURSOR_STACK];     /* stack of page indices */
@@ -873,13 +888,6 @@ typedef struct MDBX_cursor_couple {
     if ((xr_node->mn_flags & (F_DUPDATA | F_SUBDATA)) == F_DUPDATA)            \
       (mc)->mc_xcursor->mx_cursor.mc_pg[0] = NODEDATA(xr_node);                \
   } while (0)
-
-/* State of FreeDB old pages, stored in the MDBX_env */
-typedef struct MDBX_pgstate {
-  pgno_t *mf_reclaimed_pglist; /* Reclaimed freeDB pages, or NULL before use */
-  txnid_t mf_last_reclaimed;   /* ID of last used record, or 0 if
-                                  !mf_reclaimed_pglist */
-} MDBX_pgstate;
 
 /* The database environment. */
 struct MDBX_env {
@@ -922,11 +930,8 @@ struct MDBX_env {
   uint16_t *me_dbflags;        /* array of flags from MDBX_db.md_flags */
   unsigned *me_dbiseqs;        /* array of dbi sequence numbers */
   volatile txnid_t *me_oldest; /* ID of oldest reader last time we looked */
-  MDBX_pgstate me_pgstate;     /* state of old pages from freeDB */
-#define me_last_reclaimed me_pgstate.mf_last_reclaimed
-#define me_reclaimed_pglist me_pgstate.mf_reclaimed_pglist
-  MDBX_page *me_dpages; /* list of malloc'd blocks for re-use */
-                        /* PNL of pages that became unused in a write txn */
+  MDBX_page *me_dpages;        /* list of malloc'd blocks for re-use */
+  /* PNL of pages that became unused in a write txn */
   MDBX_PNL me_retired_pages;
   /* MDBX_DP of pages written during a write txn. Length MDBX_DPL_TXNFULL. */
   MDBX_DPL me_dirtylist;
@@ -959,8 +964,11 @@ struct MDBX_env {
 #if MDBX_DEBUG
   MDBX_assert_func *me_assert_func; /*  Callback for assertion failures */
 #endif
-#ifdef USE_VALGRIND
+#ifdef MDBX_USE_VALGRIND
   int me_valgrind_handle;
+#endif
+#if defined(MDBX_USE_VALGRIND) || defined(__SANITIZE_ADDRESS__)
+  pgno_t me_poison_edge;
 #endif
   MDBX_env *me_lcklist_next;
 
@@ -980,12 +988,6 @@ struct MDBX_env {
   mdbx_fastmutex_t me_remap_guard;
 #endif
 };
-
-/* Nested transaction */
-typedef struct MDBX_ntxn {
-  MDBX_txn mnt_txn;         /* the transaction */
-  MDBX_pgstate mnt_pgstate; /* parent transaction's saved freestate */
-} MDBX_ntxn;
 
 /*----------------------------------------------------------------------------*/
 /* Debug and Logging stuff */
@@ -1224,10 +1226,6 @@ MDBX_INTERNAL_FUNC void mdbx_rthc_thread_dtor(void *ptr);
 
 /* The number of overflow pages needed to store the given size. */
 #define OVPAGES(env, size) (bytes2pgno(env, PAGEHDRSZ - 1 + (size)) + 1)
-
-/* Link in MDBX_txn.mt_loose_pages list.
- * Kept outside the page header, which is needed when reusing the page. */
-#define NEXT_LOOSE_PAGE(p) (*(MDBX_page **)((p) + 2))
 
 /* Header for a single key/data pair within a page.
  * Used in pages of type P_BRANCH and P_LEAF without P_LEAF2.

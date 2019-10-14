@@ -28,6 +28,7 @@
 /* POSIX */
 #mesondefine01 MDBX_USE_ROBUST
 #mesondefine01 MDBX_USE_OFDLOCKS
+#mesondefine01 MDBX_DISABLE_GNU_SOURCE
 
 /* Build Info */
 #mesondefine MDBX_BUILD_TIMESTAMP
