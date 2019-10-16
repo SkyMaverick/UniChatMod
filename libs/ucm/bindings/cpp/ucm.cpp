@@ -6,16 +6,16 @@ UCMAppDestroyer::~UCMAppDestroyer()
 }
 
 void
-UCMAppDestroyer::initialize(UCMAppAbstract* app)
+UCMAppDestroyer::initialize(UCMAppObject* app)
 {
     mInstance = app;
 }
 
-UCMAppAbstract&
-UCMAppAbstract::get_instance()
+UCMAppObject&
+UCMAppObject::get_instance()
 {
     if (!mInstance) {
-        mInstance = new UCMAppAbstract();
+        mInstance = new UCMAppObject();
         destroyer.initialize(mInstance);
     }
     return *mInstance;

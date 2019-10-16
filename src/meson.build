@@ -8,8 +8,9 @@ tuiapp_src = files('''
     osal.c
 '''.split()) + shared_headers
 
+tuiapp_dep = [libucm_depends]
 if not (target_machine.system() == 'windows')
-    tuiapp_dep = [
+    tuiapp_dep += [
         system_library_dynload,
         system_dependencies
     ]
@@ -18,14 +19,13 @@ else
         getopt_win.h
     '''.split())
 
-    tuiapp_dep = [
+    tuiapp_dep += [
         system_dependencies
     ]
 endif
 
 tuiapp = executable (tuiapp_name,
              tuiapp_src,
-             include_directories: libs_inc,
              dependencies: tuiapp_dep,
              build_rpath: libs_rpath,
              install_rpath: libs_rpath,

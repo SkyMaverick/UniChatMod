@@ -1,2 +1,0 @@
-subdir('app')
-#subdir('plugin')

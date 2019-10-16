@@ -1,80 +1,3 @@
-libucm_src = files('''
-    api.c
-    core.c
-    cpentupd.c
-    db.c
-    errors.h
-    evhook.c
-    flags.c
-    mainloop.c
-    logger.c
-    mqueue.c
-    plugmgr.c
-    ucm.c
-    unicode.c
-'''.split())
-
-osal_src = []
-foreach src : '''
-        osal-dynlib.c
-        osal-dynlib.h
-        osal-fs.c
-        osal-fs.h
-        osal-intrnl.h
-        osal-memory.c
-        osal-memory.h
-        osal-threading.c
-        osal-threading.h
-        osal-uuid.c
-        osal-uuid.h
-      '''.split()
-    osal_src += 'osal' / src
-endforeach
-
-libucm_src += osal_src
-
-libucm_deps = [
-    system_library_dynload,
-    system_library_uv
-]
-
-# add utf8proc dependency
-if not get_option('custom_libs')
-    u8dep = cc.find_library('utf8proc', required: false)
-    if not u8dep.found()
-        cmake = import ('cmake')
-        u8proc_lib = cmake.subproject('utf8proc',
-                 cmake_options: [
-                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
-                 ])
-        u8dep = u8proc_lib.dependency('utf8proc')
-    endif
-else
-        cmake = import ('cmake')
-        u8proc_lib = cmake.subproject('utf8proc',
-                 cmake_options: [
-                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
-                 ])
-        u8dep = u8proc_lib.dependency('utf8proc')
-endif
-libucm_deps += u8dep
-
-# add utf8proc dependency
-if not (ccid == 'msvc')
-    if not get_option('custom_libs')
-        uuid_dep = cc.find_library('uuid', required: false)
-        if not uuid_dep.found()
-            uuid_sp = subproject('uuid')
-            uuid_dep = uuid_sp.get_variable('libuuid')
-        endif
-    else
-            uuid_sp = subproject('uuid')
-            uuid_dep = uuid_sp.get_variable('libuuid')
-    endif
-    libucm_deps += uuid_dep
-endif
-
-
 # split project version for move to config.h
 libucm_version = meson.project_version().split('.')
 libucm_commit = ''
@@ -112,6 +35,121 @@ libucm_version_full = '@0@_@1@_@2@'.format (
                             meson.project_version(),
                             libucm_commit,
                             libucm_time)
+
+libucm_inc = [
+    include_directories ('.'), 
+    include_directories ('.'/'include'), 
+    include_directories ('.'/'osal')
+]
+#################################################################################
+#    LibUCM dependencies resolve
+#################################################################################
+
+libucm_deps = [
+    system_library_dynload
+]
+
+# add libuv dependency
+if not get_option('custom_libs')
+    system_library_uv = cc.find_library('uv', required: false)
+    if not system_library_uv.found()
+        cmake = import ('cmake')
+        uv_lib = cmake.subproject('uv',
+                 cmake_options: [
+                     '='.join (['-DBUILD_TESTING','OFF']),
+                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
+                 ])
+        libucm_inc += uv_lib.include_directories('uv')
+        system_library_uv = uv_lib.dependency('uv')
+    endif
+else
+        cmake = import ('cmake')
+        uv_lib = cmake.subproject('uv',
+                 cmake_options: [
+                     '='.join (['-DBUILD_TESTING','OFF']),
+                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
+                 ])
+        libucm_inc += uv_lib.include_directories('uv')
+        system_library_uv = uv_lib.dependency('uv')
+endif
+libucm_deps += system_library_uv
+
+# add utf8proc dependency
+if not get_option('custom_libs')
+    u8dep = cc.find_library('utf8proc', required: false)
+    if not u8dep.found()
+        cmake = import ('cmake')
+        u8proc_lib = cmake.subproject('utf8proc',
+                 cmake_options: [
+                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
+                 ])
+        u8dep = u8proc_lib.dependency('utf8proc')
+    endif
+else
+        cmake = import ('cmake')
+        u8proc_lib = cmake.subproject('utf8proc',
+                 cmake_options: [
+                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
+                 ])
+        u8dep = u8proc_lib.dependency('utf8proc')
+endif
+libucm_deps += u8dep
+
+# add uuid dependency
+if not (ccid == 'msvc')
+    if not get_option('custom_libs')
+        uuid_dep = cc.find_library('uuid', required: false)
+        if not uuid_dep.found()
+            uuid_sp = subproject('uuid')
+            uuid_dep = uuid_sp.get_variable('libuuid')
+        endif
+    else
+            uuid_sp = subproject('uuid')
+            uuid_dep = uuid_sp.get_variable('libuuid')
+    endif
+    libucm_deps += uuid_dep
+endif
+
+#################################################################################
+#    LibUCM core library build
+#################################################################################
+
+libucm_src = files('''
+    api.c
+    core.c
+    cpentupd.c
+    db.c
+    errors.h
+    evhook.c
+    flags.c
+    mainloop.c
+    logger.c
+    mqueue.c
+    plugmgr.c
+    ucm.c
+    unicode.c
+'''.split())
+
+osal_src = []
+foreach src : '''
+        osal-dynlib.c
+        osal-dynlib.h
+        osal-fs.c
+        osal-fs.h
+        osal-intrnl.h
+        osal-memory.c
+        osal-memory.h
+        osal-threading.c
+        osal-threading.h
+        osal-uuid.c
+        osal-uuid.h
+      '''.split()
+    osal_src += 'osal' / src
+endforeach
+
+libucm_src += osal_src
+
+
 
 libucm_conf = configuration_data()
 
@@ -168,14 +206,21 @@ install_headers (libucm_part_headers,
 libucm = shared_library (meson.project_name(),
                           libucm_src,
                           dependencies: libucm_deps,
-                          include_directories: libs_inc,
+                          include_directories: libucm_inc,
                           build_rpath: libs_rpath,
                           install_rpath: libs_rpath,
                           install: true)
 libucma = static_library (meson.project_name(),
                           libucm_src,
                           dependencies: libucm_deps,
-                          include_directories: libs_inc,
+                          include_directories: libucm_inc,
                           build_rpath: libs_rpath,
                           install: false)
 
+libucm_depends = declare_dependency (
+            include_directories: libucm_inc,
+        )
+libucm_link_depends = declare_dependency (
+            link_with: libucma,
+            include_directories: libucm_inc
+        )

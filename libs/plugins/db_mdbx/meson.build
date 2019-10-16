@@ -8,7 +8,8 @@ db_mdbx_src = files('''
 '''.split()) + shared_headers
 
 db_mdbx_dep = [
-    system_dependencies
+    system_dependencies,
+    libucm_depends
 ]
 
 if not get_option('custom_libs')
@@ -26,9 +27,7 @@ db_mdbx_dep += mdbx_dep
 lib_db_mdbx = shared_library(plug_name,
                              db_mdbx_src,
                              dependencies: db_mdbx_dep,
-                             include_directories: libs_inc,
                              build_rpath: libs_rpath_plugin,
                              install_rpath: libs_rpath_plugin,
                              install_dir: install_path_plugin,
-                             install: true
-                             )
+                             install: true )

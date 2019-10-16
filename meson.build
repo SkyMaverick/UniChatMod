@@ -3,7 +3,7 @@ project ('ucm', 'c',
          license: 'Zlib',
          default_options:[
             'c_std=gnu11',
-            'warning_level=2',
+            'warning_level=0',
             'b_lto=true',
             'b_colorout=always',
          ],
@@ -57,13 +57,6 @@ else
     error ('Don\'t support build with compiler: @0@. Use GCC on *nix or MSVC on Windows'.format(cc.get_id()))
 endif
 # --- Add all switches in project command line -----------
-libs_inc = [
-    include_directories('.'),
-    include_directories('.'/'libucm'),
-    include_directories('.'/'libucm'/'include'),
-    include_directories('.'/'libucm'/'osal')
-]
-
 libs_rpath = ':'.join ([
     '$ORIGIN'/'.',
     '$ORIGIN'/'lib', '.',
@@ -105,34 +98,6 @@ endif
 system_dependencies = []
 shared_headers = []
 
-# add libuv dependency
-if not get_option('custom_libs')
-    system_library_uv = cc.find_library('uv', required: false)
-    if not system_library_uv.found()
-        cmake = import ('cmake')
-        uv_lib = cmake.subproject('uv',
-                 cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF']),
-                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
-                 ])
-        libs_inc += uv_lib.include_directories('uv')
-        system_library_uv = uv_lib.dependency('uv')
-
-        ucm_defs += 'ENABLE_CUSTOM_LIBS'
-    endif
-else
-        cmake = import ('cmake')
-        uv_lib = cmake.subproject('uv',
-                 cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF']),
-                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
-                 ])
-        libs_inc += uv_lib.include_directories('uv')
-        system_library_uv = uv_lib.dependency('uv')
-
-        ucm_defs += 'ENABLE_CUSTOM_LIBS'
-endif
-
 foreach item : ucm_cflags
     if cc.has_argument (item)
         add_project_arguments (item, language: 'c')
@@ -153,10 +118,9 @@ foreach item : ucm_defs
 endforeach
 
 # --- walk in subdirs ----------
-subdir('libucm')
-
-if get_option('create_with_plugins')
-    subdir('plugins')
+subdir('libs')
+if get_option ('create_with_startup')
+    subdir ('src')
 endif
 
 if get_option('create_with_tests')

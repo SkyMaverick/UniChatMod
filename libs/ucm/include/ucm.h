@@ -12,7 +12,7 @@
 #include <time.h>
 #include <wchar.h>
 
-#ifndef STRICT_ASINC_API
+#ifndef WITH_CLIENT_API
     #if defined(ENABLE_CUSTOM_LIBS)
         #include "uv.h"
     #else
@@ -45,7 +45,7 @@ extern "C"
 #include "uni/uprotocols.h" // protocol plugins functionality
 #include "uni/ugui.h"       // GUI plugin functionality
 
-#ifndef STRICT_ASINC_API
+#ifndef WITH_CLIENT_API
     #include "uni/uuvapi.h" // libuv callbacks
 #endif
 
@@ -202,7 +202,7 @@ extern "C"
             UCM_RET (*ucm_send_message)(void); // TODO
             UCM_RET (*ucm_recv_message)(void); // TODO
         } app;
-#ifndef STRICT_ASINC_API
+#ifndef WITH_CLIENT_API
         ucm_uv_t uv;
 #endif
     } ucm_functions_t;
