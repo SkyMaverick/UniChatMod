@@ -12,15 +12,15 @@ db_mdbx_dep = [
     libucm_depends
 ]
 
+mdbx_dep = disabler()
 if not get_option('custom_libs')
-    mdbx_dep = cc.find_library('mdbx', required: false)
+    mdbx_dep = dependency ('libmdbx', version: '>=0.31', required: false)
     if not mdbx_dep.found()
-        libmdbx = subproject('mdbx')
-        mdbx_dep = libmdbx.get_variable('libmdbx')
+        mdbx_dep = cc.find_library('mdbx', required: false)
     endif
-else
-    libmdbx = subproject('mdbx')
-    mdbx_dep = libmdbx.get_variable('libmdbx')
+endif
+if not mdbx_dep.found()
+    mdbx_dep = subproject('mdbx').get_variable('libmdbx')
 endif
 db_mdbx_dep += mdbx_dep
 

@@ -12,14 +12,6 @@
 #include <time.h>
 #include <wchar.h>
 
-#ifndef WITH_CLIENT_API
-    #if defined(ENABLE_CUSTOM_LIBS)
-        #include "uv.h"
-    #else
-        #include <uv.h>
-    #endif
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {

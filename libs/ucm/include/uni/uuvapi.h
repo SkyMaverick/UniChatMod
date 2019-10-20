@@ -1,5 +1,11 @@
 #pragma once
 
+#if defined(ENABLE_CUSTOM_LIBS)
+    #include "uv.h"
+#else
+    #include <uv.h>
+#endif
+
 typedef struct
 {
     unsigned int (*version)(void);

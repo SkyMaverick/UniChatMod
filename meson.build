@@ -8,7 +8,7 @@ project ('ucm', 'c',
             'b_colorout=always',
          ],
          subproject_dir: 'deps',
-         meson_version: '>=0.51')
+         meson_version: '>=0.52')
 
 message ('Build configuration - @0@'.format(get_option('buildtype')))
 
@@ -35,6 +35,9 @@ if get_option('create_with_hidden_api')
 endif
 if get_option('valgrind_support')
     ucm_defs += 'ENABLE_VALGRIND'
+endif
+if get_option('custom_libs')
+    ucm_defs += 'ENABLE_CUSTOM_LIBS'
 endif
 
 if (ccid == 'gcc') or (ccid == 'clang')

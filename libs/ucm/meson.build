@@ -49,66 +49,83 @@ libucm_deps = [
     system_library_dynload
 ]
 
-# add libuv dependency
-if not get_option('custom_libs')
-    system_library_uv = cc.find_library('uv', required: false)
-    if not system_library_uv.found()
-        cmake = import ('cmake')
-        uv_lib = cmake.subproject('uv',
-                 cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF']),
-                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
-                 ])
-        libucm_inc += uv_lib.include_directories('uv')
-        system_library_uv = uv_lib.dependency('uv')
-    endif
-else
-        cmake = import ('cmake')
-        uv_lib = cmake.subproject('uv',
-                 cmake_options: [
-                     '='.join (['-DBUILD_TESTING','OFF']),
-                     '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
-                 ])
-        libucm_inc += uv_lib.include_directories('uv')
-        system_library_uv = uv_lib.dependency('uv')
-endif
-libucm_deps += system_library_uv
+libucm_deps_matrix = {
+# *** LIBUV dependency ********************
+    'uv' : {
+        'name' : 'libuv',
+        'version': ' >= 1.18.0',
+        'type' : 'cmake',
+        'blcc': [],
+        'blos': [],
 
-# add utf8proc dependency
-if not get_option('custom_libs')
-    u8dep = cc.find_library('utf8proc', required: false)
-    if not u8dep.found()
-        cmake = import ('cmake')
-        u8proc_lib = cmake.subproject('utf8proc',
-                 cmake_options: [
-                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
-                 ])
-        u8dep = u8proc_lib.dependency('utf8proc')
-    endif
-else
-        cmake = import ('cmake')
-        u8proc_lib = cmake.subproject('utf8proc',
-                 cmake_options: [
-                     '='.join (['-DBUILD_SHARED_LIBS','ON'])
-                 ])
-        u8dep = u8proc_lib.dependency('utf8proc')
-endif
-libucm_deps += u8dep
+        'cmake' : {
+            'depend' : 'uv',
+            'opts': [
+                        '='.join (['-DBUILD_TESTING','OFF']),
+                        '='.join (['-DCMAKE_INSTALL_INCLUDEDIR', get_option('includedir')])
+                    ]
+        }
 
-# add uuid dependency
-if not (ccid == 'msvc')
+    },
+# *** LIBUTF8PROC dependency ********************
+    'utf8proc' : {
+        'name' : 'utf8proc2',
+        'version': ' >= 2.0.0',
+        'type' : 'cmake',
+        'blcc': [],
+        'blos': [],
+
+        'cmake' : {
+            'depend' : 'utf8proc',
+            'opts': [
+                        '='.join (['-DBUILD_SHARED_LIBS','ON'])
+                    ]
+        }
+
+    },
+# *** LIBUUID dependency ********************
+    'uuid' : {
+        'name' : 'uuid',
+        'version': '>= 2.31',
+        'blcc': ['msvc'],
+        'blos': [],
+        
+        'type' : 'meson',
+        'meson' : {
+            'depend' : 'libuuid'
+        }
+    }
+}
+
+foreach lib, opts : libucm_deps_matrix
+    if ccid in opts.get('blcc')
+        message ('This compilator (@0@) block for this dependency'.format(ccid))
+        continue
+    endif
+    if osid in opts.get('blos')
+        message ('This operation system (@0@) don\'t need  this dependency'.format(osid))
+        continue
+    endif
+
+    dep = disabler ()
     if not get_option('custom_libs')
-        uuid_dep = cc.find_library('uuid', required: false)
-        if not uuid_dep.found()
-            uuid_sp = subproject('uuid')
-            uuid_dep = uuid_sp.get_variable('libuuid')
+        dep = dependency (opts.get('name'), version: opts.get('version'), required: false,
+                not_found_message: 'Don\'t found dependency. Try @0@ for found library, but not guaranteed it correct version'.format(ccid))
+        if not dep.found()
+            dep = cc.find_library (lib, required: false)
         endif
-    else
-            uuid_sp = subproject('uuid')
-            uuid_dep = uuid_sp.get_variable('libuuid')
     endif
-    libucm_deps += uuid_dep
-endif
+    if not dep.found()
+        if opts.get('type') == 'meson'
+            dep = subproject(lib).get_variable(opts.get('meson').get('depend'))
+        elif opts.get('type') == 'cmake'
+            dep = import ('cmake').subproject (lib, cmake_options: opts.get('cmake').get('opts')).dependency (opts.get('cmake').get('depend'))
+        else
+            error ('Dependency @0@ invalide define').format(lib)
+        endif
+    endif
+    libucm_deps += dep
+endforeach
 
 #################################################################################
 #    LibUCM core library build
@@ -166,7 +183,7 @@ libucm_conf.set_quoted ('build_commit'    , libucm_commit)
 libucm_conf.set_quoted ('build_time'      , libucm_time)
 libucm_conf.set_quoted ('build_target'    , '@0@_@1@'.format(target_machine.cpu(), target_machine.system()))
 libucm_conf.set_quoted ('build_cc'        , '@0@_@1@'.format(cc.get_id(), cc.version()))
-libucm_conf.set_quoted ('build_opts'      , '')#TODO compiler options
+libucm_conf.set_quoted ('build_opts'      , '') #TODO compiler options
 libucm_conf.set_quoted ('build_flags'     , '') #TODO compiler flags
 libucm_conf.set        ('mq_size'         , get_option('message_queue_size'))
 libucm_conf.set        ('session_count'   , get_option('session_count'))
@@ -219,8 +236,10 @@ libucma = static_library (meson.project_name(),
 
 libucm_depends = declare_dependency (
             include_directories: libucm_inc,
+            dependencies: libucm_deps
         )
 libucm_link_depends = declare_dependency (
             link_with: libucma,
-            include_directories: libucm_inc
+            include_directories: libucm_inc,
+            dependencies: libucm_deps
         )

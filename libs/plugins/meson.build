@@ -12,7 +12,8 @@ p_matrix = {
 p_matrix_exp = {
     'uno'       : '''
          net_uc2
-        '''.split(),
+         gui_sdl2
+         '''.split(),
     'linux'     : '''
         '''.split(),
     'windows'   : '''
