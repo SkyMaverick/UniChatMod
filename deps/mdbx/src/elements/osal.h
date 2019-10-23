@@ -74,6 +74,14 @@
     defined(__BSD__) || defined(__NETBSD__) || defined(__bsdi__) ||            \
     defined(__DragonFly__) || defined(__APPLE__) || defined(__MACH__)
 #include <sys/cdefs.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#include <vm/vm_param.h>
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
+#include <uvm/uvm_param.h>
+#endif
+#include <sys/vmmeter.h>
 #else
 #include <malloc.h>
 #ifndef _POSIX_C_SOURCE
@@ -85,11 +93,23 @@
 #endif
 #endif /* !xBSD */
 
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || __has_include(<malloc_np.h>)
+#include <malloc_np.h>
+#endif
+
 #if defined(__APPLE__) || defined(__MACH__) || __has_include(<malloc/malloc.h>)
 #include <malloc/malloc.h>
 #endif /* MacOS */
 
+#if defined(__MACH__)
+#include <mach/host_info.h>
+#include <mach/mach_host.h>
+#include <mach/mach_port.h>
+#undef P_DIRTY
+#endif
+
 #if defined(__linux__) || defined(__gnu_linux__)
+#include <linux/sysctl.h>
 #include <sys/sendfile.h>
 #endif /* Linux */
 
@@ -866,83 +886,6 @@ MDBX_INTERNAL_VAR MDBX_DiscardVirtualMemory mdbx_DiscardVirtualMemory;
 #else
 #error FIXME atomic-ops
 #endif
-
-static __maybe_unused __inline uint32_t mdbx_atomic_add32(volatile uint32_t *p,
-                                                          uint32_t v) {
-#if !defined(__cplusplus) && defined(ATOMIC_VAR_INIT)
-  assert(atomic_is_lock_free(p));
-  return atomic_fetch_add((_Atomic uint32_t *)p, v);
-#elif defined(__GNUC__) || defined(__clang__)
-  return __sync_fetch_and_add(p, v);
-#else
-#ifdef _MSC_VER
-  STATIC_ASSERT(sizeof(volatile long) == sizeof(volatile uint32_t));
-  return _InterlockedExchangeAdd((volatile long *)p, v);
-#endif
-#ifdef __APPLE__
-  return OSAtomicAdd32(v, (volatile int32_t *)p);
-#endif
-#endif
-}
-
-static __maybe_unused __inline uint64_t mdbx_atomic_add64(volatile uint64_t *p,
-                                                          uint64_t v) {
-#if !defined(__cplusplus) && defined(ATOMIC_VAR_INIT)
-  assert(atomic_is_lock_free(p));
-  return atomic_fetch_add((_Atomic uint64_t *)p, v);
-#elif defined(__GNUC__) || defined(__clang__)
-  return __sync_fetch_and_add(p, v);
-#else
-#ifdef _MSC_VER
-#ifdef _WIN64
-  return _InterlockedExchangeAdd64((volatile int64_t *)p, v);
-#else
-  return InterlockedExchangeAdd64((volatile int64_t *)p, v);
-#endif
-#endif /* _MSC_VER */
-#ifdef __APPLE__
-  return OSAtomicAdd64(v, (volatile int64_t *)p);
-#endif
-#endif
-}
-
-#define mdbx_atomic_sub32(p, v) mdbx_atomic_add32(p, 0 - (v))
-#define mdbx_atomic_sub64(p, v) mdbx_atomic_add64(p, 0 - (v))
-
-static __maybe_unused __inline bool
-mdbx_atomic_compare_and_swap32(volatile uint32_t *p, uint32_t c, uint32_t v) {
-#if !defined(__cplusplus) && defined(ATOMIC_VAR_INIT)
-  assert(atomic_is_lock_free(p));
-  return atomic_compare_exchange_strong((_Atomic uint32_t *)p, &c, v);
-#elif defined(__GNUC__) || defined(__clang__)
-  return __sync_bool_compare_and_swap(p, c, v);
-#else
-#ifdef _MSC_VER
-  STATIC_ASSERT(sizeof(volatile long) == sizeof(volatile uint32_t));
-  return c == _InterlockedCompareExchange((volatile long *)p, v, c);
-#endif
-#ifdef __APPLE__
-  return c == OSAtomicCompareAndSwap32Barrier(c, v, (volatile int32_t *)p);
-#endif
-#endif
-}
-
-static __maybe_unused __inline bool
-mdbx_atomic_compare_and_swap64(volatile uint64_t *p, uint64_t c, uint64_t v) {
-#if !defined(__cplusplus) && defined(ATOMIC_VAR_INIT)
-  assert(atomic_is_lock_free(p));
-  return atomic_compare_exchange_strong((_Atomic uint64_t *)p, &c, v);
-#elif defined(__GNUC__) || defined(__clang__)
-  return __sync_bool_compare_and_swap(p, c, v);
-#else
-#ifdef _MSC_VER
-  return c == _InterlockedCompareExchange64((volatile int64_t *)p, v, c);
-#endif
-#ifdef __APPLE__
-  return c == OSAtomicCompareAndSwap64Barrier(c, v, (volatile uint64_t *)p);
-#endif
-#endif
-}
 
 /*----------------------------------------------------------------------------*/
 

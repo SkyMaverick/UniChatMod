@@ -168,7 +168,39 @@
 #else
 #define MDBX_64BIT_ATOMIC 0
 #endif
+#define MDBX_64BIT_ATOMIC_CONFIG "AUTO=" STRINGIFY(MDBX_64BIT_ATOMIC)
+#else
+#define MDBX_64BIT_ATOMIC_CONFIG STRINGIFY(MDBX_64BIT_ATOMIC)
 #endif /* MDBX_64BIT_ATOMIC */
+
+#ifndef MDBX_64BIT_CAS
+#if defined(ATOMIC_LLONG_LOCK_FREE)
+#if ATOMIC_LLONG_LOCK_FREE > 1
+#define MDBX_64BIT_CAS 1
+#else
+#define MDBX_64BIT_CAS 0
+#endif
+#elif defined(__GCC_ATOMIC_LLONG_LOCK_FREE)
+#if __GCC_ATOMIC_LLONG_LOCK_FREE > 1
+#define MDBX_64BIT_CAS 1
+#else
+#define MDBX_64BIT_CAS 0
+#endif
+#elif defined(__CLANG_ATOMIC_LLONG_LOCK_FREE)
+#if __CLANG_ATOMIC_LLONG_LOCK_FREE > 1
+#define MDBX_64BIT_CAS 1
+#else
+#define MDBX_64BIT_CAS 0
+#endif
+#elif defined(_MSC_VER) || defined(__APPLE__)
+#define MDBX_64BIT_CAS 1
+#else
+#define MDBX_64BIT_CAS MDBX_64BIT_ATOMIC
+#endif
+#define MDBX_64BIT_CAS_CONFIG "AUTO=" STRINGIFY(MDBX_64BIT_CAS)
+#else
+#define MDBX_64BIT_CAS_CONFIG STRINGIFY(MDBX_64BIT_CAS)
+#endif /* MDBX_64BIT_CAS */
 
 /* Some platforms define the EOWNERDEAD error code even though they
  *  don't support Robust Mutexes. Compile with -DMDBX_USE_ROBUST=0. */
@@ -216,6 +248,8 @@
 #define MDBX_TXN_CHECKPID_CONFIG MDBX_TXN_CHECKPID
 #endif /* MDBX_TXN_CHECKPID */
 
+/* Controls checking transaction owner thread against misuse transactions from
+ * other threads. */
 #ifndef MDBX_TXN_CHECKOWNER
 #define MDBX_TXN_CHECKOWNER 1
 #endif /* MDBX_TXN_CHECKOWNER */
@@ -278,6 +312,15 @@ typedef uint32_t pgno_t;
 typedef uint64_t txnid_t;
 #define PRIaTXN PRIi64
 #define MIN_TXNID UINT64_C(1)
+/* LY: for testing non-atomic 64-bit txnid on 32-bit arches.
+ * #define MDBX_TXNID_STEP (UINT32_MAX / 3) */
+#ifndef MDBX_TXNID_STEP
+#if MDBX_64BIT_CAS
+#define MDBX_TXNID_STEP 1u
+#else
+#define MDBX_TXNID_STEP 2u
+#endif
+#endif /* MDBX_TXNID_STEP */
 
 /* Used for offsets within a single page.
  * Since memory pages are typically 4 or 8KB in size, 12-13 bits,
@@ -294,7 +337,7 @@ typedef union mdbx_safe64 {
   volatile uint64_t inconsistent;
 #if MDBX_64BIT_ATOMIC
   volatile uint64_t atomic;
-#else
+#endif /* MDBX_64BIT_ATOMIC */
   struct {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     volatile uint32_t low;
@@ -306,7 +349,6 @@ typedef union mdbx_safe64 {
 #error "FIXME: Unsupported byte order"
 #endif /* __BYTE_ORDER__ */
   };
-#endif /* MDBX_64BIT_ATOMIC */
 } mdbx_safe64_t;
 
 #define SAFE64_INVALID_THRESHOLD UINT64_C(0xffffFFFF00000000)
@@ -396,7 +438,7 @@ typedef struct MDBX_meta {
  * P_META pages contain MDBX_meta, the start point of an MDBX snapshot.
  *
  * Each non-metapage up to MDBX_meta.mm_last_pg is reachable exactly once
- * in the snapshot: Either used by a database or listed in a freeDB record. */
+ * in the snapshot: Either used by a database or listed in a GC record. */
 typedef struct MDBX_page {
   union {
     struct MDBX_page *mp_next; /* for in-memory list of freed pages */
@@ -664,7 +706,7 @@ typedef txnid_t *MDBX_TXL;
 typedef union MDBX_DP {
   struct {
     pgno_t pgno;
-    void *ptr;
+    MDBX_page *ptr;
   };
   struct {
     unsigned sorted;
@@ -697,6 +739,14 @@ typedef MDBX_DP *MDBX_DPL;
 #define MDBX_PNL_LAST(pl) ((pl)[MDBX_PNL_SIZE(pl)])
 #define MDBX_PNL_BEGIN(pl) (&(pl)[1])
 #define MDBX_PNL_END(pl) (&(pl)[MDBX_PNL_SIZE(pl) + 1])
+
+#if MDBX_PNL_ASCENDING
+#define MDBX_PNL_LEAST(pl) MDBX_PNL_FIRST(pl)
+#define MDBX_PNL_MOST(pl) MDBX_PNL_LAST(pl)
+#else
+#define MDBX_PNL_LEAST(pl) MDBX_PNL_LAST(pl)
+#define MDBX_PNL_MOST(pl) MDBX_PNL_FIRST(pl)
+#endif
 
 #define MDBX_PNL_SIZEOF(pl) ((MDBX_PNL_SIZE(pl) + 1) * sizeof(pgno_t))
 #define MDBX_PNL_IS_EMPTY(pl) (MDBX_PNL_SIZE(pl) == 0)
@@ -752,36 +802,6 @@ struct MDBX_txn {
   MDBX_db *mt_dbs;
   /* Array of sequence numbers for each DB handle */
   unsigned *mt_dbiseqs;
-  union {
-    struct {
-      /* For read txns: This thread/txn's reader table slot, or NULL. */
-      MDBX_reader *reader;
-    } to;
-    struct {
-      /* The list of reclaimed txns from GC */
-      MDBX_TXL lifo_reclaimed;
-      /* The list of pages that became unused during this transaction. */
-      MDBX_PNL retired_pages;
-      /* The list of loose pages that became unused and may be reused
-       * in this transaction, linked through NEXT_LOOSE_PAGE(page). */
-      MDBX_page *loose_pages;
-      /* Number of loose pages (tw.loose_pages) */
-      unsigned loose_count;
-      /* The sorted list of dirty pages we temporarily wrote to disk
-       * because the dirty list was full. page numbers in here are
-       * shifted left by 1, deleted slots have the LSB set. */
-      MDBX_PNL spill_pages;
-      /* dirtylist room: Array size - dirty pages visible to this txn.
-       * Includes ancestor txns' dirty pages not hidden by other txns'
-       * dirty/spilled pages. Thus commit(nested txn) has room to merge
-       * dirtylist into mt_parent after freeing hidden mt_parent pages. */
-      unsigned dirtyroom;
-      /* For write txns: Modified pages. Sorted when not MDBX_WRITEMAP. */
-      MDBX_DPL dirtylist;
-      pgno_t *reclaimed_pglist; /* Reclaimed freeDB pages */
-      txnid_t last_reclaimed;   /* ID of last used record */
-    } tw;
-  };
 
 /* Transaction DB Flags */
 #define DB_DIRTY MDBX_TBL_DIRTY /* DB was written in this txn */
@@ -802,6 +822,43 @@ struct MDBX_txn {
   MDBX_dbi mt_numdbs;
   size_t mt_owner; /* thread ID that owns this transaction */
   mdbx_canary mt_canary;
+
+  union {
+    struct {
+      /* For read txns: This thread/txn's reader table slot, or NULL. */
+      MDBX_reader *reader;
+    } to;
+    struct {
+      pgno_t *reclaimed_pglist; /* Reclaimed GC pages */
+      txnid_t last_reclaimed;   /* ID of last used record */
+      pgno_t loose_refund_wl /* FIXME: describe */;
+      /* dirtylist room: Dirty array size - dirty pages visible to this txn.
+       * Includes ancestor txns' dirty pages not hidden by other txns'
+       * dirty/spilled pages. Thus commit(nested txn) has room to merge
+       * dirtylist into mt_parent after freeing hidden mt_parent pages. */
+      unsigned dirtyroom;
+      /* For write txns: Modified pages. Sorted when not MDBX_WRITEMAP. */
+      MDBX_DPL dirtylist;
+      /* The list of reclaimed txns from GC */
+      MDBX_TXL lifo_reclaimed;
+      /* The list of pages that became unused during this transaction. */
+      MDBX_PNL retired_pages;
+      /* The list of loose pages that became unused and may be reused
+       * in this transaction, linked through `mp_next`. */
+      MDBX_page *loose_pages;
+      /* Number of loose pages (tw.loose_pages) */
+      unsigned loose_count;
+      /* Number of retired to parent pages (tw.retired2parent_pages) */
+      unsigned retired2parent_count;
+      /* The list of parent's txn dirty pages that retired (became unused)
+       * in this transaction, linked through `mp_next`. */
+      MDBX_page *retired2parent_pages;
+      /* The sorted list of dirty pages we temporarily wrote to disk
+       * because the dirty list was full. page numbers in here are
+       * shifted left by 1, deleted slots have the LSB set. */
+      MDBX_PNL spill_pages;
+    } tw;
+  };
 };
 
 /* Enough space for 2^32 nodes with minimum of 2 keys per node. I.e., plenty.
@@ -847,7 +904,7 @@ struct MDBX_cursor {
 #define C_SUB 0x04                /* Cursor is a sub-cursor */
 #define C_DEL 0x08                /* last op was a cursor_del */
 #define C_UNTRACK 0x10            /* Un-track cursor when closing */
-#define C_RECLAIMING 0x20         /* FreeDB lookup is prohibited */
+#define C_RECLAIMING 0x20         /* GC lookup is prohibited */
 #define C_GCFREEZE 0x40           /* reclaimed_pglist must not be updated */
   unsigned mc_flags;              /* see mdbx_cursor */
   MDBX_page *mc_pg[CURSOR_STACK]; /* stack of pushed pages */
@@ -1255,10 +1312,11 @@ typedef struct MDBX_node {
   uint16_t mn_ksize; /* key size */
   uint16_t mn_flags; /* see mdbx_node */
   union {
+    uint32_t mn_pgno32;
+    uint32_t mn_dsize;
     struct {
       uint16_t mn_hi, mn_lo; /* part of data size or pgno */
     };
-    uint32_t mn_dsize;
   };
 #endif
 
