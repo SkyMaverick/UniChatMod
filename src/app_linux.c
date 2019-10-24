@@ -1,10 +1,7 @@
 #include "app.h"
+#include "tui.h"
 
-#if defined(UCM_OS_POSIX) || defined(UCM_OS_WINEMULATOR)
 static void* core_handle;
-#else
-static HMODULE core_handle;
-#endif
 
 static char pa_buf[UCM_PATH_MAX];
 static char pla_buf[UCM_PATH_MAX];
@@ -37,6 +34,8 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 
     fprintf(stdout, "[%s] %s\n", APP_NAME, _("Working hook LOAD_SUCCESS"));
 
+    curses_start();
+    
     ucm_signal_t* sig = ucm_api->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
     if (sig) {
         snprintf(U_SIGNAL_GUI(sig)->pid, UCM_PID_MAX, "%s", "uicurses");
@@ -48,6 +47,8 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 static void
 exit_func(int ret_status)
 {
+    curses_finish();
+
     if (info)
         free(info);
 
@@ -168,7 +169,7 @@ main(int argc, char* argv[])
 
     if (get_flag(FLAG_APP_TERMINATED))
         return ret_status;
-    
+
     ret_status = load_core_library(&args, event_load_hook);
     if (ret_status != UCM_RET_SYSTEM_DLERROR)
         exit_func (ret_status);

@@ -1,4 +1,5 @@
 app_name = 'ucm'
+
 app_src = files('''
     app.c
     flags.c
@@ -9,7 +10,13 @@ app_src = files('''
     osal.c
 '''.split()) + shared_headers
 
+app_src += files ('''
+   curses/tui.c
+   curses/tui.h
+'''.split())
+
 app_dep = [libucm_depends]
+app_inc = include_directories ('.', './curses')
 
 if get_option ('create_with_console_gui')
     if (osid == 'windows')
@@ -21,6 +28,7 @@ if get_option ('create_with_console_gui')
                      dependencies   : app_dep + app_dep_con,
                      build_rpath    : libs_rpath,
                      install_rpath  : libs_rpath,
+                     include_directories: app_inc,
                      install        : true,
                      install_dir    : install_path_app)
     else
@@ -50,5 +58,6 @@ app = executable (app_name,
              dependencies   : app_dep,
              build_rpath    : libs_rpath,
              install_rpath  : libs_rpath,
+             include_directories: app_inc,
              install        : true,
              install_dir    : install_path_app)
