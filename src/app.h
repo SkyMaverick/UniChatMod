@@ -1,6 +1,9 @@
 #pragma once
 
 #define APP_NAME "ucmc"
+
+#define ONLY_WITH_CLIENT_API 1
+
 #include "config.h"
 #include "ucm.h"
 
