@@ -32,9 +32,9 @@ enum
 enum
 {
     UCM_FLAG_TERMINATE = 0,
-    UCM_FLAG_ROPROF    = 60,
-    UCM_FLAG_NEWPROF   = 61,
-    UCM_FLAG_CHECKPROF = 62
+    UCM_FLAG_ROPROF    = 1 << 0,
+    UCM_FLAG_NEWPROF   = 1 << 1,
+    UCM_FLAG_CHECKPROF = 1 << 2
 };
 
 enum
