@@ -4,7 +4,7 @@ project ('ucm', 'c',
          default_options:[
             'c_std=gnu11',
             'warning_level=0',
-            'b_lto=true',
+#            'b_lto=true',
             'b_colorout=always',
          ],
          subproject_dir: 'deps',

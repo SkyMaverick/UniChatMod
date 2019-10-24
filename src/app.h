@@ -1,28 +1,24 @@
 #pragma once
 
-#define TUI_APP_NAME "ucmc"
-
+#define APP_NAME "ucmc"
 #include "config.h"
 #include "ucm.h"
 
+#include "gettext.h"
+#include "osal.h"
+#include "cmdline.h"
+#include "flags.h"
+
 #include <stdbool.h>
 
-typedef enum
-{
-    FLAG_APP_PORTABLE      = 1 << 0,
-    FLAG_APP_PORTABLE_BASE = 1 << 1,
-    FLAG_APP_TERMINATED    = 1 << 2
-} app_flag_t;
+#if defined(UCM_OS_POSIX)
+    #define LIBCORE_NAME "libucm.so"
+#else
+    #define LIBCORE_NAME "ucm.dll"
+#endif
+#define LIBCORE_API_MAJVER 1
+#define LIBCORE_API_MINVER 1
 
-extern const ucm_functions_t* core;
+#define STACK_TRACE_BUFFER 4096
 
-extern ucm_cstart_func core_start;
-extern ucm_cstop_func core_stop;
-extern ucm_cinfo_func core_info;
-
-bool
-get_flag(const app_flag_t flag);
-void
-set_flag(const app_flag_t flag);
-void
-unset_flag(const app_flag_t flag);
+extern const ucm_functions_t* ucm_api;

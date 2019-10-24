@@ -39,3 +39,5 @@ typedef struct
     ucm_event_t header;
     ucm_str_t data;
 } ucm_message_t;
+
+typedef void (*cb_evhook)(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx);

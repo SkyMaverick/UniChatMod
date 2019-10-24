@@ -1,34 +1,54 @@
-tuiapp_name = 'ucmc'
-tuiapp_src = files('''
+app_name = 'ucm'
+app_src = files('''
     app.c
-    app.h
-    argcmd.c
-    argcmd.h
+    flags.c
+    flags.h
+    cmdline.c
+    cmdline.h
     osal.h
     osal.c
 '''.split()) + shared_headers
 
-tuiapp_dep = [libucm_depends]
-if not (target_machine.system() == 'windows')
-    tuiapp_dep += [
-        system_library_dynload,
-        system_dependencies
-    ]
-else
-    tuiapp_src += files ('''
-        getopt_win.h
-    '''.split())
+app_dep = [libucm_depends]
 
-    tuiapp_dep += [
-        system_dependencies
-    ]
+if get_option ('create_with_console_gui')
+    if (osid == 'windows')
+        app_dep_con += subproject('pdcurses').get_variable('pdcurses_dep')
+        add_project_arguments ('-DWIN_CONSOLE_APP', language: 'c')
+
+        app_con = executable (''.join([app_name,'c']),
+                     app_src,
+                     dependencies   : app_dep + app_dep_con,
+                     build_rpath    : libs_rpath,
+                     install_rpath  : libs_rpath,
+                     install        : true,
+                     install_dir    : install_path_app)
+    else
+        app_dep_matrix = {
+            'curses' : {
+                'name'      : 'ncurses',
+                'version'   : '>=6.0.0',
+            },
+            'panel' : {
+                'name'      : 'panel',
+                'version'   : '>=6.0.0',
+            }
+        }
+        foreach lib, opts : app_dep_matrix
+            curses_dep = dependency (opts.get('name'), version: opts.get('version'), required: false,
+                    not_found_message: 'Don\'t found dependency. Try @0@ for found library, but not guaranteed it correct version'.format(ccid))
+            if not curses_dep.found()
+                curses_dep = cc.find_library (lib, required: true)
+            endif
+            app_dep += curses_dep
+        endforeach
+    endif
 endif
 
-tuiapp = executable (tuiapp_name,
-             tuiapp_src,
-             dependencies: tuiapp_dep,
-             build_rpath: libs_rpath,
-             install_rpath: libs_rpath,
-             install: true,
-             install_dir: install_path_app
-         )
+app = executable (app_name,
+             app_src,
+             dependencies   : app_dep,
+             build_rpath    : libs_rpath,
+             install_rpath  : libs_rpath,
+             install        : true,
+             install_dir    : install_path_app)

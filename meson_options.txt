@@ -45,6 +45,8 @@ option ('create_with_full_commit', type: 'boolean', value: 'true',
 
 option ('create_with_gui', type: 'boolean', value: 'true',
         description: 'build standart gui')
+option ('create_with_console_gui', type: 'boolean', value: 'true',
+        description: 'build standart console gui on windows')
 option ('auto_generate_icons', type: 'boolean', value: 'false',
         description: 'create all icons set automaticaly or each size manual')
 option ('valgrind_support', type: 'boolean', value: 'true',
