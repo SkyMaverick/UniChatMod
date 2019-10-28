@@ -7,14 +7,12 @@
 #include <unistd.h>
 
 void
-CUnitUInitialize(void)
-{
+CUnitUInitialize(void) {
     CU_cleanup_registry();
 }
 
 void
-CUnitInitialize(void)
-{
+CUnitInitialize(void) {
     if (CU_initialize_registry() != CUE_SUCCESS) {
         fprintf(stderr, "Failed initialize CUnit registry: %d\n", CU_get_error());
         exit(1);
@@ -22,22 +20,19 @@ CUnitInitialize(void)
 }
 
 static int
-initSuite(void)
-{
+initSuite(void) {
     return 0;
 }
 
 static int
-cleanSuite(void)
-{
+cleanSuite(void) {
     return 0;
 }
 
 CU_pSuite
-CUnitCreateSuite(const char* title)
-{
+CUnitCreateSuite(const char* title) {
     CU_pSuite suite = NULL;
-    suite           = CU_add_suite(title, initSuite, cleanSuite);
+    suite = CU_add_suite(title, initSuite, cleanSuite);
     if (suite == NULL) {
         CU_cleanup_registry();
         return NULL;

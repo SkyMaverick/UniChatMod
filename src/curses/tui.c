@@ -6,8 +6,7 @@
 static npc_window_t* win_main;
 
 static UCM_RET
-_curses_init(void)
-{
+_curses_init(void) {
     int ret_status = UCM_RET_SUCCESS;
 
     win_main = ucm_api->sys.zmalloc(NPC_MEMNEED_WINDOW);
@@ -39,8 +38,7 @@ _curses_init(void)
 }
 
 static void*
-_curses_loop(void* ctx)
-{
+_curses_loop(void* ctx) {
     int ch = 0;
     // TODO Temporary F1 - it's exit
     while ((ch = getch()) != KEY_F(1) || get_flag(FLAG_APP_TERMINATED)) {
@@ -53,8 +51,7 @@ _curses_loop(void* ctx)
 }
 
 static void
-_curses_finish(void)
-{
+_curses_finish(void) {
     endwin();
 
     if (win_main)
@@ -62,8 +59,7 @@ _curses_finish(void)
 }
 
 UCM_RET
-curses_start(void)
-{
+curses_start(void) {
     _curses_init();
 
     ucm_api->sys.thread_create(_curses_loop, NULL);
@@ -72,7 +68,6 @@ curses_start(void)
 }
 
 void
-curses_finish(void)
-{
+curses_finish(void) {
     _curses_finish();
 }

@@ -12,49 +12,35 @@ typedef ucm_wchr_t* ucm_wstr_t;
 #define UCMSZ_CHR sizeof(ucm_chr_t)
 #define UCMSZ_WCHR sizeof(ucm_wchr_t)
 
-enum
-{
-    UCM_TYPE_LOG_INFO  = 1 << 0,
-    UCM_TYPE_LOG_DEBUG = 1 << 1,
-    UCM_TYPE_LOG_ERROR = 1 << 2
-};
+enum { UCM_TYPE_LOG_INFO = 1 << 0, UCM_TYPE_LOG_DEBUG = 1 << 1, UCM_TYPE_LOG_ERROR = 1 << 2 };
 
-enum
-{
-    UCM_TYPE_OBJECT_NULL    = 0,
-    UCM_TYPE_OBJECT_PLUGIN  = 1 << 0,
-    UCM_TYPE_OBJECT_EVENT   = 1 << 1,
+enum {
+    UCM_TYPE_OBJECT_NULL = 0,
+    UCM_TYPE_OBJECT_PLUGIN = 1 << 0,
+    UCM_TYPE_OBJECT_EVENT = 1 << 1,
     UCM_TYPE_OBJECT_CONTACT = 1 << 2,
     UCM_TYPE_OBJECT_CONNECT = 1 << 3
 };
 
 // Global flags ---------------
-enum
-{
+enum {
     UCM_FLAG_TERMINATE = 0,
-    UCM_FLAG_ROPROF    = 1 << 0,
-    UCM_FLAG_NEWPROF   = 1 << 1,
+    UCM_FLAG_ROPROF = 1 << 0,
+    UCM_FLAG_NEWPROF = 1 << 1,
     UCM_FLAG_CHECKPROF = 1 << 2
 };
 
-enum
-{
-    CORE_LOOP_MAIN    = 1,
-    CORE_LOOP_SYSTEM  = 2,
-    CORE_LOOP_NETWORK = 3
-};
+enum { CORE_LOOP_MAIN = 1, CORE_LOOP_SYSTEM = 2, CORE_LOOP_NETWORK = 3 };
 
-enum
-{
+enum {
     UCM_FLAG_MODE_NEWPROFILE = 1 << 0,
-    UCM_FLAG_MODE_READONLY   = 1 << 1,
-    UCM_FLAG_MODE_HEADLESS   = 1 << 2,
-    UCM_FLAG_MODE_DAEMON     = 1 << 3
+    UCM_FLAG_MODE_READONLY = 1 << 1,
+    UCM_FLAG_MODE_HEADLESS = 1 << 2,
+    UCM_FLAG_MODE_DAEMON = 1 << 3
 };
 
 /*! Core return status */
-typedef enum _ucm_status_return_e
-{
+typedef enum _ucm_status_return_e {
     UCM_RET_SUCCESS = 0,
     UCM_RET_WRONGPARAM,
     UCM_RET_EXCEPTION,

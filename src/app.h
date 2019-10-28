@@ -30,8 +30,8 @@
 
 extern const ucm_functions_t* ucm_api;
 
-#define free_and_null(X)        \
-    do {                        \
-        ucm_api->sys.free((X)); \
-        (X) = NULL;             \
+#define free_and_null(X)                                                                           \
+    do {                                                                                           \
+        ucm_api->sys.free((X));                                                                    \
+        (X) = NULL;                                                                                \
     } while (0)

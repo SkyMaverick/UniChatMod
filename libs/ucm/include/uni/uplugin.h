@@ -1,30 +1,26 @@
 #pragma once
 
 /*! Enums what defines the plugin area */
-enum
-{
-    UCM_TYPE_PLUG_DB     = 1,
-    UCM_TYPE_PLUG_PROTO  = 2,
+enum {
+    UCM_TYPE_PLUG_DB = 1,
+    UCM_TYPE_PLUG_PROTO = 2,
     UCM_TYPE_PLUG_CRYPTO = 3,
-    UCM_TYPE_PLUG_HIST   = 4,
-    UCM_TYPE_PLUG_GUI    = 5,
-    UCM_TYPE_PLUG_STUFF  = 6
+    UCM_TYPE_PLUG_HIST = 4,
+    UCM_TYPE_PLUG_GUI = 5,
+    UCM_TYPE_PLUG_STUFF = 6
 };
 
 /*! Usage API version */
-typedef struct
-{
+typedef struct {
     const uint8_t vmajor;
     const uint8_t vminor;
 } ucm_vapi_t;
 
-enum
-{
+enum {
     UCM_FLAG_PLUG_LOGGED = 1,
 };
 
-typedef struct
-{
+typedef struct {
     const ucm_vapi_t api;  /// plugin release api version (required)
     const uint8_t sys;     /// plugin subsystem (required)
     const uint16_t vmajor; /// major plugin version (required)
@@ -32,8 +28,7 @@ typedef struct
     const uint16_t vpatch; /// patch plugin version (required)
     uint32_t flags;        /// plugin flags
     // build info.
-    struct
-    {
+    struct {
         const wchar_t* commit;   /// commit in repository
         const wchar_t* datetime; /// build datetime
         const wchar_t* target;   /// build target platform
@@ -52,8 +47,7 @@ typedef struct
 } ucm_plugin_info_t;
 
 /*! Structure what defines base plugin interface*/
-typedef struct _ucm_plugin_s
-{
+typedef struct _ucm_plugin_s {
     ucm_object_t oid; /// ucm system class object identificator
 
     ucm_plugin_info_t info; /// plugins description

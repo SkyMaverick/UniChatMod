@@ -4,8 +4,7 @@
 #include "flags.h"
 #include "ucm.h"
 
-typedef struct
-{
+typedef struct {
     ucm_plugdb_t* worker;
     uintptr_t mtx;
 } ucm_db_t;
@@ -13,8 +12,7 @@ typedef struct
 static ucm_db_t db;
 
 UCM_RET
-db_open(const char* aPath)
-{
+db_open(const char* aPath) {
     if (aPath == NULL)
         return UCM_RET_WRONGPARAM;
 
@@ -22,7 +20,7 @@ db_open(const char* aPath)
     UniAPI->sys.zmemory(&db, sizeof(ucm_db_t));
 
     ucm_plugdb_t** plugins = (ucm_plugdb_t**)(UniAPI->app.plugins_by_type(UCM_TYPE_PLUG_DB));
-    unsigned ret           = 0;
+    unsigned ret = 0;
     uv_fs_t ufs_req;
 
     // init mutex
@@ -94,8 +92,7 @@ db_open(const char* aPath)
 }
 
 UCM_RET
-db_close(void)
-{
+db_close(void) {
     UniAPI->sys.mutex_lock(db.mtx);
     if (db.worker) {
         db.worker->db_flush(true);

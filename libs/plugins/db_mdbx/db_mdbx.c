@@ -20,8 +20,7 @@ static mdbx_database_t dba;
 // ######################################################################
 
 void
-_assert_func(const MDBX_env* env, const char* msg, const char* function, unsigned line)
-{
+_assert_func(const MDBX_env* env, const char* msg, const char* function, unsigned line) {
     UNUSED(env);
     trace_err(_("%s. Assert in %s (line: %d)\n"), msg, function, line);
 }
@@ -30,20 +29,17 @@ _assert_func(const MDBX_env* env, const char* msg, const char* function, unsigne
 // ######################################################################
 
 static UCM_RET
-_run_dbmdbx(void)
-{
+_run_dbmdbx(void) {
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
-_stop_dbmdbx(void)
-{
+_stop_dbmdbx(void) {
     return UCM_RET_SUCCESS;
 }
 
 static void
-_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
-{
+_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2) {
     // TODO
     UNUSED(id);
     UNUSED(ctx);
@@ -56,8 +52,7 @@ _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 // ######################################################################
 
 static ucm_dbval_t*
-get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* defVal)
-{
+get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* defVal) {
     UNUSED(contact);
     if (setting == NULL) {
         trace_dbg("%s\n", "Settings name must not empty");
@@ -84,8 +79,7 @@ get_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_db
     return NULL;
 }
 static UCM_RET
-set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* value)
-{
+set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_dbval_t* value) {
     UNUSED(contact);
     UNUSED(value);
 
@@ -112,47 +106,47 @@ set_provider(HCONTACT contact, ucm_object_t* object, const char* setting, ucm_db
     return UCM_RET_SUCCESS;
 }
 
-static mdbx_database_t dba = {.plugin.core.info.api    = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
-                              .plugin.core.info.sys    = UCM_TYPE_PLUG_DB,
-                              .plugin.core.info.vmajor = UCM_VERSION_MAJOR,
-                              .plugin.core.info.vminor = UCM_VERSION_MINOR,
-                              .plugin.core.info.vpatch = UCM_VERSION_PATCH,
-                              .plugin.core.info.flags  = UCM_FLAG_PLUG_LOGGED,
-                              .plugin.core.info.build =
-                                  {
-                                      .commit   = UCM_BUILD_COMMIT,
-                                      .datetime = UCM_BUILD_TIME,
-                                      .target   = UCM_BUILD_TARGET,
-                                      .compiler = UCM_BUILD_CC,
-                                      .options  = UCM_BUILD_OPTS,
-                                      .flags    = UCM_BUILD_FLAGS,
-                                  },
-                              .plugin.core.info.pid         = "f00e9e3d-0d5c-46e7-88b2-7d554ed2cb49",
-                              .plugin.core.info.name        = L"std_dbmdbx",
-                              .plugin.core.info.developer   = L"SkyMaverick",
-                              .plugin.core.info.description = L"System standart storage plugin (based on libmdbx).",
-                              .plugin.core.info.copyright   = L"Zlib + ReOpenLDAP",
-                              .plugin.core.info.email       = L"mail@mail.ru",
-                              .plugin.core.info.website     = L"http://null.org",
+static mdbx_database_t dba = {
+    .plugin.core.info.api = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
+    .plugin.core.info.sys = UCM_TYPE_PLUG_DB,
+    .plugin.core.info.vmajor = UCM_VERSION_MAJOR,
+    .plugin.core.info.vminor = UCM_VERSION_MINOR,
+    .plugin.core.info.vpatch = UCM_VERSION_PATCH,
+    .plugin.core.info.flags = UCM_FLAG_PLUG_LOGGED,
+    .plugin.core.info.build =
+        {
+            .commit = UCM_BUILD_COMMIT,
+            .datetime = UCM_BUILD_TIME,
+            .target = UCM_BUILD_TARGET,
+            .compiler = UCM_BUILD_CC,
+            .options = UCM_BUILD_OPTS,
+            .flags = UCM_BUILD_FLAGS,
+        },
+    .plugin.core.info.pid = "f00e9e3d-0d5c-46e7-88b2-7d554ed2cb49",
+    .plugin.core.info.name = L"std_dbmdbx",
+    .plugin.core.info.developer = L"SkyMaverick",
+    .plugin.core.info.description = L"System standart storage plugin (based on libmdbx).",
+    .plugin.core.info.copyright = L"Zlib + ReOpenLDAP",
+    .plugin.core.info.email = L"mail@mail.ru",
+    .plugin.core.info.website = L"http://null.org",
 
-                              .plugin.core.run     = _run_dbmdbx,
-                              .plugin.core.stop    = _stop_dbmdbx,
-                              .plugin.core.message = _message,
+    .plugin.core.run = _run_dbmdbx,
+    .plugin.core.stop = _stop_dbmdbx,
+    .plugin.core.message = _message,
 
-                              .plugin.db_open  = mdbx_db_open,
-                              .plugin.db_check = NULL,
-                              .plugin.db_flush = mdbx_db_flush,
-                              .plugin.db_close = mdbx_db_close,
+    .plugin.db_open = mdbx_db_open,
+    .plugin.db_check = NULL,
+    .plugin.db_flush = mdbx_db_flush,
+    .plugin.db_close = mdbx_db_close,
 
-                              .plugin.db_backup = mdbx_db_backup,
-                              .plugin.get_setting = get_provider,
-                              .plugin.set_setting = set_provider};
+    .plugin.db_backup = mdbx_db_backup,
+    .plugin.get_setting = get_provider,
+    .plugin.set_setting = set_provider};
 
 mdbx_database_t* UniDB = &dba;
 
 LIBUCM_API ucm_plugin_t*
-_init_plugin(const ucm_functions_t* api)
-{
+_init_plugin(const ucm_functions_t* api) {
     app = api;
     return (ucm_plugin_t*)(&dba);
 }

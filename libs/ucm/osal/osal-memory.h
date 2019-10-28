@@ -28,8 +28,8 @@ osal_strdup(const char* str);
 char*
 osal_strndup(const char* str, size_t num);
 
-#define osal_free_null(X) \
-    do {                  \
-        osal_free(X);     \
-        X = NULL;         \
+#define osal_free_null(X)                                                                          \
+    do {                                                                                           \
+        osal_free(X);                                                                              \
+        X = NULL;                                                                                  \
     } while (0)

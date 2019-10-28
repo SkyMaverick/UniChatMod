@@ -1,24 +1,21 @@
 #pragma once
 
-enum
-{
-    UCM_DBVAL_FAIL   = 0,
-    UCM_DBVAL_U8     = 1,
-    UCM_DBVAL_U16    = 2,
-    UCM_DBVAL_U32    = 3,
-    UCM_DBVAL_FLOAT  = 4,
+enum {
+    UCM_DBVAL_FAIL = 0,
+    UCM_DBVAL_U8 = 1,
+    UCM_DBVAL_U16 = 2,
+    UCM_DBVAL_U32 = 3,
+    UCM_DBVAL_FLOAT = 4,
     UCM_DBVAL_DOUBLE = 5,
     UCM_DBVAL_ASCIIZ = 6,
     UCM_DBVAL_WIDESZ = 7,
-    UCM_DBVAL_U8SZ   = 8,
-    UCM_DBVAL_BLOB   = 9,
+    UCM_DBVAL_U8SZ = 8,
+    UCM_DBVAL_BLOB = 9,
 };
 
-typedef struct
-{
+typedef struct {
     uint8_t type;
-    union
-    {
+    union {
         uint8_t u8Val;
         uint16_t u16Val;
         uint32_t u32Val;
@@ -26,28 +23,24 @@ typedef struct
         float fVal;
         double dVal;
 
-        struct
-        {
+        struct {
             ucm_str_t sz8Val;
             size_t szSize;
         };
-        struct
-        {
+        struct {
             uint8_t* bVal;
             size_t bSize;
         };
     };
 } ucm_dbval_t;
 
-typedef struct _dbkey_s
-{
+typedef struct _dbkey_s {
     HCONTACT contact;
     char* pid;
     char* setting;
 } ucm_dbkey_t;
 
-typedef struct
-{
+typedef struct {
     ucm_plugin_t core;
 
     // technical db functionality

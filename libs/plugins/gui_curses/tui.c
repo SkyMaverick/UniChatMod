@@ -15,12 +15,10 @@
 const ucm_functions_t* app;
 
 static uintptr_t hwnd = 0;
-static int term       = 1;
+static int term = 1;
 
 static char
-_curses_mtgetch()
-{
-
+_curses_mtgetch() {
     char input = '\0';
 #ifdef UCM_OS_POSIX
     fd_set fds;
@@ -28,7 +26,7 @@ _curses_mtgetch()
     FD_SET(STDIN_FILENO, &fds);
 
     struct timeval tv;
-    tv.tv_sec  = 5;
+    tv.tv_sec = 5;
     tv.tv_usec = 0;
 
     int status = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
@@ -48,8 +46,7 @@ _curses_mtgetch()
 }
 
 static void
-_curses_start(void)
-{
+_curses_start(void) {
     initscr();
     keypad(stdscr, TRUE);
     (void)nonl();
@@ -72,14 +69,12 @@ _curses_start(void)
 }
 
 static void
-_curses_cleanup(void)
-{
+_curses_cleanup(void) {
     endwin();
 }
 
 static void*
-_curses_loop(void* ctx)
-{
+_curses_loop(void* ctx) {
     UNUSED(ctx);
     fprintf(stdout, "%s\n", "Start curses APP");
     //    _curses_start();
@@ -102,16 +97,14 @@ _curses_loop(void* ctx)
 // *********************************************************
 
 UCM_RET
-start_curses_app(void* ctx)
-{
+start_curses_app(void* ctx) {
     hwnd = app->sys.thread_create(_curses_loop, ctx);
     //    app->sys.thread_join(hwnd);
     return UCM_RET_SUCCESS;
 }
 
 void
-finish_curses_app(int sig)
-{
+finish_curses_app(int sig) {
     UNUSED(sig);
     // TODO
 }
@@ -121,20 +114,17 @@ finish_curses_app(int sig)
 // *********************************************************
 
 static UCM_RET
-_run_plugin(void)
-{
+_run_plugin(void) {
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
-_stop_plugin(void)
-{
+_stop_plugin(void) {
     return UCM_RET_SUCCESS;
 }
 
 static void
-_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
-{
+_message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2) {
     switch (id) {
     case UCM_SIG_START_GUI: {
         if (strcmp(plug->core.info.pid, (char*)ctx)) {
@@ -153,40 +143,39 @@ _message(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 }
 
 static ucm_plugui_t plugin = {
-    .core.oid         = UCM_TYPE_OBJECT_PLUGIN,
-    .core.info.api    = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
-    .core.info.sys    = UCM_TYPE_PLUG_GUI,
+    .core.oid = UCM_TYPE_OBJECT_PLUGIN,
+    .core.info.api = {.vmajor = UCM_API_MAJOR_VER, .vminor = UCM_API_MINOR_VER},
+    .core.info.sys = UCM_TYPE_PLUG_GUI,
     .core.info.vmajor = UCM_VERSION_MAJOR,
     .core.info.vminor = UCM_VERSION_MINOR,
     .core.info.vpatch = UCM_VERSION_PATCH,
-    .core.info.flags  = 0,
+    .core.info.flags = 0,
     .core.info.build =
         {
-            .commit   = UCM_BUILD_COMMIT,
+            .commit = UCM_BUILD_COMMIT,
             .datetime = UCM_BUILD_TIME,
-            .target   = UCM_BUILD_TARGET,
+            .target = UCM_BUILD_TARGET,
             .compiler = UCM_BUILD_CC,
-            .options  = UCM_BUILD_OPTS,
-            .flags    = UCM_BUILD_FLAGS,
+            .options = UCM_BUILD_OPTS,
+            .flags = UCM_BUILD_FLAGS,
         },
-    .core.info.pid         = "c609b9d1-2965-4e1e-8639-91d5556115d9",
-    .core.info.name        = L"std_uicurses",
-    .core.info.developer   = L"SkyMaverick",
+    .core.info.pid = "c609b9d1-2965-4e1e-8639-91d5556115d9",
+    .core.info.name = L"std_uicurses",
+    .core.info.developer = L"SkyMaverick",
     .core.info.description = L"Console interface TUI plugin based on ncurses/pdcurses library",
-    .core.info.copyright   = L"Zlib",
-    .core.info.email       = L"mail@mail.ru",
-    .core.info.website     = L"http://null.org",
+    .core.info.copyright = L"Zlib",
+    .core.info.email = L"mail@mail.ru",
+    .core.info.website = L"http://null.org",
 
-    .core.run     = _run_plugin,
-    .core.stop    = _stop_plugin,
+    .core.run = _run_plugin,
+    .core.stop = _stop_plugin,
     .core.message = _message,
 };
 
 const ucm_plugui_t* plug = &plugin;
 
 LIBUCM_API ucm_plugin_t*
-_init_plugin(const ucm_functions_t* api)
-{
+_init_plugin(const ucm_functions_t* api) {
     app = api;
     return (ucm_plugin_t*)(&plugin);
 }

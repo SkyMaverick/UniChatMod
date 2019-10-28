@@ -8,24 +8,23 @@ static char pla_buf[UCM_PATH_MAX];
 static char ppa_buf[UCM_PATH_MAX];
 static char psa_buf[UCM_PATH_MAX];
 
-ucm_cargs_t args = { .path_abs       = pa_buf,
-                     .path_lib_abs   = pla_buf,
-                     .path_plug_abs  = ppa_buf,
-                     .path_store_abs = psa_buf,
+ucm_cargs_t args = {.path_abs = pa_buf,
+                    .path_lib_abs = pla_buf,
+                    .path_plug_abs = ppa_buf,
+                    .path_store_abs = psa_buf,
 
-                     .options = 0 };
+                    .options = 0};
 
 ucm_cstart_func core_start = NULL;
-ucm_cstop_func core_stop   = NULL;
-ucm_cinfo_func core_info   = NULL;
+ucm_cstop_func core_stop = NULL;
+ucm_cinfo_func core_info = NULL;
 
 static ucm_plugin_info_t* info;
 
 #include "loader.c"
 
 void
-event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
-{
+event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx) {
     UNUSED(eid);
     UNUSED(ev);
     UNUSED(x1);
@@ -35,7 +34,7 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
     fprintf(stdout, "[%s] %s\n", APP_NAME, _("Working hook LOAD_SUCCESS"));
 
     curses_start();
-    
+
     ucm_signal_t* sig = ucm_api->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
     if (sig) {
         snprintf(U_SIGNAL_GUI(sig)->pid, UCM_PID_MAX, "%s", "uicurses");
@@ -45,8 +44,7 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 }
 
 static void
-exit_func(int ret_status)
-{
+exit_func(int ret_status) {
     curses_finish();
 
     if (info)
@@ -62,8 +60,7 @@ exit_func(int ret_status)
 
 #ifdef DEBUG
 static void
-_stack_trace(int sig)
-{
+_stack_trace(int sig) {
     UNUSED(sig);
 
     fprintf(stderr, "[%s] %s\n", APP_NAME, _("Catch SEGV signal ..."));
@@ -85,8 +82,7 @@ _stack_trace(int sig)
 #endif
 
 static void
-_crash_handler(int sig)
-{
+_crash_handler(int sig) {
 #ifdef DEBUG
     _stack_trace(sig);
 #endif
@@ -95,8 +91,7 @@ _crash_handler(int sig)
 }
 
 static void
-_term_handler(int sig)
-{
+_term_handler(int sig) {
     UNUSED(sig);
 
     fprintf(stderr, "[%s] %s\n", APP_NAME, _("Catch TERM signal ..."));
@@ -104,8 +99,7 @@ _term_handler(int sig)
 }
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
     set_flag(FLAG_APP_PORTABLE);
     int ret_status = UCM_RET_SUCCESS;
     // *********************************************************
@@ -172,7 +166,7 @@ main(int argc, char* argv[])
 
     ret_status = load_core_library(&args, event_load_hook);
     if (ret_status != UCM_RET_SYSTEM_DLERROR)
-        exit_func (ret_status);
+        exit_func(ret_status);
 
     return ret_status;
 }

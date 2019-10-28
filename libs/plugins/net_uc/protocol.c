@@ -14,10 +14,9 @@
 #define bswap(x) asm("bswap %1" : "=r"((x)) : "0"((x)))
 
 void
-_shuffle_key(uint32_t key, char* passkey, size_t pklen)
-{
-    uint8_t skey[SHUFFLE_BUFFER_SIZE] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                                          0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+_shuffle_key(uint32_t key, char* passkey, size_t pklen) {
+    uint8_t skey[SHUFFLE_BUFFER_SIZE] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     for (uint8_t i = 0; (i < pklen) && (i < SHUFFLE_BUFFER_SIZE); i++)
         skey[i] = passkey[i];
@@ -161,9 +160,8 @@ _shuffle_key(uint32_t key, char* passkey, size_t pklen)
 }
 
 ssize_t
-send_data(void* buffer, size_t lenght)
-{
-    uint32_t salt     = app->app.get_entropy();
+send_data(void* buffer, size_t lenght) {
+    uint32_t salt = app->app.get_entropy();
     uint8_t long_flag = 0;
     Rc6Context rc6ctx;
 
@@ -186,8 +184,7 @@ send_data(void* buffer, size_t lenght)
 }
 
 UCM_RET
-send_message(void* buffer, size_t buffer_lenght)
-{
+send_message(void* buffer, size_t buffer_lenght) {
     ssize_t res_size = 0;
     if ((send_data(buffer, buffer_lenght)) > 0) {
         // TODO

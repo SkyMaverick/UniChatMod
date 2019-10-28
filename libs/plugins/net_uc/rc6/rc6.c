@@ -56,8 +56,7 @@ typedef uint8_t uint_t;
 ;
 
 int
-rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen)
-{
+rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen) {
     uint_t c;
     uint_t i;
     uint_t j;
@@ -97,11 +96,11 @@ rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen)
     for (s = 0; s < v; s++) {
         context->s[i] += a + b;
         context->s[i] = ROL32(context->s[i], 3);
-        a             = context->s[i];
+        a = context->s[i];
 
         context->l[j] += a + b;
         context->l[j] = ROL32(context->l[j], (a + b) % 32);
-        b             = context->l[j];
+        b = context->l[j];
 
         if (++i >= (2 * RC6_NB_ROUNDS + 4))
             i = 0;
@@ -121,8 +120,7 @@ rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen)
  **/
 
 void
-rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
-{
+rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output) {
     uint_t i;
     uint32_t t;
     uint32_t u;
@@ -177,8 +175,7 @@ rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
  **/
 
 void
-rc6DecryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output)
-{
+rc6DecryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output) {
     uint_t i;
     uint32_t t;
     uint32_t u;

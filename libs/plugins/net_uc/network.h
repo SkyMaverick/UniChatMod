@@ -7,16 +7,13 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-typedef struct
-{
-    struct
-    {
+typedef struct {
+    struct {
         int socket;
         struct sockaddr_in addr;
     } ip;
 
-    struct
-    {
+    struct {
         int is_server;
         int net_status;
         int lan_status;

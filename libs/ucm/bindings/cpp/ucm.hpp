@@ -4,8 +4,7 @@
 
 class UCMAppObject; // forward definition
 
-class UCMAppDestroyer
-{
+class UCMAppDestroyer {
   private:
     UCMAppObject* mInstance;
 
@@ -14,8 +13,7 @@ class UCMAppDestroyer
     void initialize(UCMAppObject* app);
 };
 
-class UCMAppObject
-{
+class UCMAppObject {
   private:
     static UCMAppObject* mInstance;
     static UCMAppDestroyer destroyer;

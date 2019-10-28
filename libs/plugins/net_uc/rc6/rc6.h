@@ -41,21 +41,16 @@
 
 // C++ guard
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include <stdint.h>
 
-    /**
-     * @brief RC6 algorithm context
-     **/
+/**
+ * @brief RC6 algorithm context
+ **/
 
-    enum
-    {
-        NO_ERROR                 = 0,
-        ERROR_INVALID_KEY_LENGTH = 1 << 1
-    };
+enum { NO_ERROR = 0, ERROR_INVALID_KEY_LENGTH = 1 << 1 };
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -63,26 +58,28 @@ extern "C"
 #define ROR32(a, n) (((a) >> (n)) | ((a) << (32 - (n))))
 #define ROL32(a, n) (((a) << (n)) | ((a) >> (32 - (n))))
 
-#define LOAD32LE(p)                                                                  \
-    (((uint32_t)(((uint8_t*)(p))[0]) << 0) | ((uint32_t)(((uint8_t*)(p))[1]) << 8) | \
+#define LOAD32LE(p)                                                                                \
+    (((uint32_t)(((uint8_t*)(p))[0]) << 0) | ((uint32_t)(((uint8_t*)(p))[1]) << 8) |               \
      ((uint32_t)(((uint8_t*)(p))[2]) << 16) | ((uint32_t)(((uint8_t*)(p))[3]) << 24))
 
-#define STORE32LE(a, p)                                 \
-    ((uint8_t*)(p))[0] = ((uint32_t)(a) >> 0) & 0xFFU,  \
-    ((uint8_t*)(p))[1] = ((uint32_t)(a) >> 8) & 0xFFU,  \
-    ((uint8_t*)(p))[2] = ((uint32_t)(a) >> 16) & 0xFFU, \
+#define STORE32LE(a, p)                                                                            \
+    ((uint8_t*)(p))[0] = ((uint32_t)(a) >> 0) & 0xFFU,                                             \
+    ((uint8_t*)(p))[1] = ((uint32_t)(a) >> 8) & 0xFFU,                                             \
+    ((uint8_t*)(p))[2] = ((uint32_t)(a) >> 16) & 0xFFU,                                            \
     ((uint8_t*)(p))[3] = ((uint32_t)(a) >> 24) & 0xFFU
 
-    typedef struct
-    {
-        uint32_t l[RC6_MAX_KEY_SIZE / 4];
-        uint32_t s[2 * RC6_NB_ROUNDS + 4];
-    } Rc6Context;
+typedef struct {
+    uint32_t l[RC6_MAX_KEY_SIZE / 4];
+    uint32_t s[2 * RC6_NB_ROUNDS + 4];
+} Rc6Context;
 
-    // RC6 related functions
-    int rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen);
-    void rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output);
-    void rc6DecryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output);
+// RC6 related functions
+int
+rc6Init(Rc6Context* context, const uint8_t* key, size_t keyLen);
+void
+rc6EncryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output);
+void
+rc6DecryptBlock(Rc6Context* context, const uint8_t* input, uint8_t* output);
 
 // C++ guard
 #ifdef __cplusplus

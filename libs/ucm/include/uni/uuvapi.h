@@ -6,8 +6,7 @@
     #include <uv.h>
 #endif
 
-typedef struct
-{
+typedef struct {
     unsigned int (*version)(void);
     const char* (*version_string)(void);
     int (*replace_allocator)(uv_malloc_func malloc_func, uv_realloc_func realloc_func,

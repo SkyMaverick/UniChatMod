@@ -1,5 +1,4 @@
 #pragma once
 
-typedef struct
-{
+typedef struct {
 } ucm_api_t;

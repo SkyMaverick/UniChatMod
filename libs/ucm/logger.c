@@ -9,8 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct _logger_s
-{
+typedef struct _logger_s {
     void (*cb_log)(ucm_plugin_t* plug, uint32_t type, const char* text, void* ctx);
     void* ctx;
     struct _logger_s* next;
@@ -23,12 +22,11 @@ static uint32_t log_types = UCM_TYPE_LOG_INFO | UCM_TYPE_LOG_DEBUG | UCM_TYPE_LO
 #define LOG_BUFFER_SIZE 65535
 #define LOG_TYPE_SIZE sizeof(uint32_t)
 
-static char* buffer     = NULL;
+static char* buffer = NULL;
 static char* buffer_tmp = NULL;
 
 static void
-_log_console(const char* txt, uint32_t type)
-{
+_log_console(const char* txt, uint32_t type) {
     switch (type) {
     case UCM_TYPE_LOG_DEBUG:
 #ifdef DEBUG
@@ -46,8 +44,7 @@ _log_console(const char* txt, uint32_t type)
 }
 
 static void
-_log_core(ucm_plugin_t* plug, uint32_t type, const char* txt)
-{
+_log_core(ucm_plugin_t* plug, uint32_t type, const char* txt) {
     if (lock_mtx) {
         UniAPI->sys.mutex_lock(lock_mtx);
 #ifndef ENABLE_CURSES_UI
@@ -75,8 +72,7 @@ _log_core(ucm_plugin_t* plug, uint32_t type, const char* txt)
 }
 
 static int
-_log_enabled(ucm_plugin_t* plug, uint32_t type)
-{
+_log_enabled(ucm_plugin_t* plug, uint32_t type) {
     if (plug && (!(plug->info.flags == UCM_FLAG_PLUG_LOGGED)))
         return 0;
     if (plug && (!(type & log_types)))
@@ -85,8 +81,7 @@ _log_enabled(ucm_plugin_t* plug, uint32_t type)
 }
 
 static void
-_buffer_release(void)
-{
+_buffer_release(void) {
     if (buffer) {
         ucm_free_null(buffer);
         buffer_tmp = NULL;
@@ -94,19 +89,17 @@ _buffer_release(void)
 }
 
 static void
-_log_flush(ucm_logger_t** list)
-{
+_log_flush(ucm_logger_t** list) {
     ucm_logger_t* tmp = NULL;
     while ((*list)) {
-        tmp     = *list;
+        tmp = *list;
         (*list) = (*list)->next;
         ucm_free_null(tmp);
     }
 }
 
 UCM_RET
-log_init(void)
-{
+log_init(void) {
     lock_mtx = UniAPI->sys.mutex_create();
     if (!lock_mtx) {
         return UCM_RET_SYSTEM_NOCREATE;
@@ -120,8 +113,7 @@ log_init(void)
 }
 
 void
-log_release(void)
-{
+log_release(void) {
     while (UniAPI->sys.mutex_trylock(lock_mtx) != 0) {
         //        fprintf (stdout, "LOCKTRY WRITE MUTEX\n");
         continue;
@@ -135,8 +127,7 @@ log_release(void)
 }
 
 void
-logger_vlog(ucm_plugin_t* plugin, uint32_t type, const char* fmt, va_list va)
-{
+logger_vlog(ucm_plugin_t* plugin, uint32_t type, const char* fmt, va_list va) {
     if (!_log_enabled(plugin, type))
         return;
 
@@ -146,8 +137,7 @@ logger_vlog(ucm_plugin_t* plugin, uint32_t type, const char* fmt, va_list va)
 }
 
 void
-logger_log(ucm_plugin_t* plugin, uint32_t type, const char* fmt, ...)
-{
+logger_log(ucm_plugin_t* plugin, uint32_t type, const char* fmt, ...) {
     if (!_log_enabled(plugin, type))
         return;
 
@@ -158,16 +148,14 @@ logger_log(ucm_plugin_t* plugin, uint32_t type, const char* fmt, ...)
 }
 
 void
-ucm_vlog(const char* fmt, va_list va)
-{
+ucm_vlog(const char* fmt, va_list va) {
     char buf[UCM_DEF_STRLEN];
     if (vsnprintf(buf, UCM_DEF_STRLEN, fmt, va))
         _log_core(NULL, UCM_TYPE_LOG_INFO, buf);
 }
 
 void
-ucm_log(const char* fmt, ...)
-{
+ucm_log(const char* fmt, ...) {
     va_list va;
     va_start(va, fmt);
     ucm_vlog(fmt, va);
@@ -175,8 +163,7 @@ ucm_log(const char* fmt, ...)
 }
 
 void
-logger_connect(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*), void* ctx)
-{
+logger_connect(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*), void* ctx) {
     ucm_logger_t* tmp = UniAPI->sys.zmalloc(sizeof(ucm_logger_t));
     if (tmp) {
         while (UniAPI->sys.mutex_trylock(lock_mtx) != 0) {
@@ -184,9 +171,9 @@ logger_connect(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*), vo
         }
 
         tmp->cb_log = callback;
-        tmp->next   = logs;
-        tmp->ctx    = ctx;
-        logs        = tmp;
+        tmp->next = logs;
+        tmp->ctx = ctx;
+        logs = tmp;
 
         // Flush buffer in first connected logger
         if (buffer) {
@@ -203,8 +190,7 @@ logger_connect(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*), vo
 }
 
 void
-logger_disconnect(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*))
-{
+logger_disconnect(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*)) {
     ucm_logger_t* prev = NULL;
 
     while (UniAPI->sys.mutex_trylock(lock_mtx) != 0) {

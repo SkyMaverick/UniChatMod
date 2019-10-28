@@ -1,31 +1,27 @@
 #pragma once
 
-enum
-{
+enum {
     UCM_FLAG_EVENT_MULTYCAST = 1 << 0,
-    UCM_FLAG_EVENT_CRYPTO    = 1 << 1,
-    UCM_FLAG_EVENT_ALERT     = 1 << 2
+    UCM_FLAG_EVENT_CRYPTO = 1 << 1,
+    UCM_FLAG_EVENT_ALERT = 1 << 2
 };
 
-enum
-{
+enum {
     UCM_TYPE_EVENT_NORMAL = 0,
-    UCM_TYPE_EVENT_FILE   = 1,
-    UCM_TYPE_EVENT_ROOM   = 2,
+    UCM_TYPE_EVENT_FILE = 1,
+    UCM_TYPE_EVENT_ROOM = 2,
     UCM_TYPE_EVENT_STATUS = 3,
-    UCM_TYPE_EVENT_EVENT  = 4
+    UCM_TYPE_EVENT_EVENT = 4
 };
 
-typedef struct
-{
+typedef struct {
     ucm_object_t oid; /// internal object ID
 
     uint8_t type;  /// message type
     uint64_t size; ///
     uint32_t flags;
 
-    struct
-    {
+    struct {
         HCONTACT contact;
         // TODO protocol
 
@@ -34,8 +30,7 @@ typedef struct
 
 } ucm_event_t;
 
-typedef struct
-{
+typedef struct {
     ucm_event_t header;
     ucm_str_t data;
 } ucm_message_t;

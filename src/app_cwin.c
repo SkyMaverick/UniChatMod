@@ -8,24 +8,23 @@ static char pla_buf[UCM_PATH_MAX];
 static char ppa_buf[UCM_PATH_MAX];
 static char psa_buf[UCM_PATH_MAX];
 
-ucm_cargs_t args = { .path_abs       = pa_buf,
-                     .path_lib_abs   = pla_buf,
-                     .path_plug_abs  = ppa_buf,
-                     .path_store_abs = psa_buf,
+ucm_cargs_t args = {.path_abs = pa_buf,
+                    .path_lib_abs = pla_buf,
+                    .path_plug_abs = ppa_buf,
+                    .path_store_abs = psa_buf,
 
-                     .options = 0 };
+                    .options = 0};
 
 ucm_cstart_func core_start = NULL;
-ucm_cstop_func core_stop   = NULL;
-ucm_cinfo_func core_info   = NULL;
+ucm_cstop_func core_stop = NULL;
+ucm_cinfo_func core_info = NULL;
 
 static ucm_plugin_info_t* info;
 
 #include "loader.c"
 
 void
-event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
-{
+event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx) {
     UNUSED(eid);
     UNUSED(ev);
     UNUSED(x1);
@@ -43,8 +42,7 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 }
 
 static void
-exit_func(int ret_status)
-{
+exit_func(int ret_status) {
     if (info)
         free(info);
 
@@ -57,8 +55,7 @@ exit_func(int ret_status)
 }
 
 BOOL
-TermHandler(DWORD fwdHandlerType)
-{
+TermHandler(DWORD fwdHandlerType) {
     fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch signal ..."));
 
     switch (fwdHandlerType) {
@@ -72,8 +69,7 @@ TermHandler(DWORD fwdHandlerType)
 }
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
     set_flag(FLAG_APP_PORTABLE);
     int ret_status = UCM_RET_SUCCESS;
     // *********************************************************

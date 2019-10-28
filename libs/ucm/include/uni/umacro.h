@@ -33,8 +33,8 @@
     #define UCM_OS_OPENBSD
     #define UCM_OS_BSD4
 #else
-    #error \
-      "Unsupported build for this platform. \n Please add support this platform in OSAL functionality."
+    #error                                                                                         \
+        "Unsupported build for this platform. \n Please add support this platform in OSAL functionality."
 #endif
 
 #if defined(UCM_OS_MSYS) || defined(UCM_OS_CYGWIN)
@@ -45,8 +45,8 @@
     #define UCM_OS_WINDOWS
 #endif
 
-#if defined(UCM_OS_BSD4) || defined(UCM_OS_DARWIN) || defined(UCM_OS_LINUX) || \
-  defined(UCM_OS_ANDROID) || defined(UCM_OS_CYGWIN) || defined(UCM_OS_MSYS)
+#if defined(UCM_OS_BSD4) || defined(UCM_OS_DARWIN) || defined(UCM_OS_LINUX) ||                     \
+    defined(UCM_OS_ANDROID) || defined(UCM_OS_CYGWIN) || defined(UCM_OS_MSYS)
 
     #define UCM_OS_POSIX
 #endif
@@ -83,8 +83,8 @@
     #define UCM_CC_HP
 #elif defined(__DECC) || defined(__DECCXX)
     #define UCM_CC_DEC
-#elif (defined(__sgi) || defined(sgi)) && \
-  (defined(_COMPILER_VERSION) || defined(_SGI_COMPILER_VERSION))
+#elif (defined(__sgi) || defined(sgi)) &&                                                          \
+    (defined(_COMPILER_VERSION) || defined(_SGI_COMPILER_VERSION))
     #define UCM_CC_MIPS
 #elif defined(__USLC__) && defined(__SCO_VERSION__)
     #define UCM_CC_USLC
@@ -100,8 +100,8 @@
     #define UCM_CC_CRAY
 #endif
 
-#if (defined(__GNUC__) && (__GNUC__ > 2 && __GNUC_MINOR__ > 0)) || \
-  (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)
+#if (defined(__GNUC__) && (__GNUC__ > 2 && __GNUC_MINOR__ > 0)) ||                                 \
+    (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)
 
     #define __likely(x) __builtin_expect(!!(x), 1)
     #define __ulikely(x) __builtin_expect(!!(x), 0)
@@ -115,7 +115,7 @@
 #elif defined(__GNUC__)
     #if !defined(__GNUC_PREREQ)
         #if defined(__GNUC_MINOR__)
-            #define __GNUC_PREREQ(maj, min) \
+            #define __GNUC_PREREQ(maj, min)                                                        \
                 ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
         #else
             #define __GNUC_PREREQ(maj, min) 0

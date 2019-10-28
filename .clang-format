@@ -1,21 +1,12 @@
 Language: Cpp
-BasedOnStyle: Mozilla
+BasedOnStyle: LLVM
 
 IndentWidth: 4
-UseTab: Never
-# BreakBeforeBraces: Linux
-AllowShortIfStatementsOnASingleLine: false
-IndentCaseLabels: false
 ColumnLimit: 100
+UseTab: Never
+
 PointerAlignment: Left
+AlwaysBreakAfterReturnType: TopLevel
 IndentPPDirectives: BeforeHash
-
-BinPackArguments: true
-BinPackParameters: true
-AllowAllParametersOfDeclarationOnNextLine: false
-
-AlignEscapedNewlines: Left
-AlignTrailingComments: true
-AlignConsecutiveAssignments: true
 
 SortIncludes: false

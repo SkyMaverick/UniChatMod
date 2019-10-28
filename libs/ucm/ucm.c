@@ -13,8 +13,7 @@
 #include <wchar.h>
 
 static void
-_prepare_opts(const ucm_cargs_t* args)
-{
+_prepare_opts(const ucm_cargs_t* args) {
     uint64_t opts = args->options;
 
     if (opts & UCM_FLAG_MODE_READONLY)
@@ -29,8 +28,7 @@ _prepare_opts(const ucm_cargs_t* args)
 }
 
 static int
-_prepare_args(const ucm_cargs_t* args)
-{
+_prepare_args(const ucm_cargs_t* args) {
     extern char ucm_path[UCM_PATH_MAX];
     extern char ucm_path_store[UCM_PATH_MAX];
     extern char ucm_path_plugs[UCM_PATH_MAX];
@@ -48,8 +46,7 @@ _prepare_args(const ucm_cargs_t* args)
 }
 
 LIBUCM_API ucm_functions_t*
-ucm_core_start(ucm_cargs_t* args)
-{
+ucm_core_start(ucm_cargs_t* args) {
     if (!_prepare_args(args))
         return NULL;
 
@@ -63,8 +60,7 @@ ucm_core_start(ucm_cargs_t* args)
 }
 
 LIBUCM_API UCM_RET
-ucm_core_stop(void)
-{
+ucm_core_stop(void) {
     int ret_code = core_unload();
     return ret_code;
 }
@@ -72,8 +68,7 @@ ucm_core_stop(void)
 /* This functions provide information for external applications */
 
 static size_t
-handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args)
-{
+handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args) {
     UNUSED(args);
     size_t needed = sizeof(ucm_plugin_info_t);
     if (mem) {
@@ -85,8 +80,7 @@ handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args)
 }
 
 static size_t
-handle_info_plug(void* mem, size_t mem_size, ucm_cargs_t* args)
-{
+handle_info_plug(void* mem, size_t mem_size, ucm_cargs_t* args) {
     UNUSED(mem);
     UNUSED(mem_size);
     UNUSED(args);
@@ -116,8 +110,7 @@ handle_info_plug(void* mem, size_t mem_size, ucm_cargs_t* args)
 }
 
 LIBUCM_API size_t
-ucm_core_info(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args)
-{
+ucm_core_info(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args) {
     if (!_prepare_args(args))
         goto bailout;
 

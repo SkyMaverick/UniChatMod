@@ -13,8 +13,7 @@
 #include <wchar.h>
 
 static int
-__log_cmp_helper(const MDBX_val* a, const MDBX_val* b)
-{
+__log_cmp_helper(const MDBX_val* a, const MDBX_val* b) {
     // TODO make
     UNUSED(a);
     UNUSED(b);
@@ -23,23 +22,20 @@ __log_cmp_helper(const MDBX_val* a, const MDBX_val* b)
 }
 
 static void
-cb_mdbx_timer(uv_timer_t* timer)
-{
+cb_mdbx_timer(uv_timer_t* timer) {
     UNUSED(timer);
     mdbx_db_flush(true);
 }
 
 static void*
-mdbx_autosync(void* ctx)
-{
+mdbx_autosync(void* ctx) {
     app->uv.timer_start((uv_timer_t*)ctx, cb_mdbx_timer, 0, 50);
     app->uv.run(UCM_LOOP_SYSTEM(app), UV_RUN_DEFAULT);
     return NULL;
 }
 
 static void
-cb_create_backup(uv_fs_t* open_req)
-{
+cb_create_backup(uv_fs_t* open_req) {
     // TODO
     if (open_req->result >= 0) {
         trace_inf("%s: %s\n", "Create backup on file", open_req->file) uv_fs_t close_req;
@@ -66,8 +62,7 @@ cb_create_backup(uv_fs_t* open_req)
    ================================================== */
 
 static UCM_RET
-mdbx_core_map(void)
-{
+mdbx_core_map(void) {
     mdbx_env_create(&(UniDB->mdbx.env));
     mdbx_env_set_maxdbs(UniDB->mdbx.env, 10);
     mdbx_env_set_maxreaders(UniDB->mdbx.env, 244);
@@ -79,22 +74,21 @@ mdbx_core_map(void)
     if (rc != MDBX_SUCCESS)
         return UCM_RET_DATABASE_BADINIT;
 
-    unsigned int mode =
-      MDBX_NOSUBDIR | MDBX_MAPASYNC | MDBX_WRITEMAP | MDBX_NOSYNC | MDBX_COALESCE | MDBX_EXCLUSIVE;
+    unsigned int mode = MDBX_NOSUBDIR | MDBX_MAPASYNC | MDBX_WRITEMAP | MDBX_NOSYNC |
+                        MDBX_COALESCE | MDBX_EXCLUSIVE;
     if (app->app.get_flag(UCM_FLAG_ROPROF)) {
         trace_dbg("%s\n", "Set read-only database flag");
         mode |= MDBX_RDONLY;
     }
 
     return (mdbx_env_open(UniDB->mdbx.env, app->app.get_store_path(), mode, 0664) != MDBX_SUCCESS)
-             ? UCM_RET_DATABASE_BADINIT
-             : UCM_RET_SUCCESS;
+               ? UCM_RET_DATABASE_BADINIT
+               : UCM_RET_SUCCESS;
 }
 
 static inline UCM_RET
-mdbx_core_load(void)
-{
-    unsigned flags    = (app->app.get_flag(UCM_FLAG_ROPROF)) ? 0 : MDBX_CREATE;
+mdbx_core_load(void) {
+    unsigned flags = (app->app.get_flag(UCM_FLAG_ROPROF)) ? 0 : MDBX_CREATE;
     MDBX_txn* txn_tmp = StartTxn(UniDB);
     if (txn_tmp) {
         /* Open all tables */
@@ -110,7 +104,7 @@ mdbx_core_load(void)
             (mdbx_dbi_open_ex(txn_tmp, DBTABLE_NAME_LOGS, flags | MDBX_INTEGERKEY,
                               &(UniDB->mdbx.dbi_logs), __log_cmp_helper, NULL) == MDBX_SUCCESS)) {
             uint32_t kVal = 1;
-            MDBX_val key  = { &kVal, sizeof(kVal) }, data;
+            MDBX_val key = {&kVal, sizeof(kVal)}, data;
 
             /* Get database header and valide this.
                If header broken recreate it if check CREATENEW flag and don't
@@ -135,8 +129,8 @@ mdbx_core_load(void)
                     }
                     UniDB->header = *hdr;
                     trace_inf(
-                      "%s (%S): %zu.%zu\n", "Database version", UniDB->plugin.core.info.name,
-                      ((UniDB->header.version >> 32) & 0x00FF), (UniDB->header.version & 0x00FF));
+                        "%s (%S): %zu.%zu\n", "Database version", UniDB->plugin.core.info.name,
+                        ((UniDB->header.version >> 32) & 0x00FF), (UniDB->header.version & 0x00FF));
 
                 } else {
                     trace_dbg("%s\n", "Return NULL header");
@@ -147,7 +141,7 @@ mdbx_core_load(void)
                 if ((app->app.get_flag(UCM_FLAG_NEWPROF)) &&
                     (!(app->app.get_flag(UCM_FLAG_ROPROF)))) {
                     UniDB->header.signature = DBSYS_HEADER_SIGNATURE;
-                    UniDB->header.version   = MakeLong(DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
+                    UniDB->header.version = MakeLong(DBSYS_VERSION_MAJOR, DBSYS_VERSION_MINOR);
                     data.iov_base = &(UniDB->header), data.iov_len = sizeof(db_header_t);
                     if (mdbx_put(txn_tmp, UniDB->mdbx.dbi_global, &key, &data, 0) == MDBX_SUCCESS) {
                         mdbx_db_flush(true);
@@ -177,8 +171,7 @@ mdbx_core_load(void)
 }
 
 static void
-mdbx_core_unload(void)
-{
+mdbx_core_unload(void) {
     trace_dbg("%s\n", "Unload MDBX");
 
     mdbx_txn_commit(UniDB->mdbx.txn_ro);
@@ -192,15 +185,13 @@ mdbx_core_unload(void)
 }
 
 static inline void
-dbi_core_release(void)
-{
+dbi_core_release(void) {
     //    app->sys.timer_release (UniDB->sys.tmFlush);
     mdbx_core_unload();
 }
 
 static inline UCM_RET
-dbi_core_init(void)
-{
+dbi_core_init(void) {
     UniDB->sys.tick = app->sys.zmalloc(sizeof(uv_timer_t));
     if (UniDB->sys.tick == NULL)
         return UCM_RET_SYSTEM_NOMEMORY;
@@ -217,8 +208,7 @@ dbi_core_init(void)
    ================================================== */
 
 UCM_RET
-mdbx_db_open(void)
-{
+mdbx_db_open(void) {
     int ret_code = dbi_core_init();
     if (ret_code != UCM_RET_SUCCESS)
         return ret_code;
@@ -237,8 +227,7 @@ mdbx_db_open(void)
 }
 
 UCM_RET
-mdbx_db_close(void)
-{
+mdbx_db_close(void) {
     // TODO
     app->uv.timer_stop(UniDB->sys.tick);
     app->uv.run(UCM_LOOP_SYSTEM(app), UV_RUN_DEFAULT);
@@ -248,8 +237,7 @@ mdbx_db_close(void)
 }
 
 void
-mdbx_db_flush(bool force)
-{
+mdbx_db_flush(bool force) {
     mdbx_env_sync(UniDB->mdbx.env);
     if (force) {
         // TODO
@@ -257,8 +245,7 @@ mdbx_db_flush(bool force)
 }
 
 UCM_RET
-mdbx_db_backup(char* path)
-{
+mdbx_db_backup(char* path) {
     uv_fs_t open_req;
     if (app->uv.fs_open(UCM_LOOP_SYSTEM(app), &open_req, path, O_WRONLY | O_CREAT, 0664,
                         cb_create_backup) > 0) {

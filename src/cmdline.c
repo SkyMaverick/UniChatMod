@@ -10,8 +10,7 @@
 #endif
 
 static inline void
-_display_help(void)
-{
+_display_help(void) {
     fprintf(stdout, "%s\n", "Usage UniChatMod tui mode: ucmc [options]");
     fprintf(stdout, "%s\n", "Options:");
     fprintf(stdout, "%s\n", "    -?              help");
@@ -22,14 +21,12 @@ _display_help(void)
 }
 
 static inline void
-_display_version(void)
-{
+_display_version(void) {
     fprintf(stdout, "%s\n", UCM_VERSION);
 }
 
 void
-app_args_parse(int argc, char* argv[], ucm_cargs_t* args)
-{
+app_args_parse(int argc, char* argv[], ucm_cargs_t* args) {
     int opt = 0;
     while ((opt = getopt(argc, argv, "rs:p:vV?")) != -1) {
         switch (opt) {

@@ -15,16 +15,14 @@
 
 #include <wchar.h>
 
-typedef struct
-{
+typedef struct {
     // base plugin functionality (start/stop/mq)
     ucm_plugin_t base;
 
     // message/event communication loop (custom implementation)
     uintptr_t loop_ucore;
     // osal system handle
-    struct
-    {
+    struct {
         uv_loop_t* loop_sys;
         uv_loop_t* loop_net;
     } uv;
@@ -33,8 +31,7 @@ typedef struct
 static ucm_core_t kernel;
 
 static void*
-loop_core(void* ctx)
-{
+loop_core(void* ctx) {
     uint32_t id;
     uintptr_t lctx;
     uint32_t x1;
@@ -78,14 +75,12 @@ loop_core(void* ctx)
 }
 
 static UCM_RET
-_stop_core(void)
-{
+_stop_core(void) {
     return UCM_RET_SUCCESS;
 }
 
 static UCM_RET
-_run_core(void)
-{
+_run_core(void) {
     ucm_dtrace("%s: %s\n", _("Success start UniChatMod core ver."), UCM_VERSION);
     return UCM_RET_SUCCESS;
 }
@@ -110,14 +105,12 @@ _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
 }
 
 void
-wait_core_loop(void)
-{
+wait_core_loop(void) {
     UniAPI->sys.thread_join(kernel.loop_ucore);
 }
 
 static inline UCM_RET
-uv_init(void)
-{
+uv_init(void) {
     kernel.uv.loop_sys = uv_default_loop();
     if (kernel.uv.loop_sys == NULL)
         return UCM_RET_NOOBJECT;
@@ -132,8 +125,7 @@ uv_init(void)
     return UCM_RET_SUCCESS;
 }
 static inline void
-uv_destroy(void)
-{
+uv_destroy(void) {
     uv_loop_close(kernel.uv.loop_sys);
     uv_loop_close(kernel.uv.loop_net);
     if (kernel.uv.loop_net != NULL)
@@ -141,9 +133,7 @@ uv_destroy(void)
 }
 
 UCM_RET
-core_load(void)
-{
-
+core_load(void) {
     log_init();
     init_ucm_entropy();
 
@@ -166,8 +156,7 @@ core_load(void)
 }
 
 UCM_RET
-core_unload(void)
-{
+core_unload(void) {
     if (kernel.loop_ucore) {
         UniAPI->app.mainloop_msg_send(UCM_SIG_TERM, (uintptr_t)ucm_core, 0, 0);
         UniAPI->sys.thread_join(kernel.loop_ucore);
@@ -189,8 +178,7 @@ core_unload(void)
  ***************************************************/
 
 uintptr_t
-get_loop_handle(int loop)
-{
+get_loop_handle(int loop) {
     switch (loop) {
     case CORE_LOOP_MAIN:
         return kernel.loop_ucore;
@@ -203,34 +191,34 @@ get_loop_handle(int loop)
     }
 }
 
-static ucm_core_t kernel = {.base.oid             = UCM_TYPE_OBJECT_PLUGIN,
+static ucm_core_t kernel = {.base.oid = UCM_TYPE_OBJECT_PLUGIN,
                             .base.info.api.vmajor = UCM_API_MAJOR_VER,
                             .base.info.api.vminor = UCM_API_MINOR_VER,
-                            .base.info.sys        = 0,
-                            .base.info.vmajor     = UCM_VERSION_MAJOR, // TODO
-                            .base.info.vminor     = UCM_VERSION_MINOR,
-                            .base.info.vpatch     = UCM_VERSION_PATCH,
+                            .base.info.sys = 0,
+                            .base.info.vmajor = UCM_VERSION_MAJOR, // TODO
+                            .base.info.vminor = UCM_VERSION_MINOR,
+                            .base.info.vpatch = UCM_VERSION_PATCH,
                             .base.info.build =
                                 {
-                                    .commit   = UCM_BUILD_COMMIT,
+                                    .commit = UCM_BUILD_COMMIT,
                                     .datetime = UCM_BUILD_TIME,
-                                    .target   = UCM_BUILD_TARGET,
+                                    .target = UCM_BUILD_TARGET,
                                     .compiler = UCM_BUILD_CC,
-                                    .options  = UCM_BUILD_OPTS,
-                                    .flags    = UCM_BUILD_FLAGS,
+                                    .options = UCM_BUILD_OPTS,
+                                    .flags = UCM_BUILD_FLAGS,
                                 },
                             .base.info.flags = UCM_FLAG_PLUG_LOGGED,
 
-                            .base.info.pid         = "00000000-0000-0000-0000-000000000000",
-                            .base.info.name        = L"std_core",
-                            .base.info.developer   = L"SkyMaverick",
+                            .base.info.pid = "00000000-0000-0000-0000-000000000000",
+                            .base.info.name = L"std_core",
+                            .base.info.developer = L"SkyMaverick",
                             .base.info.description = L"UniChatMod core library plugin",
-                            .base.info.copyright   = L"Zlib",
-                            .base.info.email       = L"",
-                            .base.info.website     = L"",
+                            .base.info.copyright = L"Zlib",
+                            .base.info.email = L"",
+                            .base.info.website = L"",
 
-                            .base.run     = _run_core,
-                            .base.stop    = _stop_core,
+                            .base.run = _run_core,
+                            .base.stop = _stop_core,
                             .base.message = _message_core};
 
 ucm_plugin_t* ucm_core = (ucm_plugin_t*)&kernel;

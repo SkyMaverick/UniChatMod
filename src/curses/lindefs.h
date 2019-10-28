@@ -3,10 +3,8 @@
 #include <curses.h>
 #include <panel.h>
 
-typedef struct
-{
-    struct
-    {
+typedef struct {
+    struct {
         int out_tmp;
         int err_tmp;
     } fds;
