@@ -50,9 +50,9 @@ _log_core(ucm_plugin_t* plug, uint32_t type, const char* txt)
 {
     if (lock_mtx) {
         UniAPI->sys.mutex_lock(lock_mtx);
-
+#ifndef ENABLE_CURSES_UI
         _log_console(txt, type);
-
+#endif
         for (ucm_logger_t* i = logs; i; i = i->next)
             i->cb_log(plug, type, txt, i->ctx);
 

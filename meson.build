@@ -39,6 +39,12 @@ endif
 if get_option('custom_libs')
     ucm_defs += 'ENABLE_CUSTOM_LIBS'
 endif
+if get_option('create_with_console_gui')
+    ucm_defs += 'ENABLE_CURSES_UI'
+    if osid == 'windows'
+        ucm_defs += 'WIN_CONSOLE_APP'
+    endif
+endif
 
 if (ccid == 'gcc') or (ccid == 'clang')
     ucm_defs += '_XOPEN_SOURCE=700'

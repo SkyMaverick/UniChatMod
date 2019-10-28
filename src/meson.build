@@ -10,19 +10,18 @@ app_src = files('''
     osal.c
 '''.split()) + shared_headers
 
-app_src += files ('''
-   curses/tui.c
-   curses/tui.h
-'''.split())
-
 app_dep = [libucm_depends]
-app_inc = include_directories ('.', './curses')
 
 if get_option ('create_with_console_gui')
+    app_src += files ('''
+       curses/tui.c
+       curses/tui.h
+    '''.split())
+ 
+    app_inc = include_directories ('.', './curses')
+
     if (osid == 'windows')
         app_dep_con += subproject('pdcurses').get_variable('pdcurses_dep')
-        add_project_arguments ('-DWIN_CONSOLE_APP', language: 'c')
-
         app_con = executable (''.join([app_name,'c']),
                      app_src,
                      dependencies   : app_dep + app_dep_con,
