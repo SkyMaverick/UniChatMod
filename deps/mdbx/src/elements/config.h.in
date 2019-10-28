@@ -1,4 +1,4 @@
-/* This is meson-template for libmdbx's config.h
+/* This is CMake-template for libmdbx's config.h
  ******************************************************************************/
 
 /* *INDENT-OFF* */
@@ -8,7 +8,7 @@
 #mesondefine HAS_RELAXED_CONSTEXPR
 
 #mesondefine LTO_ENABLED
-#mesondefine ENABLE_VALGRIND
+#mesondefine MDBX_USE_VALGRIND
 #mesondefine ENABLE_GPROF
 #mesondefine ENABLE_GCOV
 #mesondefine ENABLE_ASAN
@@ -29,6 +29,20 @@
 #mesondefine01 MDBX_USE_ROBUST
 #mesondefine01 MDBX_USE_OFDLOCKS
 #mesondefine01 MDBX_DISABLE_GNU_SOURCE
+
+/* Simulate "AUTO" values of tristate options */
+#mesondefine MDBX_TXN_CHECKPID_AUTO
+#ifdef MDBX_TXN_CHECKPID_AUTO
+#undef MDBX_TXN_CHECKPID
+#endif
+#mesondefine MDBX_USE_ROBUST_AUTO
+#ifdef MDBX_USE_ROBUST_AUTO
+#undef MDBX_USE_ROBUST
+#endif
+#mesondefine MDBX_USE_OFDLOCKS_AUTO
+#ifdef MDBX_USE_OFDLOCKS_AUTO
+#undef MDBX_USE_OFDLOCKS
+#endif
 
 /* Build Info */
 #mesondefine MDBX_BUILD_TIMESTAMP
