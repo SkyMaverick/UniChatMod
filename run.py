@@ -41,7 +41,7 @@ format_exts = '''
 # SERVICE FUNCTIONS
 # ==================================================
 def meson_internal (path, *args):
-    cmd = ['meson'] + ['.'] + [path]
+    cmd = ['meson'] + ['.'] + ['"'+path+'"']
     for i in args:
         cmd += [i]
 
@@ -80,11 +80,11 @@ def shell_cmd_out (app, *args):
     return data
 
 def meson_cmd (type, cross, path, prefix):
-    args = ['--buildtype='+type, '-Dprefix='+prefix]
+    args = ['--buildtype='+type, '-Dprefix="'+prefix+'"']
     if os.path.exists(path):
         args += ['--reconfigure']
     if cross:
-        args += ['--cross-file', cross]
+        args += ['--cross-file', '"'+cross+'"']
     if (type == 'release') \
         and (platform.system().lower() != 'windows'):
         args += ['--strip']

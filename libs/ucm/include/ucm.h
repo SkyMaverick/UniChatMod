@@ -20,6 +20,15 @@ extern "C" {
 //      CORE STRUCTURES
 // *********************************************************
 
+/*
+   WARNING!!!
+   This include must be first because it's include Winsock2.h on Windows platform
+ */
+
+#ifndef ONLY_WITH_CLIENT_API
+    #include "uni/uuvapi.h" // libuv callbacks
+#endif
+
 #include "uni/udefs.h" // preprocessor defines and includes. MUST BE FIRST !!!
 #include "uni/umain.h" // base enums, structures and constants
 
@@ -35,10 +44,6 @@ extern "C" {
 #include "uni/udatabase.h"  // database plugins functionality
 #include "uni/uprotocols.h" // protocol plugins functionality
 #include "uni/ugui.h"       // GUI plugin functionality
-
-#ifndef ONLY_WITH_CLIENT_API
-    #include "uni/uuvapi.h" // libuv callbacks
-#endif
 
 // *********************************************************
 //      MAIN APPLICATION API STRUCTURE

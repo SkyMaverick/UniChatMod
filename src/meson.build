@@ -21,10 +21,10 @@ if get_option ('create_with_console_gui')
     app_inc = include_directories ('.', './curses')
 
     if (osid == 'windows')
-        app_dep_con += subproject('pdcurses').get_variable('pdcurses_dep')
+        app_dep_con = subproject('pdcurses').get_variable('pdcurses_dep')
         app_con = executable (''.join([app_name,'c']),
                      app_src,
-                     dependencies   : app_dep + app_dep_con,
+                     dependencies   : app_dep + [app_dep_con],
                      build_rpath    : libs_rpath,
                      install_rpath  : libs_rpath,
                      include_directories: app_inc,

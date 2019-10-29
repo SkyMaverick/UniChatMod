@@ -21,7 +21,7 @@ pdc_backend = ''
 if sysid == 'windows'
     pdc_backend = 'wincon'
 else
-    pdc_backend = 'x11'
+    error ('This build support oly Windows platform')
 endif
 
 message ('Select PDCurses backend: @0@'.format(pdc_backend))
