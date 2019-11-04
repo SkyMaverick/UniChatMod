@@ -235,11 +235,9 @@ libucma = static_library (meson.project_name(),
                           install: false)
 
 libucm_depends = declare_dependency (
-            include_directories: libucm_inc,
-            dependencies: libucm_deps
+            include_directories: libucm_inc
         )
 libucm_link_depends = declare_dependency (
             link_with: libucma,
-            include_directories: libucm_inc,
-            dependencies: libucm_deps
+            include_directories: libucm_inc
         )

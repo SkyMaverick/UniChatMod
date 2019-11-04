@@ -16,8 +16,6 @@
     #include "curses/tui.h"
 #endif
 
-#include <stdbool.h>
-
 #if defined(UCM_OS_POSIX)
     #define LIBCORE_NAME "libucm.so"
 #else
@@ -32,6 +30,6 @@ extern const ucm_functions_t* ucm_api;
 
 #define free_and_null(X)                                                                           \
     do {                                                                                           \
-        ucm_api->sys.free((X));                                                                    \
+        free((X));                                                                                 \
         (X) = NULL;                                                                                \
     } while (0)

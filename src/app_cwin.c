@@ -31,7 +31,8 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
     UNUSED(x2);
     UNUSED(ctx);
 
-    fprintf(stdout, "[%s] %s\n", TUI_APP_NAME, _("Working hook LOAD_SUCCESS"));
+    //    fprintf(stdout, "[%s] %s\n", APP_NAME, _("Working hook LOAD_SUCCESS"));
+    curses_start();
 
     ucm_signal_t* sig = ucm_api->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
     if (sig) {
@@ -56,7 +57,7 @@ exit_func(int ret_status) {
 
 BOOL
 TermHandler(DWORD fwdHandlerType) {
-    fprintf(stderr, "[%s] %s\n", TUI_APP_NAME, _("Catch signal ..."));
+    fprintf(stderr, "[%s] %s\n", APP_NAME, _("Catch signal ..."));
 
     switch (fwdHandlerType) {
     case CTRL_C_EVENT:
@@ -102,7 +103,7 @@ main(int argc, char* argv[]) {
             set_flag(FLAG_APP_PORTABLE);
         }
         if (!get_flag(FLAG_APP_PORTABLE_BASE)) {
-            snprintf(tmp, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, TUI_APP_NAME);
+            snprintf(tmp, UCM_PATH_MAX, "%s%c%s.mdbx", args.path_abs, PATH_DELIM, APP_NAME);
             break;
             set_flag(FLAG_APP_PORTABLE_BASE);
         }
@@ -130,6 +131,8 @@ main(int argc, char* argv[]) {
     if (!fRet)
         fprintf(stderr, "%s\n", "Couldn't set control handlers.");
 
+    fprintf(stdout, "Work LIBS: %s\n", args.path_lib_abs);
+    SetDllDirectoryA(args.path_lib_abs);
     load_core_library(&args, event_load_hook);
 
     return ret_status;

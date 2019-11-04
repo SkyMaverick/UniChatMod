@@ -11,10 +11,9 @@ load_core_library(ucm_cargs_t* args, cb_evhook hook) {
         core_info = dlsym(core_handle, UCM_INFO_FUNC);
 #else
     #ifdef DEBUG
-    fprintf(stdout, "%s: %s\n", "Library search path", args.path_lib_abs);
+    fprintf(stdout, "%s: %s\n", "Library search path", args->path_lib_abs);
     #endif
 
-    SetDllDirectoryA(args.path_lib_abs);
     core_handle = LoadLibraryA(LIBCORE_NAME);
     if (core_handle != INVALID_HANDLE_VALUE) {
         core_start = (ucm_cstart_func)GetProcAddress(core_handle, UCM_START_FUNC);

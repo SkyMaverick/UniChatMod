@@ -10,27 +10,50 @@ app_src = files('''
     osal.c
 '''.split()) + shared_headers
 
+app_src_con = files ('''
+   curses/tui.c
+   curses/tui.h
+'''.split())
+
+app_inc = include_directories ('.', './curses')
 app_dep = [libucm_depends]
+if not (osid == 'windows')
+    app_dep += cc.find_library ('dl', required: true)
+endif
+app_cflags = []
+app_defs = []
 
-if get_option ('create_with_console_gui')
-    app_src += files ('''
-       curses/tui.c
-       curses/tui.h
-    '''.split())
- 
-    app_inc = include_directories ('.', './curses')
+if osid == 'windows'
+# create console application
+    if get_option('create_with_console_gui')
+        if ccid == 'msvc'
+            app_cflags += '''
+                /DENABLE_CURSES_UI
+                /DWIN_CONSOLE_APP
+            '''.split()
+        else
+            app_cflags += '''
+                -DENABLE_CURSES_UI
+                -DWIN_CONSOLE_APP
+            '''.split()
+        endif
 
-    if (osid == 'windows')
         app_dep_con = subproject('pdcurses').get_variable('pdcurses_dep')
         app_con = executable (''.join([app_name,'c']),
-                     app_src,
+                     app_src + app_src_con,
                      dependencies   : app_dep + [app_dep_con],
+                     c_args         : app_cflags,
                      build_rpath    : libs_rpath,
                      install_rpath  : libs_rpath,
                      include_directories: app_inc,
                      install        : true,
                      install_dir    : install_path_app)
-    else
+    endif
+else
+    if get_option('create_with_console_gui')
+        app_cflags += '''-DENABLE_CURSES_UI'''.split()
+        app_src += app_src_con
+
         app_dep_matrix = {
             'curses' : {
                 'name'      : 'ncurses',
@@ -50,13 +73,15 @@ if get_option ('create_with_console_gui')
             app_dep += curses_dep
         endforeach
     endif
-endif
 
-app = executable (app_name,
-             app_src,
-             dependencies   : app_dep,
-             build_rpath    : libs_rpath,
-             install_rpath  : libs_rpath,
-             include_directories: app_inc,
-             install        : true,
-             install_dir    : install_path_app)
+    app = executable (app_name,
+                 app_src,
+                 c_args         : app_cflags,
+                 dependencies   : app_dep,
+                 build_rpath    : libs_rpath,
+                 install_rpath  : libs_rpath,
+                 include_directories: app_inc,
+                 link_args      : ['-lpanel', '-lcurses'],
+                 install        : true,
+                 install_dir    : install_path_app)
+endif

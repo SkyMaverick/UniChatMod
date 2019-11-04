@@ -7,7 +7,6 @@
 #include <string.h>
 
 #if defined(UCM_OS_POSIX) || defined(UCM_OS_WINEMULATOR)
-
     #include <execinfo.h>
     #include <signal.h>
 #endif

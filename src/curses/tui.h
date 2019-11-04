@@ -1,13 +1,21 @@
+#pragma once
+
 #include "app.h"
 
-#ifdef UCM_OS_WiNDOWS
+#include "curses.h"
+#include "panel.h"
+
+#ifdef UCM_OS_WINDOWS
     #include "windefs.h"
 #else
     #include "lindefs.h"
 #endif
 
-UCM_RET
+uintptr_t
 curses_start(void);
+
+void*
+curses_dispatch(void* ctx);
 
 void
 curses_finish(void);

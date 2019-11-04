@@ -1,15 +1,10 @@
-#include "../app.h"
-
-#include <curses.h>
-#include <panel.h>
+#include "tui.h"
 
 static npc_window_t* win_main;
 
-static UCM_RET
+static uintptr_t
 _curses_init(void) {
-    int ret_status = UCM_RET_SUCCESS;
-
-    win_main = ucm_api->sys.zmalloc(NPC_MEMNEED_WINDOW);
+    win_main = malloc(NPC_MEMNEED_WINDOW);
     if (win_main) {
         initscr();
         keypad(stdscr, TRUE);
@@ -30,18 +25,20 @@ _curses_init(void) {
             init_pair(8, COLOR_YELLOW, COLOR_BLACK);
         }
         refresh();
+        curses_dispatch(NULL);
     } else {
-        ret_status = UCM_RET_SYSTEM_NOMEMORY;
+        return 0;
     }
 
-    return ret_status;
+    return (uintptr_t)win_main;
 }
 
-static void*
-_curses_loop(void* ctx) {
+void*
+curses_dispatch(void* ctx) {
     int ch = 0;
     // TODO Temporary F1 - it's exit
     while ((ch = getch()) != KEY_F(1) || get_flag(FLAG_APP_TERMINATED)) {
+        printf("WOW!!!");
         addch(ch);
     }
     if (!get_flag(FLAG_APP_TERMINATED))
@@ -58,13 +55,9 @@ _curses_finish(void) {
         free_and_null(win_main);
 }
 
-UCM_RET
+uintptr_t
 curses_start(void) {
-    _curses_init();
-
-    ucm_api->sys.thread_create(_curses_loop, NULL);
-
-    erase();
+    return _curses_init();
 }
 
 void
