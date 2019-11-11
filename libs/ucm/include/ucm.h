@@ -59,7 +59,7 @@ typedef struct _ucm_functions_s {
         void (*free)(void* obj);
         void (*zmemory)(void* mem, size_t size);
         int (*realloc)(void** mem, size_t size);
-        void* (*memcpy)(void* mem, size_t size);
+        void* (*memdup)(void* mem, size_t size);
         char* (*strdup)(const char* str);
         char* (*strndup)(const char* str, size_t num);
 
@@ -213,8 +213,6 @@ typedef struct {
     char* path_lib_abs;
     char* path_plug_abs;
     char* path_store_abs;
-
-    uint64_t options;
 } ucm_cargs_t;
 
 enum {
@@ -225,23 +223,29 @@ enum {
 // ******* LOAD FUNCTIONS ************
 
 LIBUCM_API ucm_functions_t*
-ucm_core_start(ucm_cargs_t* args);
+ucm_core_load(ucm_cargs_t* args);
 
 LIBUCM_API UCM_RET
-ucm_core_stop(void);
+ucm_core_exec(uint32_t flags, void* ctx);
 
-LIBUCM_API size_t
-ucm_core_info(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args);
+LIBUCM_API UCM_RET
+ucm_core_unload(ucm_functions_t** api);
+
+LIBUCM_API const ucm_plugin_info_t*
+ucm_core_info (void);
 
 // ******* DYNAMIC LOAD FUNCTIONS ***********
 
-typedef ucm_functions_t* (*ucm_cstart_func)(ucm_cargs_t* args);
-#define UCM_START_FUNC "ucm_core_start"
+typedef ucm_functions_t* (*ucm_func_load)(ucm_cargs_t* args);
+#define UCM_LOAD_FUNC "ucm_core_load"
 
-typedef UCM_RET (*ucm_cstop_func)(void);
-#define UCM_STOP_FUNC "ucm_core_stop"
+typedef UCM_RET (*ucm_func_exec)(uint32_t flags, void* ctx);
+#define UCM_EXEC_FUNC "ucm_core_exec"
 
-typedef size_t (*ucm_cinfo_func)(uint8_t mode, void* mem, size_t mem_size, ucm_cargs_t* args);
+typedef UCM_RET (*ucm_func_unload)(ucm_functions_t** api);
+#define UCM_UNLOAD_FUNC "ucm_core_unload"
+
+typedef const ucm_plugin_info_t* (*ucm_func_info) (void);
 #define UCM_INFO_FUNC "ucm_core_info"
 
 #undef UCM_DEPRECATED

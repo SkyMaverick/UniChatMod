@@ -56,7 +56,7 @@ osal_realloc2(void** mem, size_t size) {
 }
 
 void*
-osal_memcpy(void* mem, size_t size) {
+osal_memdup(void* mem, size_t size) {
     void* buffer = osal_zmalloc(size);
     if (__likely(buffer))
         memcpy(buffer, mem, size);

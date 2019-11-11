@@ -20,7 +20,7 @@ int
 osal_realloc2(void** mem, size_t size);
 
 void*
-osal_memcpy(void* mem, size_t size);
+osal_memdup(void* mem, size_t size);
 
 char*
 osal_strdup(const char* str);

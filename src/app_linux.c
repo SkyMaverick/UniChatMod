@@ -11,15 +11,14 @@ static char psa_buf[UCM_PATH_MAX];
 ucm_cargs_t args = {.path_abs = pa_buf,
                     .path_lib_abs = pla_buf,
                     .path_plug_abs = ppa_buf,
-                    .path_store_abs = psa_buf,
+                    .path_store_abs = psa_buf};
 
-                    .options = 0};
+ucm_func_load core_load = NULL;
+ucm_func_exec core_exec = NULL;
+ucm_func_unload core_unload = NULL;
+ucm_func_info core_info = NULL;
 
-ucm_cstart_func core_start = NULL;
-ucm_cstop_func core_stop = NULL;
-ucm_cinfo_func core_info = NULL;
-
-static ucm_plugin_info_t* info;
+static const ucm_plugin_info_t* info;
 
 #include "loader.c"
 
@@ -44,11 +43,8 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 static void
 exit_func(int ret_status) {
 
-    if (info)
-        free(info);
-
-    if (core_stop)
-        core_stop();
+    if (core_unload)
+        core_unload(&ucm_api);
 
     dlclose(core_handle);
 

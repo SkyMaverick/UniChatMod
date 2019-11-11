@@ -26,7 +26,7 @@
 
 #define STACK_TRACE_BUFFER 4096
 
-extern const ucm_functions_t* ucm_api;
+extern ucm_functions_t* ucm_api;
 
 #define free_and_null(X)                                                                           \
     do {                                                                                           \

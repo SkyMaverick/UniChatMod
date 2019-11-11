@@ -11,7 +11,7 @@
     #include <signal.h>
 #endif
 
-const ucm_functions_t* ucm_api;
+ucm_functions_t* ucm_api;
 
 #if defined(UCM_OS_POSIX)
     #include "app_linux.c"
