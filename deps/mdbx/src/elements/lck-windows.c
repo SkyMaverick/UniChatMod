@@ -423,6 +423,14 @@ MDBX_INTERNAL_FUNC int mdbx_lck_init(MDBX_env *env,
 MDBX_INTERNAL_FUNC int mdbx_lck_destroy(MDBX_env *env,
                                         MDBX_env *inprocess_neighbor) {
   (void)inprocess_neighbor;
+
+  /* LY: should unmap before releasing the locks to avoid race condition and
+   * STATUS_USER_MAPPED_FILE/ERROR_USER_MAPPED_FILE */
+  if (env->me_map)
+    mdbx_munmap(&env->me_dxb_mmap);
+  if (env->me_lck)
+    mdbx_munmap(&env->me_lck_mmap);
+
   lck_unlock(env);
   return MDBX_SUCCESS;
 }
@@ -689,11 +697,21 @@ MDBX_srwlock_function mdbx_srwlock_Init, mdbx_srwlock_AcquireShared,
 
 /*----------------------------------------------------------------------------*/
 
+#if 0  /* LY: unused for now */
 static DWORD WINAPI stub_DiscardVirtualMemory(PVOID VirtualAddress,
                                               SIZE_T Size) {
   return VirtualAlloc(VirtualAddress, Size, MEM_RESET, PAGE_NOACCESS)
              ? ERROR_SUCCESS
-             : GetLastError();
+	  : GetLastError();
+}
+#endif /* unused for now */
+
+static uint64_t WINAPI stub_GetTickCount64(void) {
+  LARGE_INTEGER Counter, Frequency;
+  return (QueryPerformanceFrequency(&Frequency) &&
+          QueryPerformanceCounter(&Counter))
+             ? Counter.QuadPart * 1000ul / Frequency.QuadPart
+             : 0;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -702,9 +720,14 @@ MDBX_GetFileInformationByHandleEx mdbx_GetFileInformationByHandleEx;
 MDBX_GetVolumeInformationByHandleW mdbx_GetVolumeInformationByHandleW;
 MDBX_GetFinalPathNameByHandleW mdbx_GetFinalPathNameByHandleW;
 MDBX_SetFileInformationByHandle mdbx_SetFileInformationByHandle;
-MDBX_PrefetchVirtualMemory mdbx_PrefetchVirtualMemory;
-MDBX_DiscardVirtualMemory mdbx_DiscardVirtualMemory;
 MDBX_NtFsControlFile mdbx_NtFsControlFile;
+MDBX_PrefetchVirtualMemory mdbx_PrefetchVirtualMemory;
+MDBX_GetTickCount64 mdbx_GetTickCount64;
+#if 0  /* LY: unused for now */
+MDBX_DiscardVirtualMemory mdbx_DiscardVirtualMemory;
+MDBX_OfferVirtualMemory mdbx_OfferVirtualMemory;
+MDBX_ReclaimVirtualMemory mdbx_ReclaimVirtualMemory;
+#endif /* unused for now */
 #endif /* MDBX_ALLOY */
 
 static void mdbx_winnt_import(void) {
@@ -736,9 +759,16 @@ static void mdbx_winnt_import(void) {
   GET_KERNEL32_PROC(GetFinalPathNameByHandleW);
   GET_KERNEL32_PROC(SetFileInformationByHandle);
   GET_KERNEL32_PROC(PrefetchVirtualMemory);
+  GET_KERNEL32_PROC(GetTickCount64);
+  if (!mdbx_GetTickCount64)
+    mdbx_GetTickCount64 = stub_GetTickCount64;
+#if 0  /* LY: unused for now */
   GET_KERNEL32_PROC(DiscardVirtualMemory);
   if (!mdbx_DiscardVirtualMemory)
     mdbx_DiscardVirtualMemory = stub_DiscardVirtualMemory;
+  GET_KERNEL32_PROC(OfferVirtualMemory);
+  GET_KERNEL32_PROC(ReclaimVirtualMemory);
+#endif /* unused for now */
 #undef GET_KERNEL32_PROC
 
   const HINSTANCE hNtdll = GetModuleHandleA("ntdll.dll");

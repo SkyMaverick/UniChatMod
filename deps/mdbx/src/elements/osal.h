@@ -80,6 +80,8 @@
 #include <vm/vm_param.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
 #include <uvm/uvm_param.h>
+#else
+#define SYSCTL_LEGACY_NONCONST_MIB
 #endif
 #include <sys/vmmeter.h>
 #else
@@ -105,17 +107,29 @@
 #include <mach/host_info.h>
 #include <mach/mach_host.h>
 #include <mach/mach_port.h>
+#include <uuid/uuid.h>
 #undef P_DIRTY
 #endif
 
 #if defined(__linux__) || defined(__gnu_linux__)
 #include <linux/sysctl.h>
 #include <sys/sendfile.h>
+#include <sys/statvfs.h>
 #endif /* Linux */
 
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 0
 #endif
+
+#ifndef _XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE_EXTENDED 0
+#else
+#include <utmpx.h>
+#endif /* _XOPEN_SOURCE_EXTENDED */
+
+#if defined(__sun) || defined(__SVR4) || defined(__svr4__)
+#include <kstat.h>
+#endif /* SunOS/Solaris */
 
 #if defined(_WIN32) || defined(_WIN64)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -238,16 +252,6 @@ typedef pthread_mutex_t mdbx_fastmutex_t;
 #if !defined(MADV_DONTDUMP) && defined(MADV_NOCORE)
 #define MADV_DONTDUMP MADV_NOCORE
 #endif /* MADV_NOCORE -> MADV_DONTDUMP */
-
-#ifndef MADV_REMOVE_OR_FREE_OR_DONTNEED
-#ifdef MADV_REMOVE
-#define MADV_REMOVE_OR_FREE_OR_DONTNEED MADV_REMOVE
-#elif defined(MADV_FREE)
-#define MADV_REMOVE_OR_FREE_OR_DONTNEED MADV_FREE
-#elif defined(MADV_DONTNEED)
-#define MADV_REMOVE_OR_FREE_OR_DONTNEED MADV_DONTNEED
-#endif
-#endif /* MADV_REMOVE_OR_FREE_OR_DONTNEED */
 
 #if defined(i386) || defined(__386) || defined(__i386) || defined(__i386__) || \
     defined(i486) || defined(__i486) || defined(__i486__) ||                   \
@@ -632,18 +636,19 @@ typedef struct mdbx_mmap_param {
     struct MDBX_lockinfo *lck;
   };
   mdbx_filehandle_t fd;
-  size_t length; /* mapping length, but NOT a size of file or DB */
+  size_t limit;   /* mapping length, but NOT a size of file nor DB */
+  size_t current; /* mapped region size, i.e. the size of file and DB */
 #if defined(_WIN32) || defined(_WIN64)
-  size_t current; /* mapped region size, e.g. file and DB */
-  uint64_t filesize;
+  uint64_t filesize /* in-process cache of a file size. */;
 #endif
 #ifdef MDBX_OSAL_SECTION
   MDBX_OSAL_SECTION section;
 #endif
 } mdbx_mmap_t;
 
-MDBX_INTERNAL_FUNC int mdbx_mmap(int flags, mdbx_mmap_t *map, size_t must,
-                                 size_t limit);
+MDBX_INTERNAL_FUNC int mdbx_mmap(const int flags, mdbx_mmap_t *map,
+                                 const size_t must, const size_t limit,
+                                 const bool truncate);
 MDBX_INTERNAL_FUNC int mdbx_munmap(mdbx_mmap_t *map);
 MDBX_INTERNAL_FUNC int mdbx_mresize(int flags, mdbx_mmap_t *map, size_t current,
                                     size_t wanna);
@@ -685,6 +690,12 @@ MDBX_INTERNAL_FUNC uint64_t
 mdbx_osal_16dot16_to_monotime(uint32_t seconds_16dot16);
 MDBX_INTERNAL_FUNC uint32_t mdbx_osal_monotime_to_16dot16(uint64_t monotime);
 
+typedef union bin128 {
+  __anonymous_struct_extension__ struct { uint64_t x, y; };
+  __anonymous_struct_extension__ struct { uint32_t a, b, c, d; };
+} bin128_t;
+
+MDBX_INTERNAL_FUNC bin128_t mdbx_osal_bootid(void);
 /*----------------------------------------------------------------------------*/
 /* lck stuff */
 
@@ -848,6 +859,9 @@ typedef NTSTATUS(NTAPI *MDBX_NtFsControlFile)(
     OUT OPTIONAL PVOID OutputBuffer, IN ULONG OutputBufferLength);
 MDBX_INTERNAL_VAR MDBX_NtFsControlFile mdbx_NtFsControlFile;
 
+typedef uint64_t(WINAPI *MDBX_GetTickCount64)(void);
+MDBX_INTERNAL_VAR MDBX_GetTickCount64 mdbx_GetTickCount64;
+
 #if !defined(_WIN32_WINNT_WIN8) || _WIN32_WINNT < _WIN32_WINNT_WIN8
 typedef struct _WIN32_MEMORY_RANGE_ENTRY {
   PVOID VirtualAddress;
@@ -860,9 +874,31 @@ typedef BOOL(WINAPI *MDBX_PrefetchVirtualMemory)(
     PWIN32_MEMORY_RANGE_ENTRY VirtualAddresses, ULONG Flags);
 MDBX_INTERNAL_VAR MDBX_PrefetchVirtualMemory mdbx_PrefetchVirtualMemory;
 
+#if 0 /* LY: unused for now */
+#if !defined(_WIN32_WINNT_WIN81) || _WIN32_WINNT < _WIN32_WINNT_WIN81
+typedef enum OFFER_PRIORITY {
+  VmOfferPriorityVeryLow = 1,
+  VmOfferPriorityLow,
+  VmOfferPriorityBelowNormal,
+  VmOfferPriorityNormal
+} OFFER_PRIORITY;
+#endif /* Windows 8.1 */
+
 typedef DWORD(WINAPI *MDBX_DiscardVirtualMemory)(PVOID VirtualAddress,
                                                  SIZE_T Size);
 MDBX_INTERNAL_VAR MDBX_DiscardVirtualMemory mdbx_DiscardVirtualMemory;
+
+typedef DWORD(WINAPI *MDBX_ReclaimVirtualMemory)(PVOID VirtualAddress,
+                                                 SIZE_T Size);
+MDBX_INTERNAL_VAR MDBX_ReclaimVirtualMemory mdbx_ReclaimVirtualMemory;
+
+typedef DWORD(WINAPI *MDBX_OfferVirtualMemory(
+  PVOID          VirtualAddress,
+  SIZE_T         Size,
+  OFFER_PRIORITY Priority
+);
+MDBX_INTERNAL_VAR MDBX_OfferVirtualMemory mdbx_OfferVirtualMemory;
+#endif /* unused for now */
 
 #endif /* Windows */
 

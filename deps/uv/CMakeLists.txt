@@ -320,7 +320,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
        src/unix/linux-syscalls.c
        src/unix/procfs-exepath.c
        src/unix/random-getrandom.c
-       src/unix/random-sysctl.c
+       src/unix/random-sysctl-linux.c
        src/unix/sysinfo-loadavg.c)
 endif()
 
@@ -395,8 +395,8 @@ if(LIBUV_BUILD_TESTS)
            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-if(UNIX)
-  # Now for some gibbering horrors from beyond the stars...
+#if(UNIX)
+#  # Now for some gibbering horrors from beyond the stars...
 #  foreach(x ${uv_libraries})
 #    set(LIBS "${LIBS} -l${x}")
 #  endforeach(x)
@@ -416,13 +416,13 @@ if(UNIX)
 #  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc
 #          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
   install(TARGETS uv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  install(TARGETS uv_a ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-if(WIN32)
-  install(DIRECTORY include/ DESTINATION include)
-  install(FILES LICENSE DESTINATION .)
-  install(TARGETS uv uv_a
-          RUNTIME DESTINATION lib/$<CONFIG>
-          ARCHIVE DESTINATION lib/$<CONFIG>)
-endif()
+#  install(TARGETS uv_a ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+#endif()
+#
+#if(WIN32)
+#  install(DIRECTORY include/ DESTINATION include)
+#  install(FILES LICENSE DESTINATION .)
+#  install(TARGETS uv uv_a
+#          RUNTIME DESTINATION lib/$<CONFIG>
+#          ARCHIVE DESTINATION lib/$<CONFIG>)
+#endif()

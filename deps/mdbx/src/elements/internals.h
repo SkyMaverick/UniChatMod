@@ -245,20 +245,37 @@
 #else
 #define MDBX_TXN_CHECKPID 1
 #endif
+#define MDBX_TXN_CHECKPID_CONFIG "AUTO=" STRINGIFY(MDBX_TXN_CHECKPID)
 #else
-#define MDBX_TXN_CHECKPID_CONFIG MDBX_TXN_CHECKPID
+#define MDBX_TXN_CHECKPID_CONFIG STRINGIFY(MDBX_TXN_CHECKPID)
 #endif /* MDBX_TXN_CHECKPID */
 
 /* Controls checking transaction owner thread against misuse transactions from
  * other threads. */
 #ifndef MDBX_TXN_CHECKOWNER
 #define MDBX_TXN_CHECKOWNER 1
+#define MDBX_TXN_CHECKOWNER_CONFIG "AUTO=" STRINGIFY(MDBX_TXN_CHECKOWNER)
+#else
+#define MDBX_TXN_CHECKOWNER_CONFIG STRINGIFY(MDBX_TXN_CHECKOWNER)
 #endif /* MDBX_TXN_CHECKOWNER */
 
 #define mdbx_sourcery_anchor XCONCAT(mdbx_sourcery_, MDBX_BUILD_SOURCERY)
 #if defined(MDBX_TOOLS)
 extern LIBMDBX_API const char *const mdbx_sourcery_anchor;
 #endif
+
+/* Does a system have battery-backed Real-Time Clock or just a fake. */
+#ifndef MDBX_TRUST_RTC
+#if defined(__linux__) || defined(__gnu_linux__) || defined(__NetBSD__) ||     \
+    defined(__OpenBSD__)
+#define MDBX_TRUST_RTC 0 /* a lot of embedded systems have a fake RTC */
+#else
+#define MDBX_TRUST_RTC 1
+#endif
+#define MDBX_TRUST_RTC_CONFIG "AUTO=" STRINGIFY(MDBX_TRUST_RTC)
+#else
+#define MDBX_TRUST_RTC_CONFIG STRINGIFY(MDBX_TRUST_RTC)
+#endif /* MDBX_TRUST_RTC */
 
 /*----------------------------------------------------------------------------*/
 /* Basic constants and types */
@@ -365,7 +382,7 @@ typedef struct MDBX_db {
   pgno_t md_overflow_pages; /* number of overflow pages */
   uint64_t md_seq;          /* table sequence counter */
   uint64_t md_entries;      /* number of data items */
-  uint64_t md_merkle;       /* Merkle tree checksum */
+  uint64_t md_mod_txnid;    /* txnid of last commited modification */
 } MDBX_db;
 
 /* database size-related parameters */
@@ -587,7 +604,7 @@ typedef struct MDBX_lockinfo {
    * If there was no reboot, but there is no need to rollback to the last
    * steady sync point. Zeros mean that no relevant information is available
    * from the system. */
-  volatile uint64_t mti_bootid[2];
+  volatile bin128_t mti_bootid;
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
 #ifdef MDBX_OSAL_LOCK
@@ -659,8 +676,8 @@ typedef struct MDBX_lockinfo {
  * demand-pager to read our data and page it out when memory
  * pressure from other processes is high. So until OSs have
  * actual paging support for Huge pages, they're not viable. */
-#define MAX_PAGESIZE 0x10000
-#define MIN_PAGESIZE 256
+#define MAX_PAGESIZE MDBX_MAX_PAGESIZE
+#define MIN_PAGESIZE MDBX_MIN_PAGESIZE
 
 #define MIN_MAPSIZE (MIN_PAGESIZE * MIN_PAGENO)
 #if defined(_WIN32) || defined(_WIN64)
@@ -940,7 +957,6 @@ struct MDBX_env {
   mdbx_mmap_t me_dxb_mmap; /*  The main data file */
 #define me_map me_dxb_mmap.dxb
 #define me_fd me_dxb_mmap.fd
-#define me_mapsize me_dxb_mmap.length
   mdbx_mmap_t me_lck_mmap; /*  The lock file */
 #define me_lfd me_lck_mmap.fd
 #define me_lck me_lck_mmap.lck
@@ -1016,13 +1032,16 @@ struct MDBX_env {
 #endif
   MDBX_env *me_lcklist_next;
 
+  /* struct me_dbgeo used for accepting db-geo params from user for the new
+   * database creation, i.e. when mdbx_env_set_geometry() was called before
+   * mdbx_env_open(). */
   struct {
     size_t lower;  /* minimal size of datafile */
     size_t upper;  /* maximal size of datafile */
     size_t now;    /* current size of datafile */
     size_t grow;   /* step to grow datafile */
     size_t shrink; /* threshold to shrink datafile */
-  } me_dbgeo;      /* */
+  } me_dbgeo;
 
 #if defined(_WIN32) || defined(_WIN64)
   MDBX_srwlock me_remap_guard;

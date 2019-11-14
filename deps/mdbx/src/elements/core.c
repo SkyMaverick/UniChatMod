@@ -252,7 +252,8 @@ static __pure_function __inline void *node_data(const MDBX_node *node) {
  * This is node header plus key plus data size. */
 static __pure_function __inline size_t node_size(const MDBX_val *key,
                                                  const MDBX_val *value) {
-  return NODESIZE + key->iov_len + value->iov_len;
+  return NODESIZE +
+         EVEN((key ? key->iov_len : 0) + (value ? value->iov_len : 0));
 }
 
 static __pure_function __inline pgno_t peek_pgno(const void *ptr) {
@@ -280,6 +281,58 @@ static __pure_function __inline pgno_t
 node_largedata_pgno(const MDBX_node *node) {
   assert(node_flags(node) & F_BIGDATA);
   return peek_pgno(node_data(node));
+}
+
+/* Calculate the size of a leaf node.
+ *
+ * The size depends on the environment's page size; if a data item
+ * is too large it will be put onto an overflow page and the node
+ * size will only include the key and not the data. Sizes are always
+ * rounded up to an even number of bytes, to guarantee 2-byte alignment
+ * of the MDBX_node headers.
+ *
+ * [in] env   The environment handle.
+ * [in] key   The key for the node.
+ * [in] data  The data for the node.
+ *
+ * Returns The number of bytes needed to store the node. */
+static __pure_function __inline size_t
+leaf_size(const MDBX_env *env, const MDBX_val *key, const MDBX_val *data) {
+  size_t node_bytes = node_size(key, data);
+  if (node_bytes > env->me_nodemax) {
+    /* put on overflow page */
+    node_bytes = node_size(key, nullptr) + sizeof(pgno_t);
+  }
+
+  return node_bytes + sizeof(indx_t);
+}
+
+/* Calculate the size of a branch node.
+ *
+ * The size should depend on the environment's page size but since
+ * we currently don't support spilling large keys onto overflow
+ * pages, it's simply the size of the MDBX_node header plus the
+ * size of the key. Sizes are always rounded up to an even number
+ * of bytes, to guarantee 2-byte alignment of the MDBX_node headers.
+ *
+ * [in] env The environment handle.
+ * [in] key The key for the node.
+ *
+ * Returns The number of bytes needed to store the node. */
+static __pure_function __inline size_t branch_size(const MDBX_env *env,
+                                                   const MDBX_val *key) {
+  /* Size of a node in a branch page with a given key.
+   * This is just the node header plus the key, there is no data. */
+  size_t node_bytes = node_size(key, nullptr);
+  if (unlikely(node_bytes > env->me_nodemax)) {
+    /* put on overflow page */
+    /* not implemented */
+    mdbx_assert_fail(env, "INDXSIZE(key) <= env->me_nodemax", __func__,
+                     __LINE__);
+    node_bytes = node_size(key, nullptr) + sizeof(pgno_t);
+  }
+
+  return node_bytes + sizeof(indx_t);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -311,8 +364,14 @@ static __pure_function __inline pgno_t pgno_align2os_pgno(const MDBX_env *env,
   return bytes2pgno(env, pgno_align2os_bytes(env, pgno));
 }
 
+static __pure_function __inline size_t bytes_align2os_bytes(const MDBX_env *env,
+                                                            size_t bytes) {
+  return roundup_powerof2(roundup_powerof2(bytes, env->me_psize),
+                          env->me_os_psize);
+}
+
 /* Address of first usable data byte in a page, after the header */
-static __pure_function __inline void *page_data(MDBX_page *mp) {
+static __pure_function __inline void *page_data(const MDBX_page *mp) {
   return (char *)mp + PAGEHDRSZ;
 }
 
@@ -330,7 +389,7 @@ static __pure_function __inline unsigned page_numkeys(const MDBX_page *mp) {
 }
 
 /* The amount of space remaining in the page */
-static __pure_function __inline unsigned page_spaceleft(const MDBX_page *mp) {
+static __pure_function __inline unsigned page_room(const MDBX_page *mp) {
   return mp->mp_upper - mp->mp_lower;
 }
 
@@ -341,7 +400,7 @@ static __pure_function __inline unsigned page_space(const MDBX_env *env) {
 
 static __pure_function __inline unsigned page_used(const MDBX_env *env,
                                                    const MDBX_page *mp) {
-  return page_space(env) - page_spaceleft(mp);
+  return page_space(env) - page_room(mp);
 }
 
 /* The percentage of space used in the page, in a percents. */
@@ -353,7 +412,7 @@ page_fill(const MDBX_env *env, const MDBX_page *mp) {
 static __pure_function __inline bool
 page_fill_enough(const MDBX_page *mp, unsigned spaceleft_threshold,
                  unsigned minkeys_threshold) {
-  return page_spaceleft(mp) < spaceleft_threshold &&
+  return page_room(mp) < spaceleft_threshold &&
          page_numkeys(mp) >= minkeys_threshold;
 }
 
@@ -510,6 +569,35 @@ size_t __hot mdbx_e2k_strnlen_bug_workaround(const char *s, size_t maxlen) {
 
 /*------------------------------------------------------------------------------
  * safe read/write volatile 64-bit fields on 32-bit architectures. */
+
+static __inline void atomic_yield(void) {
+#if defined(_WIN32) || defined(_WIN64)
+  YieldProcessor();
+#elif defined(__x86_64__) || defined(__i386__) || defined(__e2k__)
+  __builtin_ia32_pause();
+#elif defined(__ia64__)
+#if defined(__HP_cc__) || defined(__HP_aCC__)
+  _Asm_hint(_HINT_PAUSE);
+#else
+  __asm__ __volatile__("hint @pause");
+#endif
+#elif defined(__arm__) || defined(__aarch64__)
+#ifdef __CC_ARM
+  __yield();
+#else
+  __asm__ __volatile__("yield");
+#endif
+#elif (defined(__mips64) || defined(__mips64__)) && defined(__mips_isa_rev) && \
+    __mips_isa_rev >= 2
+  __asm__ __volatile__("pause");
+#elif defined(__mips) || defined(__mips__) || defined(__mips64) ||             \
+    defined(__mips64__) || defined(_M_MRX000) || defined(_MIPS_) ||            \
+    defined(__MWERKS__) || defined(__sgi)
+  __asm__ __volatile__(".word 0x00000140");
+#else
+  pthread_yield();
+#endif
+}
 
 #if MDBX_64BIT_CAS
 static __inline bool atomic_cas64(volatile uint64_t *p, uint64_t c,
@@ -710,6 +798,7 @@ typedef struct rthc_entry_t {
 #define RTHC_INITIAL_LIMIT 16
 #endif
 
+static bin128_t bootid;
 #if defined(_WIN32) || defined(_WIN64)
 static CRITICAL_SECTION rthc_critical_section;
 static CRITICAL_SECTION lcklist_critical_section;
@@ -854,6 +943,8 @@ __cold void mdbx_rthc_global_init(void) {
       break;
     proba >>= 1;
   }
+
+  bootid = mdbx_osal_bootid();
 }
 
 /* dtor called for thread, i.e. for all mdbx's environment objects */
@@ -1971,10 +2062,6 @@ static int __must_check_result mdbx_node_move(MDBX_cursor *csrc,
                                               MDBX_cursor *cdst, int fromleft);
 static int __must_check_result mdbx_node_read(MDBX_cursor *mc, MDBX_node *leaf,
                                               MDBX_val *data);
-static size_t leaf_size(MDBX_env *env, const MDBX_val *key,
-                        const MDBX_val *data);
-static size_t branch_size(MDBX_env *env, const MDBX_val *key);
-
 static int __must_check_result mdbx_rebalance(MDBX_cursor *mc);
 static int __must_check_result mdbx_update_key(MDBX_cursor *mc,
                                                const MDBX_val *key);
@@ -2022,8 +2109,10 @@ static int __must_check_result mdbx_xcursor_init1(MDBX_cursor *mc,
 static int __must_check_result mdbx_xcursor_init2(MDBX_cursor *mc,
                                                   MDBX_xcursor *src_mx,
                                                   int force);
+static void mdbx_cursor_copy(const MDBX_cursor *csrc, MDBX_cursor *cdst);
 
 static int __must_check_result mdbx_drop0(MDBX_cursor *mc, int subs);
+static int __must_check_result mdbx_fetch_sdb(MDBX_txn *txn, MDBX_dbi dbi);
 
 static MDBX_cmp_func mdbx_cmp_memn, mdbx_cmp_memnr, mdbx_cmp_int_align4,
     mdbx_cmp_int_align2, mdbx_cmp_int_unaligned;
@@ -2333,7 +2422,7 @@ static __maybe_unused void mdbx_page_list(MDBX_page *mp) {
   }
   mdbx_verbose("Total: header %u + contents %u + unused %u\n",
                IS_LEAF2(mp) ? PAGEHDRSZ : PAGEHDRSZ + mp->mp_lower, total,
-               page_spaceleft(mp));
+               page_room(mp));
 }
 
 /*----------------------------------------------------------------------------*/
@@ -2451,11 +2540,6 @@ static void mdbx_dlist_free(MDBX_txn *txn) {
   }
 
   mdbx_dpl_clear(dl);
-}
-
-static size_t bytes_align2os_bytes(const MDBX_env *env, size_t bytes) {
-  return roundup_powerof2(roundup_powerof2(bytes, env->me_psize),
-                          env->me_os_psize);
 }
 
 static __inline MDBX_db *mdbx_outer_db(MDBX_cursor *mc) {
@@ -3376,24 +3460,76 @@ static int __must_check_result mdbx_page_dirty(MDBX_txn *txn, MDBX_page *mp) {
   return MDBX_SUCCESS;
 }
 
-__cold static int mdbx_mapresize(MDBX_env *env, const pgno_t size_pgno,
-                                 const pgno_t limit_pgno) {
-#ifdef MDBX_USE_VALGRIND
-  const size_t prev_mapsize = env->me_mapsize;
-  void *const prev_mapaddr = env->me_map;
-#endif
+/* Turn on/off readahead. It's harmful when the DB is larger than RAM. */
+static int __cold mdbx_set_readahead(MDBX_env *env, const size_t offset,
+                                     const size_t length, const bool enable) {
+  assert(length > 0);
+  mdbx_notice("readahead %s %u..%u", enable ? "ON" : "OFF",
+              bytes2pgno(env, offset), bytes2pgno(env, offset + length));
 
+#if defined(F_RDAHEAD)
+  if (unlikely(fcntl(env->me_fd, F_RDAHEAD, enable) == -1))
+    return errno;
+#endif /* F_RDAHEAD */
+
+  if (enable) {
+#if defined(F_RDADVISE)
+    struct radvisory hint;
+    hint.ra_offset = offset;
+    hint.ra_count = length;
+    (void)/* Ignore ENOTTY for DB on the ram-disk and so on */ fcntl(
+        env->me_fd, F_RDADVISE, &hint);
+#endif /* F_RDADVISE */
+#if defined(MADV_WILLNEED)
+    if (unlikely(madvise(env->me_map + offset, length, MADV_WILLNEED) != 0))
+      return errno;
+#elif defined(POSIX_MADV_WILLNEED)
+    rc = posix_madvise(env->me_map + offset, length, POSIX_MADV_WILLNEED);
+    if (unlikely(rc != 0))
+      return errno;
+#elif defined(_WIN32) || defined(_WIN64)
+    if (mdbx_PrefetchVirtualMemory) {
+      WIN32_MEMORY_RANGE_ENTRY hint;
+      hint.VirtualAddress = env->me_map + offset;
+      hint.NumberOfBytes = length;
+      (void)mdbx_PrefetchVirtualMemory(GetCurrentProcess(), 1, &hint, 0);
+    }
+#elif defined(POSIX_FADV_WILLNEED)
+    int err = posix_fadvise(env->me_fd, offset, length, POSIX_FADV_WILLNEED);
+    if (unlikely(err != 0))
+      return err;
+#endif /* MADV_WILLNEED */
+  } else {
+#if defined(MADV_RANDOM)
+    if (unlikely(madvise(env->me_map + offset, length, MADV_RANDOM) != 0))
+      return errno;
+#elif defined(POSIX_MADV_RANDOM)
+    int err = posix_madvise(env->me_map + offset, length, POSIX_MADV_RANDOM);
+    if (unlikely(err != 0))
+      return err;
+#elif defined(POSIX_FADV_RANDOM)
+    int err = posix_fadvise(env->me_fd, offset, length, POSIX_FADV_RANDOM);
+    if (unlikely(err != 0))
+      return err;
+#endif /* MADV_RANDOM */
+  }
+  return MDBX_SUCCESS;
+}
+
+static __cold int mdbx_mapresize(MDBX_env *env, const pgno_t size_pgno,
+                                 const pgno_t limit_pgno) {
   const size_t limit_bytes = pgno_align2os_bytes(env, limit_pgno);
   const size_t size_bytes = pgno_align2os_bytes(env, size_pgno);
 
   mdbx_verbose("resize datafile/mapping: "
                "present %" PRIuPTR " -> %" PRIuPTR ", "
                "limit %" PRIuPTR " -> %" PRIuPTR,
-               env->me_dbgeo.now, size_bytes, env->me_dbgeo.upper, limit_bytes);
+               env->me_dxb_mmap.current, size_bytes, env->me_dxb_mmap.limit,
+               limit_bytes);
 
   mdbx_assert(env, limit_bytes >= size_bytes);
-  mdbx_assert(env, bytes2pgno(env, size_bytes) == size_pgno);
-  mdbx_assert(env, bytes2pgno(env, limit_bytes) == limit_pgno);
+  mdbx_assert(env, bytes2pgno(env, size_bytes) >= size_pgno);
+  mdbx_assert(env, bytes2pgno(env, limit_bytes) >= limit_pgno);
 
 #if defined(_WIN32) || defined(_WIN64)
   /* Acquire guard in exclusive mode for:
@@ -3403,9 +3539,9 @@ __cold static int mdbx_mapresize(MDBX_env *env, const pgno_t size_pgno,
   mdbx_handle_array_t *suspended = NULL;
   mdbx_handle_array_t array_onstack;
   int rc = MDBX_SUCCESS;
-  if (limit_bytes == env->me_dxb_mmap.length &&
+  if (limit_bytes == env->me_dxb_mmap.limit &&
       size_bytes == env->me_dxb_mmap.current &&
-      env->me_dxb_mmap.current == env->me_dxb_mmap.filesize)
+      size_bytes == env->me_dxb_mmap.filesize)
     goto bailout;
 
   /* 1) Windows allows only extending a read-write section, but not a
@@ -3429,47 +3565,92 @@ __cold static int mdbx_mapresize(MDBX_env *env, const pgno_t size_pgno,
   int rc = mdbx_fastmutex_acquire(&env->me_remap_guard);
   if (rc != MDBX_SUCCESS)
     return rc;
-  if (limit_bytes == env->me_dxb_mmap.length &&
-      bytes2pgno(env, size_bytes) == env->me_dbgeo.now)
+  if (limit_bytes == env->me_dxb_mmap.limit &&
+      size_bytes == env->me_dxb_mmap.current)
     goto bailout;
 #endif /* Windows */
 
+  const size_t prev_limit = env->me_dxb_mmap.limit;
+  const void *const prev_addr = env->me_map;
+  const size_t prev_size = env->me_dxb_mmap.current;
+  if (size_bytes < prev_size) {
+    mdbx_notice("resize-MADV_%s %u..%u",
+                (env->me_flags & MDBX_WRITEMAP) ? "REMOVE" : "DONTNEED",
+                size_pgno, bytes2pgno(env, prev_size));
+#if defined(MADV_REMOVE)
+    if ((env->me_flags & MDBX_WRITEMAP) == 0 ||
+        madvise(env->me_map + size_bytes, prev_size - size_bytes,
+                MADV_REMOVE) != 0)
+#endif
+#if defined(MADV_DONTNEED)
+      (void)madvise(env->me_map + size_bytes, prev_size - size_bytes,
+                    MADV_DONTNEED);
+#elif defined(POSIX_MADV_DONTNEED)
+    (void)posix_madvise(env->me_map + size_bytes, prev_size - size_bytes,
+                        POSIX_MADV_DONTNEED);
+#elif defined(POSIX_FADV_DONTNEED)
+    (void)posix_fadvise(env->me_fd, size_bytes, prev_size - size_bytes,
+                        POSIX_FADV_DONTNEED);
+#else
+    __noop();
+#endif /* MADV_DONTNEED */
+    if (*env->me_discarded_tail > size_pgno)
+      *env->me_discarded_tail = size_pgno;
+  }
+
   rc = mdbx_mresize(env->me_flags, &env->me_dxb_mmap, size_bytes, limit_bytes);
+  if (rc == MDBX_SUCCESS && (env->me_flags & MDBX_NORDAHEAD) == 0) {
+    rc = mdbx_is_readahead_reasonable(size_bytes, 0);
+    if (rc == MDBX_RESULT_FALSE)
+      rc = mdbx_set_readahead(
+          env, 0, (size_bytes > prev_size) ? size_bytes : prev_size, false);
+    else if (rc == MDBX_RESULT_TRUE) {
+      rc = MDBX_SUCCESS;
+      const size_t readahead_pivot =
+          (limit_bytes != prev_limit || env->me_dxb_mmap.address != prev_addr
+#if defined(_WIN32) || defined(_WIN64)
+           || prev_size > size_bytes
+#endif /* Windows */
+           )
+              ? 0 /* reassign readahead to the entire map
+                     because it was remapped */
+              : prev_size;
+      if (size_bytes > readahead_pivot) {
+        *env->me_discarded_tail = size_pgno;
+        rc = mdbx_set_readahead(env, readahead_pivot,
+                                size_bytes - readahead_pivot, true);
+      }
+    }
+  }
 
 bailout:
   if (rc == MDBX_SUCCESS) {
 #if defined(_WIN32) || defined(_WIN64)
     mdbx_assert(env, size_bytes == env->me_dxb_mmap.current);
     mdbx_assert(env, size_bytes <= env->me_dxb_mmap.filesize);
-    mdbx_assert(env, limit_bytes == env->me_dxb_mmap.length);
-#endif
-    env->me_dbgeo.now = size_bytes;
-    env->me_dbgeo.upper = limit_bytes;
-    if (env->me_txn) {
-      mdbx_tassert(env->me_txn, size_pgno >= env->me_txn->mt_next_pgno);
-      env->me_txn->mt_end_pgno = env->me_txn0->mt_end_pgno = size_pgno;
-    }
+    mdbx_assert(env, limit_bytes == env->me_dxb_mmap.limit);
+#endif /* Windows */
 #ifdef MDBX_USE_VALGRIND
-    if (prev_mapsize != env->me_mapsize || prev_mapaddr != env->me_map) {
+    if (prev_limit != env->me_dxb_mmap.limit || prev_addr != env->me_map) {
       VALGRIND_DISCARD(env->me_valgrind_handle);
       env->me_valgrind_handle = 0;
-      if (env->me_mapsize)
+      if (env->me_dxb_mmap.limit)
         env->me_valgrind_handle =
-            VALGRIND_CREATE_BLOCK(env->me_map, env->me_mapsize, "mdbx");
+            VALGRIND_CREATE_BLOCK(env->me_map, env->me_dxb_mmap.limit, "mdbx");
     }
-#endif
+#endif /* MDBX_USE_VALGRIND */
   } else {
     if (rc != MDBX_RESULT_TRUE) {
       mdbx_error("failed resize datafile/mapping: "
                  "present %" PRIuPTR " -> %" PRIuPTR ", "
                  "limit %" PRIuPTR " -> %" PRIuPTR ", errcode %d",
-                 env->me_dbgeo.now, size_bytes, env->me_dbgeo.upper,
+                 env->me_dxb_mmap.current, size_bytes, env->me_dxb_mmap.limit,
                  limit_bytes, rc);
     } else {
       mdbx_notice("unable resize datafile/mapping: "
                   "present %" PRIuPTR " -> %" PRIuPTR ", "
                   "limit %" PRIuPTR " -> %" PRIuPTR ", errcode %d",
-                  env->me_dbgeo.now, size_bytes, env->me_dbgeo.upper,
+                  env->me_dxb_mmap.current, size_bytes, env->me_dxb_mmap.limit,
                   limit_bytes, rc);
     }
     if (!env->me_dxb_mmap.address) {
@@ -3879,7 +4060,7 @@ skip_cache:
                    aligned, aligned - txn->mt_end_pgno);
       rc = mdbx_mapresize(env, aligned, head->mm_geo.upper);
       if (rc == MDBX_SUCCESS) {
-        mdbx_tassert(env->me_txn, txn->mt_end_pgno >= next);
+        env->me_txn->mt_end_pgno = aligned;
         if (!mp)
           return rc;
         goto done;
@@ -4641,7 +4822,7 @@ static int mdbx_txn_renew0(MDBX_txn *txn, unsigned flags) {
     rc = MDBX_PANIC;
   } else {
     const size_t size = pgno2bytes(env, txn->mt_end_pgno);
-    if (unlikely(size > env->me_mapsize)) {
+    if (unlikely(size > env->me_dxb_mmap.limit)) {
       if (txn->mt_geo.upper > MAX_PAGENO ||
           bytes2pgno(env, pgno2bytes(env, txn->mt_geo.upper)) !=
               txn->mt_geo.upper) {
@@ -4655,17 +4836,20 @@ static int mdbx_txn_renew0(MDBX_txn *txn, unsigned flags) {
         goto bailout;
       }
     }
-    txn->mt_owner = mdbx_thread_self();
+    if (txn->mt_flags & MDBX_RDONLY) {
 #if defined(_WIN32) || defined(_WIN64)
-    if ((txn->mt_flags & MDBX_RDONLY) != 0 && size > env->me_dbgeo.lower &&
-        env->me_dbgeo.shrink) {
-      txn->mt_flags |= MDBX_SHRINK_ALLOWED;
-      mdbx_srwlock_AcquireShared(&env->me_remap_guard);
-    }
+      if (size > env->me_dbgeo.lower && env->me_dbgeo.shrink) {
+        txn->mt_flags |= MDBX_SHRINK_ALLOWED;
+        mdbx_srwlock_AcquireShared(&env->me_remap_guard);
+      }
 #endif
+    } else {
+      env->me_dxb_mmap.current = size;
+    }
 #if defined(MDBX_USE_VALGRIND) || defined(__SANITIZE_ADDRESS__)
     mdbx_txn_valgrind(env, txn);
 #endif
+    txn->mt_owner = mdbx_thread_self();
     return MDBX_SUCCESS;
   }
 bailout:
@@ -5098,6 +5282,7 @@ static int mdbx_txn_end(MDBX_txn *txn, unsigned mode) {
   mdbx_ensure(env, txn->mt_txnid >=
                        /* paranoia is appropriate here */ *env->me_oldest);
 
+  int rc = MDBX_SUCCESS;
   if (F_ISSET(txn->mt_flags, MDBX_RDONLY)) {
     if (txn->to.reader) {
       MDBX_reader *slot = txn->to.reader;
@@ -5156,30 +5341,53 @@ static int mdbx_txn_end(MDBX_txn *txn, unsigned mode) {
       mdbx_assert(env, txn->mt_parent != NULL);
       mdbx_assert(env, mdbx_pnl_check4assert(txn->tw.reclaimed_pglist,
                                              txn->mt_next_pgno));
+      MDBX_txn *const parent = txn->mt_parent;
       env->me_txn->mt_child = NULL;
       env->me_txn->mt_flags &= ~MDBX_TXN_HAS_CHILD;
       mdbx_pnl_free(txn->tw.reclaimed_pglist);
       mdbx_pnl_free(txn->tw.spill_pages);
 
       if (txn->tw.lifo_reclaimed) {
-        mdbx_assert(env,
-                    MDBX_PNL_SIZE(txn->tw.lifo_reclaimed) >=
-                        (unsigned)(uintptr_t)txn->mt_parent->tw.lifo_reclaimed);
+        mdbx_assert(env, MDBX_PNL_SIZE(txn->tw.lifo_reclaimed) >=
+                             (unsigned)(uintptr_t)parent->tw.lifo_reclaimed);
         MDBX_PNL_SIZE(txn->tw.lifo_reclaimed) =
-            (unsigned)(uintptr_t)txn->mt_parent->tw.lifo_reclaimed;
-        txn->mt_parent->tw.lifo_reclaimed = txn->tw.lifo_reclaimed;
+            (unsigned)(uintptr_t)parent->tw.lifo_reclaimed;
+        parent->tw.lifo_reclaimed = txn->tw.lifo_reclaimed;
       }
 
       if (txn->tw.retired_pages) {
-        mdbx_assert(env,
-                    MDBX_PNL_SIZE(txn->tw.retired_pages) >=
-                        (unsigned)(uintptr_t)txn->mt_parent->tw.retired_pages);
+        mdbx_assert(env, MDBX_PNL_SIZE(txn->tw.retired_pages) >=
+                             (unsigned)(uintptr_t)parent->tw.retired_pages);
         MDBX_PNL_SIZE(txn->tw.retired_pages) =
-            (unsigned)(uintptr_t)txn->mt_parent->tw.retired_pages;
-        txn->mt_parent->tw.retired_pages = txn->tw.retired_pages;
+            (unsigned)(uintptr_t)parent->tw.retired_pages;
+        parent->tw.retired_pages = txn->tw.retired_pages;
       }
 
       mdbx_free(txn->tw.dirtylist);
+
+      if (parent->mt_geo.upper != txn->mt_geo.upper ||
+          parent->mt_geo.now != txn->mt_geo.now) {
+        /* undo resize performed by child txn */
+        rc = mdbx_mapresize(env, parent->mt_geo.now, parent->mt_geo.upper);
+        if (rc == MDBX_RESULT_TRUE) {
+          /* unable undo resize (it is regular for Windows),
+           * therefore promote size changes from child to the parent txn */
+          mdbx_notice("unable undo resize performed by child txn, promote to "
+                      "the parent (%u->%u, %u->%u)",
+                      txn->mt_geo.now, parent->mt_geo.now, txn->mt_geo.upper,
+                      parent->mt_geo.upper);
+          parent->mt_geo.now = txn->mt_geo.now;
+          parent->mt_geo.upper = txn->mt_geo.upper;
+          rc = MDBX_SUCCESS;
+        } else if (unlikely(rc != MDBX_SUCCESS)) {
+          mdbx_error("error %d while undo resize performed by child txn, fail "
+                     "the parent",
+                     rc);
+          parent->mt_flags |= MDBX_TXN_ERROR;
+          if (!env->me_dxb_mmap.address)
+            env->me_flags |= MDBX_FATAL_ERROR;
+        }
+      }
     }
   }
 
@@ -5189,7 +5397,7 @@ static int mdbx_txn_end(MDBX_txn *txn, unsigned mode) {
     mdbx_free(txn);
   }
 
-  return MDBX_SUCCESS;
+  return rc;
 }
 
 int mdbx_txn_reset(MDBX_txn *txn) {
@@ -5342,6 +5550,8 @@ static __cold int mdbx_audit_ex(MDBX_txn *txn, unsigned retired_stored,
       for (unsigned j = 0; j < page_numkeys(mp); j++) {
         MDBX_node *node = page_node(mp, j);
         if (node_flags(node) == F_SUBDATA) {
+          if (unlikely(node_ds(node) < sizeof(MDBX_db)))
+            return MDBX_CORRUPTED;
           MDBX_db db_copy, *db;
           memcpy(db = &db_copy, node_data(node), sizeof(db_copy));
           if ((txn->mt_flags & MDBX_RDONLY) == 0) {
@@ -5720,6 +5930,7 @@ retry:
         }
 
         mdbx_tassert(txn, txn->tw.lifo_reclaimed != nullptr);
+        rc = MDBX_RESULT_TRUE;
         do {
           if (unlikely(gc_rid <= 1)) {
             if (unlikely(MDBX_PNL_SIZE(txn->tw.lifo_reclaimed) <=
@@ -5747,6 +5958,11 @@ retry:
                  left > ((unsigned)MDBX_PNL_SIZE(txn->tw.lifo_reclaimed) -
                          reused_gc_slot) *
                             env->me_maxgc_ov1page);
+        if (reused_gc_slot && rc != MDBX_RESULT_TRUE) {
+          mdbx_trace("%s: restart innter-loop since reused_gc_slot %u > 0",
+                     dbg_prefix_mode, reused_gc_slot);
+          continue;
+        }
       }
 
       const unsigned i =
@@ -5790,18 +6006,18 @@ retry:
 
     unsigned chunk = left;
     if (unlikely(chunk > env->me_maxgc_ov1page)) {
-      const unsigned avail_gs_slots =
+      const unsigned avail_gc_slots =
           txn->tw.lifo_reclaimed
               ? (unsigned)MDBX_PNL_SIZE(txn->tw.lifo_reclaimed) -
                     reused_gc_slot + 1
               : (gc_rid < INT16_MAX) ? (unsigned)gc_rid : INT16_MAX;
-      if (avail_gs_slots > 1) {
+      if (avail_gc_slots > 1) {
         if (chunk < env->me_maxgc_ov1page * 2)
           chunk /= 2;
         else {
           const unsigned threshold =
-              env->me_maxgc_ov1page * ((avail_gs_slots < prefer_max_scatter)
-                                           ? avail_gs_slots
+              env->me_maxgc_ov1page * ((avail_gc_slots < prefer_max_scatter)
+                                           ? avail_gc_slots
                                            : prefer_max_scatter);
           if (left < threshold)
             chunk = env->me_maxgc_ov1page;
@@ -5827,7 +6043,7 @@ retry:
             }
 
             chunk = (avail >= tail) ? tail - span
-                                    : (avail_gs_slots > 3 &&
+                                    : (avail_gc_slots > 3 &&
                                        reused_gc_slot < prefer_max_scatter - 3)
                                           ? avail - span
                                           : tail;
@@ -6500,7 +6716,9 @@ int mdbx_txn_commit(MDBX_txn *txn) {
           rc = MDBX_BAD_DBI;
           goto fail;
         }
-        data.iov_base = &txn->mt_dbs[i];
+        MDBX_db *db = &txn->mt_dbs[i];
+        db->md_mod_txnid = txn->mt_txnid;
+        data.iov_base = db;
         WITH_CURSOR_TRACKING(mc,
                              rc = mdbx_cursor_put(&mc, &txn->mt_dbxs[i].md_name,
                                                   &data, F_SUBDATA));
@@ -6522,8 +6740,10 @@ int mdbx_txn_commit(MDBX_txn *txn) {
 
   rc = mdbx_page_flush(txn, 0);
   if (likely(rc == MDBX_SUCCESS)) {
-    MDBX_meta meta, *head = mdbx_meta_head(env);
+    if (txn->mt_dbs[MAIN_DBI].md_flags & DB_DIRTY)
+      txn->mt_dbs[MAIN_DBI].md_mod_txnid = txn->mt_txnid;
 
+    MDBX_meta meta, *head = mdbx_meta_head(env);
     meta.mm_magic_and_version = head->mm_magic_and_version;
     meta.mm_extra_flags = head->mm_extra_flags;
     meta.mm_validator_id = head->mm_validator_id;
@@ -6927,7 +7147,7 @@ static int mdbx_sync_locked(MDBX_env *env, unsigned flags,
                                 pgno2bytes(env, edge - largest_pgno));
     }
 #endif /* MDBX_USE_VALGRIND */
-#if defined(MADV_REMOVE_OR_FREE_OR_DONTNEED)
+#if defined(MADV_DONTNEED)
     const size_t largest_aligned2os_bytes =
         pgno_align2os_bytes(env, largest_pgno);
     const pgno_t largest_aligned2os_pgno =
@@ -6935,17 +7155,29 @@ static int mdbx_sync_locked(MDBX_env *env, unsigned flags,
     const pgno_t prev_discarded_pgno = *env->me_discarded_tail;
     if (prev_discarded_pgno >
         largest_aligned2os_pgno +
-            /* 256Kb threshold to avoid unreasonable madvise() call */
-            bytes2pgno(env, 256 * 1024)) {
+            /* 1M threshold to avoid unreasonable madvise() call */
+            bytes2pgno(env, MEGABYTE)) {
+      mdbx_notice("open-MADV_%s %u..%u", "DONTNEED", *env->me_discarded_tail,
+                  largest_pgno);
       *env->me_discarded_tail = largest_aligned2os_pgno;
       const size_t prev_discarded_bytes =
-          pgno_align2os_bytes(env, prev_discarded_pgno);
+          pgno2bytes(env, prev_discarded_pgno) & ~(env->me_os_psize - 1);
       mdbx_ensure(env, prev_discarded_bytes > largest_aligned2os_bytes);
-      (void)madvise(env->me_map + largest_aligned2os_bytes,
-                    prev_discarded_bytes - largest_aligned2os_bytes,
-                    MADV_REMOVE_OR_FREE_OR_DONTNEED);
+      int advise = MADV_DONTNEED;
+#if defined(MADV_FREE) &&                                                      \
+    0 /* MADV_FREE works for only anon vma at the moment */
+      if ((env->me_flags & MDBX_WRITEMAP) &&
+          mdbx_linux_kernel_version > 0x04050000)
+        advise = MADV_FREE;
+#endif /* MADV_FREE */
+      int err = madvise(env->me_map + largest_aligned2os_bytes,
+                        prev_discarded_bytes - largest_aligned2os_bytes, advise)
+                    ? errno
+                    : MDBX_SUCCESS;
+      mdbx_assert(env, err == MDBX_SUCCESS);
+      (void)err;
     }
-#endif /* MADV_REMOVE_OR_FREE_OR_DONTNEED */
+#endif /* MADV_FREE || MADV_DONTNEED */
 
     /* LY: check conditions to shrink datafile */
     const pgno_t backlog_gap =
@@ -7272,116 +7504,6 @@ bailout:
   return rc;
 }
 
-static int __cold mdbx_env_map(MDBX_env *env, const int is_exclusive,
-                               const size_t usedsize) {
-  int rc = mdbx_mmap(env->me_flags, &env->me_dxb_mmap, env->me_dbgeo.now,
-                     env->me_dbgeo.upper);
-  if (unlikely(rc != MDBX_SUCCESS))
-    return rc;
-
-#ifdef MADV_DONTFORK
-  if (unlikely(madvise(env->me_map, env->me_mapsize, MADV_DONTFORK) != 0))
-    return errno;
-#endif
-
-#ifdef MADV_NOHUGEPAGE
-  (void)madvise(env->me_map, env->me_mapsize, MADV_NOHUGEPAGE);
-#endif
-
-#if defined(MADV_DODUMP) && defined(MADV_DONTDUMP)
-  const size_t meta_length = pgno2bytes(env, NUM_METAS);
-  (void)madvise(env->me_map, meta_length, MADV_DODUMP);
-  (void)madvise(env->me_map + meta_length, env->me_mapsize - meta_length,
-                (mdbx_runtime_flags & MDBX_DBG_DUMP) ? MADV_DODUMP
-                                                     : MADV_DONTDUMP);
-#endif
-
-#if defined(MADV_REMOVE_OR_FREE_OR_DONTNEED)
-  if (is_exclusive && (env->me_flags & MDBX_WRITEMAP) != 0) {
-    const size_t used_aligned2os_bytes =
-        roundup_powerof2(usedsize, env->me_os_psize);
-    *env->me_discarded_tail = bytes2pgno(env, used_aligned2os_bytes);
-    if (used_aligned2os_bytes < env->me_mapsize) {
-      (void)madvise(env->me_map + used_aligned2os_bytes,
-                    env->me_mapsize - used_aligned2os_bytes,
-                    MADV_REMOVE_OR_FREE_OR_DONTNEED);
-    }
-  }
-#else
-  (void)is_exclusive;
-#endif /* MADV_REMOVE_OR_FREE_OR_DONTNEED */
-
-#ifdef POSIX_FADV_RANDOM
-  /* this also checks that the file size is valid for a particular FS */
-  rc = posix_fadvise(env->me_fd, 0, env->me_dbgeo.upper, POSIX_FADV_RANDOM);
-  if (unlikely(rc != 0))
-    return rc;
-#elif defined(F_RDAHEAD)
-  if (unlikely(fcntl(env->me_fd, F_RDAHEAD, 0) == -1))
-    return errno;
-#endif
-
-  /* Turn on/off readahead. It's harmful when the DB is larger than RAM. */
-  if (env->me_flags & MDBX_NORDAHEAD) {
-#if defined(MADV_RANDOM)
-    if (unlikely(madvise(env->me_map, env->me_mapsize, MADV_RANDOM) != 0))
-      return errno;
-#elif defined(POSIX_MADV_RANDOM)
-    rc = posix_madvise(env->me_map, env->me_mapsize, POSIX_MADV_RANDOM);
-    if (unlikely(rc != 0))
-      return errno;
-#endif
-#ifdef POSIX_FADV_DONTNEED
-    rc = posix_fadvise(env->me_fd, 0, env->me_mapsize, POSIX_FADV_DONTNEED);
-    if (unlikely(rc != 0))
-      return rc;
-#endif
-#if defined(MADV_DONTNEED)
-    if (unlikely(madvise(env->me_map, env->me_mapsize, MADV_DONTNEED) != 0))
-      return errno;
-#elif defined(POSIX_MADV_DONTNEED)
-    rc = posix_madvise(env->me_map, env->me_mapsize, POSIX_MADV_DONTNEED);
-    if (unlikely(rc != 0))
-      return errno;
-#endif
-  } else {
-#ifdef POSIX_FADV_WILLNEED
-    rc = posix_fadvise(env->me_fd, 0, usedsize, POSIX_FADV_WILLNEED);
-    if (unlikely(rc != 0))
-      return rc;
-#elif defined(F_RDADVISE)
-    struct radvisory hint;
-    hint.ra_offset = 0;
-    hint.ra_count = usedsize;
-    (void)/* Ignore ENOTTY for DB on the ram-disk and so on */ fcntl(
-        env->me_fd, F_RDADVISE, &hint);
-#endif
-#if defined(MADV_WILLNEED)
-    if (unlikely(madvise(env->me_map, usedsize, MADV_WILLNEED) != 0))
-      return errno;
-#elif defined(POSIX_MADV_WILLNEED)
-    rc = posix_madvise(env->me_map, usedsize, POSIX_MADV_WILLNEED);
-    if (unlikely(rc != 0))
-      return errno;
-#endif
-#if defined(_WIN32) || defined(_WIN64)
-    if (mdbx_PrefetchVirtualMemory) {
-      WIN32_MEMORY_RANGE_ENTRY hint;
-      hint.VirtualAddress = env->me_map;
-      hint.NumberOfBytes = usedsize;
-      (void)mdbx_PrefetchVirtualMemory(GetCurrentProcess(), 1, &hint, 0);
-    }
-#endif /* Windows */
-  }
-
-#ifdef MDBX_USE_VALGRIND
-  env->me_valgrind_handle =
-      VALGRIND_CREATE_BLOCK(env->me_map, env->me_mapsize, "mdbx");
-#endif
-
-  return MDBX_SUCCESS;
-}
-
 __cold LIBMDBX_API int
 mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
                       intptr_t size_upper, intptr_t growth_step,
@@ -7429,13 +7551,9 @@ mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
       mdbx_find_oldest(env->me_txn0);
     }
 
+    /* get untouched params from DB */
     if (pagesize < 0)
       pagesize = env->me_psize;
-    if (pagesize != (intptr_t)env->me_psize) {
-      rc = MDBX_EINVAL;
-      goto bailout;
-    }
-
     if (size_lower < 0)
       size_lower = pgno2bytes(env, head->mm_geo.lower);
     if (size_now < 0)
@@ -7447,6 +7565,10 @@ mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
     if (shrink_threshold < 0)
       shrink_threshold = pgno2bytes(env, head->mm_geo.shrink);
 
+    if (pagesize != (intptr_t)env->me_psize) {
+      rc = MDBX_EINVAL;
+      goto bailout;
+    }
     const size_t usedbytes =
         pgno2bytes(env, mdbx_find_largest(env, head->mm_geo.next));
     if ((size_t)size_upper < usedbytes) {
@@ -7531,7 +7653,7 @@ mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
 
   /* LY: подбираем значение size_upper:
    *  - кратное размеру системной страницы
-   *  - без нарушения MAX_MAPSIZE или MAX_PAGENO */
+   *  - без нарушения MAX_MAPSIZE и MAX_PAGENO */
   while (unlikely((size_t)size_upper > MAX_MAPSIZE ||
                   (uint64_t)size_upper / pagesize > MAX_PAGENO)) {
     if ((size_t)size_upper < env->me_os_psize + MIN_MAPSIZE ||
@@ -7560,27 +7682,17 @@ mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
     if ((size_t)growth_step > MEGABYTE * 16)
       growth_step = MEGABYTE * 16;
   }
+  if (growth_step == 0 && shrink_threshold > 0)
+    growth_step = 1;
   growth_step = roundup_powerof2(growth_step, env->me_os_psize);
   if (bytes2pgno(env, growth_step) > UINT16_MAX)
     growth_step = pgno2bytes(env, UINT16_MAX);
 
-  if (shrink_threshold < 0) {
+  if (shrink_threshold < 0)
     shrink_threshold = growth_step + growth_step;
-    if (shrink_threshold < growth_step)
-      shrink_threshold = growth_step;
-  }
   shrink_threshold = roundup_powerof2(shrink_threshold, env->me_os_psize);
   if (bytes2pgno(env, shrink_threshold) > UINT16_MAX)
     shrink_threshold = pgno2bytes(env, UINT16_MAX);
-
-#ifdef POSIX_FADV_RANDOM
-  if (env->me_fd != INVALID_HANDLE_VALUE) {
-    /* this also checks that the file size is valid for a particular FS */
-    rc = posix_fadvise(env->me_fd, 0, env->me_dbgeo.upper, POSIX_FADV_RANDOM);
-    if (unlikely(rc != 0))
-      goto bailout;
-  }
-#endif
 
   /* save user's geo-params for future open/create */
   env->me_dbgeo.lower = size_lower;
@@ -7590,9 +7702,34 @@ mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
   env->me_dbgeo.shrink = shrink_threshold;
   rc = MDBX_SUCCESS;
 
+  mdbx_ensure(env, pagesize >= MIN_PAGESIZE);
+  mdbx_ensure(env, pagesize <= MAX_PAGESIZE);
+  mdbx_ensure(env, is_powerof2(pagesize));
+  mdbx_ensure(env, is_powerof2(env->me_os_psize));
+
+  mdbx_ensure(env, env->me_dbgeo.lower >= MIN_MAPSIZE);
+  mdbx_ensure(env, env->me_dbgeo.lower / pagesize >= MIN_PAGENO);
+  mdbx_ensure(env, env->me_dbgeo.lower % pagesize == 0);
+  mdbx_ensure(env, env->me_dbgeo.lower % env->me_os_psize == 0);
+
+  mdbx_ensure(env, env->me_dbgeo.upper <= MAX_MAPSIZE);
+  mdbx_ensure(env, env->me_dbgeo.upper / pagesize <= MAX_PAGENO);
+  mdbx_ensure(env, env->me_dbgeo.upper % pagesize == 0);
+  mdbx_ensure(env, env->me_dbgeo.upper % env->me_os_psize == 0);
+
+  mdbx_ensure(env, env->me_dbgeo.now >= env->me_dbgeo.lower);
+  mdbx_ensure(env, env->me_dbgeo.now <= env->me_dbgeo.upper);
+  mdbx_ensure(env, env->me_dbgeo.now % pagesize == 0);
+  mdbx_ensure(env, env->me_dbgeo.now % env->me_os_psize == 0);
+
+  mdbx_ensure(env, env->me_dbgeo.grow % pagesize == 0);
+  mdbx_ensure(env, env->me_dbgeo.grow % env->me_os_psize == 0);
+  mdbx_ensure(env, env->me_dbgeo.shrink % pagesize == 0);
+  mdbx_ensure(env, env->me_dbgeo.shrink % env->me_os_psize == 0);
+
   if (env->me_map) {
     /* apply new params to opened environment */
-    mdbx_assert(env, pagesize == (intptr_t)env->me_psize);
+    mdbx_ensure(env, pagesize == (intptr_t)env->me_psize);
     MDBX_meta meta;
     MDBX_meta *head = nullptr;
     const mdbx_geo_t *current_geo;
@@ -7612,16 +7749,24 @@ mdbx_env_set_geometry(MDBX_env *env, intptr_t size_lower, intptr_t size_now,
     new_geo.shrink = (uint16_t)bytes2pgno(env, env->me_dbgeo.shrink);
     new_geo.next = current_geo->next;
 
-    mdbx_assert(env, env->me_dbgeo.lower >= MIN_MAPSIZE);
-    mdbx_assert(env, new_geo.lower >= MIN_PAGENO);
-    mdbx_assert(env, env->me_dbgeo.upper <= MAX_MAPSIZE);
-    mdbx_assert(env, new_geo.upper <= MAX_PAGENO);
-    mdbx_assert(env, new_geo.now >= new_geo.next);
-    mdbx_assert(env, env->me_dbgeo.upper >= env->me_dbgeo.lower);
-    mdbx_assert(env, new_geo.upper >= new_geo.now);
-    mdbx_assert(env, new_geo.now >= new_geo.lower);
-    mdbx_assert(env, new_geo.grow == bytes2pgno(env, env->me_dbgeo.grow));
-    mdbx_assert(env, new_geo.shrink == bytes2pgno(env, env->me_dbgeo.shrink));
+    mdbx_ensure(env,
+                pgno_align2os_bytes(env, new_geo.lower) == env->me_dbgeo.lower);
+    mdbx_ensure(env,
+                pgno_align2os_bytes(env, new_geo.upper) == env->me_dbgeo.upper);
+    mdbx_ensure(env,
+                pgno_align2os_bytes(env, new_geo.now) == env->me_dbgeo.now);
+    mdbx_ensure(env,
+                pgno_align2os_bytes(env, new_geo.grow) == env->me_dbgeo.grow);
+    mdbx_ensure(env, pgno_align2os_bytes(env, new_geo.shrink) ==
+                         env->me_dbgeo.shrink);
+
+    mdbx_ensure(env, env->me_dbgeo.lower >= MIN_MAPSIZE);
+    mdbx_ensure(env, new_geo.lower >= MIN_PAGENO);
+    mdbx_ensure(env, env->me_dbgeo.upper <= MAX_MAPSIZE);
+    mdbx_ensure(env, new_geo.upper <= MAX_PAGENO);
+    mdbx_ensure(env, new_geo.now >= new_geo.next);
+    mdbx_ensure(env, new_geo.upper >= new_geo.now);
+    mdbx_ensure(env, new_geo.now >= new_geo.lower);
 
     if (memcmp(current_geo, &new_geo, sizeof(mdbx_geo_t)) != 0) {
 #if defined(_WIN32) || defined(_WIN64)
@@ -7738,10 +7883,10 @@ int __cold mdbx_env_get_maxreaders(MDBX_env *env, unsigned *readers) {
 
 /* Further setup required for opening an MDBX environment */
 static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
-  uint64_t filesize_before_mmap;
+  uint64_t filesize_before;
   MDBX_meta meta;
   int rc = MDBX_RESULT_FALSE;
-  int err = mdbx_read_header(env, &meta, &filesize_before_mmap);
+  int err = mdbx_read_header(env, &meta, &filesize_before);
   if (unlikely(err != MDBX_SUCCESS)) {
     if (lck_rc != /* lck exclusive */ MDBX_RESULT_TRUE || err != MDBX_ENODATA ||
         (env->me_flags & MDBX_RDONLY) != 0)
@@ -7767,12 +7912,12 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
     if (unlikely(err != MDBX_SUCCESS))
       return err;
 
-    err = mdbx_ftruncate(env->me_fd, filesize_before_mmap = env->me_dbgeo.now);
+    err = mdbx_ftruncate(env->me_fd, filesize_before = env->me_dbgeo.now);
     if (unlikely(err != MDBX_SUCCESS))
       return err;
 
 #ifndef NDEBUG /* just for checking */
-    err = mdbx_read_header(env, &meta, &filesize_before_mmap);
+    err = mdbx_read_header(env, &meta, &filesize_before);
     if (unlikely(err != MDBX_SUCCESS))
       return err;
 #endif
@@ -7788,38 +7933,39 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
 
   mdbx_setup_pagesize(env, meta.mm_psize);
   const size_t used_bytes = pgno2bytes(env, meta.mm_geo.next);
+  const size_t used_aligned2os_bytes =
+      roundup_powerof2(used_bytes, env->me_os_psize);
   if ((env->me_flags & MDBX_RDONLY) /* readonly */
       || lck_rc != MDBX_RESULT_TRUE /* not exclusive */) {
     /* use present params from db */
+    const size_t pagesize = meta.mm_psize;
     err = mdbx_env_set_geometry(
-        env, meta.mm_geo.lower * (uint64_t)meta.mm_psize,
-        meta.mm_geo.now * (uint64_t)meta.mm_psize,
-        meta.mm_geo.upper * (uint64_t)meta.mm_psize,
-        meta.mm_geo.grow * (uint64_t)meta.mm_psize,
-        meta.mm_geo.shrink * (uint64_t)meta.mm_psize, meta.mm_psize);
+        env, meta.mm_geo.lower * pagesize, meta.mm_geo.now * pagesize,
+        meta.mm_geo.upper * pagesize, meta.mm_geo.grow * pagesize,
+        meta.mm_geo.shrink * pagesize, meta.mm_psize);
     if (unlikely(err != MDBX_SUCCESS)) {
       mdbx_error("%s", "could not use present dbsize-params from db");
       return MDBX_INCOMPATIBLE;
     }
   } else if (env->me_dbgeo.now) {
     /* silently growth to last used page */
-    if (env->me_dbgeo.now < used_bytes)
-      env->me_dbgeo.now = used_bytes;
-    if (env->me_dbgeo.upper < used_bytes)
-      env->me_dbgeo.upper = used_bytes;
+    if (env->me_dbgeo.now < used_aligned2os_bytes)
+      env->me_dbgeo.now = used_aligned2os_bytes;
+    if (env->me_dbgeo.upper < used_aligned2os_bytes)
+      env->me_dbgeo.upper = used_aligned2os_bytes;
 
     /* apply preconfigured params, but only if substantial changes:
      *  - upper or lower limit changes
      *  - shrink threshold or growth step
-     * But ignore just chagne just a 'now/current' size. */
+     * But ignore change just a 'now/current' size. */
     if (bytes_align2os_bytes(env, env->me_dbgeo.upper) !=
-            pgno_align2os_bytes(env, meta.mm_geo.upper) ||
+            pgno2bytes(env, meta.mm_geo.upper) ||
         bytes_align2os_bytes(env, env->me_dbgeo.lower) !=
-            pgno_align2os_bytes(env, meta.mm_geo.lower) ||
+            pgno2bytes(env, meta.mm_geo.lower) ||
         bytes_align2os_bytes(env, env->me_dbgeo.shrink) !=
-            pgno_align2os_bytes(env, meta.mm_geo.shrink) ||
+            pgno2bytes(env, meta.mm_geo.shrink) ||
         bytes_align2os_bytes(env, env->me_dbgeo.grow) !=
-            pgno_align2os_bytes(env, meta.mm_geo.grow)) {
+            pgno2bytes(env, meta.mm_geo.grow)) {
 
       if (env->me_dbgeo.shrink && env->me_dbgeo.now > used_bytes)
         /* pre-shrink if enabled */
@@ -7848,11 +7994,15 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
                    meta.mm_geo.lower, meta.mm_geo.next, meta.mm_geo.now,
                    meta.mm_geo.upper, meta.mm_geo.grow, meta.mm_geo.shrink,
                    meta.mm_txnid_a.inconsistent, mdbx_durable_str(&meta));
+    } else {
+      /* fetch back 'now/current' size, since it was ignored during comparison
+       * and may differ. */
+      env->me_dbgeo.now = pgno_align2os_bytes(env, meta.mm_geo.now);
     }
     mdbx_ensure(env, meta.mm_geo.now >= meta.mm_geo.next);
   } else {
-    /* geo-params not pre-configured by user,
-     * get current values from a meta. */
+    /* geo-params are not pre-configured by user,
+     * get current values from the meta. */
     env->me_dbgeo.now = pgno2bytes(env, meta.mm_geo.now);
     env->me_dbgeo.lower = pgno2bytes(env, meta.mm_geo.lower);
     env->me_dbgeo.upper = pgno2bytes(env, meta.mm_geo.upper);
@@ -7860,65 +8010,103 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
     env->me_dbgeo.shrink = pgno2bytes(env, meta.mm_geo.shrink);
   }
 
-  const size_t expected_bytes =
-      roundup_powerof2(pgno2bytes(env, meta.mm_geo.now), env->me_os_psize);
-  mdbx_ensure(env, expected_bytes >= used_bytes);
-  if (filesize_before_mmap != expected_bytes) {
+  mdbx_ensure(env,
+              pgno_align2os_bytes(env, meta.mm_geo.now) == env->me_dbgeo.now);
+  mdbx_ensure(env, env->me_dbgeo.now >= used_bytes);
+  if (unlikely(filesize_before != env->me_dbgeo.now)) {
     if (lck_rc != /* lck exclusive */ MDBX_RESULT_TRUE) {
       mdbx_verbose("filesize mismatch (expect %" PRIuPTR "b/%" PRIaPGNO
                    "p, have %" PRIu64 "b/%" PRIaPGNO "p), "
                    "assume other process working",
-                   expected_bytes, bytes2pgno(env, expected_bytes),
-                   filesize_before_mmap,
-                   bytes2pgno(env, (size_t)filesize_before_mmap));
+                   env->me_dbgeo.now, bytes2pgno(env, env->me_dbgeo.now),
+                   filesize_before, bytes2pgno(env, (size_t)filesize_before));
     } else {
       mdbx_notice("filesize mismatch (expect %" PRIuSIZE "b/%" PRIaPGNO
                   "p, have %" PRIu64 "b/%" PRIaPGNO "p)",
-                  expected_bytes, bytes2pgno(env, expected_bytes),
-                  filesize_before_mmap,
-                  bytes2pgno(env, (size_t)filesize_before_mmap));
-      if (filesize_before_mmap < used_bytes) {
+                  env->me_dbgeo.now, bytes2pgno(env, env->me_dbgeo.now),
+                  filesize_before, bytes2pgno(env, (size_t)filesize_before));
+      if (filesize_before < used_bytes) {
         mdbx_error("last-page beyond end-of-file (last %" PRIaPGNO
                    ", have %" PRIaPGNO ")",
-                   meta.mm_geo.next,
-                   bytes2pgno(env, (size_t)filesize_before_mmap));
+                   meta.mm_geo.next, bytes2pgno(env, (size_t)filesize_before));
         return MDBX_CORRUPTED;
       }
 
       if (env->me_flags & MDBX_RDONLY) {
-        if (filesize_before_mmap % env->me_os_psize) {
+        if (filesize_before & (env->me_os_psize - 1)) {
           mdbx_error("%s", "filesize should be rounded-up to system page");
           return MDBX_WANNA_RECOVERY;
         }
         mdbx_warning("%s", "ignore filesize mismatch in readonly-mode");
       } else {
-        mdbx_verbose("resize datafile to %" PRIuSIZE " bytes, %" PRIaPGNO
+        mdbx_verbose("will resize datafile to %" PRIuSIZE " bytes, %" PRIaPGNO
                      " pages",
-                     expected_bytes, bytes2pgno(env, expected_bytes));
-        err = mdbx_ftruncate(env->me_fd, expected_bytes);
-        if (unlikely(err != MDBX_SUCCESS)) {
-          mdbx_error("error %d, while resize datafile to %" PRIuSIZE
-                     " bytes, %" PRIaPGNO " pages",
-                     rc, expected_bytes, bytes2pgno(env, expected_bytes));
-          return err;
-        }
-        filesize_before_mmap = expected_bytes;
+                     env->me_dbgeo.now, bytes2pgno(env, env->me_dbgeo.now));
       }
     }
   }
 
-  err = mdbx_env_map(env, lck_rc /* exclusive status */, used_bytes);
+  err = mdbx_mmap(env->me_flags, &env->me_dxb_mmap, env->me_dbgeo.now,
+                  env->me_dbgeo.upper, lck_rc);
+  if (unlikely(err != MDBX_SUCCESS))
+    return err;
+
+#if defined(MADV_DODUMP) && defined(MADV_DONTDUMP)
+  const size_t meta_length = pgno2bytes(env, NUM_METAS);
+  (void)madvise(env->me_map, meta_length, MADV_DODUMP);
+  (void)madvise(env->me_map + meta_length, env->me_dxb_mmap.limit - meta_length,
+                (mdbx_runtime_flags & MDBX_DBG_DUMP) ? MADV_DODUMP
+                                                     : MADV_DONTDUMP);
+#endif
+
+  *env->me_discarded_tail = bytes2pgno(env, used_aligned2os_bytes);
+  if (used_aligned2os_bytes < env->me_dxb_mmap.current) {
+#if defined(MADV_REMOVE)
+    if (lck_rc && (env->me_flags & MDBX_WRITEMAP) != 0) {
+      mdbx_notice("open-MADV_%s %u..%u", "REMOVE", *env->me_discarded_tail,
+                  bytes2pgno(env, env->me_dxb_mmap.current));
+      (void)madvise(env->me_map + used_aligned2os_bytes,
+                    env->me_dxb_mmap.current - used_aligned2os_bytes,
+                    MADV_REMOVE);
+    }
+#endif /* MADV_REMOVE */
+#if defined(MADV_DONTNEED)
+    mdbx_notice("open-MADV_%s %u..%u", "DONTNEED", *env->me_discarded_tail,
+                bytes2pgno(env, env->me_dxb_mmap.current));
+    (void)madvise(env->me_map + used_aligned2os_bytes,
+                  env->me_dxb_mmap.current - used_aligned2os_bytes,
+                  MADV_DONTNEED);
+#elif defined(POSIX_MADV_DONTNEED)
+    (void)madvise(env->me_map + used_aligned2os_bytes,
+                  env->me_dxb_mmap.current - used_aligned2os_bytes,
+                  POSIX_MADV_DONTNEED);
+#elif defined(POSIX_FADV_DONTNEED)
+    (void)posix_fadvise(env->me_fd, used_aligned2os_bytes,
+                        env->me_dxb_mmap.current - used_aligned2os_bytes,
+                        POSIX_FADV_DONTNEED);
+#endif /* MADV_DONTNEED */
+  }
+
+#ifdef MDBX_USE_VALGRIND
+  env->me_valgrind_handle =
+      VALGRIND_CREATE_BLOCK(env->me_map, env->me_dxb_mmap.limit, "mdbx");
+#endif
+
+  const bool readahead = (env->me_flags & MDBX_NORDAHEAD) == 0 &&
+                         mdbx_is_readahead_reasonable(env->me_dxb_mmap.current,
+                                                      0) == MDBX_RESULT_TRUE;
+  err = mdbx_set_readahead(env, 0, env->me_dxb_mmap.current, readahead);
   if (err != MDBX_SUCCESS)
     return err;
 
   mdbx_assert(env, used_bytes >= pgno2bytes(env, NUM_METAS) &&
-                       used_bytes <= env->me_mapsize);
+                       used_bytes <= env->me_dxb_mmap.limit);
 #if defined(MDBX_USE_VALGRIND) || defined(__SANITIZE_ADDRESS__)
   VALGRIND_MAKE_MEM_NOACCESS(env->me_map + used_bytes,
-                             env->me_mapsize - used_bytes);
+                             env->me_dxb_mmap.limit - used_bytes);
   ASAN_POISON_MEMORY_REGION(env->me_map + used_bytes,
-                            env->me_mapsize - used_bytes);
-  env->me_poison_edge = bytes2pgno(env, env->me_mapsize);
+                            env->me_dxb_mmap.limit - used_bytes);
+  env->me_poison_edge = bytes2pgno(env, env->me_dxb_mmap.limit);
 #endif /* MDBX_USE_VALGRIND */
 
   /* NOTE: AddressSanitizer (at least GCC 7.x, 8.x) could generate
@@ -7940,9 +8128,9 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
     if (lck_rc == /* lck exclusive */ MDBX_RESULT_TRUE) {
       mdbx_assert(env, META_IS_STEADY(&meta) && !META_IS_STEADY(head));
       if (env->me_flags & MDBX_RDONLY) {
-        mdbx_warning("rollback needed: (from head %" PRIaTXN
-                     " to steady %" PRIaTXN "), but unable in read-only mode",
-                     head_txnid, meta.mm_txnid_a.inconsistent);
+        mdbx_error("rollback needed: (from head %" PRIaTXN
+                   " to steady %" PRIaTXN "), but unable in read-only mode",
+                   head_txnid, meta.mm_txnid_a.inconsistent);
         return MDBX_WANNA_RECOVERY /* LY: could not recovery/rollback */;
       }
 
@@ -7984,8 +8172,12 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
         err = mdbx_pwrite(env->me_fd, &rollback, sizeof(MDBX_meta),
                           (uint8_t *)head - (uint8_t *)env->me_map);
       }
-      if (err)
+      if (err) {
+        mdbx_error("error %d rollback from %" PRIaTXN ", to %" PRIaTXN
+                   " as %" PRIaTXN,
+                   err, head_txnid, meta.mm_txnid_a.inconsistent, undo_txnid);
         return err;
+      }
 
       mdbx_invalidate_mmap_noncoherent_cache(env->me_map,
                                              pgno2bytes(env, NUM_METAS));
@@ -8009,29 +8201,19 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
 
   const MDBX_meta *head = mdbx_meta_head(env);
   if (lck_rc == /* lck exclusive */ MDBX_RESULT_TRUE) {
-    /* re-check file size after mmap */
-    uint64_t filesize_after_mmap;
-    err = mdbx_filesize(env->me_fd, &filesize_after_mmap);
-    if (unlikely(err != MDBX_SUCCESS))
-      return err;
-    if (filesize_after_mmap != expected_bytes) {
-      if (filesize_after_mmap != filesize_before_mmap)
-        mdbx_verbose("datafile resized by system to %" PRIu64 " bytes",
-                     filesize_after_mmap);
-      if (filesize_after_mmap % env->me_os_psize ||
-          filesize_after_mmap > env->me_dbgeo.upper ||
-          filesize_after_mmap < used_bytes) {
-        mdbx_error("unacceptable/unexpected datafile size %" PRIu64,
-                   filesize_after_mmap);
-        return MDBX_PROBLEM;
-      }
-      if ((env->me_flags & MDBX_RDONLY) == 0) {
-        meta.mm_geo.now =
-            bytes2pgno(env, env->me_dbgeo.now = (size_t)filesize_after_mmap);
-        mdbx_verbose("update meta-geo to filesize %" PRIuPTR
-                     " bytes, %" PRIaPGNO " pages",
-                     env->me_dbgeo.now, meta.mm_geo.now);
-      }
+    /* re-check size after mmap */
+    if ((env->me_dxb_mmap.current & (env->me_os_psize - 1)) != 0 ||
+        env->me_dxb_mmap.current < used_bytes) {
+      mdbx_error("unacceptable/unexpected datafile size %" PRIuPTR,
+                 env->me_dxb_mmap.current);
+      return MDBX_PROBLEM;
+    }
+    if (env->me_dxb_mmap.current != env->me_dbgeo.now &&
+        (env->me_flags & MDBX_RDONLY) == 0) {
+      meta.mm_geo.now = bytes2pgno(env, env->me_dxb_mmap.current);
+      mdbx_verbose("update meta-geo to filesize %" PRIuPTR " bytes, %" PRIaPGNO
+                   " pages",
+                   env->me_dxb_mmap.current, meta.mm_geo.now);
     }
 
     if (memcmp(&meta.mm_geo, &head->mm_geo, sizeof(meta.mm_geo))) {
@@ -8052,16 +8234,15 @@ static int __cold mdbx_setup_dxb(MDBX_env *env, const int lck_rc) {
       *env->me_unsynced_pages += 1;
       err = mdbx_sync_locked(env, env->me_flags | MDBX_SHRINK_ALLOWED, &meta);
       if (err) {
-        mdbx_verbose("error %d, while updating meta.geo: "
-                     "from l%" PRIaPGNO "-n%" PRIaPGNO "-u%" PRIaPGNO
-                     "/s%u-g%u (txn#%" PRIaTXN "), "
-                     "to l%" PRIaPGNO "-n%" PRIaPGNO "-u%" PRIaPGNO
-                     "/s%u-g%u (txn#%" PRIaTXN ")",
-                     err, head->mm_geo.lower, head->mm_geo.now,
-                     head->mm_geo.upper, head->mm_geo.shrink, head->mm_geo.grow,
-                     txnid, meta.mm_geo.lower, meta.mm_geo.now,
-                     meta.mm_geo.upper, meta.mm_geo.shrink, meta.mm_geo.grow,
-                     next_txnid);
+        mdbx_error("error %d, while updating meta.geo: "
+                   "from l%" PRIaPGNO "-n%" PRIaPGNO "-u%" PRIaPGNO
+                   "/s%u-g%u (txn#%" PRIaTXN "), "
+                   "to l%" PRIaPGNO "-n%" PRIaPGNO "-u%" PRIaPGNO
+                   "/s%u-g%u (txn#%" PRIaTXN ")",
+                   err, head->mm_geo.lower, head->mm_geo.now,
+                   head->mm_geo.upper, head->mm_geo.shrink, head->mm_geo.grow,
+                   txnid, meta.mm_geo.lower, meta.mm_geo.now, meta.mm_geo.upper,
+                   meta.mm_geo.shrink, meta.mm_geo.grow, next_txnid);
         return err;
       }
     }
@@ -8161,30 +8342,23 @@ static int __cold mdbx_setup_lck(MDBX_env *env, char *lck_pathname,
     goto bailout;
 
   if (lck_seize_rc == MDBX_RESULT_TRUE) {
-    uint64_t wanna = roundup_powerof2(env->me_maxreaders * sizeof(MDBX_reader) +
-                                          sizeof(MDBX_lockinfo),
-                                      env->me_os_psize);
+    size = roundup_powerof2(env->me_maxreaders * sizeof(MDBX_reader) +
+                                sizeof(MDBX_lockinfo),
+                            env->me_os_psize);
 #ifndef NDEBUG
-    err = mdbx_ftruncate(env->me_lfd, size = 0);
+    err = mdbx_ftruncate(env->me_lfd, 0);
     if (unlikely(err != MDBX_SUCCESS))
       goto bailout;
 #endif
     mdbx_jitter4testing(false);
-
-    if (size != wanna) {
-      err = mdbx_ftruncate(env->me_lfd, wanna);
-      if (unlikely(err != MDBX_SUCCESS))
-        goto bailout;
-      size = wanna;
-    }
   } else {
     if (env->me_flags & MDBX_EXCLUSIVE) {
       err = MDBX_BUSY;
       goto bailout;
     }
-    if (size > PTRDIFF_MAX || (size & (env->me_os_psize - 1)) ||
+    if (size > INT_MAX || (size & (env->me_os_psize - 1)) != 0 ||
         size < env->me_os_psize) {
-      mdbx_notice("lck-file has invalid size %" PRIu64 " bytes", size);
+      mdbx_error("lck-file has invalid size %" PRIu64 " bytes", size);
       err = MDBX_PROBLEM;
       goto bailout;
     }
@@ -8199,7 +8373,8 @@ static int __cold mdbx_setup_lck(MDBX_env *env, char *lck_pathname,
   }
   env->me_maxreaders = (unsigned)maxreaders;
 
-  err = mdbx_mmap(MDBX_WRITEMAP, &env->me_lck_mmap, (size_t)size, (size_t)size);
+  err = mdbx_mmap(MDBX_WRITEMAP, &env->me_lck_mmap, (size_t)size, (size_t)size,
+                  lck_seize_rc);
   if (unlikely(err != MDBX_SUCCESS))
     goto bailout;
 
@@ -8207,18 +8382,8 @@ static int __cold mdbx_setup_lck(MDBX_env *env, char *lck_pathname,
   (void)madvise(env->me_lck, size, MADV_DODUMP);
 #endif
 
-#ifdef MADV_DONTFORK
-  if (madvise(env->me_lck, size, MADV_DONTFORK) < 0)
-    goto bailout;
-#endif
-
 #ifdef MADV_WILLNEED
   if (madvise(env->me_lck, size, MADV_WILLNEED) < 0)
-    goto bailout;
-#endif
-
-#ifdef MADV_RANDOM
-  if (madvise(env->me_lck, size, MADV_RANDOM) < 0)
     goto bailout;
 #endif
 
@@ -8300,7 +8465,7 @@ __cold int mdbx_is_readahead_reasonable(size_t volume, intptr_t redundancy) {
 #elif defined(HW_USERMEM) || defined(HW_PHYSMEM64) || defined(HW_MEMSIZE) ||   \
     defined(HW_PHYSMEM)
   size_t ram, len = sizeof(ram);
-  static const int mib[2] = {
+  static const int mib[] = {
     CTL_HW,
 #if defined(HW_USERMEM)
     HW_USERMEM
@@ -8312,7 +8477,12 @@ __cold int mdbx_is_readahead_reasonable(size_t volume, intptr_t redundancy) {
     HW_PHYSMEM
 #endif
   };
-  if (sysctl(mib, ARRAY_LENGTH(mib), &ram, &len, NULL, 0) != 0)
+  if (sysctl(
+#ifdef SYSCTL_LEGACY_NONCONST_MIB
+          (int *)
+#endif
+              mib,
+          ARRAY_LENGTH(mib), &ram, &len, NULL, 0) != 0)
     return errno;
   if (len != sizeof(ram))
     return MDBX_ENOSYS;
@@ -8350,7 +8520,7 @@ __cold int mdbx_is_readahead_reasonable(size_t volume, intptr_t redundancy) {
 #elif defined(VM_TOTAL) || defined(VM_METER)
   struct vmtotal info;
   size_t len = sizeof(info);
-  static const int mib[2] = {
+  static const int mib[] = {
     CTL_VM,
 #if defined(VM_TOTAL)
     VM_TOTAL
@@ -8358,7 +8528,12 @@ __cold int mdbx_is_readahead_reasonable(size_t volume, intptr_t redundancy) {
     VM_METER
 #endif
   };
-  if (sysctl(mib, ARRAY_LENGTH(mib), &info, &len, NULL, 0) != 0)
+  if (sysctl(
+#ifdef SYSCTL_LEGACY_NONCONST_MIB
+          (int *)
+#endif
+              mib,
+          ARRAY_LENGTH(mib), &info, &len, NULL, 0) != 0)
     return errno;
   if (len != sizeof(info))
     return MDBX_ENOSYS;
@@ -8519,7 +8694,7 @@ int __cold mdbx_env_open(MDBX_env *env, const char *path, unsigned flags,
           if (atomic_cas32(&env->me_lck->mti_envmode, MDBX_RDONLY,
                            env->me_flags & mode_flags))
             break;
-          /* TODO: yield/relax cpu */
+          atomic_yield();
         }
         if ((env->me_lck->mti_envmode ^ env->me_flags) & mode_flags) {
           mdbx_error("%s", "current mode/flags incompatible with requested");
@@ -8578,6 +8753,7 @@ int __cold mdbx_env_open(MDBX_env *env, const char *path, unsigned flags,
     mdbx_debug("leaf pages: %" PRIaPGNO, db->md_leaf_pages);
     mdbx_debug("overflow pages: %" PRIaPGNO, db->md_overflow_pages);
     mdbx_debug("root: %" PRIaPGNO, db->md_root);
+    mdbx_debug("schema_altered: %" PRIaTXN, db->md_mod_txnid);
   }
 #endif
 
@@ -8596,33 +8772,21 @@ static int __cold mdbx_env_close0(MDBX_env *env) {
     mdbx_ensure(env, env->me_lcklist_next == nullptr);
     return MDBX_SUCCESS;
   }
+
   env->me_flags &= ~MDBX_ENV_ACTIVE;
+  env->me_oldest = nullptr;
+  env->me_sync_timestamp = nullptr;
+  env->me_autosync_period = nullptr;
+  env->me_unsynced_pages = nullptr;
+  env->me_autosync_threshold = nullptr;
+  env->me_discarded_tail = nullptr;
+  env->me_meta_sync_txnid = nullptr;
+  if (env->me_flags & MDBX_ENV_TXKEY)
+    mdbx_rthc_remove(env->me_txkey);
+
   lcklist_lock();
   const int rc = lcklist_detach_locked(env);
   lcklist_unlock();
-
-  /* Doing this here since me_dbxs may not exist during mdbx_env_close */
-  if (env->me_dbxs) {
-    for (unsigned i = env->me_maxdbs; --i >= CORE_DBS;)
-      mdbx_free(env->me_dbxs[i].md_name.iov_base);
-    mdbx_free(env->me_dbxs);
-  }
-
-  mdbx_free(env->me_pbuf);
-  mdbx_free(env->me_dbiseqs);
-  mdbx_free(env->me_dbflags);
-  mdbx_free(env->me_path);
-  mdbx_free(env->me_dirtylist);
-  if (env->me_txn0) {
-    mdbx_txl_free(env->me_txn0->tw.lifo_reclaimed);
-    mdbx_pnl_free(env->me_txn0->tw.retired_pages);
-    mdbx_pnl_free(env->me_txn0->tw.spill_pages);
-    mdbx_pnl_free(env->me_txn0->tw.reclaimed_pglist);
-    mdbx_free(env->me_txn0);
-  }
-
-  if (env->me_flags & MDBX_ENV_TXKEY)
-    mdbx_rthc_remove(env->me_txkey);
 
   if (env->me_map) {
     mdbx_munmap(&env->me_dxb_mmap);
@@ -8638,17 +8802,28 @@ static int __cold mdbx_env_close0(MDBX_env *env) {
 
   if (env->me_lck)
     mdbx_munmap(&env->me_lck_mmap);
-  env->me_oldest = nullptr;
-  env->me_sync_timestamp = nullptr;
-  env->me_autosync_period = nullptr;
-  env->me_unsynced_pages = nullptr;
-  env->me_autosync_threshold = nullptr;
-  env->me_discarded_tail = nullptr;
-  env->me_meta_sync_txnid = nullptr;
 
   if (env->me_lfd != INVALID_HANDLE_VALUE) {
     (void)mdbx_closefile(env->me_lfd);
     env->me_lfd = INVALID_HANDLE_VALUE;
+  }
+
+  if (env->me_dbxs) {
+    for (unsigned i = env->me_maxdbs; --i >= CORE_DBS;)
+      mdbx_free(env->me_dbxs[i].md_name.iov_base);
+    mdbx_free(env->me_dbxs);
+  }
+  mdbx_free(env->me_pbuf);
+  mdbx_free(env->me_dbiseqs);
+  mdbx_free(env->me_dbflags);
+  mdbx_free(env->me_path);
+  mdbx_free(env->me_dirtylist);
+  if (env->me_txn0) {
+    mdbx_txl_free(env->me_txn0->tw.lifo_reclaimed);
+    mdbx_pnl_free(env->me_txn0->tw.retired_pages);
+    mdbx_pnl_free(env->me_txn0->tw.spill_pages);
+    mdbx_pnl_free(env->me_txn0->tw.reclaimed_pglist);
+    mdbx_free(env->me_txn0);
   }
   env->me_flags = 0;
   return rc;
@@ -9101,6 +9276,42 @@ __hot static int mdbx_page_search_root(MDBX_cursor *mc, MDBX_val *key,
   return MDBX_SUCCESS;
 }
 
+static int mdbx_fetch_sdb(MDBX_txn *txn, MDBX_dbi dbi) {
+  MDBX_cursor mc;
+  if (unlikely(TXN_DBI_CHANGED(txn, dbi)))
+    return MDBX_BAD_DBI;
+  int rc = mdbx_cursor_init(&mc, txn, MAIN_DBI);
+  if (unlikely(rc != MDBX_SUCCESS))
+    return rc;
+  rc = mdbx_page_search(&mc, &txn->mt_dbxs[dbi].md_name, 0);
+  if (unlikely(rc != MDBX_SUCCESS))
+    return (rc == MDBX_NOTFOUND) ? MDBX_BAD_DBI : rc;
+
+  MDBX_val data;
+  int exact = 0;
+  MDBX_node *node = mdbx_node_search(&mc, &txn->mt_dbxs[dbi].md_name, &exact);
+  if (unlikely(!exact))
+    return MDBX_BAD_DBI;
+  if (unlikely((node_flags(node) & (F_DUPDATA | F_SUBDATA)) != F_SUBDATA))
+    return MDBX_INCOMPATIBLE; /* not a named DB */
+  rc = mdbx_node_read(&mc, node, &data);
+  if (unlikely(rc != MDBX_SUCCESS))
+    return rc;
+
+  if (unlikely(data.iov_len < sizeof(MDBX_db)))
+    return MDBX_INCOMPATIBLE; /* not a named DB */
+
+  uint16_t md_flags = UNALIGNED_PEEK_16(data.iov_base, MDBX_db, md_flags);
+  /* The txn may not know this DBI, or another process may
+   * have dropped and recreated the DB with other flags. */
+  if (unlikely((txn->mt_dbs[dbi].md_flags & PERSISTENT_FLAGS) != md_flags))
+    return MDBX_INCOMPATIBLE;
+
+  memcpy(&txn->mt_dbs[dbi], data.iov_base, sizeof(MDBX_db));
+  txn->mt_dbflags[dbi] &= ~DB_STALE;
+  return MDBX_SUCCESS;
+}
+
 /* Search for the lowest key under the current branch page.
  * This just bypasses a numkeys check in the current page
  * before calling mdbx_page_search_root(), because the callers
@@ -9148,35 +9359,9 @@ __hot static int mdbx_page_search(MDBX_cursor *mc, MDBX_val *key, int flags) {
 
   /* Make sure we're using an up-to-date root */
   if (unlikely(*mc->mc_dbflag & DB_STALE)) {
-    MDBX_cursor mc2;
-    if (unlikely(TXN_DBI_CHANGED(mc->mc_txn, mc->mc_dbi)))
-      return MDBX_BAD_DBI;
-    rc = mdbx_cursor_init(&mc2, mc->mc_txn, MAIN_DBI);
+    rc = mdbx_fetch_sdb(mc->mc_txn, mc->mc_dbi);
     if (unlikely(rc != MDBX_SUCCESS))
       return rc;
-    rc = mdbx_page_search(&mc2, &mc->mc_dbx->md_name, 0);
-    if (unlikely(rc != MDBX_SUCCESS))
-      return (rc == MDBX_NOTFOUND) ? MDBX_BAD_DBI : rc;
-    {
-      MDBX_val data;
-      int exact = 0;
-      MDBX_node *node = mdbx_node_search(&mc2, &mc->mc_dbx->md_name, &exact);
-      if (!exact)
-        return MDBX_BAD_DBI;
-      if (unlikely((node_flags(node) & (F_DUPDATA | F_SUBDATA)) != F_SUBDATA))
-        return MDBX_INCOMPATIBLE; /* not a named DB */
-      rc = mdbx_node_read(&mc2, node, &data);
-      if (rc)
-        return rc;
-
-      uint16_t md_flags = UNALIGNED_PEEK_16(data.iov_base, MDBX_db, md_flags);
-      /* The txn may not know this DBI, or another process may
-       * have dropped and recreated the DB with other flags. */
-      if (unlikely((mc->mc_db->md_flags & PERSISTENT_FLAGS) != md_flags))
-        return MDBX_INCOMPATIBLE;
-      memcpy(mc->mc_db, data.iov_base, sizeof(MDBX_db));
-    }
-    *mc->mc_dbflag &= ~DB_STALE;
   }
   root = mc->mc_db->md_root;
 
@@ -10080,7 +10265,7 @@ int mdbx_cursor_put(MDBX_cursor *mc, MDBX_val *key, MDBX_val *data,
   MDBX_page *fp, *sub_root = NULL;
   uint16_t fp_flags;
   MDBX_val xdata, *rdata, dkey, olddata;
-  MDBX_db dummy;
+  MDBX_db nested_dupdb;
   unsigned mcount = 0, dcount = 0, nospill;
   size_t nsize;
   int rc2;
@@ -10406,7 +10591,8 @@ int mdbx_cursor_put(MDBX_cursor *mc, MDBX_val *key, MDBX_val *data,
          * fp: old sub-page or a header faking it.
          * mp: new (sub-)page.  offset: growth in page size.
          * xdata: node data with new page or DB. */
-        unsigned i, offset = 0;
+        unsigned i;
+        size_t offset = 0;
         MDBX_page *mp = fp = xdata.iov_base = env->me_pbuf;
         mp->mp_pgno = mc->mc_pg[mc->mc_top]->mp_pgno;
 
@@ -10459,11 +10645,11 @@ int mdbx_cursor_put(MDBX_cursor *mc, MDBX_val *key, MDBX_val *data,
           switch (flags) {
           default:
             if (!(mc->mc_db->md_flags & MDBX_DUPFIXED)) {
-              offset = EVEN(NODESIZE + sizeof(indx_t) + data->iov_len);
+              offset = node_size(data, nullptr) + sizeof(indx_t);
               break;
             }
             offset = fp->mp_leaf2_ksize;
-            if (page_spaceleft(fp) < offset) {
+            if (page_room(fp) < offset) {
               offset *= 4; /* space for 4 more */
               break;
             }
@@ -10485,30 +10671,30 @@ int mdbx_cursor_put(MDBX_cursor *mc, MDBX_val *key, MDBX_val *data,
           /* Too big for a sub-page, convert to sub-DB */
           fp_flags &= ~P_SUBP;
         prep_subDB:
-          dummy.md_xsize = 0;
-          dummy.md_flags = 0;
+          nested_dupdb.md_xsize = 0;
+          nested_dupdb.md_flags = 0;
           if (mc->mc_db->md_flags & MDBX_DUPFIXED) {
             fp_flags |= P_LEAF2;
-            dummy.md_xsize = fp->mp_leaf2_ksize;
-            dummy.md_flags = MDBX_DUPFIXED;
+            nested_dupdb.md_xsize = fp->mp_leaf2_ksize;
+            nested_dupdb.md_flags = MDBX_DUPFIXED;
             if (mc->mc_db->md_flags & MDBX_INTEGERDUP)
-              dummy.md_flags |= MDBX_INTEGERKEY;
+              nested_dupdb.md_flags |= MDBX_INTEGERKEY;
           }
-          dummy.md_depth = 1;
-          dummy.md_branch_pages = 0;
-          dummy.md_leaf_pages = 1;
-          dummy.md_overflow_pages = 0;
-          dummy.md_entries = page_numkeys(fp);
-          xdata.iov_len = sizeof(MDBX_db);
-          xdata.iov_base = &dummy;
+          nested_dupdb.md_depth = 1;
+          nested_dupdb.md_branch_pages = 0;
+          nested_dupdb.md_leaf_pages = 1;
+          nested_dupdb.md_overflow_pages = 0;
+          nested_dupdb.md_entries = page_numkeys(fp);
+          xdata.iov_len = sizeof(nested_dupdb);
+          xdata.iov_base = &nested_dupdb;
           if ((rc = mdbx_page_alloc(mc, 1, &mp, MDBX_ALLOC_ALL)))
             return rc;
           mc->mc_db->md_leaf_pages += 1;
           mdbx_cassert(mc, env->me_psize > olddata.iov_len);
           offset = env->me_psize - (unsigned)olddata.iov_len;
           flags |= F_DUPDATA | F_SUBDATA;
-          dummy.md_root = mp->mp_pgno;
-          dummy.md_seq = dummy.md_merkle = 0;
+          nested_dupdb.md_root = mp->mp_pgno;
+          nested_dupdb.md_seq = nested_dupdb.md_mod_txnid = 0;
           sub_root = mp;
         }
         if (mp != fp) {
@@ -10585,7 +10771,7 @@ new_sub:
   nflags = flags & NODE_ADD_FLAGS;
   nsize = IS_LEAF2(mc->mc_pg[mc->mc_top]) ? key->iov_len
                                           : leaf_size(env, key, rdata);
-  if (page_spaceleft(mc->mc_pg[mc->mc_top]) < nsize) {
+  if (page_room(mc->mc_pg[mc->mc_top]) < nsize) {
     if ((flags & (F_DUPDATA | F_SUBDATA)) == F_DUPDATA)
       nflags &= ~MDBX_APPEND; /* sub-page may need room to grow */
     if (!insert_key)
@@ -10878,58 +11064,6 @@ static int mdbx_page_new(MDBX_cursor *mc, unsigned flags, unsigned num,
   return MDBX_SUCCESS;
 }
 
-/* Calculate the size of a leaf node.
- *
- * The size depends on the environment's page size; if a data item
- * is too large it will be put onto an overflow page and the node
- * size will only include the key and not the data. Sizes are always
- * rounded up to an even number of bytes, to guarantee 2-byte alignment
- * of the MDBX_node headers.
- *
- * [in] env   The environment handle.
- * [in] key   The key for the node.
- * [in] data  The data for the node.
- *
- * Returns The number of bytes needed to store the node. */
-static __pure_function __inline size_t
-leaf_size(MDBX_env *env, const MDBX_val *key, const MDBX_val *data) {
-  size_t sz = node_size(key, data);
-  if (sz > env->me_nodemax) {
-    /* put on overflow page */
-    sz = sz - data->iov_len + sizeof(pgno_t);
-  }
-
-  return EVEN(sz) + sizeof(indx_t);
-}
-
-/* Calculate the size of a branch node.
- *
- * The size should depend on the environment's page size but since
- * we currently don't support spilling large keys onto overflow
- * pages, it's simply the size of the MDBX_node header plus the
- * size of the key. Sizes are always rounded up to an even number
- * of bytes, to guarantee 2-byte alignment of the MDBX_node headers.
- *
- * [in] env The environment handle.
- * [in] key The key for the node.
- *
- * Returns The number of bytes needed to store the node. */
-static __pure_function __inline size_t branch_size(MDBX_env *env,
-                                                   const MDBX_val *key) {
-  /* Size of a node in a branch page with a given key.
-   * This is just the node header plus the key, there is no data. */
-  size_t sz = NODESIZE + (key ? key->iov_len : 0);
-  if (unlikely(sz > env->me_nodemax)) {
-    /* put on overflow page */
-    /* not implemented */
-    mdbx_assert_fail(env, "INDXSIZE(key) <= env->me_nodemax", __func__,
-                     __LINE__);
-    sz = sz - key->iov_len + sizeof(pgno_t);
-  }
-
-  return EVEN(sz) + sizeof(indx_t);
-}
-
 static int __must_check_result mdbx_node_add_leaf2(MDBX_cursor *mc,
                                                    unsigned indx,
                                                    const MDBX_val *key) {
@@ -10944,36 +11078,26 @@ static int __must_check_result mdbx_node_add_leaf2(MDBX_cursor *mc,
   mdbx_cassert(mc, PAGETYPE(mp) == (P_LEAF | P_LEAF2));
   const unsigned ksize = mc->mc_db->md_xsize;
   mdbx_cassert(mc, ksize == key->iov_len);
+  const unsigned nkeys = page_numkeys(mp);
 
-  const int room = page_spaceleft(mp);
-  mdbx_cassert(mc, room >= (int)ksize);
-  if (unlikely(room < (int)ksize)) {
-  bailout:
+  /* Just using these for counting */
+  const intptr_t lower = mp->mp_lower + sizeof(indx_t);
+  const intptr_t upper = mp->mp_upper - (ksize - sizeof(indx_t));
+  if (unlikely(lower > upper)) {
     mc->mc_txn->mt_flags |= MDBX_TXN_ERROR;
     return MDBX_PAGE_FULL;
   }
+  mp->mp_lower = (indx_t)lower;
+  mp->mp_upper = (indx_t)upper;
 
   char *const ptr = page_leaf2key(mp, indx, ksize);
-  mdbx_cassert(mc, page_numkeys(mp) >= indx);
-  if (unlikely(page_numkeys(mp) < indx))
-    goto bailout;
-
-  const unsigned diff = page_numkeys(mp) - indx;
+  mdbx_cassert(mc, nkeys >= indx);
+  const unsigned diff = nkeys - indx;
   if (likely(diff > 0))
     /* Move higher keys up one slot. */
     memmove(ptr + ksize, ptr, diff * ksize);
   /* insert new key */
   memcpy(ptr, key->iov_base, ksize);
-
-  /* Just using these for counting */
-  mdbx_cassert(mc, UINT16_MAX - mp->mp_lower >= (int)sizeof(indx_t));
-  mp->mp_lower += sizeof(indx_t);
-  mdbx_cassert(mc, mp->mp_upper >= ksize - sizeof(indx_t));
-  mp->mp_upper -= (indx_t)(ksize - sizeof(indx_t));
-
-  mdbx_cassert(mc,
-               mp->mp_upper >= mp->mp_lower &&
-                   PAGEHDRSZ + mp->mp_upper <= mc->mc_txn->mt_env->me_psize);
   return MDBX_SUCCESS;
 }
 
@@ -10991,34 +11115,22 @@ static int __must_check_result mdbx_node_add_branch(MDBX_cursor *mc,
   mdbx_cassert(mc, PAGETYPE(mp) == P_BRANCH);
   STATIC_ASSERT(NODESIZE % 2 == 0);
 
-  const size_t room = page_spaceleft(mp);
-  const size_t node_size =
-      likely(key != NULL) ? NODESIZE + EVEN(key->iov_len) : NODESIZE;
-  mdbx_cassert(mc, branch_size(mc->mc_txn->mt_env, key) ==
-                       node_size + sizeof(indx_t));
-  mdbx_cassert(mc, room >= node_size + sizeof(indx_t));
-  if (unlikely(room < node_size + sizeof(indx_t))) {
-  bailout:
-    mc->mc_txn->mt_flags |= MDBX_TXN_ERROR;
-    return MDBX_PAGE_FULL;
-  }
-
+  /* Move higher pointers up one slot. */
   const unsigned nkeys = page_numkeys(mp);
   mdbx_cassert(mc, nkeys >= indx);
-  if (unlikely(nkeys < indx))
-    goto bailout;
-
-  /* Move higher pointers up one slot. */
   for (unsigned i = nkeys; i > indx; --i)
     mp->mp_ptrs[i] = mp->mp_ptrs[i - 1];
 
   /* Adjust free space offsets. */
-  const size_t ofs = mp->mp_upper - node_size;
-  mdbx_cassert(mc, ofs >= mp->mp_lower + sizeof(indx_t));
-  mdbx_cassert(mc, ofs <= UINT16_MAX);
-  mp->mp_ptrs[indx] = (uint16_t)ofs;
-  mp->mp_upper = (uint16_t)ofs;
-  mp->mp_lower += sizeof(indx_t);
+  const size_t branch_bytes = branch_size(mc->mc_txn->mt_env, key);
+  const intptr_t lower = mp->mp_lower + sizeof(indx_t);
+  const intptr_t upper = mp->mp_upper - (branch_bytes - sizeof(indx_t));
+  if (unlikely(lower > upper)) {
+    mc->mc_txn->mt_flags |= MDBX_TXN_ERROR;
+    return MDBX_PAGE_FULL;
+  }
+  mp->mp_lower = (indx_t)lower;
+  mp->mp_ptrs[indx] = mp->mp_upper = (indx_t)upper;
 
   /* Write the node data. */
   MDBX_node *node = page_node(mp, indx);
@@ -11030,10 +11142,6 @@ static int __must_check_result mdbx_node_add_branch(MDBX_cursor *mc,
     node_set_ks(node, key->iov_len);
     memcpy(node_key(node), key->iov_base, key->iov_len);
   }
-
-  mdbx_cassert(mc,
-               mp->mp_upper >= mp->mp_lower &&
-                   PAGEHDRSZ + mp->mp_upper <= mc->mc_txn->mt_env->me_psize);
   return MDBX_SUCCESS;
 }
 
@@ -11052,58 +11160,43 @@ static int __must_check_result mdbx_node_add_leaf(MDBX_cursor *mc,
   mdbx_cassert(mc, PAGETYPE(mp) == P_LEAF);
   MDBX_page *largepage = NULL;
 
-  const size_t room = page_spaceleft(mp);
-  size_t node_size = NODESIZE + key->iov_len;
+  size_t leaf_bytes = 0;
   if (unlikely(flags & F_BIGDATA)) {
     /* Data already on overflow page. */
     STATIC_ASSERT(sizeof(pgno_t) % 2 == 0);
-    node_size += sizeof(pgno_t);
-  } else if (unlikely(node_size + data->iov_len >
-                      mc->mc_txn->mt_env->me_nodemax)) {
+    leaf_bytes = node_size(key, nullptr) + sizeof(pgno_t) + sizeof(indx_t);
+  } else if (unlikely(node_size(key, data) > mc->mc_txn->mt_env->me_nodemax)) {
+    /* Put data on overflow page. */
     mdbx_cassert(mc, !F_ISSET(mc->mc_db->md_flags, MDBX_DUPSORT));
     const pgno_t ovpages = number_of_ovpages(mc->mc_txn->mt_env, data->iov_len);
-    /* Put data on overflow page. */
-    mdbx_debug("data size is %" PRIuPTR ", node would be %" PRIuPTR
-               ", put data on %u-overflow page(s)",
-               data->iov_len, node_size + data->iov_len, ovpages);
     int rc = mdbx_page_new(mc, P_OVERFLOW, ovpages, &largepage);
     if (unlikely(rc != MDBX_SUCCESS))
       return rc;
-    mdbx_debug("allocated overflow page %" PRIaPGNO, largepage->mp_pgno);
+    mdbx_debug("allocated %u overflow page(s) %" PRIaPGNO "for %" PRIuPTR
+               " data bytes",
+               largepage->mp_pages, largepage->mp_pgno, data->iov_len);
     flags |= F_BIGDATA;
-    node_size += sizeof(pgno_t);
-    mdbx_cassert(mc, leaf_size(mc->mc_txn->mt_env, key, data) ==
-                         EVEN(node_size) + sizeof(indx_t));
+    leaf_bytes = node_size(key, nullptr) + sizeof(pgno_t) + sizeof(indx_t);
   } else {
-    node_size += data->iov_len;
-    mdbx_cassert(mc, leaf_size(mc->mc_txn->mt_env, key, data) ==
-                         EVEN(node_size) + sizeof(indx_t));
+    leaf_bytes = node_size(key, data) + sizeof(indx_t);
   }
-
-  node_size = EVEN(node_size);
-  mdbx_cassert(mc, room >= node_size + sizeof(indx_t));
-  if (unlikely(room < node_size + sizeof(indx_t))) {
-  bailout:
-    mc->mc_txn->mt_flags |= MDBX_TXN_ERROR;
-    return MDBX_PAGE_FULL;
-  }
-
-  const unsigned nkeys = page_numkeys(mp);
-  mdbx_cassert(mc, nkeys >= indx);
-  if (unlikely(nkeys < indx))
-    goto bailout;
+  mdbx_cassert(mc, leaf_bytes == leaf_size(mc->mc_txn->mt_env, key, data));
 
   /* Move higher pointers up one slot. */
+  const unsigned nkeys = page_numkeys(mp);
+  mdbx_cassert(mc, nkeys >= indx);
   for (unsigned i = nkeys; i > indx; --i)
     mp->mp_ptrs[i] = mp->mp_ptrs[i - 1];
 
   /* Adjust free space offsets. */
-  const size_t ofs = mp->mp_upper - node_size;
-  mdbx_cassert(mc, ofs >= mp->mp_lower + sizeof(indx_t));
-  mdbx_cassert(mc, ofs <= UINT16_MAX);
-  mp->mp_ptrs[indx] = (uint16_t)ofs;
-  mp->mp_upper = (uint16_t)ofs;
-  mp->mp_lower += sizeof(indx_t);
+  const intptr_t lower = mp->mp_lower + sizeof(indx_t);
+  const intptr_t upper = mp->mp_upper - (leaf_bytes - sizeof(indx_t));
+  if (unlikely(lower > upper)) {
+    mc->mc_txn->mt_flags |= MDBX_TXN_ERROR;
+    return MDBX_PAGE_FULL;
+  }
+  mp->mp_lower = (indx_t)lower;
+  mp->mp_ptrs[indx] = mp->mp_upper = (indx_t)upper;
 
   /* Write the node data. */
   MDBX_node *node = page_node(mp, indx);
@@ -11129,10 +11222,6 @@ static int __must_check_result mdbx_node_add_leaf(MDBX_cursor *mc,
     else if (likely(nodedata != data->iov_base))
       memcpy(nodedata, data->iov_base, data->iov_len);
   }
-
-  mdbx_cassert(mc,
-               mp->mp_upper >= mp->mp_lower &&
-                   PAGEHDRSZ + mp->mp_upper <= mc->mc_txn->mt_env->me_psize);
   return MDBX_SUCCESS;
 }
 
@@ -11209,7 +11298,7 @@ static void mdbx_node_shrink(MDBX_page *mp, unsigned indx) {
 
   node = page_node(mp, indx);
   sp = (MDBX_page *)node_data(node);
-  delta = page_spaceleft(sp);
+  delta = page_room(sp);
   assert(delta > 0);
 
   /* Prepare to shift upward, set len = length(subpage part to shift) */
@@ -11290,12 +11379,16 @@ static int mdbx_xcursor_init1(MDBX_cursor *mc, MDBX_node *node) {
     return MDBX_CORRUPTED;
 
   if (node_flags(node) & F_SUBDATA) {
+    if (unlikely(node_ds(node) != sizeof(MDBX_db)))
+      return MDBX_CORRUPTED;
     memcpy(&mx->mx_db, node_data(node), sizeof(MDBX_db));
     mx->mx_cursor.mc_pg[0] = 0;
     mx->mx_cursor.mc_snum = 0;
     mx->mx_cursor.mc_top = 0;
     mx->mx_cursor.mc_flags = C_SUB;
   } else {
+    if (unlikely(node_ds(node) <= PAGEHDRSZ))
+      return MDBX_CORRUPTED;
     MDBX_page *fp = node_data(node);
     mx->mx_db.md_xsize = 0;
     mx->mx_db.md_flags = 0;
@@ -11320,12 +11413,6 @@ static int mdbx_xcursor_init1(MDBX_cursor *mc, MDBX_node *node) {
   mdbx_debug("Sub-db -%u root page %" PRIaPGNO, mx->mx_cursor.mc_dbi,
              mx->mx_db.md_root);
   mx->mx_dbflag = DB_VALID | DB_USRVALID | DB_DUPDATA;
-  /* FIXME: #if UINT_MAX < SIZE_MAX
-          if (mx->mx_dbx.md_cmp == mdbx_cmp_int && mx->mx_db.md_pad ==
-  sizeof(size_t))
-                  mx->mx_dbx.md_cmp = mdbx_cmp_clong;
-  #endif */
-
   return MDBX_SUCCESS;
 }
 
@@ -11584,7 +11671,7 @@ static int mdbx_update_key(MDBX_cursor *mc, const MDBX_val *key) {
 
   /* Shift node contents if EVEN(key length) changed. */
   if (delta) {
-    if (delta > (int)page_spaceleft(mp)) {
+    if (delta > (int)page_room(mp)) {
       /* not enough space left, do a delete and split */
       mdbx_debug("Not enough room, delta = %d, splitting...", delta);
       pgno_t pgno = node_pgno(node);
@@ -11620,19 +11707,13 @@ static int mdbx_update_key(MDBX_cursor *mc, const MDBX_val *key) {
   return MDBX_SUCCESS;
 }
 
-static void mdbx_cursor_copy(const MDBX_cursor *csrc, MDBX_cursor *cdst);
-
 /* Move a node from csrc to cdst. */
 static int mdbx_node_move(MDBX_cursor *csrc, MDBX_cursor *cdst, int fromleft) {
   int rc;
   DKBUF;
 
-  /* Mark src and dst as dirty. */
-  if (unlikely((rc = mdbx_page_touch(csrc)) || (rc = mdbx_page_touch(cdst))))
-    return rc;
-
-  MDBX_page *const psrc = csrc->mc_pg[csrc->mc_top];
-  MDBX_page *const pdst = cdst->mc_pg[cdst->mc_top];
+  MDBX_page *psrc = csrc->mc_pg[csrc->mc_top];
+  MDBX_page *pdst = cdst->mc_pg[cdst->mc_top];
   mdbx_cassert(csrc, PAGETYPE(psrc) == PAGETYPE(pdst));
   mdbx_cassert(csrc, csrc->mc_dbi == cdst->mc_dbi);
   mdbx_cassert(csrc, csrc->mc_top == cdst->mc_top);
@@ -11650,28 +11731,32 @@ static int mdbx_node_move(MDBX_cursor *csrc, MDBX_cursor *cdst, int fromleft) {
     const pgno_t srcpg = node_pgno(srcnode);
     key4move.iov_len = node_ks(srcnode);
     key4move.iov_base = node_key(srcnode);
+
     if (csrc->mc_ki[csrc->mc_top] == 0) {
       const uint16_t snum = csrc->mc_snum;
       mdbx_cassert(csrc, snum > 0);
       /* must find the lowest key below src */
       rc = mdbx_page_search_lowest(csrc);
-      MDBX_page *psrc2 = csrc->mc_pg[csrc->mc_top];
+      MDBX_page *lowest_page = csrc->mc_pg[csrc->mc_top];
       if (unlikely(rc))
         return rc;
-      mdbx_cassert(csrc, IS_LEAF(psrc2));
-      if (unlikely(!IS_LEAF(psrc2)))
+      mdbx_cassert(csrc, IS_LEAF(lowest_page));
+      if (unlikely(!IS_LEAF(lowest_page)))
         goto bailout;
-      if (IS_LEAF2(psrc2)) {
+      if (IS_LEAF2(lowest_page)) {
         key4move.iov_len = csrc->mc_db->md_xsize;
-        key4move.iov_base = page_leaf2key(psrc2, 0, key4move.iov_len);
+        key4move.iov_base = page_leaf2key(lowest_page, 0, key4move.iov_len);
       } else {
-        const MDBX_node *s2 = page_node(psrc2, 0);
-        key4move.iov_len = node_ks(s2);
-        key4move.iov_base = node_key(s2);
+        const MDBX_node *lowest_node = page_node(lowest_page, 0);
+        key4move.iov_len = node_ks(lowest_node);
+        key4move.iov_base = node_key(lowest_node);
       }
+
+      /* restore cursor after mdbx_page_search_lowest() */
       csrc->mc_snum = snum;
       csrc->mc_top = snum - 1;
       csrc->mc_ki[csrc->mc_top] = 0;
+
       /* paranoia */
       mdbx_cassert(csrc, psrc == csrc->mc_pg[csrc->mc_top]);
       mdbx_cassert(csrc, IS_BRANCH(psrc));
@@ -11689,25 +11774,53 @@ static int mdbx_node_move(MDBX_cursor *csrc, MDBX_cursor *cdst, int fromleft) {
       rc = mdbx_page_search_lowest(&mn);
       if (unlikely(rc))
         return rc;
-      MDBX_page *const pdst2 = mn.mc_pg[mn.mc_top];
-      mdbx_cassert(cdst, IS_LEAF(pdst2));
-      if (unlikely(!IS_LEAF(pdst2)))
+      MDBX_page *const lowest_page = mn.mc_pg[mn.mc_top];
+      mdbx_cassert(cdst, IS_LEAF(lowest_page));
+      if (unlikely(!IS_LEAF(lowest_page)))
         goto bailout;
       MDBX_val key;
-      if (IS_LEAF2(pdst2)) {
+      if (IS_LEAF2(lowest_page)) {
         key.iov_len = mn.mc_db->md_xsize;
-        key.iov_base = page_leaf2key(pdst2, 0, key.iov_len);
+        key.iov_base = page_leaf2key(lowest_page, 0, key.iov_len);
       } else {
-        MDBX_node *s2 = page_node(pdst2, 0);
-        key.iov_len = node_ks(s2);
-        key.iov_base = node_key(s2);
+        MDBX_node *lowest_node = page_node(lowest_page, 0);
+        key.iov_len = node_ks(lowest_node);
+        key.iov_base = node_key(lowest_node);
       }
+
+      /* restore cursor after mdbx_page_search_lowest() */
       mn.mc_snum = snum;
       mn.mc_top = snum - 1;
       mn.mc_ki[mn.mc_top] = 0;
+
+      const intptr_t delta =
+          EVEN(key.iov_len) - EVEN(node_ks(page_node(mn.mc_pg[mn.mc_top], 0)));
+      const intptr_t needed =
+          branch_size(cdst->mc_txn->mt_env, &key4move) + delta;
+      const intptr_t have = page_room(pdst);
+      if (unlikely(needed > have))
+        return MDBX_RESULT_TRUE;
+
+      if (unlikely((rc = mdbx_page_touch(csrc)) ||
+                   (rc = mdbx_page_touch(cdst))))
+        return rc;
+      psrc = csrc->mc_pg[csrc->mc_top];
+      pdst = cdst->mc_pg[cdst->mc_top];
+
       rc = mdbx_update_key(&mn, &key);
       if (unlikely(rc))
         return rc;
+    } else {
+      const size_t needed = branch_size(cdst->mc_txn->mt_env, &key4move);
+      const size_t have = page_room(pdst);
+      if (unlikely(needed > have))
+        return MDBX_RESULT_TRUE;
+
+      if (unlikely((rc = mdbx_page_touch(csrc)) ||
+                   (rc = mdbx_page_touch(cdst))))
+        return rc;
+      psrc = csrc->mc_pg[csrc->mc_top];
+      pdst = cdst->mc_pg[cdst->mc_top];
     }
 
     mdbx_debug("moving %s-node %u [%s] on page %" PRIaPGNO
@@ -11720,6 +11833,11 @@ static int mdbx_node_move(MDBX_cursor *csrc, MDBX_cursor *cdst, int fromleft) {
   } break;
 
   case P_LEAF: {
+    /* Mark src and dst as dirty. */
+    if (unlikely((rc = mdbx_page_touch(csrc)) || (rc = mdbx_page_touch(cdst))))
+      return rc;
+    psrc = csrc->mc_pg[csrc->mc_top];
+    pdst = cdst->mc_pg[cdst->mc_top];
     const MDBX_node *srcnode = page_node(psrc, csrc->mc_ki[csrc->mc_top]);
     MDBX_val data;
     data.iov_len = node_ds(srcnode);
@@ -11736,6 +11854,11 @@ static int mdbx_node_move(MDBX_cursor *csrc, MDBX_cursor *cdst, int fromleft) {
   } break;
 
   case P_LEAF | P_LEAF2: {
+    /* Mark src and dst as dirty. */
+    if (unlikely((rc = mdbx_page_touch(csrc)) || (rc = mdbx_page_touch(cdst))))
+      return rc;
+    psrc = csrc->mc_pg[csrc->mc_top];
+    pdst = cdst->mc_pg[cdst->mc_top];
     key4move.iov_len = csrc->mc_db->md_xsize;
     key4move.iov_base =
         page_leaf2key(psrc, csrc->mc_ki[csrc->mc_top], key4move.iov_len);
@@ -11895,19 +12018,12 @@ static int mdbx_node_move(MDBX_cursor *csrc, MDBX_cursor *cdst, int fromleft) {
  *
  * Returns 0 on success, non-zero on failure. */
 static int mdbx_page_merge(MDBX_cursor *csrc, MDBX_cursor *cdst) {
-  MDBX_node *srcnode;
   MDBX_val key;
   int rc;
 
   mdbx_cassert(csrc, csrc != cdst);
-
-  /* Mark dst as dirty. */
-  if (unlikely(rc = mdbx_page_touch(cdst)))
-    return rc;
-
-  MDBX_page *const psrc = csrc->mc_pg[csrc->mc_top];
-  MDBX_page *const pdst = cdst->mc_pg[cdst->mc_top];
-
+  const MDBX_page *const psrc = csrc->mc_pg[csrc->mc_top];
+  MDBX_page *pdst = cdst->mc_pg[cdst->mc_top];
   mdbx_debug("merging page %" PRIaPGNO " into %" PRIaPGNO, psrc->mp_pgno,
              pdst->mp_pgno);
 
@@ -11920,24 +12036,33 @@ static int mdbx_page_merge(MDBX_cursor *csrc, MDBX_cursor *cdst) {
                          IS_LEAF(cdst->mc_pg[cdst->mc_db->md_depth - 1]));
   mdbx_cassert(csrc, csrc->mc_snum < csrc->mc_db->md_depth ||
                          IS_LEAF(csrc->mc_pg[csrc->mc_db->md_depth - 1]));
+  mdbx_cassert(cdst, page_room(pdst) >= page_used(cdst->mc_txn->mt_env, psrc));
   const int pagetype = PAGETYPE(psrc);
 
   /* Move all nodes from src to dst */
-  const unsigned nkeys = page_numkeys(pdst);
-  unsigned j = nkeys;
-  if (unlikely(pagetype & P_LEAF2)) {
-    key.iov_len = csrc->mc_db->md_xsize;
-    key.iov_base = page_data(psrc);
-    for (unsigned i = 0; i < page_numkeys(psrc); i++, j++) {
-      rc = mdbx_node_add_leaf2(cdst, j, &key);
-      if (unlikely(rc != MDBX_SUCCESS))
+  const unsigned dst_nkeys = page_numkeys(pdst);
+  const unsigned src_nkeys = page_numkeys(psrc);
+  if (likely(src_nkeys)) {
+    unsigned j = dst_nkeys;
+    if (unlikely(pagetype & P_LEAF2)) {
+      /* Mark dst as dirty. */
+      if (unlikely(rc = mdbx_page_touch(cdst)))
         return rc;
-      key.iov_base = (char *)key.iov_base + key.iov_len;
-    }
-  } else {
-    for (unsigned i = 0; i < page_numkeys(psrc); i++, j++) {
-      srcnode = page_node(psrc, i);
-      if (i == 0 && (pagetype & P_BRANCH)) {
+
+      key.iov_len = csrc->mc_db->md_xsize;
+      key.iov_base = page_data(psrc);
+      unsigned i = 0;
+      do {
+        rc = mdbx_node_add_leaf2(cdst, j++, &key);
+        if (unlikely(rc != MDBX_SUCCESS))
+          return rc;
+        key.iov_base = (char *)key.iov_base + key.iov_len;
+      } while (++i != src_nkeys);
+    } else {
+      MDBX_node *srcnode = page_node(psrc, 0);
+      key.iov_len = node_ks(srcnode);
+      key.iov_base = node_key(srcnode);
+      if (pagetype & P_BRANCH) {
         MDBX_cursor mn;
         mdbx_cursor_copy(csrc, &mn);
         mn.mc_xcursor = NULL;
@@ -11949,35 +12074,52 @@ static int mdbx_page_merge(MDBX_cursor *csrc, MDBX_cursor *cdst) {
           key.iov_len = mn.mc_db->md_xsize;
           key.iov_base = page_leaf2key(mn.mc_pg[mn.mc_top], 0, key.iov_len);
         } else {
-          MDBX_node *s2 = page_node(mn.mc_pg[mn.mc_top], 0);
-          key.iov_len = node_ks(s2);
-          key.iov_base = node_key(s2);
+          MDBX_node *lowest = page_node(mn.mc_pg[mn.mc_top], 0);
+          key.iov_len = node_ks(lowest);
+          key.iov_base = node_key(lowest);
+
+          const size_t dst_room = page_room(pdst);
+          const size_t src_used = page_used(cdst->mc_txn->mt_env, psrc);
+          const size_t space_needed = src_used - node_ks(srcnode) + key.iov_len;
+          if (unlikely(space_needed > dst_room))
+            return MDBX_RESULT_TRUE;
         }
-      } else {
+      }
+
+      /* Mark dst as dirty. */
+      if (unlikely(rc = mdbx_page_touch(cdst)))
+        return rc;
+
+      unsigned i = 0;
+      while (true) {
+        if (pagetype & P_LEAF) {
+          MDBX_val data;
+          data.iov_len = node_ds(srcnode);
+          data.iov_base = node_data(srcnode);
+          rc = mdbx_node_add_leaf(cdst, j++, &key, &data, node_flags(srcnode));
+        } else {
+          mdbx_cassert(csrc, node_flags(srcnode) == 0);
+          rc = mdbx_node_add_branch(cdst, j++, &key, node_pgno(srcnode));
+        }
+        if (unlikely(rc != MDBX_SUCCESS))
+          return rc;
+
+        if (++i == src_nkeys)
+          break;
+        srcnode = page_node(psrc, i);
         key.iov_len = node_ks(srcnode);
         key.iov_base = node_key(srcnode);
       }
-
-      if (pagetype & P_LEAF) {
-        MDBX_val data;
-        data.iov_len = node_ds(srcnode);
-        data.iov_base = node_data(srcnode);
-        rc = mdbx_node_add_leaf(cdst, j, &key, &data, node_flags(srcnode));
-      } else {
-        mdbx_cassert(csrc, node_flags(srcnode) == 0);
-        rc = mdbx_node_add_branch(cdst, j, &key, node_pgno(srcnode));
-      }
-      if (unlikely(rc != MDBX_SUCCESS))
-        return rc;
     }
+
+    pdst = cdst->mc_pg[cdst->mc_top];
+    mdbx_debug("dst page %" PRIaPGNO " now has %u keys (%.1f%% filled)",
+               pdst->mp_pgno, page_numkeys(pdst),
+               page_fill(cdst->mc_txn->mt_env, pdst));
+
+    mdbx_cassert(csrc, psrc == csrc->mc_pg[csrc->mc_top]);
+    mdbx_cassert(cdst, pdst == cdst->mc_pg[cdst->mc_top]);
   }
-
-  mdbx_debug("dst page %" PRIaPGNO " now has %u keys (%.1f%% filled)",
-             pdst->mp_pgno, page_numkeys(pdst),
-             page_fill(cdst->mc_txn->mt_env, pdst));
-
-  mdbx_cassert(csrc, psrc == csrc->mc_pg[csrc->mc_top]);
-  mdbx_cassert(cdst, pdst == cdst->mc_pg[cdst->mc_top]);
 
   /* Unlink the src page from parent and add to free list. */
   csrc->mc_top--;
@@ -12007,8 +12149,8 @@ static int mdbx_page_merge(MDBX_cursor *csrc, MDBX_cursor *cdst) {
         continue;
       if (m3->mc_pg[top] == psrc) {
         m3->mc_pg[top] = pdst;
-        mdbx_cassert(m3, nkeys + m3->mc_ki[top] <= UINT16_MAX);
-        m3->mc_ki[top] += (indx_t)nkeys;
+        mdbx_cassert(m3, dst_nkeys + m3->mc_ki[top] <= UINT16_MAX);
+        m3->mc_ki[top] += (indx_t)dst_nkeys;
         m3->mc_ki[top - 1] = cdst->mc_ki[top - 1];
       } else if (m3->mc_pg[top - 1] == csrc->mc_pg[top - 1] &&
                  m3->mc_ki[top - 1] > csrc->mc_ki[top - 1]) {
@@ -12021,7 +12163,7 @@ static int mdbx_page_merge(MDBX_cursor *csrc, MDBX_cursor *cdst) {
 
   /* If not operating on GC, allow this page to be reused
    * in this txn. Otherwise just add to free list. */
-  rc = mdbx_page_retire(csrc, psrc);
+  rc = mdbx_page_retire(csrc, (MDBX_page *)psrc);
   if (unlikely(rc))
     return rc;
 
@@ -12133,7 +12275,6 @@ static void mdbx_cursor_copy(const MDBX_cursor *csrc, MDBX_cursor *cdst) {
  * [in] mc Cursor pointing to the page where rebalancing should begin.
  * Returns 0 on success, non-zero on failure. */
 static int mdbx_rebalance(MDBX_cursor *mc) {
-  MDBX_node *node;
   int rc;
 
   mdbx_cassert(mc, mc->mc_snum > 0);
@@ -12145,10 +12286,9 @@ static int mdbx_rebalance(MDBX_cursor *mc) {
                                            : (pagetype & P_BRANCH) ? 2 : 1;
 
   /* The threshold of minimum page fill factor, in form of a negative binary
-   * exponent (i.e. 3 means 1/(2**3) == 1/8 == 12,5%). Pages emptier than this
+   * exponent, i.e. 2 means 1/(2**3) == 1/4 == 25%. Pages emptier than this
    * are candidates for merging. */
-  const unsigned threshold_fill_exp2 =
-      (P_BRANCH == 1) ? 5 /* 1/32 == 3,125 */ : 2 /* 1/4 == 25% */;
+  const unsigned threshold_fill_exp2 = 2;
 
   /* The threshold of minimum page fill factor, as a number of free bytes on a
    * page. Pages emptier than this are candidates for merging. */
@@ -12268,31 +12408,37 @@ static int mdbx_rebalance(MDBX_cursor *mc) {
   mdbx_cursor_copy(mc, &mn);
   mn.mc_xcursor = NULL;
 
-  int oldki = mc->mc_ki[mc->mc_top];
-  bool fromleft;
-  if (mc->mc_ki[pre_top] == 0) {
-    /* We're the leftmost leaf in our parent. */
-    mdbx_debug("%s", "reading right neighbor");
-    mn.mc_ki[pre_top]++;
-    node = page_node(mc->mc_pg[pre_top], mn.mc_ki[pre_top]);
-    rc = mdbx_page_get(mc, node_pgno(node), &mn.mc_pg[mn.mc_top], NULL);
+  MDBX_page *left = nullptr, *right = nullptr;
+  if (mn.mc_ki[pre_top] > 0) {
+    rc = mdbx_page_get(
+        &mn, node_pgno(page_node(mn.mc_pg[pre_top], mn.mc_ki[pre_top] - 1)),
+        &left, NULL);
     if (unlikely(rc != MDBX_SUCCESS))
       return rc;
-    mdbx_cassert(mc, PAGETYPE(mn.mc_pg[mn.mc_top]) ==
-                         PAGETYPE(mc->mc_pg[mc->mc_top]));
+    mdbx_cassert(mc, PAGETYPE(left) == PAGETYPE(mc->mc_pg[mc->mc_top]));
+  }
+  if (mn.mc_ki[pre_top] + 1u < page_numkeys(mn.mc_pg[pre_top])) {
+    rc = mdbx_page_get(
+        &mn, node_pgno(page_node(mn.mc_pg[pre_top], mn.mc_ki[pre_top] + 1)),
+        &right, NULL);
+    if (unlikely(rc != MDBX_SUCCESS))
+      return rc;
+    mdbx_cassert(mc, PAGETYPE(right) == PAGETYPE(mc->mc_pg[mc->mc_top]));
+  }
+
+  int ki = mc->mc_ki[mc->mc_top];
+  bool fromleft;
+  if (!left || (right && page_room(left) < page_room(right))) {
+    mdbx_debug("merging %s neighbor", "right");
+    mn.mc_pg[mn.mc_top] = right;
+    mn.mc_ki[pre_top] += 1;
     mn.mc_ki[mn.mc_top] = 0;
     mc->mc_ki[mc->mc_top] = (indx_t)page_numkeys(mc->mc_pg[mc->mc_top]);
     fromleft = false;
   } else {
-    /* There is at least one neighbor to the left. */
-    mdbx_debug("%s", "reading left neighbor");
-    mn.mc_ki[pre_top]--;
-    node = page_node(mc->mc_pg[pre_top], mn.mc_ki[pre_top]);
-    rc = mdbx_page_get(mc, node_pgno(node), &mn.mc_pg[mn.mc_top], NULL);
-    if (unlikely(rc != MDBX_SUCCESS))
-      return rc;
-    mdbx_cassert(mc, PAGETYPE(mn.mc_pg[mn.mc_top]) ==
-                         PAGETYPE(mc->mc_pg[mc->mc_top]));
+    mdbx_debug("merging %s neighbor", "left");
+    mn.mc_pg[mn.mc_top] = left;
+    mn.mc_ki[pre_top] -= 1;
     mn.mc_ki[mn.mc_top] = (indx_t)page_numkeys(mn.mc_pg[mn.mc_top]) - 1;
     mc->mc_ki[mc->mc_top] = 0;
     fromleft = true;
@@ -12307,9 +12453,10 @@ static int mdbx_rebalance(MDBX_cursor *mc) {
    * (A branch page must never have less than 2 keys.) */
   if (page_fill_enough(mn.mc_pg[mn.mc_top], spaceleft_threshold, minkeys + 1)) {
     rc = mdbx_node_move(&mn, mc, fromleft);
-    if (unlikely(rc != MDBX_SUCCESS))
+    if (likely(rc == MDBX_SUCCESS))
+      ki += fromleft /* if we inserted on left, bump position up */;
+    else if (unlikely(rc != MDBX_RESULT_TRUE))
       return rc;
-    oldki += fromleft /* if we inserted on left, bump position up */;
     mdbx_cassert(mc, IS_LEAF(mc->mc_pg[mc->mc_top]) ||
                          PAGETYPE(mc->mc_pg[mc->mc_top]) == pagetype);
     mdbx_cassert(mc, mc->mc_snum < mc->mc_db->md_depth ||
@@ -12317,28 +12464,29 @@ static int mdbx_rebalance(MDBX_cursor *mc) {
   } else {
     if (!fromleft) {
       rc = mdbx_page_merge(&mn, mc);
-      if (unlikely(rc != MDBX_SUCCESS))
+      if (unlikely(MDBX_IS_ERROR(rc)))
         return rc;
       mdbx_cassert(mc, IS_LEAF(mc->mc_pg[mc->mc_top]) ||
                            PAGETYPE(mc->mc_pg[mc->mc_top]) == pagetype);
       mdbx_cassert(mc, mc->mc_snum < mc->mc_db->md_depth ||
                            IS_LEAF(mc->mc_pg[mc->mc_db->md_depth - 1]));
     } else {
-      oldki += page_numkeys(mn.mc_pg[mn.mc_top]);
+      int new_ki = ki + page_numkeys(mn.mc_pg[mn.mc_top]);
       mn.mc_ki[mn.mc_top] += mc->mc_ki[mn.mc_top] + 1;
       /* We want mdbx_rebalance to find mn when doing fixups */
       WITH_CURSOR_TRACKING(mn, rc = mdbx_page_merge(mc, &mn));
-      if (unlikely(rc != MDBX_SUCCESS))
+      if (likely(rc == MDBX_SUCCESS)) {
+        ki = new_ki;
+        mdbx_cursor_copy(&mn, mc);
+      } else if (unlikely(rc != MDBX_RESULT_TRUE))
         return rc;
-      mdbx_cursor_copy(&mn, mc);
       mdbx_cassert(mc, IS_LEAF(mc->mc_pg[mc->mc_top]) ||
                            PAGETYPE(mc->mc_pg[mc->mc_top]) == pagetype);
       mdbx_cassert(mc, mc->mc_snum < mc->mc_db->md_depth ||
                            IS_LEAF(mc->mc_pg[mc->mc_db->md_depth - 1]));
     }
-    mc->mc_flags &= ~C_EOF;
   }
-  mc->mc_ki[mc->mc_top] = (indx_t)oldki;
+  mc->mc_ki[mc->mc_top] = (indx_t)ki;
   return MDBX_SUCCESS;
 }
 
@@ -12402,8 +12550,8 @@ static __cold int mdbx_page_check(MDBX_env *env, const MDBX_page *const mp,
       case 0 /* usual */:
         break;
       case F_SUBDATA /* sub-db */:
-        mdbx_assert(env, dsize == sizeof(MDBX_db));
-        if (unlikely(dsize != sizeof(MDBX_db)))
+        mdbx_assert(env, dsize >= sizeof(MDBX_db));
+        if (unlikely(dsize < sizeof(MDBX_db)))
           return MDBX_CORRUPTED;
         break;
       case F_SUBDATA | F_DUPDATA /* dupsorted sub-tree */:
@@ -12971,7 +13119,7 @@ static int mdbx_page_split(MDBX_cursor *mc, const MDBX_val *newkey,
   }
 
   /* Copy separator key to the parent. */
-  if (page_spaceleft(mn.mc_pg[ptop]) < branch_size(env, &sepkey)) {
+  if (page_room(mn.mc_pg[ptop]) < branch_size(env, &sepkey)) {
     const int snum = mc->mc_snum;
     const int depth = mc->mc_db->md_depth;
     mn.mc_snum--;
@@ -13203,8 +13351,7 @@ static int mdbx_page_split(MDBX_cursor *mc, const MDBX_val *newkey,
         XCURSOR_REFRESH(m3, m3->mc_pg[mc->mc_top], m3->mc_ki[mc->mc_top]);
     }
   }
-  mdbx_debug("mp left: %d, rp left: %d", page_spaceleft(mp),
-             page_spaceleft(rp));
+  mdbx_debug("mp left: %d, rp left: %d", page_room(mp), page_room(rp));
 
 done:
   if (copy) /* tmp page */
@@ -13433,7 +13580,10 @@ static int __cold mdbx_env_cwalk(mdbx_copy *my, pgno_t *pg, int flags) {
               toggle = my->mc_toggle;
             }
           } else if (node_flags(node) & F_SUBDATA) {
-            MDBX_db db;
+            if (node_ds(node) < sizeof(MDBX_db)) {
+              rc = MDBX_CORRUPTED;
+              goto done;
+            }
 
             /* Need writable leaf */
             if (mp != leaf) {
@@ -13443,13 +13593,14 @@ static int __cold mdbx_env_cwalk(mdbx_copy *my, pgno_t *pg, int flags) {
               node = page_node(mp, i);
             }
 
-            memcpy(&db, node_data(node), sizeof(db));
+            MDBX_db db;
+            memcpy(&db, node_data(node), sizeof(MDBX_db));
             my->mc_toggle = (short)toggle;
             rc = mdbx_env_cwalk(my, &db.md_root, node_flags(node) & F_DUPDATA);
             if (rc)
               goto done;
             toggle = my->mc_toggle;
-            memcpy(node_data(node), &db, sizeof(db));
+            memcpy(node_data(node), &db, sizeof(MDBX_db));
           }
         }
       }
@@ -13691,8 +13842,7 @@ static int __cold mdbx_env_copy_asis(MDBX_env *env, MDBX_txn *read_txn,
   mdbx_txn_unlock(env);
 
   /* Copy the data */
-  const size_t whole_size = roundup_powerof2(
-      pgno2bytes(env, read_txn->mt_end_pgno), env->me_os_psize);
+  const size_t whole_size = pgno_align2os_bytes(env, read_txn->mt_end_pgno);
   const size_t used_size = pgno2bytes(env, read_txn->mt_next_pgno);
   mdbx_jitter4testing(false);
 
@@ -13776,7 +13926,7 @@ int __cold mdbx_env_copy2fd(MDBX_env *env, mdbx_filehandle_t fd,
   }
 
   const size_t buffer_size =
-      roundup_powerof2(pgno2bytes(env, NUM_METAS), env->me_os_psize) +
+      pgno_align2os_bytes(env, NUM_METAS) +
       roundup_powerof2(((flags & MDBX_CP_COMPACT) ? MDBX_WBUF * 2 : MDBX_WBUF),
                        env->me_os_psize);
 
@@ -13978,24 +14128,26 @@ int __cold mdbx_env_get_fd(MDBX_env *env, mdbx_filehandle_t *arg) {
  * [in] db the MDBX_db record containing the stats to return.
  * [out] arg the address of an MDBX_stat structure to receive the stats.
  * Returns 0, this function always succeeds. */
-static int __cold mdbx_stat0(const MDBX_env *env, const MDBX_db *db,
-                             MDBX_stat *arg) {
-  arg->ms_psize = env->me_psize;
-  arg->ms_depth = db->md_depth;
-  arg->ms_branch_pages = db->md_branch_pages;
-  arg->ms_leaf_pages = db->md_leaf_pages;
-  arg->ms_overflow_pages = db->md_overflow_pages;
-  arg->ms_entries = db->md_entries;
-  return MDBX_SUCCESS;
+static void mdbx_stat0(const MDBX_env *env, const MDBX_db *db, MDBX_stat *dest,
+                       size_t bytes) {
+  dest->ms_psize = env->me_psize;
+  dest->ms_depth = db->md_depth;
+  dest->ms_branch_pages = db->md_branch_pages;
+  dest->ms_leaf_pages = db->md_leaf_pages;
+  dest->ms_overflow_pages = db->md_overflow_pages;
+  dest->ms_entries = db->md_entries;
+  if (likely(bytes >=
+             offsetof(MDBX_stat, ms_mod_txnid) + sizeof(dest->ms_mod_txnid)))
+    dest->ms_mod_txnid = db->md_mod_txnid;
 }
 
-int __cold mdbx_env_stat(MDBX_env *env, MDBX_stat *arg, size_t bytes) {
-  return mdbx_env_stat_ex(env, NULL, arg, bytes);
+int __cold mdbx_env_stat(MDBX_env *env, MDBX_stat *dest, size_t bytes) {
+  return mdbx_env_stat_ex(env, NULL, dest, bytes);
 }
 
 int __cold mdbx_env_stat_ex(const MDBX_env *env, const MDBX_txn *txn,
-                            MDBX_stat *arg, size_t bytes) {
-  if (unlikely((env == NULL && txn == NULL) || arg == NULL))
+                            MDBX_stat *dest, size_t bytes) {
+  if (unlikely((env == NULL && txn == NULL) || dest == NULL))
     return MDBX_EINVAL;
 
   if (txn) {
@@ -14010,18 +14162,19 @@ int __cold mdbx_env_stat_ex(const MDBX_env *env, const MDBX_txn *txn,
       return MDBX_EINVAL;
   }
 
-  if (unlikely(bytes != sizeof(MDBX_stat)))
+  const size_t size_before_modtxnid = offsetof(MDBX_stat, ms_mod_txnid);
+  if (unlikely(bytes != sizeof(MDBX_stat)) && bytes != size_before_modtxnid)
     return MDBX_EINVAL;
 
-  if (txn)
-    return mdbx_stat0(txn->mt_env, &txn->mt_dbs[MAIN_DBI], arg);
+  if (txn) {
+    mdbx_stat0(txn->mt_env, &txn->mt_dbs[MAIN_DBI], dest, bytes);
+    return MDBX_SUCCESS;
+  }
 
   while (1) {
     const MDBX_meta *const recent_meta = mdbx_meta_head(env);
     const txnid_t txnid = mdbx_meta_txnid_fluid(env, recent_meta);
-    const int err = mdbx_stat0(env, &recent_meta->mm_dbs[MAIN_DBI], arg);
-    if (unlikely(err != MDBX_SUCCESS))
-      return err;
+    mdbx_stat0(env, &recent_meta->mm_dbs[MAIN_DBI], dest, bytes);
     mdbx_compiler_barrier();
     if (likely(txnid == mdbx_meta_txnid_fluid(env, recent_meta) &&
                recent_meta == mdbx_meta_head(env)))
@@ -14094,7 +14247,7 @@ int __cold mdbx_env_info_ex(const MDBX_env *env, const MDBX_txn *txn,
     unsynced_pages = *env->me_unsynced_pages +
                      (*env->me_meta_sync_txnid != (uint32_t)arg->mi_last_pgno);
 
-    arg->mi_mapsize = env->me_mapsize;
+    arg->mi_mapsize = env->me_dxb_mmap.limit;
     mdbx_compiler_barrier();
     if (likely(arg->mi_meta0_txnid == mdbx_meta_txnid_fluid(env, meta0) &&
                arg->mi_meta0_sign == meta0->mm_datasync_sign &&
@@ -14125,8 +14278,8 @@ int __cold mdbx_env_info_ex(const MDBX_env *env, const MDBX_txn *txn,
     arg->mi_autosync_threshold = pgno2bytes(env, *env->me_autosync_threshold);
     arg->mi_autosync_period_seconds16dot16 =
         mdbx_osal_monotime_to_16dot16(*env->me_autosync_period);
-    arg->mi_bootid[0] = lck ? lck->mti_bootid[0] : 0;
-    arg->mi_bootid[1] = lck ? lck->mti_bootid[1] : 0;
+    arg->mi_bootid[0] = lck ? lck->mti_bootid.x : 0;
+    arg->mi_bootid[1] = lck ? lck->mti_bootid.y : 0;
     arg->mi_mode = lck ? lck->mti_envmode : env->me_flags;
   }
 
@@ -14292,6 +14445,8 @@ int mdbx_dbi_open_ex(MDBX_txn *txn, const char *table_name, unsigned user_flags,
     MDBX_node *node = page_node(mc.mc_pg[mc.mc_top], mc.mc_ki[mc.mc_top]);
     if (unlikely((node_flags(node) & (F_DUPDATA | F_SUBDATA)) != F_SUBDATA))
       return MDBX_INCOMPATIBLE;
+    if (unlikely(data.iov_len < sizeof(MDBX_db)))
+      return MDBX_CORRUPTED;
   }
 
   if (rc != MDBX_SUCCESS && unlikely(txn->mt_flags & MDBX_RDONLY))
@@ -14395,32 +14550,32 @@ int mdbx_dbi_open(MDBX_txn *txn, const char *table_name, unsigned table_flags,
   return mdbx_dbi_open_ex(txn, table_name, table_flags, dbi, nullptr, nullptr);
 }
 
-int __cold mdbx_dbi_stat(MDBX_txn *txn, MDBX_dbi dbi, MDBX_stat *arg,
+int __cold mdbx_dbi_stat(MDBX_txn *txn, MDBX_dbi dbi, MDBX_stat *dest,
                          size_t bytes) {
   int rc = check_txn(txn, MDBX_TXN_BLOCKED);
   if (unlikely(rc != MDBX_SUCCESS))
     return rc;
 
-  if (unlikely(!arg))
+  if (unlikely(!dest))
     return MDBX_EINVAL;
 
   if (unlikely(!TXN_DBI_EXIST(txn, dbi, DB_VALID)))
     return MDBX_EINVAL;
 
-  if (unlikely(bytes != sizeof(MDBX_stat)))
+  const size_t size_before_modtxnid = offsetof(MDBX_stat, ms_mod_txnid);
+  if (unlikely(bytes != sizeof(MDBX_stat)) && bytes != size_before_modtxnid)
     return MDBX_EINVAL;
 
   if (unlikely(txn->mt_flags & MDBX_TXN_BLOCKED))
     return MDBX_BAD_TXN;
 
   if (unlikely(txn->mt_dbflags[dbi] & DB_STALE)) {
-    MDBX_cursor_couple cx;
-    /* Stale, must read the DB's root. cursor_init does it for us. */
-    rc = mdbx_cursor_init(&cx.outer, txn, dbi);
+    rc = mdbx_fetch_sdb(txn, dbi);
     if (unlikely(rc != MDBX_SUCCESS))
       return rc;
   }
-  return mdbx_stat0(txn->mt_env, &txn->mt_dbs[dbi], arg);
+  mdbx_stat0(txn->mt_env, &txn->mt_dbs[dbi], dest, bytes);
+  return MDBX_SUCCESS;
 }
 
 static int mdbx_dbi_close_locked(MDBX_env *env, MDBX_dbi dbi) {
@@ -15154,7 +15309,7 @@ static int __cold mdbx_env_walk(mdbx_walk_ctx_t *ctx, const char *dbi,
 
   const int nkeys = page_numkeys(mp);
   size_t header_size = IS_LEAF2(mp) ? PAGEHDRSZ : PAGEHDRSZ + mp->mp_lower;
-  size_t unused_size = page_spaceleft(mp);
+  size_t unused_size = page_room(mp);
   size_t payload_size = 0;
   size_t align_bytes = 0;
   MDBX_page_type_t type;
@@ -15232,9 +15387,9 @@ static int __cold mdbx_env_walk(mdbx_walk_ctx_t *ctx, const char *dbi,
 
     case F_SUBDATA /* sub-db */: {
       const size_t namelen = node_ks(node);
-      if (unlikely(namelen == 0 || node_ds(node) != sizeof(MDBX_db)))
+      if (unlikely(namelen == 0 || node_ds(node) < sizeof(MDBX_db)))
         return MDBX_CORRUPTED;
-      payload_size += sizeof(MDBX_db);
+      payload_size += node_ds(node);
     } break;
 
     case F_SUBDATA | F_DUPDATA /* dupsorted sub-tree */: {
@@ -15251,7 +15406,7 @@ static int __cold mdbx_env_walk(mdbx_walk_ctx_t *ctx, const char *dbi,
       const int nsubkeys = page_numkeys(sp);
       size_t subheader_size =
           IS_LEAF2(sp) ? PAGEHDRSZ : PAGEHDRSZ + sp->mp_lower;
-      size_t subunused_size = page_spaceleft(sp);
+      size_t subunused_size = page_room(sp);
       size_t subpayload_size = 0;
       size_t subalign_bytes = 0;
       MDBX_page_type_t subtype;
@@ -16074,7 +16229,7 @@ int mdbx_is_dirty(const MDBX_txn *txn, const void *ptr) {
       return mdbx_pnl_exist(txn->tw.spill_pages, pgno << 1) ? MDBX_RESULT_TRUE
                                                             : MDBX_RESULT_FALSE;
     }
-    if ((size_t)offset < env->me_mapsize) {
+    if ((size_t)offset < env->me_dxb_mmap.limit) {
       /* Указатель адресует что-то в пределах mmap, но за границей
        * распределенных страниц. Такое может случится если mdbx_is_dirty()
        * вызывает после операции, в ходе которой гразная страница попала
@@ -16114,9 +16269,7 @@ int mdbx_dbi_sequence(MDBX_txn *txn, MDBX_dbi dbi, uint64_t *result,
     return MDBX_BAD_DBI;
 
   if (unlikely(txn->mt_dbflags[dbi] & DB_STALE)) {
-    MDBX_cursor_couple cx;
-    /* Stale, must read the DB's root. cursor_init does it for us. */
-    rc = mdbx_cursor_init(&cx.outer, txn, dbi);
+    rc = mdbx_fetch_sdb(txn, dbi);
     if (unlikely(rc != MDBX_SUCCESS))
       return rc;
   }
@@ -16454,10 +16607,11 @@ __dll_export
 #else
     #error "FIXME: Unsupported byte order"
 #endif /* __BYTE_ORDER__ */
-    " MDBX_TXN_CHECKPID=" STRINGIFY(MDBX_TXN_CHECKPID)
-    " MDBX_TXN_CHECKOWNER=" STRINGIFY(MDBX_TXN_CHECKOWNER)
-    " MDBX_64BIT_ATOMIC=" STRINGIFY(MDBX_64BIT_ATOMIC_CONFIG)
-    " MDBX_64BIT_CAS=" STRINGIFY(MDBX_64BIT_CAS_CONFIG)
+    " MDBX_TXN_CHECKPID=" MDBX_TXN_CHECKPID_CONFIG
+    " MDBX_TXN_CHECKOWNER=" MDBX_TXN_CHECKOWNER_CONFIG
+    " MDBX_64BIT_ATOMIC=" MDBX_64BIT_ATOMIC_CONFIG
+    " MDBX_64BIT_CAS=" MDBX_64BIT_CAS_CONFIG
+    " MDBX_TRUST_RTC=" MDBX_TRUST_RTC_CONFIG
 #ifdef __SANITIZE_ADDRESS__
     " SANITIZE_ADDRESS=YES"
 #endif /* __SANITIZE_ADDRESS__ */
