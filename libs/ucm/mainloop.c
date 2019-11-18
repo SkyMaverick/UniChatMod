@@ -3,7 +3,6 @@
 #include "api.h"
 #include "config.h"
 #include "defs.h"
-#include "gettext.h"
 #include "mqueue.h"
 #include "ucm.h"
 

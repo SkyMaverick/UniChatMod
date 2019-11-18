@@ -123,7 +123,7 @@ static inline MDBX_txn*
 StartTxn(mdbx_database_t* db) {
     MDBX_txn* res = 0;
     int rc = mdbx_txn_begin(db->mdbx.env, NULL,
-                            (app->app.get_flag(UCM_FLAG_ROPROF)) ? MDBX_RDONLY : 0, &res);
+                            (app->app.get_flag(UCM_FLAG_PROFILE_RO)) ? MDBX_RDONLY : 0, &res);
     // TODO exception
     UNUSED(rc);
     return res;

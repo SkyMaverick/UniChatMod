@@ -6,7 +6,6 @@
 #include "db.h"
 #include "defs.h"
 #include "evhook.h"
-#include "gettext.h"
 #include "logger.h"
 #include "mainloop.h"
 #include "plugmgr.h"

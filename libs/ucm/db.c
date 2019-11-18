@@ -32,21 +32,22 @@ db_open(const char* aPath) {
     // Try file access
     int flag_exit = 0;
     do {
-        if (get_system_flag(UCM_FLAG_NEWPROF)) {
+        if (get_system_flag(UCM_FLAG_PROFILE_NEW)) {
             UniAPI->sys.fs_fcreate(aPath);
             flag_exit++;
         }
-        int r = UniAPI->uv.fs_access(UCM_LOOP_SYSTEM(UniAPI), &ufs_req, aPath,
-                                     (get_system_flag(UCM_FLAG_ROPROF)) ? R_OK : R_OK | W_OK, NULL);
+        int r =
+            UniAPI->uv.fs_access(UCM_LOOP_SYSTEM(UniAPI), &ufs_req, aPath,
+                                 (get_system_flag(UCM_FLAG_PROFILE_RO)) ? R_OK : R_OK | W_OK, NULL);
 
         if (r < 0) {
             ucm_dtrace("%s: %s\n", aPath, "fail open");
-            if (get_system_flag(UCM_FLAG_ROPROF))
+            if (get_system_flag(UCM_FLAG_PROFILE_RO))
                 return UCM_RET_SYSTEM_NOACCESS;
-            if (get_system_flag(UCM_FLAG_NEWPROF))
+            if (get_system_flag(UCM_FLAG_PROFILE_NEW))
                 return UCM_RET_BUSY;
 
-            set_system_flag(UCM_FLAG_NEWPROF);
+            set_system_flag(UCM_FLAG_PROFILE_NEW);
             continue;
 
         } else

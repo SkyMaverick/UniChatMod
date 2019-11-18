@@ -216,18 +216,27 @@ typedef struct {
     char* path_store_abs;
 } ucm_cargs_t;
 
+enum { UCM_OPERATION_NONE, UCM_OPERATION_INFO, UCM_OPERATION_RUN };
+
 enum {
-    UCM_INFO_CORE = 0,
-    UCM_INFO_PLUGINS = 1,
+    UCM_OPT_INFO_PLUGINS_ALL = 1 << 0,
+    UCM_OPT_INFO_PLUGINS_BROKEN = 1 << 1,
+    UCM_OPT_INFO_PLUGINS_BLOCKED = 1 << 2
 };
 
+enum {
+    UCM_OPT_RUN_NORMAL = 0,
+    UCM_OPT_RUN_DAEMONIZED = 1 << 0,
+    UCM_OPT_RUN_READONLY = 1 << 1,
+    UCM_OPT_RUN_CHECKDB = 1 << 2
+};
 // ******* LOAD FUNCTIONS ************
 
 LIBUCM_API ucm_functions_t*
 ucm_core_load(ucm_cargs_t* args);
 
-LIBUCM_API UCM_RET
-ucm_core_exec(uint16_t action, uint32_t flags, void* ctx);
+LIBUCM_API size_t
+ucm_core_exec(uint16_t action, uint32_t flags, void* ctx, size_t ctx_size);
 
 LIBUCM_API UCM_RET
 ucm_core_unload(ucm_functions_t** api);
@@ -240,7 +249,7 @@ ucm_core_info(void);
 typedef ucm_functions_t* (*ucm_func_load)(ucm_cargs_t* args);
 #define UCM_LOAD_FUNC "ucm_core_load"
 
-typedef UCM_RET (*ucm_func_exec)(uint16_t action, uint32_t flags, void* ctx);
+typedef size_t (*ucm_func_exec)(uint16_t action, uint32_t flags, void* ctx, size_t ctx_size);
 #define UCM_EXEC_FUNC "ucm_core_exec"
 
 typedef UCM_RET (*ucm_func_unload)(ucm_functions_t** api);

@@ -25,7 +25,6 @@ _curses_init(void) {
             init_pair(8, COLOR_YELLOW, COLOR_BLACK);
         }
         refresh();
-        curses_dispatch(NULL);
     } else {
         return 0;
     }
@@ -38,7 +37,6 @@ curses_dispatch(void* ctx) {
     int ch = 0;
     // TODO Temporary F1 - it's exit
     while ((ch = getch()) != KEY_F(1) || get_flag(FLAG_APP_TERMINATED)) {
-        printf("WOW!!!");
         addch(ch);
     }
     if (!get_flag(FLAG_APP_TERMINATED))

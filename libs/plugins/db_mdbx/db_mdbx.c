@@ -2,7 +2,6 @@
 #include "db_mdbx.h"
 
 #include "config.h"
-#include "gettext.h"
 #include "mdbx.h"
 #include "mdbx_core.h"
 

@@ -5,33 +5,78 @@
 #include "defs.h"
 #include "logger.h"
 #include "plugmgr.h"
+#include "flags.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <flags.h>
+
+static inline int
+opts_run_prepare_args(uint32_t flags, void* ctx, size_t ctx_size) {
+    extern char ucm_path[UCM_PATH_MAX];
+    extern char ucm_path_store[UCM_PATH_MAX];
+    extern char ucm_path_plugs[UCM_PATH_MAX];
+
+    ucm_cargs_t* args = (ucm_cargs_t*)ctx;
+
+    if (args->path_abs && args->path_plug_abs && args->path_store_abs) {
+        snprintf(ucm_path, UCM_PATH_MAX, "%s", args->path_abs);
+        snprintf(ucm_path_store, UCM_PATH_MAX, "%s", args->path_store_abs);
+        snprintf(ucm_path_plugs, UCM_PATH_MAX, "%s", args->path_plug_abs);
+    } else {
+        return 1;
+    }
+
+    if (flags & UCM_OPT_RUN_CHECKDB)
+        set_system_flag(UCM_FLAG_PROFILE_CHECK);
+
+    if (flags & UCM_OPT_RUN_READONLY) {
+        // FIXME Unset all modifable flags  with RO options
+        unset_system_flag(UCM_FLAG_PROFILE_CHECK);
+        set_system_flag(UCM_FLAG_PROFILE_RO);
+    }
+
+    return 0;
+}
 
 LIBUCM_API ucm_functions_t*
 ucm_core_load(ucm_cargs_t* args) {
-    return NULL;
+    return UniAPI->sys.memdup(UniAPI, sizeof(ucm_functions_t));
 }
 
-LIBUCM_API UCM_RET
-ucm_core_exec(uint32_t flags, void* ctx) {
+LIBUCM_API size_t
+ucm_core_exec(uint16_t action, uint32_t flags, void* ctx, size_t ctx_size) {
+    switch (action) {
+    case UCM_OPERATION_RUN: {
+        if (!opts_run_prepare_args(flags, ctx, ctx_size)) {
+            return core_load();
+        } else {
+            return UCM_RET_CORE_WRONGCTX;
+        }
+        break;
+    }
+    case UCM_OPERATION_INFO: {
+        break;
+    }
+    case UCM_OPERATION_NONE:
+    default:
+        return UCM_RET_NOTIMPLEMENT;
+    }
     return UCM_RET_SUCCESS;
 }
 
 LIBUCM_API UCM_RET
 ucm_core_unload(ucm_functions_t** api) {
+    if (api && *api) {
+        ucm_free_null(*api);
+    }
     return UCM_RET_SUCCESS;
 }
 
 LIBUCM_API const ucm_plugin_info_t*
-ucm_core_info (void)
-{
+ucm_core_info(void) {
     return &(ucm_core->info);
 }
-
 
 // static void
 // _prepare_opts(const ucm_cargs_t* args) {

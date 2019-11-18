@@ -3,7 +3,6 @@
 
 #include "core.h"
 #include "cpentupd.h"
-#include "errors.h"
 #include "evhook.h"
 #include "flags.h"
 #include "logger.h"

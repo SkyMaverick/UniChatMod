@@ -23,25 +23,26 @@ load_core_library(ucm_cargs_t* args, cb_evhook hook) {
         core_info = (ucm_func_unload)GetProcAddress(core_handle, UCM_INFO_FUNC);
 #endif
         if (core_load && core_exec && core_unload && core_info) {
-                info = core_info();
-                if (info) {
-                    if ((info->api.vmajor >= LIBCORE_API_MAJVER) && 
-                        (info->api.vminor >= LIBCORE_API_MINVER)) {
+            info = core_info();
+            if (info) {
+                if ((info->api.vmajor >= LIBCORE_API_MAJVER) &&
+                    (info->api.vminor >= LIBCORE_API_MINVER)) {
 
-                        ucm_api = core_load (args);
-                        if (ucm_api) {
-                            core_exec (0, NULL); // TODO
-
-                            ucm_api->app.mainloop_hook_attach (hook, NULL, UCM_SIG_LOAD_SUCCESS);
+                    ucm_api = core_load(args);
+                    if (ucm_api) {
+                        UCM_RET cret =
+                            core_exec(UCM_OPERATION_RUN, 0, (void*)args, sizeof(args)); // TODO
+                        if (cret == UCM_RET_SUCCESS) {
+                            ucm_api->app.mainloop_hook_attach(hook, NULL, UCM_SIG_LOAD_SUCCESS);
                             ucm_api->app.wait_exit();
-                            ucm_api->app.mainloop_hook_detach (hook);
-                            
-                            core_unload(&ucm_api);
-                            return UCM_RET_SUCCESS;
-                        } else {
-                            return UCM_RET_EXCEPTION;
+                            ucm_api->app.mainloop_hook_detach(hook);
                         }
+                        core_unload(&ucm_api);
+                        return cret;
+                    } else {
+                        return UCM_RET_EXCEPTION;
                     }
+                }
             } else {
                 // TODO
                 return UCM_RET_EXCEPTION;

@@ -33,6 +33,7 @@ typedef enum _ucm_status_return_e {
     UCM_RET_PLUGIN_BADIFACE,
 
     UCM_RET_CORE_BADOPTS,
+    UCM_RET_CORE_WRONGCTX,
 
     UCM_RET_UNKNOWERROR
 } UCM_RET;
@@ -95,6 +96,8 @@ static const char* errors[UCM_RET_UNKNOWERROR + 1] = {
 
     //   UCM_RET_CORE_BADOPTS
     _("This option not realized in UCM core"),
+    //   UCM_RET_CORE_WRONGCTX
+    _("UCM core detect wrong startup parameters"),
 
     //   UCM_RET_UNKNOWERROR
     _("Unknown error message")};

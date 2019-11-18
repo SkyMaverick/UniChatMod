@@ -7,7 +7,6 @@
 #include "config.h"
 #include "ucm.h"
 
-#include "gettext.h"
 #include "osal.h"
 #include "cmdline.h"
 #include "flags.h"
