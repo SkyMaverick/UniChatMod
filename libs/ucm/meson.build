@@ -136,7 +136,6 @@ libucm_src = files('''
     core.c
     cpentupd.c
     db.c
-    errors.h
     evhook.c
     flags.c
     mainloop.c
@@ -165,7 +164,6 @@ foreach src : '''
 endforeach
 
 libucm_src += osal_src
-
 
 
 libucm_conf = configuration_data()
@@ -204,16 +202,19 @@ shared_headers += [
 libucm_part_headers = []
 
 foreach item : '''
-      ucontacts.h
-      udatabase.h
-      udefs.h
-      uevents.h
-      ugui.h
-      umacro.h
-      umain.h
-      uplugin.h
-      uprotocols.h
-      usignals.h
+          uapi.h
+          ucontacts.h
+          udatabase.h
+          udefs.h
+          uerrors.h
+          uevents.h
+          ugui.h
+          umacro.h
+          umain.h
+          uplugin.h
+          uprotocols.h
+          usignals.h
+          uuvapi.h
     '''.split()
     libucm_part_headers += files('.'/'include'/'uni'/ item)
 endforeach

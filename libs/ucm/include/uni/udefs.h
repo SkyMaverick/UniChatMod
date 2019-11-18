@@ -13,6 +13,13 @@
     #include <unistd.h>
 #endif
 
+#ifdef ENABLE_GETTEXT
+    #include <libintl.h>
+    #define _(s) gettext(s)
+#else
+    #define _(s) (s)
+#endif
+
 #if defined(UCM_OS_WINDOWS)
     #define DYNLIB_SUFFIX ".dll"
 #elif defined(UCM_OS_DARWIN)

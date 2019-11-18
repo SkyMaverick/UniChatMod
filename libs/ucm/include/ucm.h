@@ -29,8 +29,9 @@ extern "C" {
     #include "uni/uuvapi.h" // libuv callbacks
 #endif
 
-#include "uni/udefs.h" // preprocessor defines and includes. MUST BE FIRST !!!
-#include "uni/umain.h" // base enums, structures and constants
+#include "uni/udefs.h"   // preprocessor defines and includes. MUST BE FIRST !!!
+#include "uni/uerrors.h" // return codes and error defines
+#include "uni/umain.h"   // base enums, structures and constants
 
 #include "uni/usignals.h"  // signals
 #include "uni/ucontacts.h" // contacts
@@ -226,26 +227,26 @@ LIBUCM_API ucm_functions_t*
 ucm_core_load(ucm_cargs_t* args);
 
 LIBUCM_API UCM_RET
-ucm_core_exec(uint32_t flags, void* ctx);
+ucm_core_exec(uint16_t action, uint32_t flags, void* ctx);
 
 LIBUCM_API UCM_RET
 ucm_core_unload(ucm_functions_t** api);
 
 LIBUCM_API const ucm_plugin_info_t*
-ucm_core_info (void);
+ucm_core_info(void);
 
 // ******* DYNAMIC LOAD FUNCTIONS ***********
 
 typedef ucm_functions_t* (*ucm_func_load)(ucm_cargs_t* args);
 #define UCM_LOAD_FUNC "ucm_core_load"
 
-typedef UCM_RET (*ucm_func_exec)(uint32_t flags, void* ctx);
+typedef UCM_RET (*ucm_func_exec)(uint16_t action, uint32_t flags, void* ctx);
 #define UCM_EXEC_FUNC "ucm_core_exec"
 
 typedef UCM_RET (*ucm_func_unload)(ucm_functions_t** api);
 #define UCM_UNLOAD_FUNC "ucm_core_unload"
 
-typedef const ucm_plugin_info_t* (*ucm_func_info) (void);
+typedef const ucm_plugin_info_t* (*ucm_func_info)(void);
 #define UCM_INFO_FUNC "ucm_core_info"
 
 #undef UCM_DEPRECATED

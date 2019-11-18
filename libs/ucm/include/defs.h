@@ -3,7 +3,6 @@
 #include "api.h"
 #include "config.h"
 #include "core.h"
-#include "gettext.h"
 #include "ucm.h"
 
 #include <limits.h>
