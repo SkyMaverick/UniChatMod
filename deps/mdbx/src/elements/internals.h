@@ -33,12 +33,6 @@
 #   undef NDEBUG
 #endif
 
-#define MDBX_OSX_WANNA_DURABILITY 0 /* using fcntl(F_FULLFSYNC) with 5-10 times slowdown */
-#define MDBX_OSX_WANNA_SPEED 1      /* using fsync() with chance of data lost on power failure */
-#ifndef MDBX_OSX_SPEED_INSTEADOF_DURABILITY
-#   define MDBX_OSX_SPEED_INSTEADOF_DURABILITY MDBX_OSX_WANNA_DURABILITY
-#endif
-
 #ifdef MDBX_ALLOY
 /* Amalgamated build */
 #   define MDBX_INTERNAL_FUNC static
@@ -152,130 +146,17 @@
 #   endif
 #endif /* -Walignment-reduction-ignored */
 
-#include "osal.h"
-
 /* *INDENT-ON* */
 /* clang-format on */
 
-#if UINTPTR_MAX > 0xffffFFFFul || ULONG_MAX > 0xffffFFFFul
-#define MDBX_WORDBITS 64
-#else
-#define MDBX_WORDBITS 32
-#endif /* MDBX_WORDBITS */
-
-#ifndef MDBX_64BIT_ATOMIC
-#if MDBX_WORDBITS >= 64
-#define MDBX_64BIT_ATOMIC 1
-#else
-#define MDBX_64BIT_ATOMIC 0
-#endif
-#define MDBX_64BIT_ATOMIC_CONFIG "AUTO=" STRINGIFY(MDBX_64BIT_ATOMIC)
-#else
-#define MDBX_64BIT_ATOMIC_CONFIG STRINGIFY(MDBX_64BIT_ATOMIC)
-#endif /* MDBX_64BIT_ATOMIC */
-
-#ifndef MDBX_64BIT_CAS
-#if defined(ATOMIC_LLONG_LOCK_FREE)
-#if ATOMIC_LLONG_LOCK_FREE > 1
-#define MDBX_64BIT_CAS 1
-#else
-#define MDBX_64BIT_CAS 0
-#endif
-#elif defined(__GCC_ATOMIC_LLONG_LOCK_FREE)
-#if __GCC_ATOMIC_LLONG_LOCK_FREE > 1
-#define MDBX_64BIT_CAS 1
-#else
-#define MDBX_64BIT_CAS 0
-#endif
-#elif defined(__CLANG_ATOMIC_LLONG_LOCK_FREE)
-#if __CLANG_ATOMIC_LLONG_LOCK_FREE > 1
-#define MDBX_64BIT_CAS 1
-#else
-#define MDBX_64BIT_CAS 0
-#endif
-#elif defined(_MSC_VER) || defined(__APPLE__)
-#define MDBX_64BIT_CAS 1
-#else
-#define MDBX_64BIT_CAS MDBX_64BIT_ATOMIC
-#endif
-#define MDBX_64BIT_CAS_CONFIG "AUTO=" STRINGIFY(MDBX_64BIT_CAS)
-#else
-#define MDBX_64BIT_CAS_CONFIG STRINGIFY(MDBX_64BIT_CAS)
-#endif /* MDBX_64BIT_CAS */
-
-/* Some platforms define the EOWNERDEAD error code even though they
- *  don't support Robust Mutexes. Compile with -DMDBX_USE_ROBUST=0. */
-#ifndef MDBX_USE_ROBUST
-/* Howard Chu: Android currently lacks Robust Mutex support */
-#if defined(EOWNERDEAD) && !defined(__ANDROID__) && !defined(__APPLE__) &&     \
-    (!defined(__GLIBC__) ||                                                    \
-     __GLIBC_PREREQ(                                                           \
-         2,                                                                    \
-         10) /* LY: glibc before 2.10 has a troubles with Robust Mutex too. */ \
-     || _POSIX_C_SOURCE >= 200809L)
-#define MDBX_USE_ROBUST 1
-#else
-#define MDBX_USE_ROBUST 0
-#endif
-#define MDBX_USE_ROBUST_CONFIG "AUTO=" STRINGIFY(MDBX_USE_ROBUST)
-#else
-#define MDBX_USE_ROBUST_CONFIG STRINGIFY(MDBX_USE_ROBUST)
-#endif /* MDBX_USE_ROBUST */
-
-#ifndef MDBX_USE_OFDLOCKS
-#if defined(F_OFD_SETLK) && defined(F_OFD_SETLKW) && defined(F_OFD_GETLK) &&   \
-    !defined(MDBX_SAFE4QEMU)
-#define MDBX_USE_OFDLOCKS 1
-#else
-#define MDBX_USE_OFDLOCKS 0
-#endif
-#define MDBX_USE_OFDLOCKS_CONFIG "AUTO=" STRINGIFY(MDBX_USE_OFDLOCKS)
-#else
-#define MDBX_USE_OFDLOCKS_CONFIG STRINGIFY(MDBX_USE_OFDLOCKS)
-#endif /* MDBX_USE_OFDLOCKS */
-
-/* Controls checking PID against reuse DB environment after the fork() */
-#ifndef MDBX_TXN_CHECKPID
-#if defined(MADV_DONTFORK) || defined(_WIN32) || defined(_WIN64)
-/* PID check could be ommited:
- *  - on Linux when madvise(MADV_DONTFORK) is available. i.e. after the fork()
- *    mapped pages will not be available for child process.
- *  - in Windows where fork() not available. */
-#define MDBX_TXN_CHECKPID 0
-#else
-#define MDBX_TXN_CHECKPID 1
-#endif
-#define MDBX_TXN_CHECKPID_CONFIG "AUTO=" STRINGIFY(MDBX_TXN_CHECKPID)
-#else
-#define MDBX_TXN_CHECKPID_CONFIG STRINGIFY(MDBX_TXN_CHECKPID)
-#endif /* MDBX_TXN_CHECKPID */
-
-/* Controls checking transaction owner thread against misuse transactions from
- * other threads. */
-#ifndef MDBX_TXN_CHECKOWNER
-#define MDBX_TXN_CHECKOWNER 1
-#define MDBX_TXN_CHECKOWNER_CONFIG "AUTO=" STRINGIFY(MDBX_TXN_CHECKOWNER)
-#else
-#define MDBX_TXN_CHECKOWNER_CONFIG STRINGIFY(MDBX_TXN_CHECKOWNER)
-#endif /* MDBX_TXN_CHECKOWNER */
+#include "osal.h"
 
 #define mdbx_sourcery_anchor XCONCAT(mdbx_sourcery_, MDBX_BUILD_SOURCERY)
 #if defined(MDBX_TOOLS)
 extern LIBMDBX_API const char *const mdbx_sourcery_anchor;
 #endif
 
-/* Does a system have battery-backed Real-Time Clock or just a fake. */
-#ifndef MDBX_TRUST_RTC
-#if defined(__linux__) || defined(__gnu_linux__) || defined(__NetBSD__) ||     \
-    defined(__OpenBSD__)
-#define MDBX_TRUST_RTC 0 /* a lot of embedded systems have a fake RTC */
-#else
-#define MDBX_TRUST_RTC 1
-#endif
-#define MDBX_TRUST_RTC_CONFIG "AUTO=" STRINGIFY(MDBX_TRUST_RTC)
-#else
-#define MDBX_TRUST_RTC_CONFIG STRINGIFY(MDBX_TRUST_RTC)
-#endif /* MDBX_TRUST_RTC */
+#include "options.h"
 
 /*----------------------------------------------------------------------------*/
 /* Basic constants and types */
@@ -492,6 +373,33 @@ typedef struct MDBX_page {
 
 #pragma pack(pop)
 
+#if MDBX_LOCKING == MDBX_LOCKING_WIN32FILES
+#define MDBX_CLOCK_SIGN UINT32_C(0xF10C)
+typedef void mdbx_ipclock_t;
+#elif MDBX_LOCKING == MDBX_LOCKING_SYSV
+
+#define MDBX_CLOCK_SIGN UINT32_C(0xF18D)
+typedef mdbx_pid_t mdbx_ipclock_t;
+#ifndef EOWNERDEAD
+#define EOWNERDEAD MDBX_RESULT_TRUE
+#endif
+
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX2001 ||                                \
+    MDBX_LOCKING == MDBX_LOCKING_POSIX2008
+#define MDBX_CLOCK_SIGN UINT32_C(0x8017)
+typedef pthread_mutex_t mdbx_ipclock_t;
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+#define MDBX_CLOCK_SIGN UINT32_C(0xFC29)
+typedef sem_t mdbx_ipclock_t;
+#else
+#error "FIXME"
+#endif /* MDBX_LOCKING */
+
+#if MDBX_LOCKING > MDBX_LOCKING_SYSV
+MDBX_INTERNAL_FUNC int mdbx_ipclock_stub(mdbx_ipclock_t *ipc);
+MDBX_INTERNAL_FUNC int mdbx_ipclock_destroy(mdbx_ipclock_t *ipc);
+#endif /* MDBX_LOCKING */
+
 /* Reader Lock Table
  *
  * Readers don't acquire any locks for their data access. Instead, they
@@ -607,10 +515,11 @@ typedef struct MDBX_lockinfo {
   volatile bin128_t mti_bootid;
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
-#ifdef MDBX_OSAL_LOCK
-      /* Mutex protecting write-txn. */
-      MDBX_OSAL_LOCK mti_wmutex;
-#endif
+
+  /* Write transation lock. */
+#if MDBX_LOCKING > 0
+      mdbx_ipclock_t mti_wlock;
+#endif /* MDBX_LOCKING > 0 */
 
   volatile txnid_t mti_oldest_reader;
 
@@ -630,10 +539,10 @@ typedef struct MDBX_lockinfo {
 
   alignas(MDBX_CACHELINE_SIZE) /* cacheline ---------------------------------*/
 
-#ifdef MDBX_OSAL_LOCK
-      /* Mutex protecting readers registration access to this table. */
-      MDBX_OSAL_LOCK mti_rmutex;
-#endif
+  /* Readeaders registration lock. */
+#if MDBX_LOCKING > 0
+      mdbx_ipclock_t mti_rlock;
+#endif /* MDBX_LOCKING > 0 */
 
   /* The number of slots that have been used in the reader table.
    * This always records the maximum count, it is not decremented
@@ -647,7 +556,7 @@ typedef struct MDBX_lockinfo {
 
 /* Lockfile format signature: version, features and field layout */
 #define MDBX_LOCK_FORMAT                                                       \
-  (MDBX_OSAL_LOCK_SIGN * 27733 + (unsigned)sizeof(MDBX_reader) * 13 +          \
+  (MDBX_CLOCK_SIGN * 27733 + (unsigned)sizeof(MDBX_reader) * 13 +              \
    (unsigned)offsetof(MDBX_reader, mr_snapshot_pages_used) * 251 +             \
    (unsigned)offsetof(MDBX_lockinfo, mti_oldest_reader) * 83 +                 \
    (unsigned)offsetof(MDBX_lockinfo, mti_numreaders) * 37 +                    \
@@ -983,9 +892,19 @@ struct MDBX_env {
   void *me_pbuf;              /* scratch area for DUPSORT put() */
   MDBX_txn *me_txn;           /* current write transaction */
   MDBX_txn *me_txn0;          /* prealloc'd write transaction */
-#ifdef MDBX_OSAL_LOCK
-  MDBX_OSAL_LOCK *me_wmutex; /* write-txn mutex */
-#endif
+
+  /* write-txn lock */
+#if MDBX_LOCKING == MDBX_LOCKING_SYSV
+  union {
+    key_t key;
+    int semid;
+  } me_sysv_ipc;
+#endif /* MDBX_LOCKING == MDBX_LOCKING_SYSV */
+
+#if MDBX_LOCKING > 0
+  mdbx_ipclock_t *me_wlock;
+#endif /* MDBX_LOCKING > 0 */
+
   MDBX_dbx *me_dbxs;           /* array of static DB info */
   uint16_t *me_dbflags;        /* array of flags from MDBX_db.md_flags */
   unsigned *me_dbiseqs;        /* array of dbi sequence numbers */
@@ -1010,9 +929,9 @@ struct MDBX_env {
   volatile uint32_t *me_meta_sync_txnid;
   MDBX_oom_func *me_oom_func; /* Callback for kicking laggard readers */
   struct {
-#ifdef MDBX_OSAL_LOCK
-    MDBX_OSAL_LOCK wmutex;
-#endif
+#if MDBX_LOCKING > 0
+    mdbx_ipclock_t wlock;
+#endif /* MDBX_LOCKING > 0 */
     txnid_t oldest;
     uint64_t sync_timestamp;
     uint64_t autosync_period;
@@ -1132,12 +1051,6 @@ MDBX_INTERNAL_FUNC void mdbx_assert_fail(const MDBX_env *env, const char *msg,
                      __VA_ARGS__);                                             \
   } while (0)
 
-#define mdbx_debug_print(fmt, ...)                                             \
-  do {                                                                         \
-    if (mdbx_log_enabled(MDBX_LOG_DEBUG))                                      \
-      mdbx_debug_log(MDBX_LOG_DEBUG, NULL, 0, fmt, __VA_ARGS__);               \
-  } while (0)
-
 #define mdbx_verbose(fmt, ...)                                                 \
   do {                                                                         \
     if (mdbx_log_enabled(MDBX_LOG_VERBOSE))                                    \
@@ -1194,6 +1107,44 @@ MDBX_INTERNAL_FUNC void mdbx_assert_fail(const MDBX_env *env, const char *msg,
 #undef assert
 #define assert(expr) mdbx_assert(NULL, expr)
 #endif
+
+/*----------------------------------------------------------------------------*/
+/* Cache coherence and mmap invalidation */
+
+#if MDBX_CPU_WRITEBACK_INCOHERENT
+#define mdbx_flush_incoherent_cpu_writeback() mdbx_memory_barrier()
+#else
+#define mdbx_flush_incoherent_cpu_writeback() mdbx_compiler_barrier()
+#endif /* MDBX_CPU_WRITEBACK_INCOHERENT */
+
+static __inline void mdbx_flush_incoherent_mmap(void *addr, size_t nbytes,
+                                                const intptr_t pagesize) {
+#if MDBX_MMAP_INCOHERENT_FILE_WRITE
+  char *const begin = (char *)(-pagesize & (intptr_t)addr);
+  char *const end =
+      (char *)(-pagesize & (intptr_t)((char *)addr + nbytes + pagesize - 1));
+  int err = msync(begin, end - begin, MS_SYNC | MS_INVALIDATE) ? errno : 0;
+  mdbx_assert(nullptr, err == 0);
+  (void)err;
+#else
+  (void)pagesize;
+#endif /* MDBX_MMAP_INCOHERENT_FILE_WRITE */
+
+#if MDBX_MMAP_INCOHERENT_CPU_CACHE
+#ifdef DCACHE
+  /* MIPS has cache coherency issues.
+   * Note: for any nbytes >= on-chip cache size, entire is flushed. */
+  cacheflush(addr, nbytes, DCACHE);
+#else
+#error "Oops, cacheflush() not available"
+#endif /* DCACHE */
+#endif /* MDBX_MMAP_INCOHERENT_CPU_CACHE */
+
+#if !MDBX_MMAP_INCOHERENT_FILE_WRITE && !MDBX_MMAP_INCOHERENT_CPU_CACHE
+  (void)addr;
+  (void)nbytes;
+#endif
+}
 
 /*----------------------------------------------------------------------------*/
 /* Internal prototypes */
@@ -1304,7 +1255,7 @@ typedef struct MDBX_node {
       uint16_t mn_hi, mn_lo; /* part of data size or pgno */
     };
   };
-#endif
+#endif /* __BYTE_ORDER__ */
 
   /* mdbx_node Flags */
 #define F_BIGDATA 0x01 /* data put on overflow page */

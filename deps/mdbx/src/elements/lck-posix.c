@@ -13,6 +13,7 @@
  */
 
 #include "internals.h"
+#include <sys/sem.h>
 
 /*----------------------------------------------------------------------------*/
 /* global constructor/destructor */
@@ -158,8 +159,8 @@ static int lck_op(mdbx_filehandle_t fd, int cmd, int lck, off_t offset,
     if (rc != -1) {
       if (cmd == op_getlk) {
         /* Checks reader by pid. Returns:
-         *   MDBX_RESULT_TRUE   - if pid is live (unable to acquire lock)
-         *   MDBX_RESULT_FALSE  - if pid is dead (lock acquired). */
+         *   MDBX_RESULT_TRUE   - if pid is live (reader holds a lock).
+         *   MDBX_RESULT_FALSE  - if pid is dead (a lock could be placed). */
         return (lock_op.l_type == F_UNLCK) ? MDBX_RESULT_FALSE
                                            : MDBX_RESULT_TRUE;
       }
@@ -195,6 +196,30 @@ MDBX_INTERNAL_FUNC int mdbx_rpid_check(MDBX_env *env, uint32_t pid) {
 
 /*---------------------------------------------------------------------------*/
 
+#if MDBX_LOCKING > MDBX_LOCKING_SYSV
+MDBX_INTERNAL_FUNC int mdbx_ipclock_stub(mdbx_ipclock_t *ipc) {
+#if MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+  return sem_init(ipc, false, 1) ? errno : 0;
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX2001 ||                                \
+    MDBX_LOCKING == MDBX_LOCKING_POSIX2008
+  return pthread_mutex_init(ipc, nullptr);
+#else
+#error "FIXME"
+#endif
+}
+
+MDBX_INTERNAL_FUNC int mdbx_ipclock_destroy(mdbx_ipclock_t *ipc) {
+#if MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+  return sem_destroy(ipc) ? errno : 0;
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX2001 ||                                \
+    MDBX_LOCKING == MDBX_LOCKING_POSIX2008
+  return pthread_mutex_destroy(ipc);
+#else
+#error "FIXME"
+#endif
+}
+#endif /* MDBX_LOCKING > MDBX_LOCKING_SYSV */
+
 MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
   assert(env->me_fd != INVALID_HANDLE_VALUE);
   if (unlikely(mdbx_getpid() != env->me_pid))
@@ -218,6 +243,7 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
     return MDBX_RESULT_TRUE /* Done: return with exclusive locking. */;
   }
 
+retry_exclusive:
   /* Firstly try to get exclusive locking.  */
   rc = lck_op(env->me_lfd, op_setlk, F_WRLCK, 0, 1);
   if (rc == MDBX_SUCCESS) {
@@ -237,15 +263,14 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
     }
 
     /* Fallback to lck-shared */
-    rc = lck_op(env->me_lfd, op_setlk, F_RDLCK, 0, 1);
-    if (rc != MDBX_SUCCESS) {
-      mdbx_error("%s(%s) failed: errcode %u", __func__, "fallback-shared", rc);
-      mdbx_assert(env, MDBX_IS_ERROR(rc));
-      return rc;
-    }
-    /* Done: return with shared locking. */
-    return MDBX_RESULT_FALSE;
   }
+
+  /* Here could be one of two::
+   *  - mdbx_lck_destroy() from the another process was hold the lock
+   *    during a destruction.
+   *  - either mdbx_lck_seize() from the another process was got the exclusive
+   *    lock and doing initialization.
+   * For distinguish these cases will use size of the lck-file later. */
 
   /* Wait for lck-shared now. */
   /* Here may be await during transient processes, for instance until another
@@ -255,6 +280,39 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
     mdbx_error("%s(%s) failed: errcode %u", __func__, "try-shared", rc);
     mdbx_assert(env, MDBX_IS_ERROR(rc));
     return rc;
+  }
+
+  /* got shared, retry exclusive */
+  rc = lck_op(env->me_lfd, op_setlk, F_WRLCK, 0, 1);
+  if (rc == MDBX_SUCCESS)
+    goto continue_dxb_exclusive;
+
+  if (!(rc == EAGAIN || rc == EACCES || rc == EBUSY || rc == EWOULDBLOCK ||
+        rc == EDEADLK)) {
+    mdbx_error("%s(%s) failed: errcode %u", __func__, "try-exclusive", rc);
+    mdbx_assert(env, MDBX_IS_ERROR(rc));
+    return rc;
+  }
+
+  /* Checking file size for detect the situation when we got the shared lock
+   * immediately after mdbx_lck_destroy(). */
+  struct stat st;
+  if (fstat(env->me_lfd, &st)) {
+    rc = errno;
+    mdbx_error("%s(%s) failed: errcode %u", __func__, "check-filesize", rc);
+    mdbx_assert(env, MDBX_IS_ERROR(rc));
+    return rc;
+  }
+  if (st.st_size < (unsigned)(sizeof(MDBX_lockinfo) + sizeof(MDBX_reader))) {
+    mdbx_verbose("lck-file is too short (%u), retry exclusive-lock",
+                 (unsigned)st.st_size);
+    rc = lck_op(env->me_lfd, op_setlk, F_UNLCK, 0, 1);
+    if (rc != MDBX_SUCCESS) {
+      mdbx_error("%s(%s) failed: errcode %u", __func__, "retry-exclusive", rc);
+      mdbx_assert(env, MDBX_IS_ERROR(rc));
+      return rc;
+    }
+    goto retry_exclusive;
   }
 
   /* Lock against another process operating in without-lck or exclusive mode. */
@@ -268,20 +326,8 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_seize(MDBX_env *env) {
     return rc;
   }
 
-  /* got shared, retry exclusive */
-  rc = lck_op(env->me_lfd, op_setlk, F_WRLCK, 0, 1);
-  if (rc == MDBX_SUCCESS)
-    goto continue_dxb_exclusive;
-
-  if (rc == EAGAIN || rc == EACCES || rc == EBUSY || rc == EWOULDBLOCK ||
-      rc == EDEADLK)
-    return MDBX_RESULT_FALSE /* Done: exclusive is unavailable,
-                                but shared locks are alive. */
-        ;
-
-  mdbx_error("%s(%s) failed: errcode %u", __func__, "try-exclusive", rc);
-  mdbx_assert(env, MDBX_IS_ERROR(rc));
-  return rc;
+  /* Done: return with shared locking. */
+  return MDBX_RESULT_FALSE;
 }
 
 MDBX_INTERNAL_FUNC int mdbx_lck_downgrade(MDBX_env *env) {
@@ -316,16 +362,25 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_destroy(MDBX_env *env,
       /* try get exclusive access */
       lck_op(env->me_lfd, op_setlk, F_WRLCK, 0, OFF_T_MAX) == 0 &&
       lck_op(env->me_fd, op_setlk,
-             (env->me_flags & MDBX_RDONLY) ? F_RDLCK : F_WRLCK, 0, OFF_T_MAX)) {
-    mdbx_verbose("%s: got exclusive, drown mutexes", __func__);
-    rc = pthread_mutex_destroy(&env->me_lck->mti_rmutex);
+             (env->me_flags & MDBX_RDONLY) ? F_RDLCK : F_WRLCK, 0,
+             OFF_T_MAX) == 0) {
+
+    mdbx_verbose("%s: got exclusive, drown locks", __func__);
+#if MDBX_LOCKING == MDBX_LOCKING_SYSV
+    if (env->me_sysv_ipc.semid != -1)
+      rc = semctl(env->me_sysv_ipc.semid, 2, IPC_RMID) ? errno : 0;
+#else
+    rc = mdbx_ipclock_destroy(&env->me_lck->mti_rlock);
     if (rc == 0)
-      rc = pthread_mutex_destroy(&env->me_lck->mti_wmutex);
+      rc = mdbx_ipclock_destroy(&env->me_lck->mti_wlock);
+#endif /* MDBX_LOCKING */
+
     mdbx_assert(env, rc == 0);
     if (rc == 0) {
-      memset(env->me_lck, 0x81, sizeof(MDBX_lockinfo));
-      msync(env->me_lck, env->me_os_psize, MS_ASYNC);
+      mdbx_munmap(&env->me_lck_mmap);
+      rc = ftruncate(env->me_lfd, 0) ? errno : 0;
     }
+
     mdbx_jitter4testing(false);
   }
 
@@ -373,9 +428,6 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_destroy(MDBX_env *env,
 
 /*---------------------------------------------------------------------------*/
 
-static int mdbx_mutex_failed(MDBX_env *env, pthread_mutex_t *mutex,
-                             const int rc);
-
 MDBX_INTERNAL_FUNC int __cold mdbx_lck_init(MDBX_env *env,
                                             MDBX_env *inprocess_neighbor,
                                             int global_uniqueness_flag) {
@@ -383,6 +435,70 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_init(MDBX_env *env,
     return MDBX_SUCCESS /* currently don't need any initialization
       if LCK already opened/used inside current process */
         ;
+#if MDBX_LOCKING == MDBX_LOCKING_SYSV
+  int semid = -1;
+  if (global_uniqueness_flag) {
+    struct stat st;
+    if (fstat(env->me_fd, &st))
+      return errno;
+  sysv_retry_create:
+    semid = semget(env->me_sysv_ipc.key, 2,
+                   IPC_CREAT | IPC_EXCL |
+                       (st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO)));
+    if (unlikely(semid == -1)) {
+      int err = errno;
+      if (err != EEXIST)
+        return err;
+
+      /* remove and re-create semaphore set */
+      semid = semget(env->me_sysv_ipc.key, 2, 0);
+      if (semid == -1) {
+        err = errno;
+        if (err != ENOENT)
+          return err;
+        goto sysv_retry_create;
+      }
+      if (semctl(semid, 2, IPC_RMID)) {
+        err = errno;
+        if (err != EIDRM)
+          return err;
+      }
+      goto sysv_retry_create;
+    }
+
+    unsigned short val_array[2] = {1, 1};
+    if (semctl(semid, 2, SETALL, val_array))
+      return errno;
+  } else {
+    semid = semget(env->me_sysv_ipc.key, 2, 0);
+    if (semid == -1)
+      return errno;
+
+    /* check read & write access */
+    struct semid_ds data[2];
+    if (semctl(semid, 2, IPC_STAT, data) || semctl(semid, 2, IPC_SET, data))
+      return errno;
+  }
+
+  env->me_sysv_ipc.semid = semid;
+
+  return MDBX_SUCCESS;
+
+#elif MDBX_LOCKING == MDBX_LOCKING_FUTEX
+#warning "TODO"
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+
+  /* don't initialize semaphores twice */
+  if (global_uniqueness_flag == MDBX_RESULT_TRUE) {
+    if (sem_init(&env->me_lck->mti_rlock, true, 1))
+      return errno;
+    if (sem_init(&env->me_lck->mti_wlock, true, 1))
+      return errno;
+  }
+  return MDBX_SUCCESS;
+
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX2001 ||                                \
+    MDBX_LOCKING == MDBX_LOCKING_POSIX2008
 
     /* FIXME: Unfortunately, there is no other reliable way but to long testing
      * on each platform. On the other hand, behavior like FreeBSD is incorrect
@@ -413,102 +529,55 @@ MDBX_INTERNAL_FUNC int __cold mdbx_lck_init(MDBX_env *env,
   if (rc)
     goto bailout;
 
-#if MDBX_USE_ROBUST
-#if defined(__GLIBC__) && !__GLIBC_PREREQ(2, 12) &&                            \
-    !defined(pthread_mutex_consistent) && _POSIX_C_SOURCE < 200809L
+#if MDBX_LOCKING == MDBX_LOCKING_POSIX2008
+#if defined(PTHREAD_MUTEX_ROBUST) || defined(pthread_mutexattr_setrobust)
+  rc = pthread_mutexattr_setrobust(&ma, PTHREAD_MUTEX_ROBUST);
+#elif defined(PTHREAD_MUTEX_ROBUST_NP) ||                                      \
+    defined(pthread_mutexattr_setrobust_np)
+  rc = pthread_mutexattr_setrobust_np(&ma, PTHREAD_MUTEX_ROBUST_NP);
+#elif _POSIX_THREAD_PROCESS_SHARED < 200809L
   rc = pthread_mutexattr_setrobust_np(&ma, PTHREAD_MUTEX_ROBUST_NP);
 #else
   rc = pthread_mutexattr_setrobust(&ma, PTHREAD_MUTEX_ROBUST);
 #endif
   if (rc)
     goto bailout;
-#endif /* MDBX_USE_ROBUST */
+#endif /* MDBX_LOCKING == MDBX_LOCKING_POSIX2008 */
 
-#if _POSIX_C_SOURCE >= 199506L && !defined(MDBX_SAFE4QEMU)
+#if defined(_POSIX_THREAD_PRIO_INHERIT) && _POSIX_THREAD_PRIO_INHERIT >= 0 &&  \
+    !defined(MDBX_SAFE4QEMU)
   rc = pthread_mutexattr_setprotocol(&ma, PTHREAD_PRIO_INHERIT);
   if (rc == ENOTSUP)
     rc = pthread_mutexattr_setprotocol(&ma, PTHREAD_PRIO_NONE);
-  if (rc)
+  if (rc && rc != ENOTSUP)
     goto bailout;
 #endif /* PTHREAD_PRIO_INHERIT */
 
   rc = pthread_mutexattr_settype(&ma, PTHREAD_MUTEX_ERRORCHECK);
-  if (rc)
+  if (rc && rc != ENOTSUP)
     goto bailout;
 
-  rc = pthread_mutex_init(&env->me_lck->mti_rmutex, &ma);
+  rc = pthread_mutex_init(&env->me_lck->mti_rlock, &ma);
   if (rc)
     goto bailout;
-  rc = pthread_mutex_init(&env->me_lck->mti_wmutex, &ma);
+  rc = pthread_mutex_init(&env->me_lck->mti_wlock, &ma);
 
 bailout:
   pthread_mutexattr_destroy(&ma);
   return rc;
+#else
+#error "FIXME"
+#endif /* MDBX_LOCKING > 0 */
 }
 
-static int mdbx_robust_lock(MDBX_env *env, pthread_mutex_t *mutex) {
-  mdbx_jitter4testing(true);
-  int rc = pthread_mutex_lock(mutex);
-  if (unlikely(rc != 0))
-    rc = mdbx_mutex_failed(env, mutex, rc);
-  return rc;
-}
-
-static int mdbx_robust_trylock(MDBX_env *env, pthread_mutex_t *mutex) {
-  mdbx_jitter4testing(true);
-  int rc = pthread_mutex_trylock(mutex);
-  if (unlikely(rc != 0 && rc != EBUSY))
-    rc = mdbx_mutex_failed(env, mutex, rc);
-  return (rc != EBUSY) ? rc : MDBX_BUSY;
-}
-
-static int mdbx_robust_unlock(MDBX_env *env, pthread_mutex_t *mutex) {
-  int rc = pthread_mutex_unlock(mutex);
-  mdbx_jitter4testing(true);
-  if (unlikely(rc != 0))
-    env->me_flags |= MDBX_FATAL_ERROR;
-  return rc;
-}
-
-MDBX_INTERNAL_FUNC int mdbx_rdt_lock(MDBX_env *env) {
-  mdbx_trace("%s", ">>");
-  int rc = mdbx_robust_lock(env, &env->me_lck->mti_rmutex);
-  mdbx_trace("<< rc %d", rc);
-  return rc;
-}
-
-MDBX_INTERNAL_FUNC void mdbx_rdt_unlock(MDBX_env *env) {
-  mdbx_trace("%s", ">>");
-  int rc = mdbx_robust_unlock(env, &env->me_lck->mti_rmutex);
-  mdbx_trace("<< rc %d", rc);
-  if (unlikely(MDBX_IS_ERROR(rc)))
-    mdbx_panic("%s() failed: errcode %d\n", __func__, rc);
-}
-
-int mdbx_txn_lock(MDBX_env *env, bool dontwait) {
-  mdbx_trace("%s", ">>");
-  int rc = dontwait ? mdbx_robust_trylock(env, env->me_wmutex)
-                    : mdbx_robust_lock(env, env->me_wmutex);
-  mdbx_trace("<< rc %d", rc);
-  return MDBX_IS_ERROR(rc) ? rc : MDBX_SUCCESS;
-}
-
-void mdbx_txn_unlock(MDBX_env *env) {
-  mdbx_trace("%s", ">>");
-  int rc = mdbx_robust_unlock(env, env->me_wmutex);
-  mdbx_trace("<< rc %d", rc);
-  if (unlikely(MDBX_IS_ERROR(rc)))
-    mdbx_panic("%s() failed: errcode %d\n", __func__, rc);
-}
-
-static int __cold mdbx_mutex_failed(MDBX_env *env, pthread_mutex_t *mutex,
-                                    const int err) {
+static int __cold mdbx_ipclock_failed(MDBX_env *env, mdbx_ipclock_t *ipc,
+                                      const int err) {
   int rc = err;
-#if MDBX_USE_ROBUST
+#if MDBX_LOCKING == MDBX_LOCKING_POSIX2008 || MDBX_LOCKING == MDBX_LOCKING_SYSV
   if (err == EOWNERDEAD) {
     /* We own the mutex. Clean up after dead previous owner. */
 
-    int rlocked = (env->me_lck && mutex == &env->me_lck->mti_rmutex);
+    const bool rlocked = (env->me_lck && ipc == &env->me_lck->mti_rlock);
     rc = MDBX_SUCCESS;
     if (!rlocked) {
       if (unlikely(env->me_txn)) {
@@ -518,34 +587,141 @@ static int __cold mdbx_mutex_failed(MDBX_env *env, pthread_mutex_t *mutex,
         rc = MDBX_PANIC;
       }
     }
-    mdbx_notice("%cmutex owner died, %s", (rlocked ? 'r' : 'w'),
+    mdbx_notice("%clock owner died, %s", (rlocked ? 'r' : 'w'),
                 (rc ? "this process' env is hosed" : "recovering"));
 
     int check_rc = mdbx_reader_check0(env, rlocked, NULL);
     check_rc = (check_rc == MDBX_SUCCESS) ? MDBX_RESULT_TRUE : check_rc;
 
-#if defined(__GLIBC__) && !__GLIBC_PREREQ(2, 12) &&                            \
-    !defined(pthread_mutex_consistent) && _POSIX_C_SOURCE < 200809L
-    int mreco_rc = pthread_mutex_consistent_np(mutex);
+#if MDBX_LOCKING == MDBX_LOCKING_SYSV
+    rc = (rc == MDBX_SUCCESS) ? check_rc : rc;
 #else
-    int mreco_rc = pthread_mutex_consistent(mutex);
+#if defined(PTHREAD_MUTEX_ROBUST) || defined(pthread_mutex_consistent)
+    int mreco_rc = pthread_mutex_consistent(ipc);
+#elif defined(PTHREAD_MUTEX_ROBUST_NP) || defined(pthread_mutex_consistent_np)
+    int mreco_rc = pthread_mutex_consistent_np(ipc);
+#elif _POSIX_THREAD_PROCESS_SHARED < 200809L
+    int mreco_rc = pthread_mutex_consistent_np(ipc);
+#else
+    int mreco_rc = pthread_mutex_consistent(ipc);
 #endif
     check_rc = (mreco_rc == 0) ? check_rc : mreco_rc;
 
     if (unlikely(mreco_rc))
-      mdbx_error("mutex recovery failed, %s", mdbx_strerror(mreco_rc));
+      mdbx_error("lock recovery failed, %s", mdbx_strerror(mreco_rc));
 
     rc = (rc == MDBX_SUCCESS) ? check_rc : rc;
     if (MDBX_IS_ERROR(rc))
-      pthread_mutex_unlock(mutex);
+      pthread_mutex_unlock(ipc);
+#endif /* MDBX_LOCKING == MDBX_LOCKING_POSIX2008 */
     return rc;
   }
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX2001
+  (void)ipc;
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+  (void)ipc;
+#elif MDBX_LOCKING == MDBX_LOCKING_FUTEX
+#warning "TODO"
+  (void)ipc;
 #else
-  (void)mutex;
-#endif /* MDBX_USE_ROBUST */
+#error "FIXME"
+#endif /* MDBX_LOCKING */
 
   mdbx_error("mutex (un)lock failed, %s", mdbx_strerror(err));
   if (rc != EDEADLK)
     env->me_flags |= MDBX_FATAL_ERROR;
   return rc;
+}
+
+static int mdbx_ipclock_lock(MDBX_env *env, mdbx_ipclock_t *ipc,
+                             const bool dont_wait) {
+#if MDBX_LOCKING == MDBX_LOCKING_POSIX2001 ||                                  \
+    MDBX_LOCKING == MDBX_LOCKING_POSIX2008
+  int rc = dont_wait ? pthread_mutex_trylock(ipc) : pthread_mutex_lock(ipc);
+  rc = (rc == EBUSY && dont_wait) ? MDBX_BUSY : rc;
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+  int rc = MDBX_SUCCESS;
+  if (dont_wait) {
+    if (sem_trywait(ipc)) {
+      rc = errno;
+      if (rc == EAGAIN)
+        rc = MDBX_BUSY;
+    }
+  } else if (sem_wait(ipc))
+    rc = errno;
+#elif MDBX_LOCKING == MDBX_LOCKING_SYSV
+  struct sembuf op = {.sem_num = (ipc != env->me_wlock),
+                      .sem_op = -1,
+                      .sem_flg = dont_wait ? IPC_NOWAIT | SEM_UNDO : SEM_UNDO};
+  int rc;
+  if (semop(env->me_sysv_ipc.semid, &op, 1)) {
+    rc = errno;
+    if (dont_wait && rc == EAGAIN)
+      rc = MDBX_BUSY;
+  } else {
+    rc = *ipc ? EOWNERDEAD : MDBX_SUCCESS;
+    *ipc = env->me_pid;
+  }
+#else
+#error "FIXME"
+#endif /* MDBX_LOCKING */
+
+  if (unlikely(rc != MDBX_SUCCESS && rc != MDBX_BUSY))
+    rc = mdbx_ipclock_failed(env, ipc, rc);
+  return rc;
+}
+
+static int mdbx_ipclock_unlock(MDBX_env *env, mdbx_ipclock_t *ipc) {
+#if MDBX_LOCKING == MDBX_LOCKING_POSIX2001 ||                                  \
+    MDBX_LOCKING == MDBX_LOCKING_POSIX2008
+  int rc = pthread_mutex_unlock(ipc);
+  (void)env;
+#elif MDBX_LOCKING == MDBX_LOCKING_POSIX1988
+  int rc = sem_post(ipc) ? errno : MDBX_SUCCESS;
+  (void)env;
+#elif MDBX_LOCKING == MDBX_LOCKING_SYSV
+  if (unlikely(*ipc != (pid_t)env->me_pid))
+    return EPERM;
+  *ipc = 0;
+  struct sembuf op = {
+      .sem_num = (ipc != env->me_wlock), .sem_op = 1, .sem_flg = SEM_UNDO};
+  int rc = semop(env->me_sysv_ipc.semid, &op, 1) ? errno : MDBX_SUCCESS;
+#else
+#error "FIXME"
+#endif /* MDBX_LOCKING */
+  return rc;
+}
+
+MDBX_INTERNAL_FUNC int mdbx_rdt_lock(MDBX_env *env) {
+  mdbx_trace("%s", ">>");
+  mdbx_jitter4testing(true);
+  int rc = mdbx_ipclock_lock(env, &env->me_lck->mti_rlock, false);
+  mdbx_trace("<< rc %d", rc);
+  return rc;
+}
+
+MDBX_INTERNAL_FUNC void mdbx_rdt_unlock(MDBX_env *env) {
+  mdbx_trace("%s", ">>");
+  int rc = mdbx_ipclock_unlock(env, &env->me_lck->mti_rlock);
+  mdbx_trace("<< rc %d", rc);
+  if (unlikely(rc != MDBX_SUCCESS))
+    mdbx_panic("%s() failed: errcode %d\n", __func__, rc);
+  mdbx_jitter4testing(true);
+}
+
+int mdbx_txn_lock(MDBX_env *env, bool dont_wait) {
+  mdbx_trace("%swait %s", dont_wait ? "dont-" : "", ">>");
+  mdbx_jitter4testing(true);
+  int rc = mdbx_ipclock_lock(env, env->me_wlock, dont_wait);
+  mdbx_trace("<< rc %d", rc);
+  return MDBX_IS_ERROR(rc) ? rc : MDBX_SUCCESS;
+}
+
+void mdbx_txn_unlock(MDBX_env *env) {
+  mdbx_trace("%s", ">>");
+  int rc = mdbx_ipclock_unlock(env, env->me_wlock);
+  mdbx_trace("<< rc %d", rc);
+  if (unlikely(rc != MDBX_SUCCESS))
+    mdbx_panic("%s() failed: errcode %d\n", __func__, rc);
+  mdbx_jitter4testing(true);
 }

@@ -275,6 +275,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Android")
        src/unix/linux-syscalls.c
        src/unix/procfs-exepath.c
        src/unix/pthread-fixes.c
+       src/unix/random-getrandom.c
+       src/unix/random-sysctl-linux.c
        src/unix/sysinfo-loadavg.c)
 endif()
 
@@ -411,7 +413,7 @@ endif()
 #  set(prefix ${CMAKE_INSTALL_PREFIX})
 #  configure_file(libuv.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc @ONLY)
 #
-  install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+#  install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 #  install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR})
 #  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libuv.pc
 #          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
@@ -420,7 +422,7 @@ endif()
 #endif()
 #
 #if(WIN32)
-#  install(DIRECTORY include/ DESTINATION include)
+  install(DIRECTORY include/ DESTINATION include)
 #  install(FILES LICENSE DESTINATION .)
 #  install(TARGETS uv uv_a
 #          RUNTIME DESTINATION lib/$<CONFIG>

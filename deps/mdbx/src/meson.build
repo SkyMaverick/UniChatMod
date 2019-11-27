@@ -49,6 +49,7 @@ else
     libmdbx_src += '''
         elements/defs.h
         elements/internals.h
+        elements/options.h
         elements/core.c
         elements/osal.h
         elements/osal.c

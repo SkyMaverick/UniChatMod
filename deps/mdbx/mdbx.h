@@ -555,6 +555,7 @@ typedef DWORD mdbx_tid_t;
 #define MDBX_EPERM ERROR_INVALID_FUNCTION
 #define MDBX_EINTR ERROR_CANCELLED
 #define MDBX_ENOFILE ERROR_FILE_NOT_FOUND
+#define MDBX_EREMOTE ERROR_REMOTE_STORAGE_MEDIA_ERROR
 
 #else
 
@@ -580,6 +581,7 @@ typedef pthread_t mdbx_tid_t;
 #define MDBX_EPERM EPERM
 #define MDBX_EINTR EINTR
 #define MDBX_ENOFILE ENOENT
+#define MDBX_EREMOTE ENOTBLK
 
 #endif
 
@@ -767,7 +769,16 @@ struct iovec {
 #define HAVE_STRUCT_IOVEC
 #endif /* HAVE_STRUCT_IOVEC */
 
+#if defined(__sun) || defined(__SVR4) || defined(__svr4__)
+/* The `iov_len` is signed on Sun/Solaris.
+ * So define custom MDBX_val to avoid a lot of warings. */
+typedef struct MDBX_val {
+  void *iov_base /* pointer to some data */;
+  size_t iov_len /* the length of data in bytes */;
+} MDBX_val;
+#else
 typedef struct iovec MDBX_val;
+#endif
 
 /* The maximum size of a data item.
  * MDBX only store a 32 bit value for node sizes. */
@@ -970,6 +981,12 @@ LIBMDBX_API const char *mdbx_dump_val(const MDBX_val *key, char *const buf,
  * by default. This option turns it off if the OS supports it. Turning it off
  * may help random read performance when the DB is larger than RAM and system
  * RAM is full.
+ *
+ * By default libmdbx dynamically enables/disables readahead depending on the
+ * actual database size and currently available memory. On the other hand, such
+ * automation has some limitation, i.e. could be performed only when DB size
+ * changing but can't tracks and reacts changing a free RAM availability, since
+ * it changes independently and asynchronously.
  *
  * NOTE: The mdbx_is_readahead_reasonable() function allows to quickly find out
  *       whether to use readahead or not based on the size of the data and the

@@ -38,6 +38,8 @@
     !defined(MDBX_TOOLS)
 #define _NO_CRT_STDIO_INLINE
 #endif
+#elif !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
 #endif /* Windows */
 
 /*----------------------------------------------------------------------------*/
@@ -71,9 +73,10 @@
 /* Systems includes */
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||     \
-    defined(__BSD__) || defined(__NETBSD__) || defined(__bsdi__) ||            \
-    defined(__DragonFly__) || defined(__APPLE__) || defined(__MACH__)
+    defined(__BSD__) || defined(__bsdi__) || defined(__DragonFly__) ||         \
+    defined(__APPLE__) || defined(__MACH__)
 #include <sys/cdefs.h>
+#include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -86,16 +89,9 @@
 #include <sys/vmmeter.h>
 #else
 #include <malloc.h>
-#ifndef _POSIX_C_SOURCE
-#ifdef _POSIX_SOURCE
-#define _POSIX_C_SOURCE 1
-#else
-#define _POSIX_C_SOURCE 0
-#endif
-#endif
 #endif /* !xBSD */
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || __has_include(<malloc_np.h>)
+#if defined(__FreeBSD__) || __has_include(<malloc_np.h>)
 #include <malloc_np.h>
 #endif
 
@@ -114,7 +110,7 @@
 #if defined(__linux__) || defined(__gnu_linux__)
 #include <linux/sysctl.h>
 #include <sys/sendfile.h>
-#include <sys/statvfs.h>
+#include <sys/statfs.h>
 #endif /* Linux */
 
 #ifndef _XOPEN_SOURCE
@@ -129,6 +125,9 @@
 
 #if defined(__sun) || defined(__SVR4) || defined(__svr4__)
 #include <kstat.h>
+/* On Solaris, it's easier to add a missing prototype rather than find a
+ * combination of #defines that break nothing. */
+__extern_C key_t ftok(const char *, int);
 #endif /* SunOS/Solaris */
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -195,11 +194,14 @@ static inline void *mdbx_realloc(void *ptr, size_t bytes) {
 #else /*----------------------------------------------------------------------*/
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <signal.h>
 #include <sys/file.h>
+#include <sys/ipc.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/uio.h>
 #include <unistd.h>
 typedef pthread_t mdbx_thread_t;
@@ -272,23 +274,16 @@ typedef pthread_mutex_t mdbx_fastmutex_t;
 #endif /* __amd64__ */
 #endif /* all x86 */
 
-#if !defined(MDBX_UNALIGNED_OK)
-#if defined(_MSC_VER)
-#define MDBX_UNALIGNED_OK 1 /* avoid MSVC misoptimization */
-#elif __CLANG_PREREQ(5, 0) || __GNUC_PREREQ(5, 0)
-#define MDBX_UNALIGNED_OK 0 /* expecting optimization is well done */
-#elif (defined(__ia32__) || defined(__ARM_FEATURE_UNALIGNED)) &&               \
-    !defined(__ALIGNED__)
-#define MDBX_UNALIGNED_OK 1
-#else
-#define MDBX_UNALIGNED_OK 0
-#endif
-#endif /* MDBX_UNALIGNED_OK */
-
 #if (-6 & 5) || CHAR_BIT != 8 || UINT_MAX < 0xffffffff || ULONG_MAX % 0xFFFF
 #error                                                                         \
     "Sanity checking failed: Two's complement, reasonably sized integer types"
 #endif
+
+#if UINTPTR_MAX > 0xffffFFFFul || ULONG_MAX > 0xffffFFFFul
+#define MDBX_WORDBITS 64
+#else
+#define MDBX_WORDBITS 32
+#endif /* MDBX_WORDBITS */
 
 /*----------------------------------------------------------------------------*/
 /* Compiler's includes for builtins/intrinsics */
@@ -347,7 +342,7 @@ typedef pthread_mutex_t mdbx_fastmutex_t;
 #include <sys/endian.h>
 #include <sys/types.h>
 #elif defined(__bsdi__) || defined(__DragonFly__) || defined(__FreeBSD__) ||   \
-    defined(__NETBSD__) || defined(__NetBSD__) ||                              \
+    defined(__NetBSD__) ||                              \
     defined(HAVE_SYS_PARAM_H) || __has_include(<sys/param.h>)
 #include <sys/param.h>
 #endif /* OS */
@@ -398,6 +393,15 @@ typedef pthread_mutex_t mdbx_fastmutex_t;
 
 /*----------------------------------------------------------------------------*/
 /* Memory/Compiler barriers, cache coherence */
+
+#if __has_include(<sys/cachectl.h>)
+#include <sys/cachectl.h>
+#elif defined(__mips) || defined(__mips__) || defined(__mips64) ||             \
+    defined(__mips64__) || defined(_M_MRX000) || defined(_MIPS_) ||            \
+    defined(__MWERKS__) || defined(__sgi)
+/* MIPS should have explicit cache control */
+#include <sys/cachectl.h>
+#endif
 
 static __maybe_unused __inline void mdbx_compiler_barrier(void) {
 #if defined(__clang__) || defined(__GNUC__)
@@ -455,71 +459,6 @@ static __maybe_unused __inline void mdbx_memory_barrier(void) {
 #else
 #error "Could not guess the kind of compiler, please report to us."
 #endif
-}
-
-/*----------------------------------------------------------------------------*/
-/* Cache coherence and invalidation */
-
-#ifndef MDBX_CPU_WRITEBACK_IS_COHERENT
-#if defined(__ia32__) || defined(__e2k__) || defined(__hppa) ||                \
-    defined(__hppa__)
-#define MDBX_CPU_WRITEBACK_IS_COHERENT 1
-#else
-#define MDBX_CPU_WRITEBACK_IS_COHERENT 0
-#endif
-#endif /* MDBX_CPU_WRITEBACK_IS_COHERENT */
-
-#ifndef MDBX_CACHELINE_SIZE
-#if defined(SYSTEM_CACHE_ALIGNMENT_SIZE)
-#define MDBX_CACHELINE_SIZE SYSTEM_CACHE_ALIGNMENT_SIZE
-#elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
-#define MDBX_CACHELINE_SIZE 128
-#else
-#define MDBX_CACHELINE_SIZE 64
-#endif
-#endif /* MDBX_CACHELINE_SIZE */
-
-#if MDBX_CPU_WRITEBACK_IS_COHERENT
-#define mdbx_flush_noncoherent_cpu_writeback() mdbx_compiler_barrier()
-#else
-#define mdbx_flush_noncoherent_cpu_writeback() mdbx_memory_barrier()
-#endif
-
-#if __has_include(<sys/cachectl.h>)
-#include <sys/cachectl.h>
-#elif defined(__mips) || defined(__mips__) || defined(__mips64) ||             \
-    defined(__mips64__) || defined(_M_MRX000) || defined(_MIPS_) ||            \
-    defined(__MWERKS__) || defined(__sgi)
-/* MIPS should have explicit cache control */
-#include <sys/cachectl.h>
-#endif
-
-#ifndef MDBX_CPU_CACHE_MMAP_NONCOHERENT
-#if defined(__mips) || defined(__mips__) || defined(__mips64) ||               \
-    defined(__mips64__) || defined(_M_MRX000) || defined(_MIPS_) ||            \
-    defined(__MWERKS__) || defined(__sgi)
-/* MIPS has cache coherency issues. */
-#define MDBX_CPU_CACHE_MMAP_NONCOHERENT 1
-#else
-/* LY: assume no relevant mmap/dcache issues. */
-#define MDBX_CPU_CACHE_MMAP_NONCOHERENT 0
-#endif
-#endif /* ndef MDBX_CPU_CACHE_MMAP_NONCOHERENT */
-
-static __maybe_unused __inline void
-mdbx_invalidate_mmap_noncoherent_cache(void *addr, size_t nbytes) {
-#if MDBX_CPU_CACHE_MMAP_NONCOHERENT
-#ifdef DCACHE
-  /* MIPS has cache coherency issues.
-   * Note: for any nbytes >= on-chip cache size, entire is flushed. */
-  cacheflush(addr, nbytes, DCACHE);
-#else
-#error "Oops, cacheflush() not available"
-#endif /* DCACHE */
-#else  /* MDBX_CPU_CACHE_MMAP_NONCOHERENT */
-  (void)addr;
-  (void)nbytes;
-#endif /* MDBX_CPU_CACHE_MMAP_NONCOHERENT */
 }
 
 /*----------------------------------------------------------------------------*/
@@ -646,9 +585,11 @@ typedef struct mdbx_mmap_param {
 #endif
 } mdbx_mmap_t;
 
+#define MMAP_OPTION_TRUNCATE 1
+#define MMAP_OPTION_SEMAPHORE 2
 MDBX_INTERNAL_FUNC int mdbx_mmap(const int flags, mdbx_mmap_t *map,
                                  const size_t must, const size_t limit,
-                                 const bool truncate);
+                                 const unsigned options);
 MDBX_INTERNAL_FUNC int mdbx_munmap(mdbx_mmap_t *map);
 MDBX_INTERNAL_FUNC int mdbx_mresize(int flags, mdbx_mmap_t *map, size_t current,
                                     size_t wanna);
@@ -664,7 +605,8 @@ mdbx_resume_threads_after_remap(mdbx_handle_array_t *array);
 #endif /* Windows */
 MDBX_INTERNAL_FUNC int mdbx_msync(mdbx_mmap_t *map, size_t offset,
                                   size_t length, int async);
-MDBX_INTERNAL_FUNC int mdbx_check4nonlocal(mdbx_filehandle_t handle, int flags);
+MDBX_INTERNAL_FUNC int mdbx_check_fs_rdonly(mdbx_filehandle_t handle,
+                                            const char *pathname, int err);
 
 static __maybe_unused __inline uint32_t mdbx_getpid(void) {
   STATIC_ASSERT(sizeof(mdbx_pid_t) <= sizeof(uint32_t));
@@ -698,14 +640,6 @@ typedef union bin128 {
 MDBX_INTERNAL_FUNC bin128_t mdbx_osal_bootid(void);
 /*----------------------------------------------------------------------------*/
 /* lck stuff */
-
-#if defined(_WIN32) || defined(_WIN64)
-#undef MDBX_OSAL_LOCK
-#define MDBX_OSAL_LOCK_SIGN UINT32_C(0xF10C)
-#else
-#define MDBX_OSAL_LOCK pthread_mutex_t
-#define MDBX_OSAL_LOCK_SIGN UINT32_C(0x8017)
-#endif /* MDBX_OSAL_LOCK */
 
 /// \brief Initialization of synchronization primitives linked with MDBX_env
 ///   instance both in LCK-file and within the current process.
@@ -781,7 +715,7 @@ MDBX_INTERNAL_FUNC void mdbx_rdt_unlock(MDBX_env *env);
 ///   Reading transactions will not be blocked.
 ///   Declared as LIBMDBX_API because it is used in mdbx_chk.
 /// \return Error code or zero on success
-LIBMDBX_API int mdbx_txn_lock(MDBX_env *env, bool dontwait);
+LIBMDBX_API int mdbx_txn_lock(MDBX_env *env, bool dont_wait);
 
 /// \brief Releases lock once DB changes is made (after writing transaction
 ///   has finished).
