@@ -160,7 +160,7 @@ main(int argc, char* argv[]) {
     if (get_flag(FLAG_APP_TERMINATED))
         return ret_status;
     curses_start();
-
+    
     ret_status = load_core_library(&args, event_load_hook);
     if (ret_status != UCM_RET_SYSTEM_DLERROR)
         exit_func(ret_status);

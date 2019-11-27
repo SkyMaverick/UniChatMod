@@ -14,11 +14,11 @@
 ucm_functions_t* ucm_api;
 
 #if defined(UCM_OS_POSIX)
-    #include "app_linux.c"
+    #include "linux/app.c"
 #else
     #if defined(WIN_CONSOLE_APP)
-        #include "app_cwin.c"
+        #include "wincon/app.c"
     #else
-        #include "app_win.c"
+        #include "win/app_win.c"
     #endif
 #endif

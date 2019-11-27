@@ -132,3 +132,6 @@ endif
 
 # -- post-targets install ------
 install_headers (shared_headers)
+
+# rpm = import('rpm')
+# rpm.generate_spec_template()

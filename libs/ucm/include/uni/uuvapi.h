@@ -235,5 +235,4 @@ typedef struct {
     uv_thread_t (*thread_self)(void);
     int (*thread_join)(uv_thread_t* tid);
     int (*thread_equal)(const uv_thread_t* t1, const uv_thread_t* t2);
-
 } ucm_uv_t;
