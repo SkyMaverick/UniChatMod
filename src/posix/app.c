@@ -1,7 +1,6 @@
-
 #include "app.h"
 
-static HMODULE core_handle;
+static void* core_handle;
 
 static char pa_buf[UCM_PATH_MAX];
 static char pla_buf[UCM_PATH_MAX];
@@ -11,15 +10,14 @@ static char psa_buf[UCM_PATH_MAX];
 ucm_cargs_t args = {.path_abs = pa_buf,
                     .path_lib_abs = pla_buf,
                     .path_plug_abs = ppa_buf,
-                    .path_store_abs = psa_buf,
+                    .path_store_abs = psa_buf};
 
-                    .options = 0};
+ucm_func_load core_load = NULL;
+ucm_func_exec core_exec = NULL;
+ucm_func_unload core_unload = NULL;
+ucm_func_info core_info = NULL;
 
-ucm_cstart_func core_start = NULL;
-ucm_cstop_func core_stop = NULL;
-ucm_cinfo_func core_info = NULL;
-
-static ucm_plugin_info_t* info;
+static const ucm_plugin_info_t* info;
 
 #include "loader.c"
 
@@ -31,8 +29,9 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
     UNUSED(x2);
     UNUSED(ctx);
 
-    //    fprintf(stdout, "[%s] %s\n", APP_NAME, _("Working hook LOAD_SUCCESS"));
-    curses_start();
+    fprintf(stdout, "[%s] %s\n", APP_NAME, _("Working hook LOAD_SUCCESS"));
+
+//    curses_dispatch(NULL);
 
     ucm_signal_t* sig = ucm_api->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
     if (sig) {
@@ -44,29 +43,52 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 
 static void
 exit_func(int ret_status) {
-    if (info)
-        free(info);
 
-    if (core_stop)
-        core_stop();
+    if (core_unload && ucm_api)
+        core_unload(&ucm_api);
 
-    FreeLibrary(core_handle);
-
+    dlclose(core_handle);
     exit(ret_status);
 }
 
-BOOL
-TermHandler(DWORD fwdHandlerType) {
-    fprintf(stderr, "[%s] %s\n", APP_NAME, _("Catch signal ..."));
+#ifdef DEBUG
+static void
+_stack_trace(int sig) {
+    UNUSED(sig);
 
-    switch (fwdHandlerType) {
-    case CTRL_C_EVENT:
-    case CTRL_CLOSE_EVENT:
-    case CTRL_SHUTDOWN_EVENT:
-    default:
-        exit_func(UCM_RET_SUCCESS);
-    }
-    return TRUE;
+    fprintf(stderr, "[%s] %s\n", APP_NAME, _("Catch SEGV signal ..."));
+    void* buf[STACK_TRACE_BUFFER];
+    char** strs;
+
+    int ptrs = backtrace(buf, STACK_TRACE_BUFFER);
+    if (ptrs)
+        fprintf(stderr, "%s: %d\n", _("Trace last addresses"), ptrs);
+
+    strs = backtrace_symbols(buf, ptrs);
+    if (strs != NULL) {
+        for (int i = 0; i < ptrs; i++)
+            fprintf(stderr, "%s\n", strs[i]);
+    } else
+        fprintf(stderr, "%s\n", _("backtrace symbols error"));
+    free(strs);
+}
+#endif
+
+static void
+_crash_handler(int sig) {
+#ifdef DEBUG
+    _stack_trace(sig);
+#endif
+    // TODO maybe clean
+    exit(UCM_RET_EXCEPTION);
+}
+
+static void
+_term_handler(int sig) {
+    UNUSED(sig);
+
+    fprintf(stderr, "[%s] %s\n", APP_NAME, _("Catch TERM signal ..."));
+    exit_func(UCM_RET_SUCCESS);
 }
 
 int
@@ -126,14 +148,18 @@ main(int argc, char* argv[]) {
         // TODO
     }
 
-    //
-    BOOL fRet = SetConsoleCtrlHandler((PHANDLER_ROUTINE)TermHandler, TRUE);
-    if (!fRet)
-        fprintf(stderr, "%s\n", "Couldn't set control handlers.");
+    signal(SIGINT, _crash_handler);
+    signal(SIGSEGV, _crash_handler);
+    signal(SIGTERM, _term_handler);
 
-    fprintf(stdout, "Work LIBS: %s\n", args.path_lib_abs);
-    SetDllDirectoryA(args.path_lib_abs);
-    load_core_library(&args, event_load_hook);
+    app_args_parse(argc, argv, &args);
+
+    if (get_flag(FLAG_APP_TERMINATED))
+        return ret_status;
+    
+    ret_status = load_core_library(&args, event_load_hook);
+    if (ret_status != UCM_RET_SYSTEM_DLERROR)
+        exit_func(ret_status);
 
     return ret_status;
 }
