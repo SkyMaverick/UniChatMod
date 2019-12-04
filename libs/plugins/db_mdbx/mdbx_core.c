@@ -185,7 +185,7 @@ mdbx_core_unload(void) {
 
 static inline void
 dbi_core_release(void) {
-    //    app->sys.timer_release (UniDB->sys.tmFlush);
+    app->sys.free(UniDB->sys.tick);
     mdbx_core_unload();
 }
 

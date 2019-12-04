@@ -19,7 +19,11 @@ db_open(const char* aPath) {
     // zero database structure
     UniAPI->sys.zmemory(&db, sizeof(ucm_db_t));
 
-    ucm_plugdb_t** plugins = (ucm_plugdb_t**)(UniAPI->app.plugins_by_type(UCM_TYPE_PLUG_DB));
+    //    ucm_plugdb_t** plugins = (ucm_plugdb_t**)(UniAPI->app.plugins_by_type(UCM_TYPE_PLUG_DB));
+    uintptr_t pld = UniAPI->app.plugin_get(UCM_TYPE_PLUG_DB);
+    if (!pld)
+        return UCM_RET_EXCEPTION;
+
     unsigned ret = 0;
     uv_fs_t ufs_req;
 
@@ -61,11 +65,13 @@ db_open(const char* aPath) {
     int ret_code = UCM_RET_SUCCESS;
 
     UniAPI->sys.mutex_lock(db.mtx);
-    while (*plugins) {
-        if ((*plugins)->db_open != NULL) {
-            ret_code = (*plugins)->db_open();
+    do {
+        ucm_plugdb_t* pl = (ucm_plugdb_t*)U_PLUGIN(pld);
+
+        if (pl->db_open != NULL) {
+            ret_code = pl->db_open();
             if (ret_code == UCM_RET_SUCCESS) {
-                db.worker = *plugins;
+                db.worker = pl;
             } else {
                 switch (ret) {
                 case UCM_RET_DATABASE_BADFORMAT:
@@ -77,10 +83,11 @@ db_open(const char* aPath) {
                 }
             }
         } else {
-            ucm_dtrace("%s: %s\n", (*plugins)->core.info.name, "method db_open() not implemented");
+            ucm_dtrace("%s: %s\n", pl->core.info.name, "method db_open() not implemented");
         }
-        plugins++;
-    }
+        pld = UniAPI->app.plugin_next(pld);
+    } while (pld);
+
     UniAPI->sys.mutex_unlock(db.mtx);
 
     if (db.worker == NULL) {

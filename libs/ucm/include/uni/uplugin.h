@@ -44,23 +44,32 @@ typedef struct {
     const wchar_t* const copyright;   /// plugin license
     const wchar_t* const email;       /// support email
     const wchar_t* const website;     /// official website
-} ucm_plugin_info_t;
+} ucm_pluginfo_t;
 
 /*! Structure what defines base plugin interface*/
 typedef struct _ucm_plugin_s {
-    ucm_object_t oid; /// ucm system class object identificator
+    struct {
+        ucm_object_t oid; /// ucm system class object identificator
+        ucm_uuid_t uuid;  /// plugins unique ID (UUID)
+    } head;
 
-    ucm_plugin_info_t info; /// plugins description
-    ucm_uuid_t uuid;        /// plugins unique ID (UUID)
+    ucm_pluginfo_t info; /// plugins description
 
-    UCM_RET(*run)
-    (void);                /// activate plugin (with context for hot-plug) (required)
+    UCM_RET (*run)(void);  /// activate plugin (with context for hot-plug) (required)
     UCM_RET (*stop)(void); /// deactivate plugin (required)
     void (*message)(uint32_t id, uintptr_t ctx, uint32_t x1,
                     uint32_t x2); /// recieve system messages callback
     // TODO define this prototype
     void (*msg_process)(void);
 } ucm_plugin_t;
-#define U_PLUGIN(X) ((ucm_plugin_t*)(X))
 
+typedef struct {
+    ucm_plugin_t* plugin;
+    uintptr_t handle;
+    uint8_t mode;
+
+    uint32_t locks;
+} ucm_pld_t;
+#define U_PLUGIN(X) (((ucm_pld_t*)(X))->plugin)
+//
 #define _EVENT_SENDER(obj) ((ucm_plugin_t*)(((ucm_ev_t*)obj)->sender))

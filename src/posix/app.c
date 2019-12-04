@@ -17,7 +17,7 @@ ucm_func_exec core_exec = NULL;
 ucm_func_unload core_unload = NULL;
 ucm_func_info core_info = NULL;
 
-static const ucm_plugin_info_t* info;
+static const ucm_pluginfo_t* info;
 
 #include "loader.c"
 
@@ -31,7 +31,7 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 
     fprintf(stdout, "[%s] %s\n", APP_NAME, _("Working hook LOAD_SUCCESS"));
 
-//    curses_dispatch(NULL);
+    //    curses_dispatch(NULL);
 
     ucm_signal_t* sig = ucm_api->app.mainloop_sig_alloc(UCM_SIG_START_GUI);
     if (sig) {
@@ -44,10 +44,11 @@ event_load_hook(uint32_t eid, uintptr_t ev, uint32_t x1, uint32_t x2, void* ctx)
 static void
 exit_func(int ret_status) {
 
-    if (core_unload && ucm_api)
-        core_unload(&ucm_api);
-
+    if (ucm_api)
+        core_exec(UCM_OPERATION_STOP, 0, NULL, 0);
+#ifndef ENABLE_VALGRIND
     dlclose(core_handle);
+#endif
     exit(ret_status);
 }
 
@@ -156,7 +157,7 @@ main(int argc, char* argv[]) {
 
     if (get_flag(FLAG_APP_TERMINATED))
         return ret_status;
-    
+
     ret_status = load_core_library(&args, event_load_hook);
     if (ret_status != UCM_RET_SYSTEM_DLERROR)
         exit_func(ret_status);

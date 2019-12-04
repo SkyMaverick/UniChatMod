@@ -35,7 +35,7 @@ opts_run_prepare_args(uint32_t flags, void* ctx, size_t ctx_size) {
         unset_system_flag(UCM_FLAG_PROFILE_CHECK);
         set_system_flag(UCM_FLAG_PROFILE_RO);
     }
-
+    // TODO DAEMONIZED
     return 0;
 }
 
@@ -55,6 +55,9 @@ ucm_core_exec(uint16_t action, uint32_t flags, void* ctx, size_t ctx_size) {
         }
         break;
     }
+    case UCM_OPERATION_STOP: {
+        return core_unload();
+    }
     case UCM_OPERATION_INFO: {
         break;
     }
@@ -73,7 +76,7 @@ ucm_core_unload(ucm_functions_t** api) {
     return UCM_RET_SUCCESS;
 }
 
-LIBUCM_API const ucm_plugin_info_t*
+LIBUCM_API const ucm_pluginfo_t*
 ucm_core_info(void) {
     return &(ucm_core->info);
 }
@@ -136,7 +139,7 @@ ucm_core_info(void) {
 // static size_t
 // handle_info_core(void* mem, size_t mem_size, ucm_cargs_t* args) {
 //     UNUSED(args);
-//     size_t needed = sizeof(ucm_plugin_info_t);
+//     size_t needed = sizeof(ucm_pluginfo_t);
 //     if (mem) {
 //         if (mem_size < needed)
 //             needed = mem_size;
@@ -155,8 +158,8 @@ ucm_core_info(void) {
 //     //
 //     //    if (count > 0) {
 //     //
-//     //        ucm_plugin_info_t* inf_arr;
-//     //        inf_arr = UniAPI->sys.zmalloc (sizeof(ucm_plugin_info_t) * count);
+//     //        ucm_pluginfo_t* inf_arr;
+//     //        inf_arr = UniAPI->sys.zmalloc (sizeof(ucm_pluginfo_t) * count);
 //     //        if (inf_arr == NULL)
 //     //            goto bailout;
 //     //
@@ -164,7 +167,7 @@ ucm_core_info(void) {
 //     //        UniAPI->app.get_plugins_all(); for ( size_t i = 0; *tmp; tmp++,
 //     //        i++ )
 //     //            memcpy (&(inf_arr[i]), &((*tmp)->info),
-//     //            sizeof(ucm_plugin_info_t));
+//     //            sizeof(ucm_pluginfo_t));
 //     //
 //     //        *info = (void*) inf_arr;
 //     //    }

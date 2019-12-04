@@ -12,49 +12,73 @@
 #include <string.h>
 #include <wchar.h>
 
-typedef struct ucm_module_s {
-    ucm_plugin_t* plugin; /* plugin handler */
-    uintptr_t handle;     /* library descriptor */
+typedef struct pmgr_node_s {
+    ucm_pld_t pld;
+    struct pmgr_node_s* next;
+} pmgr_node_t;
 
-    struct ucm_module_s* next; /* linked list element */
-} ucm_module_t;
+/*
+ > |_____|_____| ... |_____| - HEADS lists
+      V     V           V
+   |_____|_____| ... |_____| - nodes
+
+   ..................
+      V     V           V
+   |NULL |NULL | ... | NULL|
+
+   To user provide plugin descriptor (as uintptr_t contain ucm_pld_t) wich cast U_PLUGIN(X)
+*/
+
+enum { UCM_MODULE_BROKEN = 1 << 0, UCM_MODULE_BLOCKED = 1 << 1, UCM_MODULE_FREEZE = 1 << 2 };
+
+#define PLUGINS_SYSTEM 0
+#define INACTIVE_PLUGINS UCM_TYPE_PLUG_STUFF + 1
 
 typedef struct {
-    // modules chain. Base structure which contain all load modules
-    ucm_module_t* m_list;
-    size_t found;
-    // RWL-mutex for block update store
+    pmgr_node_t* plist[UCM_TYPE_PLUG_STUFF + 2];
+
     uintptr_t lock;
-    // flags
-    uint32_t flags;
 
-    struct {
-        // All plugins count
-        size_t count;
-        // index last element for each type array
-        size_t idx[UCM_TYPE_PLUG_STUFF + 1];
+    bool is_load;
+    size_t found;
+    size_t runable;
 
-        /* Store for plugins pointer (format)
+    uintptr_t cache_lock;
+    ucm_plugin_t** cache;
+} pmgr_t;
 
-                                          idx [type]
-                                           |
-             [          0          ] [p1* ... pn*, <NULL>]
-             [ UCM_TYPE_PLUG_DB    ] [p1* ... pn*, <NULL>]
-                                ... *** ...
-             [ UCM_TYPE_PLUG_STUFF ] [p1* ... pn*, <NULL>]
+static pmgr_t plug_mgr = {};
 
-         */
-        ucm_plugin_t* items[UCM_TYPE_PLUG_STUFF + 1][UCM_DEF_PLUG_COUNT + 1];
-    } registry;
-} ucm_pmgr_t;
+static pmgr_node_t core_node = {
+    .pld.plugin = NULL, .pld.handle = 0, .pld.mode = UCM_MODULE_FREEZE, .next = NULL};
 
-static ucm_pmgr_t* UniPMgr = NULL;
-#define U__REG(X, Y) UniPMgr->registry.items[(X)][(Y)]
-#define U__IDX(X) UniPMgr->registry.idx[(X)]
-
-/***************************************************
-    INTERNAL API
- ***************************************************/
+static int
+cache_regenerate(pmgr_t* P) {
+    // Create new memory-cache block
+    ucm_plugin_t** mem = API_OS.zmalloc(sizeof(ucm_plugin_t*) * P->runable);
+    if (mem == NULL)
+        return UCM_RET_SYSTEM_NOMEMORY;
+    // Update memory-cache. Use only verified plugins
+    size_t ctmp = 0;
+    for (unsigned i = 0; i <= UCM_TYPE_PLUG_STUFF + 1; i++) {
+        pmgr_node_t* tmp = P->plist[i];
+        if (tmp) {
+            do {
+                mem[ctmp] = tmp->pld.plugin;
+                ctmp++;
+            } while (tmp->next);
+        }
+    }
+    void* old_cache = (void*)(P->cache);
+    // Replace old cache -> new cache memory block
+    API_OS.rwlock_wlock(P->cache_lock);
+    P->cache = mem;
+    API_OS.rwlock_unlock(P->cache_lock);
+    // Release old memory cache
+    if (old_cache)
+        API_OS.free(old_cache);
+    return UCM_RET_SUCCESS;
+}
 
 static UCM_RET
 plugin_verify(ucm_plugin_t* plugin) {
@@ -79,50 +103,43 @@ plugin_verify(ucm_plugin_t* plugin) {
     return UCM_RET_SUCCESS;
 }
 
-static UCM_RET
-plugin_preload(ucm_plugin_t* plugin) {
-    plugin->oid = UCM_TYPE_OBJECT_PLUGIN;
-
-    if (UniAPI->sys.uuid_parse(plugin->info.pid, plugin->uuid) < 0)
-        return UCM_RET_PLUGIN_BADPID;
-
-    return UCM_RET_SUCCESS;
-}
-
-static ucm_module_t*
+static pmgr_node_t*
 plugin_load(char* filename) {
-    ucm_module_t* module = NULL;
+    pmgr_node_t* node = NULL;
 
-    // 1. Load library witch plugin potential
-    uintptr_t handle = UniAPI->sys.dlopen(filename);
+    uintptr_t handle = API_OS.dlopen(filename);
     if (!handle) {
         ucm_etrace("%s: %s\n", filename, _("plugin don't load"));
-        return module;
+        return node;
     }
 
-    // 2. Run INIT function. Provide core API or get plugin handle
-    cb_init_plugin _pfunc = (cb_init_plugin)UniAPI->sys.dlsym(handle, "_init_plugin");
+    cb_init_plugin _pfunc = (cb_init_plugin)API_OS.dlsym(handle, "_init_plugin");
     if (_pfunc) {
         ucm_plugin_t* plug = _pfunc(UniAPI);
         if (plug) {
-            // 3. Verfify plugin handle (check needed function)
-            int ret_code = plugin_verify(plug);
-            if (ret_code == UCM_RET_SUCCESS) {
-                // 4. Preload plugin operation
-                ret_code = plugin_preload(plug);
+            node = API_OS.zmalloc(sizeof(pmgr_node_t));
+            if (node) {
+                node->pld.plugin = plug;
+                node->pld.handle = handle;
+
+                int ret_code = plugin_verify(plug);
                 if (ret_code == UCM_RET_SUCCESS) {
-                    // 5. Create module object
-                    module = UniAPI->sys.zmalloc(sizeof(ucm_module_t));
-                    if (module) {
-                        module->plugin = plug;
-                        module->handle = handle;
-                        return module;
+                    plug->head.oid = UCM_TYPE_OBJECT_PLUGIN;
+                    if (API_OS.uuid_parse(plug->info.pid, plug->head.uuid) < 0) {
+                        node->pld.mode |= UCM_MODULE_BROKEN;
+                    } else {
+                        int ret = plug->run();
+                        if (ret == UCM_RET_SUCCESS) {
+                            plug_mgr.runable++;
+                        } else {
+                            node->pld.mode |= UCM_MODULE_BROKEN;
+                            ucm_etrace("%s. %s\n", filename, UniAPI->sys.strerr(ret_code));
+                        }
                     }
                 } else {
+                    node->pld.mode |= UCM_MODULE_BROKEN;
                     ucm_etrace("%s. %s\n", filename, UniAPI->sys.strerr(ret_code));
                 }
-            } else {
-                ucm_etrace("%s. %s\n", filename, UniAPI->sys.strerr(ret_code));
             }
         } else {
             ucm_etrace("%s: %s\n", filename, _("this plugin broken initialization"));
@@ -131,8 +148,18 @@ plugin_load(char* filename) {
     } else {
         ucm_etrace("%s - %s\n", filename, _("this library isn't plugin"));
     }
-    UniAPI->sys.dlclose(handle);
-    return module;
+    return node;
+}
+
+static inline void
+node_add(pmgr_t* P, pmgr_node_t* N) {
+    pmgr_node_t* tmp = NULL;
+    size_t idx = ((N->pld.mode & UCM_MODULE_BROKEN) || (N->pld.mode & UCM_MODULE_BLOCKED))
+                     ? INACTIVE_PLUGINS
+                     : N->pld.plugin->info.sys;
+    tmp = P->plist[idx];
+    N->next = tmp;
+    P->plist[idx] = N;
 }
 
 static void
@@ -143,140 +170,151 @@ scan_result_process(uv_fs_t* req) {
 
     ucm_dtrace("%s ...\n", "Scan plugin directory");
 
-    while (UniAPI->uv.fs_scandir_next(req, &dent) != UV__EOF) {
+    while (API_UV.fs_scandir_next(req, &dent) != UV__EOF) {
         ucm_dtrace("%s%c%s\n", req->path, PATH_DELIM, dent.name);
 
         snprintf(buffer, UCM_PATH_MAX, "%s%c%s", req->path, PATH_DELIM, dent.name);
 
-        ucm_module_t* tmp = plugin_load(buffer);
+        pmgr_node_t* tmp = plugin_load(buffer);
         if (tmp) {
-            UniAPI->sys.rwlock_wlock(UniPMgr->lock);
-
-            // update modules list
-            tmp->next = UniPMgr->m_list->next;
-            UniPMgr->m_list->next = tmp;
-
-            UniPMgr->found++;
-
-            UniAPI->sys.rwlock_unlock(UniPMgr->lock);
+            plug_mgr.found++;
+            API_OS.rwlock_wlock(plug_mgr.lock);
+            node_add(&plug_mgr, tmp);
+            API_OS.rwlock_unlock(plug_mgr.lock);
         }
     }
 #if defined(UCM_OS_WINDOWS)
-    UniAPI->uv.fs_close(UCM_LOOP_SYSTEM(UniAPI), &close_req, req->file.fd, NULL);
+    API_UV.fs_close(UCM_LOOP_SYSTEM(UniAPI), &close_req, req->file.fd, NULL);
 #else
-    UniAPI->uv.fs_close(UCM_LOOP_SYSTEM(UniAPI), &close_req, req->file, NULL);
+    API_UV.fs_close(UCM_LOOP_SYSTEM(UniAPI), &close_req, req->file, NULL);
 #endif
-    UniAPI->uv.fs_req_cleanup(&close_req);
+    API_UV.fs_req_cleanup(&close_req);
 }
 
-/***************************************************
-    EXTERNAL API
- ***************************************************/
+static unsigned
+internal_init(pmgr_t* P) {
+    P->lock = UniAPI->sys.rwlock_create();
+    P->cache_lock = UniAPI->sys.rwlock_create();
+}
+
+static void
+internal_clear(pmgr_t* P) {
+    if (P->cache) {
+        ucm_free_null(P->cache);
+    }
+    if (P->lock)
+        API_OS.rwlock_free(P->lock);
+    if (P->cache_lock)
+        API_OS.rwlock_free(P->cache_lock);
+}
+
+static UCM_RET
+internal_node_lock(pmgr_node_t* N) {}
+// /***************************************************
+//     INTERNAL API
+//  ***************************************************/
+//
 size_t
-pmgr_load(char* path, uint32_t flags) {
-    if (UniPMgr != NULL)
-        return UniPMgr->registry.count;
+pmgr_load(char* path) {
+    if (pmgr_isload())
+        return plug_mgr.found;
+
+    internal_init(&plug_mgr);
+
+    core_node.pld.plugin = ucm_core;
+    plug_mgr.plist[PLUGINS_SYSTEM] = &core_node;
 
     uv_fs_t req;
-    // 1. Create manager object
-    UniPMgr = UniAPI->sys.zmalloc(sizeof(ucm_pmgr_t));
-    if (UniPMgr) {
-        UniPMgr->flags = flags;
-        // 2. Create modules list head element
-        UniPMgr->m_list = UniAPI->sys.zmalloc(sizeof(ucm_module_t));
-        if (UniPMgr->m_list) {
-            // 3. Let head element is root core plugin
-            UniPMgr->m_list->plugin = ucm_core;
-            // 4. Create global mutex
-            UniPMgr->lock = UniAPI->sys.rwlock_create();
-            if (UniPMgr->lock) {
-                // 5. Scan plugins directory and process it
-                int r = UniAPI->uv.fs_scandir(UCM_LOOP_SYSTEM(UniAPI), &req, path, O_RDONLY, NULL);
-                if (r >= 0) {
-                    scan_result_process(&req);
-                    UniAPI->uv.fs_req_cleanup(&req);
+    int r = API_UV.fs_scandir(UCM_LOOP_SYSTEM(UniAPI), &req, path, O_RDONLY, NULL);
+    if (r >= 0) {
+        scan_result_process(&req);
+        cache_regenerate(&plug_mgr);
+        plug_mgr.is_load = true;
 
-                    UniAPI->app.mainloop_msg_send(UCM_SIG_PLUGS_SUCCESS, 0, UniPMgr->found, 0);
+        API.mainloop_msg_send(UCM_SIG_PLUGS_SUCCESS, 0, plug_mgr.found, 0);
+    };
+    API_UV.fs_req_cleanup(&req);
 
-                    return UniPMgr->found;
-                }
-                UniAPI->uv.fs_req_cleanup(&req);
-                ucm_dtrace("%s: %s\n", "Scandir error", UniAPI->uv.strerror(r));
-
-                UniAPI->sys.rwlock_free(UniPMgr->lock);
-            }
-            ucm_free_null(UniPMgr->m_list);
-        }
-        ucm_free_null(UniPMgr);
-    }
-    return 0;
+    return plug_mgr.found;
 }
 
-size_t
-pmgr_group_run(uint8_t sys) {
-    for (ucm_module_t* tmp = UniPMgr->m_list; tmp; tmp = tmp->next) {
-        if (tmp->plugin->info.sys == sys) {
-            int err = tmp->plugin->run();
-            if (err == UCM_RET_SUCCESS) {
-                size_t idx = U__IDX(sys);
-                U__REG(sys, idx) = tmp->plugin;
-                U__IDX(sys)++;
-            } else {
-                ucm_etrace("%s - %s: %s\n", _("Broken"), tmp->plugin->info.name,
-                           UniAPI->sys.strerr(err));
-            }
-        }
-    }
-    return U__IDX(sys);
-}
-
-void
-pmgr_group_stop(uint8_t sys) {
-    for (size_t i = 0; U__REG(sys, i) != NULL; i++) {
-        U__REG(sys, i)->stop();
-        U__REG(sys, i) = NULL;
-
-        U__IDX(sys)--;
-    }
+const bool
+pmgr_isload(void) {
+    return plug_mgr.is_load;
 }
 
 void
 pmgr_unload(void) {
-    UniAPI->sys.rwlock_wlock(UniPMgr->lock);
-    while (UniPMgr->m_list) {
-        ucm_module_t* tmp = UniPMgr->m_list;
-        UniPMgr->m_list = UniPMgr->m_list->next;
+    API_OS.rwlock_wlock(plug_mgr.lock);
+    plug_mgr.is_load = false;
 
-        if (tmp->handle)
-            UniAPI->sys.dlclose(tmp->handle);
-        ucm_free_null(tmp);
-    }
-    UniAPI->sys.rwlock_unlock(UniPMgr->lock);
+    for (unsigned i = UCM_TYPE_PLUG_STUFF + 1; i <= 0; i--) {
+        pmgr_node_t* tmp = plug_mgr.plist[i];
+        while (tmp) {
+            pmgr_node_t* dead = tmp;
+            tmp = tmp->next;
 
-    UniAPI->sys.rwlock_free(UniPMgr->lock);
-    ucm_free_null(UniPMgr);
-}
-
-const ucm_plugin_t**
-pmgr_get(unsigned type) {
-    return (const ucm_plugin_t**)(UniPMgr->registry.items[type]);
-}
-
-void
-pmgr_message_process(const uint32_t* id, const uintptr_t* ctx, const uint32_t* x1,
-                     const uint32_t* x2) {
-    UniAPI->sys.rwlock_rlock(UniPMgr->lock);
-
-    for (size_t i = 0; i < UCM_TYPE_PLUG_STUFF; i++) {
-        for (size_t j = 0; U__REG(i, j); j++) {
-            if (U__REG(i, j)->message) {
-                U__REG(i, j)->message(*id, *ctx, *x1, *x2);
-            }
+            dead->pld.plugin->stop();
+            if (dead->pld.handle != 0)
+                API_OS.dlclose(dead->pld.handle);
+            ucm_free_null(dead);
         }
     }
 
-    UniAPI->sys.rwlock_unlock(UniPMgr->lock);
+    API_OS.rwlock_unlock(plug_mgr.lock);
+    internal_clear(&plug_mgr);
 }
 
-#undef U__REG
-#undef U__IDX
+uintptr_t
+pmgr_first(unsigned type) {
+    if ((plug_mgr.is_load = false) || (type > INACTIVE_PLUGINS))
+        return 0;
+    API_OS.rwlock_rlock(plug_mgr.lock);
+
+    pmgr_node_t* tmp = plug_mgr.plist[type];
+    if (tmp->pld.locks == UINT32_MAX)
+        return 0;
+
+    tmp->pld.locks += 1;
+
+    API_OS.rwlock_unlock(plug_mgr.lock);
+    return (uintptr_t)&tmp->pld;
+}
+
+static inline void
+close_plugin(pmgr_node_t* N) {
+    if (N->pld.locks > 0)
+        N->pld.locks -= 1;
+}
+
+uintptr_t
+pmgr_next(uintptr_t pld) {
+    if ((plug_mgr.is_load = false) || (pld == 0))
+        return 0;
+    API_OS.rwlock_rlock(plug_mgr.lock);
+
+    pmgr_node_t* tmp = (pmgr_node_t*)pld;
+    close_plugin(tmp);
+    tmp = tmp->next;
+
+    API_OS.rwlock_unlock(plug_mgr.lock);
+    return (uintptr_t)&tmp->pld;
+}
+
+void
+pmgr_close(uintptr_t* pld) {
+    API_OS.rwlock_rlock(plug_mgr.lock);
+    close_plugin((pmgr_node_t*)(*pld));
+    *pld = 0;
+    API_OS.rwlock_unlock(plug_mgr.lock);
+}
+
+void
+pmgr_message_process(const uint32_t id, const uintptr_t ctx, const uint32_t x1, const uint32_t x2) {
+    if (plug_mgr.is_load == true) {
+        API_OS.rwlock_rlock(plug_mgr.cache_lock);
+        for (size_t i = 0; i < plug_mgr.runable; i++)
+            plug_mgr.cache[i]->message(id, ctx, x1, x2);
+        API_OS.rwlock_unlock(plug_mgr.cache_lock);
+    }
+}

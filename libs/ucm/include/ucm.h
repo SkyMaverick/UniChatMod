@@ -181,8 +181,9 @@ typedef struct _ucm_functions_s {
         void (*logger_disconnect)(void (*callback)(ucm_plugin_t*, uint32_t, const char*, void*));
 
         /*! get plugins by category */
-        const ucm_plugin_t** (*plugins_by_type)(unsigned type);
-
+        uintptr_t (*plugin_get)(unsigned type);
+        uintptr_t (*plugin_next)(uintptr_t plugin);
+        void (*plugin_close)(uintptr_t* plugin);
         /*! get global paths */
         char* (*get_startup_path)(void);
         char* (*get_store_path)(void);
@@ -191,7 +192,7 @@ typedef struct _ucm_functions_s {
         int (*get_entropy)(void);
 
         /*! user API */
-        const ucm_plugin_info_t* (*get_plugin_info)(char* pid);
+        const ucm_pluginfo_t* (*get_plugin_info)(char* pid);
         UCM_RET (*ucm_send_message)(void); // TODO
         UCM_RET (*ucm_recv_message)(void); // TODO
     } app;
@@ -216,7 +217,7 @@ typedef struct {
     char* path_store_abs;
 } ucm_cargs_t;
 
-enum { UCM_OPERATION_NONE, UCM_OPERATION_INFO, UCM_OPERATION_RUN };
+enum { UCM_OPERATION_NONE, UCM_OPERATION_INFO, UCM_OPERATION_RUN, UCM_OPERATION_STOP };
 
 enum {
     UCM_OPT_INFO_PLUGINS_ALL = 1 << 0,
@@ -241,7 +242,7 @@ ucm_core_exec(uint16_t action, uint32_t flags, void* ctx, size_t ctx_size);
 LIBUCM_API UCM_RET
 ucm_core_unload(ucm_functions_t** api);
 
-LIBUCM_API const ucm_plugin_info_t*
+LIBUCM_API const ucm_pluginfo_t*
 ucm_core_info(void);
 
 // ******* DYNAMIC LOAD FUNCTIONS ***********
@@ -255,7 +256,7 @@ typedef size_t (*ucm_func_exec)(uint16_t action, uint32_t flags, void* ctx, size
 typedef UCM_RET (*ucm_func_unload)(ucm_functions_t** api);
 #define UCM_UNLOAD_FUNC "ucm_core_unload"
 
-typedef const ucm_plugin_info_t* (*ucm_func_info)(void);
+typedef const ucm_pluginfo_t* (*ucm_func_info)(void);
 #define UCM_INFO_FUNC "ucm_core_info"
 
 #undef UCM_DEPRECATED

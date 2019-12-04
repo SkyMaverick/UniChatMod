@@ -43,7 +43,7 @@ loop_core(void* ctx) {
             // hook events for host applications
             hooks_event(id, lctx, x1, x2);
             // send message to all plugins
-            pmgr_message_process(&id, &lctx, &x1, &x2);
+            pmgr_message_process(id, lctx, x1, x2);
 
             switch (id) {
             case UCM_SIG_TERM:
@@ -52,10 +52,6 @@ loop_core(void* ctx) {
                 break;
             case UCM_SIG_PLUGS_SUCCESS:
                 ucm_dtrace("[EVENT] %s: %d\n", "Found plugins", x1);
-
-                pmgr_group_run(0);
-                pmgr_group_run(UCM_TYPE_PLUG_DB);
-
                 db_open(UniAPI->app.get_store_path());
                 break;
             }
@@ -91,9 +87,8 @@ _message_core(uint32_t id, uintptr_t ctx, uint32_t x1, uint32_t x2)
     switch (id) {
     case UCM_SIG_DBLOAD_SUCCESS:
         if (x1 == UCM_RET_SUCCESS) {
-            ucm_dtrace("[EVENT] %s: %S\n", "Start database with plugin", U_PLUGIN(ctx)->info.name);
-            for (int i = UCM_TYPE_PLUG_DB + 1; i <= UCM_TYPE_PLUG_STUFF; i++)
-                pmgr_group_run(i);
+            ucm_dtrace("[EVENT] %s: %S\n", "Start database with plugin",
+                       ((ucm_plugin_t*)(ctx))->info.name);
             UniAPI->app.mainloop_msg_send(UCM_SIG_LOAD_SUCCESS, 0, 0, 0);
         }
         break;
@@ -147,7 +142,7 @@ core_load(void) {
             return ret_code;
         }
 
-        pmgr_load(UniAPI->app.get_plugins_path(), 0);
+        pmgr_load(UniAPI->app.get_plugins_path());
     } else {
         uv_destroy();
     }
@@ -190,7 +185,7 @@ get_loop_handle(int loop) {
     }
 }
 
-static ucm_core_t kernel = {.base.oid = UCM_TYPE_OBJECT_PLUGIN,
+static ucm_core_t kernel = {.base.head.oid = UCM_TYPE_OBJECT_PLUGIN,
                             .base.info.api.vmajor = UCM_API_MAJOR_VER,
                             .base.info.api.vminor = UCM_API_MINOR_VER,
                             .base.info.sys = 0,
